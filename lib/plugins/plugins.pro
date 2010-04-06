@@ -10,6 +10,7 @@ HEADERS = \
     SignOn/authpluginif.h
 
 headers.files = \
+    SignOn/AuthPluginInterface \
     SignOn/authpluginif.h \
     SignOn/signonplugin.h \
     SignOn/UiSessionData \
