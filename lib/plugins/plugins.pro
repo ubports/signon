@@ -1,9 +1,16 @@
 TEMPLATE = lib
-TARGET =
+TARGET = signon-plugins
 
+include( ../../common-project-config.pri )
 include( ../../common-installs-config.pri )
 
+CONFIG += static
+
+HEADERS = \
+    SignOn/authpluginif.h
+
 headers.files = \
+    SignOn/AuthPluginInterface \
     SignOn/authpluginif.h \
     SignOn/signonplugin.h \
     SignOn/UiSessionData \
@@ -15,4 +22,10 @@ INSTALLS += headers
 pkgconfig.files = signon-plugins.pc
 pkgconfig.path = $${INSTALL_PREFIX}/lib/pkgconfig
 INSTALLS += pkgconfig
+
+# configuration feature
+feature.files = signon-plugins.prf
+feature.path = $$[QT_INSTALL_DATA]/mkspecs/features
+INSTALLS += feature
+
 
