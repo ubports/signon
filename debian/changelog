@@ -1,3 +1,9 @@
+signon (0.1.12-1) unstable; urgency=low
+
+  * Simplified building of signon plugins: provide qmake features file.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Tue, 06 Apr 2010 14:57:16 +0300
+
 signon (0.1.11-1) unstable; urgency=low
 
   * Ship signoncommon.h
