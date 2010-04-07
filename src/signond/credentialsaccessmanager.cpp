@@ -144,11 +144,13 @@ bool CredentialsAccessManager::openCredentialsSystem()
     RETURN_IF_NOT_INITIALIZED(false);
 
     //todo remove this variable after LUKS implementation becomes stable.
-    QString dbPath = m_pCryptoFileSystemManager->fileSystemMountPath()
-                     + QDir::separator()
-                     + m_CAMConfiguration.m_dbName;
+    QString dbPath;
 
     if (m_CAMConfiguration.m_useEncryption) {
+        dbPath = m_pCryptoFileSystemManager->fileSystemMountPath()
+            + QDir::separator()
+            + m_CAMConfiguration.m_dbName;
+
         if (!fileSystemDeployed()) {
             if (deployCredentialsSystem()) {
                 if (openDB(dbPath))
