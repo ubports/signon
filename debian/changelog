@@ -1,3 +1,9 @@
+signon (0.1.12-2) unstable; urgency=low
+
+  * Ship missing file libsignon-plugins.a in signon-plugins-dev.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Tue, 06 Apr 2010 15:32:19 +0300
+
 signon (0.1.12-1) unstable; urgency=low
 
   * Simplified building of signon plugins: provide qmake features file.

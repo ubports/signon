@@ -1,4 +1,5 @@
 usr/lib/pkgconfig/signon-plugins.pc
+usr/lib/libsignon-plugins.a
 usr/include/signon-plugins/SignOn/AuthPluginInterface
 usr/include/signon-plugins/SignOn/authpluginif.h
 usr/include/signon-plugins/SignOn/UiSessionData
