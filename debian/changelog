@@ -1,3 +1,10 @@
+signon (0.1.13-1) unstable; urgency=low
+
+  * Fix crash on startup when running with encryption disabled.
+  * Link plugins to libsignon-plugins.a (fixes test cases).
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Wed, 07 Apr 2010 13:50:47 +0300
+
 signon (0.1.12-2) unstable; urgency=low
 
   * Ship missing file libsignon-plugins.a in signon-plugins-dev.
