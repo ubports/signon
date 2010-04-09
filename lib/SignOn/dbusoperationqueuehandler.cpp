@@ -79,6 +79,7 @@ namespace SignOn {
             QMetaType::destroy(QMetaType::type(arg->name()), arg->data());
             if (arg->name())
                 delete [] arg->name();
+            delete arg;
         }
     }
 
