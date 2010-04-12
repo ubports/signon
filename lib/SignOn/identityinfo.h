@@ -28,9 +28,6 @@
 
 #include "signoncommon.h"
 
-// TODO: define with Qt dllexport/dllimport goodness
-#define SIGNON_EXPORT
-
 namespace SignOn {
 
     /*!
@@ -49,7 +46,7 @@ namespace SignOn {
      * Contains identity information. This information is stored into database.
      * @see queryIdentities()
      */
-    class IdentityInfo
+    class SIGNON_EXPORT IdentityInfo
     {
         friend class AuthServiceImpl;
         friend class IdentityImpl;

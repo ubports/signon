@@ -48,8 +48,7 @@ namespace SignOn {
      * Represents an database entry for a single identity.
      * Identity is client side presentation of a credential.
      */
-    SIGNON_EXPORT
-    class Identity : public QObject
+    class SIGNON_EXPORT Identity : public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(Identity)

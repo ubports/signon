@@ -33,6 +33,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <SignOn/signoncommon.h>
+
 namespace SignOn {
 
 /*!
@@ -77,7 +79,7 @@ enum SignonUiPolicy {
  *
  * @warning All this class' definitions must be inline.
  */
-class SessionData
+class SIGNON_EXPORT SessionData
 {
 public:
     /*!

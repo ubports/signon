@@ -39,7 +39,7 @@ namespace SignOn {
      * The class is for managing identities.
      * Most applications can use this by using widgets from libSignOnUI.
      */
-    class AuthService : public QObject
+    class SIGNON_EXPORT AuthService : public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(AuthService)

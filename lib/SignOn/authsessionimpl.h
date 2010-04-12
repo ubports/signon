@@ -45,7 +45,6 @@ namespace SignOn {
      * AuthSession class implementation.
      * @sa AuthSession
      */
-    SIGNON_EXPORT
     class AuthSessionImpl : public QObject
     {
         Q_OBJECT

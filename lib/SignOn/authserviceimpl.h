@@ -46,7 +46,6 @@ namespace SignOn {
      * AuthService class implementation.
      * @sa AuthService
      */
-    SIGNON_EXPORT
     class AuthServiceImpl : public QObject
     {
         Q_OBJECT

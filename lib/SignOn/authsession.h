@@ -42,7 +42,7 @@ namespace SignOn {
      * Represents a session to authentication plugin/server.
      * AuthSession is used to maintain connection to authentication plugin.
      */
-    class AuthSession: public QObject
+    class SIGNON_EXPORT AuthSession: public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(AuthSession)

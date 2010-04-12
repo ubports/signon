@@ -48,6 +48,10 @@
     #define BLAME() if(1) ; else qDebug()
 #endif
 
+#if __GNUC__ >= 4
+    #define SIGNON_EXPORT __attribute__ ((visibility("default")))
+#endif
+
 #ifndef SIGNON_EXPORT
     #define SIGNON_EXPORT
 #endif
