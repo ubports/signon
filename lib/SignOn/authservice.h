@@ -33,6 +33,8 @@ namespace SignOn {
 
     /*!
      * @class AuthService
+     * @headerfile authservice.h SignOn/AuthService
+     *
      * Represents signond for client application.
      * The class is for managing identities.
      * Most applications can use this by using widgets from libSignOnUI.

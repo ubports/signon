@@ -43,6 +43,8 @@ namespace SignOn {
 
     /*!
      * @class Identity
+     * @headerfile identity.h SignOn/Identity
+     *
      * Represents an database entry for a single identity.
      * Identity is client side presentation of a credential.
      */

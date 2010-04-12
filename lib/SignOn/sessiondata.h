@@ -69,6 +69,8 @@ enum SignonUiPolicy {
 
 /*!
  * @class SessionData
+ * @headerfile sessiondata.h SignOn/SessionData
+ *
  * Data container to hold values for authentication session.
  * Inherit this class if you want to extend the property range.
  *

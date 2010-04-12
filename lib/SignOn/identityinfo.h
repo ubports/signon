@@ -44,6 +44,8 @@ namespace SignOn {
 
     /*!
      * @class IdentityInfo
+     * @headerfile identityinfo.h SignOn/IdentityInfo
+     *
      * Contains identity information. This information is stored into database.
      * @see queryIdentities()
      */

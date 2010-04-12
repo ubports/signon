@@ -37,6 +37,8 @@ namespace SignOn {
 
     /*!
      * @class AuthSession
+     * @headerfile authsession.h SignOn/AuthSession
+     *
      * Represents a session to authentication plugin/server.
      * AuthSession is used to maintain connection to authentication plugin.
      */
