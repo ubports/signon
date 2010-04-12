@@ -84,8 +84,8 @@ namespace SignOn {
         {
         public:
             /*!
-             * Contructor creates an IdentityRegExp, as specified by regExp.
-             * @param regExp the regular expression as string.
+             * Contructor creates an IdentityRegExp, as specified by pattern.
+             * @param pattern the regular expression as string.
              */
             IdentityRegExp(const QString &pattern);
 

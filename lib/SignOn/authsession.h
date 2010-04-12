@@ -99,6 +99,9 @@ namespace SignOn {
         };
 
     protected:
+        /*!
+         * @internal
+         */
         AuthSession(quint32 id, const QString &methodName, QObject *parent = 0);
         ~AuthSession();
 
@@ -191,12 +194,10 @@ namespace SignOn {
         /*!
          * Sign message by using secret stored into identity.
          * This convenience interface to do special challenge to signature service.
-         * When signing is completed, signal signedMessage() is emitted.
-         * If the operation fails, a signal error() is emitted.
-         *
-         * @param message string to be signed
          * @param params extra information for signing.
          * @param mechanism mechanism to use for signing.
+         *
+         * @deprecated
          */
         void signMessage(const SessionData &params, const QString &mechanism = 0) {
             process(params, mechanism);
@@ -233,8 +234,10 @@ namespace SignOn {
         void response(const SessionData &sessionData);
 
         /*!
-         *
+         * Provides information about the state of the authentication
+         * request.
          * @param state is the current state of the authentication request.
+         * @param message a textual description of the state.
          */
         void stateChanged(AuthSession::AuthSessionState state, const QString &message);
 

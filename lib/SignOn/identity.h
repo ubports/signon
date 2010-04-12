@@ -77,6 +77,9 @@ namespace SignOn {
         };
 
     protected:
+        /*!
+         * @internal
+         */
         Identity(const quint32 id = SSO_NEW_IDENTITY,
                  QObject *parent = 0);
 
@@ -167,7 +170,6 @@ namespace SignOn {
          * used to create a new identity using Identity::newIdentity()
          *
          * @param info the credentials to store
-         * @param secret secret key to store
          */
         void storeCredentials(const IdentityInfo &info = IdentityInfo());
 
@@ -229,10 +231,10 @@ namespace SignOn {
         void error(Identity::IdentityError code, const QString &message);
 
         /*!
-         * Emitted when the list of available mechanisms have been obtained
+         * Emitted when the list of available methods have been obtained
          * for identity.
          *
-         * @param mechanisms a list of available mechanisms
+         * @param methods a list of available methods
          */
         void methodsAvailable(const QStringList &methods);
 
