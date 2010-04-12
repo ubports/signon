@@ -2,7 +2,7 @@ signon (0.1.14-1) unstable; urgency=low
 
   * Fixes: NB#161778 - <MemLeak> valgrind libaccounts-qt-tests
 
- -- Alberto Mardegan <alberto.mardegan@nokia.com>  Fri, 09 Apr 2010 13:50:47 +0
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Fri, 09 Apr 2010 13:50:47 +0300
 
 signon (0.1.13-1) unstable; urgency=low
 
