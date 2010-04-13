@@ -17,9 +17,8 @@ for( folder, DOC_FOLDERS ) {
 #-----------------------------------------------------------------------------
 # extra build targets for generating and cleaning documentation
 #-----------------------------------------------------------------------------
-for( subdir, src) {
-    DOC_INPUT += $${_PRO_FILE_PWD_}/$${subdir}
-}
+DOC_INPUT += $${_PRO_FILE_PWD_}
+DOC_INPUT += doc/src
 
 # target for generating documentation
 doctarget.target     = docs
@@ -42,7 +41,7 @@ doccleantarget.target = cleandocs
 for( folder, DOC_FOLDERS ) {
     doccleantarget.commands += rm -r -f $${folder};
 }
-doccleantarget.commands += rm -r -f doc/signon.tags;
+doccleantarget.commands += rm -r -f doc/accounts.tags;
 doccleantarget.depends   = FORCE
 QMAKE_EXTRA_TARGETS     += doccleantarget
 
@@ -52,13 +51,13 @@ QMAKE_EXTRA_TARGETS     += doccleantarget
 # NOTE: remember to set headers.files before this include to have the headers
 # properly setup.
 #-----------------------------------------------------------------------------
-include( ../common-installs-config.pri )
+include( ../../common-installs-config.pri )
 
 
 #-----------------------------------------------------------------------------
 # Installation target setup for documentation
 #-----------------------------------------------------------------------------
-documentation.path = $${INSTALL_PREFIX}/share/doc/$${PROJECT_NAME}
+documentation.path = $${INSTALL_PREFIX}/share/doc/libsignon-qt
 for( folder, DOC_FOLDERS ) {
     documentation.files += $${folder}
 }

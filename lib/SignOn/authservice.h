@@ -33,11 +33,13 @@ namespace SignOn {
 
     /*!
      * @class AuthService
+     * @headerfile authservice.h SignOn/AuthService
+     *
      * Represents signond for client application.
      * The class is for managing identities.
      * Most applications can use this by using widgets from libSignOnUI.
      */
-    class AuthService : public QObject
+    class SIGNON_EXPORT AuthService : public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(AuthService)
@@ -82,8 +84,8 @@ namespace SignOn {
         {
         public:
             /*!
-             * Contructor creates an IdentityRegExp, as specified by regExp.
-             * @param regExp the regular expression as string.
+             * Contructor creates an IdentityRegExp, as specified by pattern.
+             * @param pattern the regular expression as string.
              */
             IdentityRegExp(const QString &pattern);
 

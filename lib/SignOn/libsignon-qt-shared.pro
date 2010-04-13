@@ -47,7 +47,8 @@ CONFIG += qdbus \
     build_all \
     link_pkgconfig
 QMAKE_CXXFLAGS += -fno-exceptions \
-    -fno-rtti
+    -fno-rtti \
+    -fvisibility=hidden
 DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
 include( ../../common-installs-config.pri )
 

@@ -28,26 +28,28 @@
 
 #include "signoncommon.h"
 
-// TODO: define with Qt dllexport/dllimport goodness
-#define SIGNON_EXPORT
-
 namespace SignOn {
 
     /*!
-     * @typedef Defines a string as an authentication method.
+     * @typedef QString MethodName
+     * Defines a string as an authentication method.
      */
     typedef QString MethodName;
+
     /*!
-     * @typedef Defines a string list as a list of mechanisms.
+     * @typedef QStringList MechanismsList
+     * Defines a string list as a list of mechanisms.
      */
     typedef QStringList MechanismsList;
 
     /*!
      * @class IdentityInfo
+     * @headerfile identityinfo.h SignOn/IdentityInfo
+     *
      * Contains identity information. This information is stored into database.
      * @see queryIdentities()
      */
-    class IdentityInfo
+    class SIGNON_EXPORT IdentityInfo
     {
         friend class AuthServiceImpl;
         friend class IdentityImpl;
@@ -126,7 +128,7 @@ namespace SignOn {
 
         /*!
          * Sets whether the secret is stored or not.
-         * @param storeSecret.
+         * @param storeSecret whether the secret must be stored in the DB.
          */
         void setStoreSecret(const bool storeSecret);
 
@@ -179,7 +181,7 @@ namespace SignOn {
          * @attention this list is to be set by the 1st application that stores the credentials
          * and will be editable by only the same application. Applications own token will be added into ACL automatically.
          *
-         * @param accessControlList, list of access control tokens.
+         * @param accessControlList list of access control tokens.
          */
         void setAccessControlList(const QStringList &accessControlList);
 
