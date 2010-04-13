@@ -33,6 +33,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <SignOn/signoncommon.h>
+
 namespace SignOn {
 
 /*!
@@ -69,13 +71,15 @@ enum SignonUiPolicy {
 
 /*!
  * @class SessionData
+ * @headerfile sessiondata.h SignOn/SessionData
+ *
  * Data container to hold values for authentication session.
  * Inherit this class if you want to extend the property range.
  *
  *
  * @warning All this class' definitions must be inline.
  */
-class SessionData
+class SIGNON_EXPORT SessionData
 {
 public:
     /*!
@@ -88,13 +92,13 @@ public:
 
     /*!
      * Copy constructor.
-     * @param other, SessionData object to be copyed to this instance.
+     * @param other SessionData object to be copyed to this instance.
      */
     SessionData(const SessionData &other) { m_data = other.m_data; }
 
     /*!
      * Assignment operator
-     * @param other, SessionData object to be assigned to this instance.
+     * @param other SessionData object to be assigned to this instance.
      * @returns reference to this object
      */
     SessionData &operator=(const SessionData &other) {

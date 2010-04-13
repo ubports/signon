@@ -30,6 +30,9 @@
 #include "signoncommon.h"
 #include "identityinfo.h"
 
+/*
+ * @cond IMPL
+ */
 namespace SignOn {
 
     /* --------------- DBusOperationQueueHandler::Operation ---------------- */
@@ -187,3 +190,6 @@ namespace SignOn {
         return false;
     }
 } //SignOn
+/*
+ * @endcond IMPL
+ */

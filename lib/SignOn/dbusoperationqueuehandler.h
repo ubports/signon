@@ -32,6 +32,9 @@
 #define SSO_NORMALIZE_METHOD_SIGNATURE(method) \
     DBusOperationQueueHandler::normalizedOperationSignature(method).data()
 
+/*
+ * @cond IMPL
+ */
 namespace SignOn {
 
     class DBusOperationQueueHandler
@@ -82,5 +85,9 @@ namespace SignOn {
     };
 
 } //SignOn
+
+/*
+ * @endcond IMPL
+ */
 
 #endif // DBUSOPERATIONQUEUEHANDLER_H
