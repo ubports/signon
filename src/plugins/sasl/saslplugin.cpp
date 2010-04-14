@@ -47,7 +47,7 @@ public:
         m_secprops.max_ssf = UINT_MAX;
         m_secprops.min_ssf = 0;
         m_secprops.security_flags=0;
-
+        m_psecret = NULL;
         m_state=PLUGIN_STATE_INIT;
     }
 
@@ -57,14 +57,17 @@ public:
         if (m_conn) {
             sasl_dispose(&m_conn);
         }
+        if (m_psecret)
+            free(m_psecret);
+        m_psecret = NULL;
     }
 
     sasl_callback_t m_callbacks[N_CALLBACKS];
     sasl_conn_t *m_conn;
     sasl_security_properties_t m_secprops;
+    sasl_secret_t *m_psecret;
 
     SaslData m_input;
-    QByteArray m_secret;
     QByteArray m_username;
     QByteArray m_authname;
     QByteArray m_realm;
@@ -323,22 +326,23 @@ public:
 
         if ( ! psecret || id != SASL_CB_PASS)
             return SASL_BADPARAM;
-        self->d->m_secret=self->d->m_input.Secret().toUtf8();
-        password = self->d->m_secret.data();
+        QByteArray secret = self->d->m_input.Secret().toUtf8();
+        password = secret.data();
         if (! password)
             return SASL_FAIL;
 
-        len = self->d->m_secret.count();
+        len = secret.count();
+        if (self->d->m_psecret)
+            free(self->d->m_psecret);
+        self->d->m_psecret = (sasl_secret_t *) malloc(sizeof(sasl_secret_t) + len);
 
-        *psecret = (sasl_secret_t *) malloc(sizeof(sasl_secret_t) + len);
+        *psecret = self->d->m_psecret;
 
         if (! *psecret) {
-            memset(password, 0, len);
             return SASL_NOMEM;
         }
         (*psecret)->len = len;
-        strcpy((char *)(*psecret)->data, password);
-        memset(password, 0, len);
+        memcpy((char *)(*psecret)->data, password, len);
 
         TRACE();
         return SASL_OK;
