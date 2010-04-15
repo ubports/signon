@@ -77,11 +77,6 @@
 #define SIGNON_MAX_TIMEOUT 0x7FFFFFFF
 
 /*
- * idle timeout for remote identities and their plugin processes
- * */
-#define SSO_MAX_IDLE_TIME 300
-
-/*
  * todo: the naming convention for interfaces should be clarified
  * */
 

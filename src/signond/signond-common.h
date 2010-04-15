@@ -25,5 +25,10 @@
 
 #include "SignOn/signoncommon.h"
 
+/*
+ * idle timeout for remote identities and their plugin processes
+ * */
+#define SSO_MAX_IDLE_TIME 300
+
 #endif // SIGNOND_COMMON_H_
 
