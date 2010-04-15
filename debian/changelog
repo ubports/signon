@@ -1,3 +1,9 @@
+signon (0.1.15-1) unstable; urgency=low
+
+  * Fixes: NB#163865 - <MemLeak> valgrind memory leaks in signon-saslplugin-tests
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Thu, 15 Apr 2010 10:50:47 +0300
+
 signon (0.1.14-1) unstable; urgency=low
 
   * Fixes: NB#161778 - <MemLeak> valgrind libaccounts-qt-tests
