@@ -72,6 +72,7 @@ private:
 class SaslServer {
 public:
     SaslServer();
+    ~SaslServer();
     int  init(const QString& mech, QByteArray &challenge);
     int step(const QByteArray &response);
 

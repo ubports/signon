@@ -51,6 +51,7 @@ void SaslPluginTest::cleanupTestCase()
 {
     TEST_START
 
+    sasl_done();
     TEST_DONE
 }
 
@@ -259,7 +260,7 @@ void SaslPluginTest::testPluginChallengeCramMd5()
     info.setService(QByteArray("sample"));
 
     //create connection to server to get initial challenge
-    SaslServer* server = new SaslServer();
+    SaslServer *server = new SaslServer();
 
     QByteArray challenge;
     int serret = server->init(QString("CRAM-MD5"), challenge); //fails sometimes
@@ -360,7 +361,6 @@ void SaslPluginTest::testPluginsasl_get_secret()
     ret=m_testPlugin->sasl_get_secret(m_testPlugin->d->m_conn,NULL,0, &secret);
     QVERIFY(ret==SASL_BADPARAM);
 
-    if(secret) free(secret);
     m_testPlugin->d->m_input.setSecret(QString("password"));
 
     ret=m_testPlugin->sasl_get_secret(m_testPlugin->d->m_conn,m_testPlugin,SASL_CB_PASS, NULL);
@@ -369,8 +369,6 @@ void SaslPluginTest::testPluginsasl_get_secret()
     qDebug("err: %d",ret);
     QVERIFY(ret==SASL_OK);
     QCOMPARE(QByteArray("password"),QByteArray((const char*)secret->data,(int)secret->len));
-
-    if(secret) free(secret);
 
     TEST_DONE
 }
@@ -484,6 +482,12 @@ SaslServer::SaslServer()
     ipremote="127.0.0.1";
     searchpath=".";
     memset(&buf, 0L, SAMPLE_SEC_BUF_SIZE);
+}
+
+SaslServer::~SaslServer()
+{
+    sasl_dispose(&conn);
+    //sasl_done(); //cannot be called, as plugin also runs this
 }
 
 int SaslServer::init(const QString& mech, QByteArray& challenge)
