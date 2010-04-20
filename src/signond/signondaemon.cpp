@@ -75,10 +75,8 @@ namespace SignonDaemonNS {
 
         QDBusConnection::RegisterOptions registerOptions = QDBusConnection::ExportAllContents;
 
-#ifndef SIGNON_DISABLE_ACCESS_CONTROL
         (void)new SignonDaemonAdaptor(this);
         registerOptions = QDBusConnection::ExportAdaptors;
-#endif
 
         if (!connection.registerObject(SIGNON_DAEMON_OBJECTPATH, this, registerOptions)) {
             TRACE() << "Object cannot be registered";

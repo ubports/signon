@@ -35,6 +35,12 @@
 #define SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX QLatin1String("AID::")
 #define SSO_DEFAULT_CREDS_STR_BUFFER_SIZE 256
 
+#ifdef SIGNON_DISABLE_ACCESS_CONTROL
+#define RETURN_IF_AC_DISABLED(val)  return (val)
+#else
+#define RETURN_IF_AC_DISABLED(val)
+#endif
+
 namespace SignonDaemonNS {
 
     static const char keychainToken[] = "signond0::keychain-access";
@@ -42,6 +48,8 @@ namespace SignonDaemonNS {
     bool AccessControlManager::isPeerAllowedToUseIdentity(const QDBusContext &peerContext,
                                                           const quint32 identityId)
     {
+        RETURN_IF_AC_DISABLED(true);
+
         // TODO - improve this, the error handling and more precise behaviour
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
@@ -66,6 +74,8 @@ namespace SignonDaemonNS {
                                                                        const QDBusContext &peerContext,
                                                                        const quint32 identityId)
     {
+        RETURN_IF_AC_DISABLED(ApplicationIsOwner);
+
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         QString ownerToken = db->credentialsOwnerSecurityToken(identityId);
 
@@ -81,12 +91,16 @@ namespace SignonDaemonNS {
 
     bool AccessControlManager::isPeerKeychainWidget(const QDBusContext &peerContext)
     {
+        RETURN_IF_AC_DISABLED(true);
+
         static QString keychainWidgetToken = QLatin1String(keychainToken);
         return peerHasToken(peerContext, keychainWidgetToken);
     }
 
     QString AccessControlManager::idTokenOfPeer(const QDBusContext &peerContext)
     {
+        RETURN_IF_AC_DISABLED(QString());
+
         QStringList peerTokens = accessTokens(peerContext);
         foreach(QString token, peerTokens) {
             if (token.startsWith(SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX))
@@ -98,6 +112,8 @@ namespace SignonDaemonNS {
     bool AccessControlManager::peerHasOneOfTokens(const QDBusContext &peerContext,
                                                   const QStringList &tokens)
     {
+        RETURN_IF_AC_DISABLED(true);
+
         QStringList peerTokens = accessTokens(peerContext);
         foreach(QString token, tokens)
             if (peerTokens.contains(token))
@@ -108,6 +124,8 @@ namespace SignonDaemonNS {
 
     QStringList AccessControlManager::accessTokens(const pid_t peerPid)
     {
+        RETURN_IF_AC_DISABLED(QStringList());
+
         creds_t ccreds = creds_gettask(peerPid);
 
         creds_value_t value;
@@ -144,6 +162,8 @@ namespace SignonDaemonNS {
 
     bool AccessControlManager::peerHasToken(const pid_t processPid, const QString &token)
     {
+        RETURN_IF_AC_DISABLED(true);
+
         creds_type_t require_type;
         creds_value_t require_value;
         creds_t ccreds;
