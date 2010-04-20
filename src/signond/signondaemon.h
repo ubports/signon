@@ -93,6 +93,15 @@ namespace SignonDaemonNS {
 
         bool init();
 
+        /*!
+         * Returns the number of seconds of inactivity after which identity
+         * objects might be automatically deleted.
+         */
+        int identityTimeout() const
+        {
+            return m_identityTimeout;
+        }
+
     public Q_SLOTS:
         bool initSecureStorage(const QByteArray &lockCode);
 
@@ -137,6 +146,8 @@ namespace SignonDaemonNS {
          * The instance of CAM
          * */
         CredentialsAccessManager *m_pCAMManager;
+
+        int m_identityTimeout;
     }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

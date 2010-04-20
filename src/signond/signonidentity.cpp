@@ -30,14 +30,13 @@
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
 
-#define IDENTITY_MAX_IDLE_TIME (60 * 5) // five minutes
-
 namespace SignonDaemonNS {
 
     static QTimer idleAssasinTimer;
 
-    SignonIdentity::SignonIdentity(quint32 id, SignonDaemon *parent)
-            : SignonDisposable(IDENTITY_MAX_IDLE_TIME, parent),
+    SignonIdentity::SignonIdentity(quint32 id, int timeout,
+                                   SignonDaemon *parent)
+            : SignonDisposable(timeout, parent),
               m_pInfo(NULL),
               m_pSignonDaemon(parent)
     {
@@ -98,7 +97,8 @@ namespace SignonDaemonNS {
 
     SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
     {
-        SignonIdentity *identity = new SignonIdentity(id, parent);
+        SignonIdentity *identity =
+            new SignonIdentity(id, parent->identityTimeout(), parent);
 
         if (!identity->init()) {
             TRACE() << "The created identity is invalid and will be deleted.\n";

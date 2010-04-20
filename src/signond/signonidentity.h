@@ -80,7 +80,7 @@ namespace SignonDaemonNS {
         void infoUpdated(int);
 
     private:
-        SignonIdentity(quint32 id, SignonDaemon *parent);
+        SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
         bool init();
         bool credentialsStored() const { return m_id > 0 ? true : false; }
 

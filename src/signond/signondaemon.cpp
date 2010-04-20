@@ -30,6 +30,7 @@
 #include "signonidentity.h"
 #include "signonauthsession.h"
 
+#define IDENTITY_MAX_IDLE_TIME (60 * 5) // five minutes
 
 using namespace SignOn;
 
@@ -67,6 +68,10 @@ namespace SignonDaemonNS {
             TRACE() << err.message();
             return false;
         }
+
+        int envIdentityTimeout = qgetenv("SSO_IDENTITY_TIMEOUT").toInt();
+        m_identityTimeout = envIdentityTimeout > 0 ?
+            envIdentityTimeout : IDENTITY_MAX_IDLE_TIME;
 
         QDBusConnection::RegisterOptions registerOptions = QDBusConnection::ExportAllContents;
 
