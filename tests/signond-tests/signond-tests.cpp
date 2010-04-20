@@ -32,44 +32,19 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-class SignondTest : public QObject
-{
-     Q_OBJECT
-
- private Q_SLOTS:
-
-     void runPluginProxyTests();
-     void runCAMTests();
-
- private:
-     TestPluginProxy testPluginProxy;
-#ifdef CAM_UNIT_TESTS_FIXED
-     CredentialsAccessManagerTest testCAM;
-#endif
-};
-
-void SignondTest::runPluginProxyTests()
-{
-    testPluginProxy.runAllTests();
-}
-
-void SignondTest::runCAMTests()
-{
-#if CAM_UNIT_TESTS_FIXED
-    testCAM.runAllTests();
-#endif
-}
-
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
-    SignondTest signondTest;
-    QTest::qExec(&signondTest, argc, argv);
+#if CAM_UNIT_TESTS_FIXED
+    CredentialsAccessManagerTest testCAM;
+    QTest::qExec(&testCAM, argc, argv);
+#endif
+
+    TestPluginProxy testPluginProxy;
+    QTest::qExec(&testPluginProxy, argc, argv);
 
     TimeoutsTest timeoutsTest;
     QTest::qExec(&timeoutsTest, argc, argv);
 }
-
-#include "signond-tests.moc"
 
