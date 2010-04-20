@@ -12,18 +12,21 @@ QT += core \
 QT -= gui
 
 LIBS += -L/usr/lib \
-        -lcreds
+        -lcreds \
+        -lsignon-qt
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
 HEADERS += \
-           $$TOP_SRC_DIR/src/signond/pluginproxy.h \
-           $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.h
+    timeouts.h \
+    $$TOP_SRC_DIR/src/signond/pluginproxy.h \
+    $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.h
 
-SOURCES =  signond-tests.cpp \
-	   $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.cpp \
-           $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp
-           
+SOURCES = \
+    signond-tests.cpp \
+    timeouts.cpp \
+    $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.cpp \
+    $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp
 
 contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
  HEADERS *=$$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.h \

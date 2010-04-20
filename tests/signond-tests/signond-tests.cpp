@@ -22,11 +22,13 @@
  */
 
 #include "testpluginproxy.h"
+#include "timeouts.h"
 
 #ifdef CAM_UNIT_TESTS_FIXED
 #include "credentialsaccessmanagertest.h"
 #endif
 
+#include <QCoreApplication>
 #include <QtTest/QtTest>
 #include <QtCore>
 
@@ -58,6 +60,16 @@ void SignondTest::runCAMTests()
 #endif
 }
 
-QTEST_MAIN(SignondTest);
+int main(int argc, char **argv)
+{
+    QCoreApplication app(argc, argv);
+
+    SignondTest signondTest;
+    QTest::qExec(&signondTest, argc, argv);
+
+    TimeoutsTest timeoutsTest;
+    QTest::qExec(&timeoutsTest, argc, argv);
+}
+
 #include "signond-tests.moc"
 
