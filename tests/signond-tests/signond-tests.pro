@@ -57,10 +57,12 @@ QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 
 target.path = /usr/bin
-target.files += signonremoteplugin-test.sh
+scripts.path = /usr/bin
+scripts.files += signonremoteplugin-test.sh
 
 testsuite.path  = /usr/share/$$TARGET
 testsuite.files = tests.xml
 
 INSTALLS += target \
-            testsuite
+            testsuite \
+            scripts
