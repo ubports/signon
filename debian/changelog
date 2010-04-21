@@ -1,8 +1,9 @@
 signon (0.1.15-1) unstable; urgency=low
 
   * Fixes: NB#163865 - <MemLeak> valgrind memory leaks in signon-saslplugin-tests
+  * Implemented: SWP#ASSOH-367
 
- -- Alberto Mardegan <alberto.mardegan@nokia.com>  Thu, 15 Apr 2010 10:50:47 +0300
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 21 Apr 2010 15:20:53 +0300
 
 signon (0.1.14-1) unstable; urgency=low
 
