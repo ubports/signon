@@ -26,12 +26,10 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-
 #include "SignOn/signoncommon.h"
 #include "SignOn/sessiondata.h"
 #include "SignOn/authpluginif.h"
 #include "pluginproxy.h"
-
 
 using namespace SignonDaemonNS;
 using namespace SignOn;
@@ -52,6 +50,7 @@ private Q_SLOTS:
     void processUi_for_dummy();
     void process_wrong_mech_for_dummy();
     void process_and_cancel_for_dummy();
+    void wrong_user_for_dummy();
 
 private:
     PluginProxy *m_proxy;

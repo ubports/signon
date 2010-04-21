@@ -37,7 +37,7 @@ contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
            $$TOP_SRC_DIR/src/signond/simdbusadaptor.h \
            $$TOP_SRC_DIR/src/signond/cryptomanager.h \
            $$TOP_SRC_DIR/src/signond/credentialsdb.h
-           
+
  SOURCES *= $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/includes.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/dbuspeer.cpp
@@ -50,16 +50,17 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/tests/pluginproxytest \
     $$TOP_SRC_DIR/src/signond \
     $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server
-    
+
 DEFINES += SSO_CI_TESTMANAGEMENT
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 
 target.path = /usr/bin
+target.files += signonremoteplugin-test.sh
 
 testsuite.path  = /usr/share/$$TARGET
 testsuite.files = tests.xml
-          
+
 INSTALLS += target \
             testsuite

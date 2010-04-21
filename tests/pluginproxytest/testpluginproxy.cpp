@@ -22,18 +22,29 @@
 #include <QVariant>
 #include "testpluginproxy.h"
 
+#include <sys/types.h>
+#include <pwd.h>
+
 void TestPluginProxy::initTestCase()
 {
     m_proxy = NULL;
+
+#ifndef NO_SIGNON_USER
+    QVERIFY2(!::getuid(), "test must be run as root");
+    //check signon user
+
+    struct passwd *signonUser = getpwnam("signon");
+    QVERIFY2(signonUser, "signon user do not exist, add with 'useradd --system signon'");
+#endif
 
     qRegisterMetaType<QVariantMap>("QVariantMap");
     qRegisterMetaType<AuthPluginError>("AuthPluginError");
 }
 
-
 void TestPluginProxy::cleanupTestCase()
 {
     delete m_proxy;
+
 }
 
 void TestPluginProxy::create_nonexisting()
@@ -41,7 +52,6 @@ void TestPluginProxy::create_nonexisting()
     PluginProxy *pp = PluginProxy::createNewPluginProxy("nonexisting");
     QVERIFY(pp == NULL);
 }
-
 
 void TestPluginProxy::create_dummy()
 {
@@ -51,7 +61,6 @@ void TestPluginProxy::create_dummy()
 
     m_proxy = pp;
 }
-
 
 void TestPluginProxy::type_for_dummy()
 {
@@ -173,7 +182,6 @@ void TestPluginProxy::processUi_for_dummy()
 
     QCOMPARE(spyUi.count(), 1);
 
-
 }
 
 void TestPluginProxy::process_and_cancel_for_dummy()
@@ -202,7 +210,6 @@ void TestPluginProxy::process_and_cancel_for_dummy()
                      SIGNAL(processError(const QString&, int, const QString&)),
                      &loop,
                      SLOT(quit()));
-
 
     QTimer::singleShot(0.2*1000, m_proxy, SLOT(cancel()));
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
@@ -274,8 +281,18 @@ void TestPluginProxy::process_wrong_mech_for_dummy()
     QVERIFY(errMsg == QString("The given mechanism is unavailable"));
 }
 
+void TestPluginProxy::wrong_user_for_dummy()
+{
+    if (::getuid()) {
+        QSKIP("This test need to be run as root", SkipSingle);
+    }
+
+#ifndef NO_SIGNON_USER
+    QProcess *pluginProcess = new QProcess(this);
+    QVERIFY(pluginProcess->execute(QString("/usr/bin/signonpluginprocess"))==2);
+#endif
+}
+
 #if !defined(SSO_CI_TESTMANAGEMENT)
     QTEST_MAIN(TestPluginProxy)
 #endif
-
-

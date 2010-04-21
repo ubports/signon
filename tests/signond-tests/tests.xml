@@ -10,6 +10,10 @@
 	name="signond-tests-runCAMTests">
             <step>/usr/bin/signond-tests runCAMTests</step>
         </case>
+        <case description="signond:signond-tests:signonremoteplugin-test"
+	name="signond:signond-tests:signonremoteplugin-test">
+            <step>/usr/bin/signonremoteplugin-test.sh</step>
+        </case>
         <environments>
         <scratchbox>true</scratchbox>
         <hardware>true</hardware>
