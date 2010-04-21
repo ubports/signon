@@ -60,12 +60,6 @@ extern "C" {
     #define SIGNON_PLUGIN_SUFFIX "plugin.so"
 #endif
 
-#ifndef SIGNON_PLUGINS_DIR
-    #define SIGNON_PLUGINS_DIR "/usr/lib/signon"
-#endif
-
-
-
 namespace RemotePluginProcessNS {
 
 /*!

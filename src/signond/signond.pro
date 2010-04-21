@@ -22,6 +22,7 @@ HEADERS += \
     signond-common.h \
     signondaemonadaptor.h \
     signondaemon.h \
+    signondisposable.h \
     signontrace.h \
     simdbusadaptor.h \
     pluginproxy.h \
@@ -40,6 +41,7 @@ SOURCES += accesscodehandler.cpp \
     signonauthsession.cpp \
     signonidentity.cpp \
     signondaemonadaptor.cpp \
+    signondisposable.cpp \
     signonui_interface.cpp \
     pluginproxy.cpp \
     main.cpp \

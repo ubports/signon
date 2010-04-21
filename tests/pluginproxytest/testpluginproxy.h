@@ -26,12 +26,10 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-
 #include "SignOn/signoncommon.h"
 #include "SignOn/sessiondata.h"
 #include "SignOn/authpluginif.h"
 #include "pluginproxy.h"
-
 
 using namespace SignonDaemonNS;
 using namespace SignOn;
@@ -40,14 +38,7 @@ class TestPluginProxy: public QObject
 {
     Q_OBJECT
 
-#if defined(SSO_CI_TESTMANAGEMENT)
-    public Q_SLOTS:
-
-    void runAllTests();
-#else
-    private Q_SLOTS:
-#endif
-
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
 
@@ -59,6 +50,7 @@ class TestPluginProxy: public QObject
     void processUi_for_dummy();
     void process_wrong_mech_for_dummy();
     void process_and_cancel_for_dummy();
+    void wrong_user_for_dummy();
 
 private:
     PluginProxy *m_proxy;

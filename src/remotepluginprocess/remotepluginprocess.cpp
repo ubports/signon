@@ -280,7 +280,7 @@ namespace RemotePluginProcessNS {
     QString RemotePluginProcess::getPluginName(const QString &type)
     {
         QString fileName = QDir::cleanPath(SIGNON_PLUGINS_DIR) +
-                           QLatin1Char('/') +
+                           QDir::separator() +
                            QString(SIGNON_PLUGIN_PREFIX) +
                            type +
                            QString(SIGNON_PLUGIN_SUFFIX);

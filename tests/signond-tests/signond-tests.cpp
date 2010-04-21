@@ -22,42 +22,29 @@
  */
 
 #include "testpluginproxy.h"
+#include "timeouts.h"
 
 #ifdef CAM_UNIT_TESTS_FIXED
 #include "credentialsaccessmanagertest.h"
 #endif
 
+#include <QCoreApplication>
 #include <QtTest/QtTest>
 #include <QtCore>
 
-class SignondTest : public QObject
+int main(int argc, char **argv)
 {
-     Q_OBJECT
+    QCoreApplication app(argc, argv);
 
- private Q_SLOTS:
-
-     void runPluginProxyTests();
-     void runCAMTests();
-
- private:
-     TestPluginProxy testPluginProxy;
-#ifdef CAM_UNIT_TESTS_FIXED
-     CredentialsAccessManagerTest testCAM;
-#endif
-};
-
-void SignondTest::runPluginProxyTests()
-{
-    testPluginProxy.runAllTests();
-}
-
-void SignondTest::runCAMTests()
-{
 #if CAM_UNIT_TESTS_FIXED
-    testCAM.runAllTests();
+    CredentialsAccessManagerTest testCAM;
+    QTest::qExec(&testCAM, argc, argv);
 #endif
-}
 
-QTEST_MAIN(SignondTest);
-#include "signond-tests.moc"
+    TestPluginProxy testPluginProxy;
+    QTest::qExec(&testPluginProxy, argc, argv);
+
+    TimeoutsTest timeoutsTest;
+    QTest::qExec(&timeoutsTest, argc, argv);
+}
 

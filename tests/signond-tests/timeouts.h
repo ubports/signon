@@ -20,15 +20,42 @@
  * 02110-1301 USA
  */
 
-#ifndef SIGNOND_COMMON_H_
-#define SIGNOND_COMMON_H_
+#ifndef TIMEOUTS_TEST_H
+#define TIMEOUTS_TEST_H
 
-#include "SignOn/signoncommon.h"
+#include <SignOn/Identity>
 
-/*
- * idle timeout for remote identities and their plugin processes
- * */
-#define SSO_MAX_IDLE_TIME 300
+#include <QtTest/QtTest>
+#include <QtCore>
 
-#endif // SIGNOND_COMMON_H_
+using namespace SignOn;
+
+class TimeoutsTest: public QObject
+{
+    Q_OBJECT
+
+private slots:
+
+    void initTestCase();
+    void cleanupTestCase();
+    void init();
+
+    void identityTimeout();
+
+public slots:
+    void credentialsStored(const quint32 id);
+    void identityError(Identity::IdentityError code, const QString &message);
+
+signals:
+    void finished();
+
+private:
+    bool triggerDisposableCleanup();
+    bool identityAlive(const QString &path);
+
+    QProcess *daemonProcess;
+    bool completed;
+};
+
+#endif // TIMEOUTS_TEST_H
 

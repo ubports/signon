@@ -22,6 +22,7 @@
  */
 
 #include "signondaemonadaptor.h"
+#include "signondisposable.h"
 #include "accesscontrolmanager.h"
 
 namespace SignonDaemonNS {
@@ -43,6 +44,8 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
     {
+        SignonDisposable::destroyUnused();
+
         m_parent->registerNewIdentity(objectPath);
     }
 
@@ -63,6 +66,8 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
+        SignonDisposable::destroyUnused();
+
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), id)) {
             securityErrorReply(__func__);
@@ -79,6 +84,8 @@ namespace SignonDaemonNS {
 
     QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id, const QString &type)
     {
+        SignonDisposable::destroyUnused();
+
         /* Access Control */
         if (id != SSO_NEW_IDENTITY) {
             if (!AccessControlManager::isPeerAllowedToUseAuthSession(

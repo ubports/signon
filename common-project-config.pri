@@ -20,6 +20,8 @@ INCLUDEPATH    += $${TOP_SRC_DIR}/lib
 
 #DEFINES += QT_NO_DEBUG_OUTPUT
 DEFINES += SIGNON_TRACE
+#TODO comment this to restrict plugins to run under signon user
+DEFINES += NO_SIGNON_USER
 
 # End of File
 

@@ -54,6 +54,13 @@ int main(int argc, char *argv[])
 {
     TRACE();
 
+#ifndef NO_SIGNON_USER
+    if (!::getuid()) {
+        BLAME() << argv[0] << " cannot be started with root priviledges!!!";
+        exit(2);
+    }
+#endif
+
     QCoreApplication app(argc, argv);
     installSigHandlers();
 

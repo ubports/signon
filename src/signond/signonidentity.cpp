@@ -30,18 +30,15 @@
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
 
-#define IDENITITY_IDLE_WATCHDOG_TIMEOUT (SSO_MAX_IDLE_TIME * 500)
-#define IDENTITY_MAX_IDLE_TIME SSO_MAX_IDLE_TIME
-
 namespace SignonDaemonNS {
 
     static QTimer idleAssasinTimer;
 
-    SignonIdentity::SignonIdentity(quint32 id, SignonDaemon *parent)
-            : QObject(parent),
+    SignonIdentity::SignonIdentity(quint32 id, int timeout,
+                                   SignonDaemon *parent)
+            : SignonDisposable(timeout, parent),
               m_pInfo(NULL),
-              m_pSignonDaemon(parent),
-              m_lastOperationTime(QDateTime::currentDateTime())
+              m_pSignonDaemon(parent)
     {
         m_id = id;
 
@@ -73,28 +70,6 @@ namespace SignonDaemonNS {
         delete m_signonui;
     }
 
-    void SignonIdentity::subscribeWatchdog(SignonIdentity *subscriber)
-    {
-        TRACE() << "Subscribing watchdog for identity...";
-
-        if (!idleAssasinTimer.isActive())
-            idleAssasinTimer.start(IDENITITY_IDLE_WATCHDOG_TIMEOUT);
-
-        connect(&idleAssasinTimer, SIGNAL(timeout()), subscriber, SLOT(check4Idle()));
-    }
-
-    void SignonIdentity::check4Idle()
-    {
-        TRACE() << "Checking identity for idle...";
-        QDateTime currentTime = QDateTime::currentDateTime();
-
-        if (currentTime.toTime_t() - m_lastOperationTime.toTime_t() > IDENTITY_MAX_IDLE_TIME) {
-            TRACE() << "This identity is being idle for too long time";
-            blockSignals(true);
-            m_pSignonDaemon->unregisterIdentity(this);
-        }
-    }
-
     bool SignonIdentity::init()
     {
         QDBusConnection connection = SIGNON_BUS;
@@ -117,13 +92,13 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        subscribeWatchdog(this);
         return true;
     }
 
     SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
     {
-        SignonIdentity *identity = new SignonIdentity(id, parent);
+        SignonIdentity *identity =
+            new SignonIdentity(id, parent->identityTimeout(), parent);
 
         if (!identity->init()) {
             TRACE() << "The created identity is invalid and will be deleted.\n";
@@ -163,7 +138,7 @@ namespace SignonDaemonNS {
                                                 SSO_IDENTITY_UNKNOWN_ERR_NAME,
                                                 QLatin1String("Not implemented."));
         SIGNON_BUS.send(errReply);
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
         return 0;
     }
 
@@ -194,7 +169,7 @@ namespace SignonDaemonNS {
         }
 
         TRACE() << "INFO as variant list:" << info.toVariantList();
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
         return info.toVariantList();
     }
 
@@ -206,7 +181,7 @@ namespace SignonDaemonNS {
         QDBusMessage errReply = message().createErrorReply(SSO_IDENTITY_UNKNOWN_ERR_NAME,
                                                            QLatin1String("Not implemented."));
         SIGNON_BUS.send(errReply);
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
         return false;
     }
 
@@ -229,7 +204,7 @@ namespace SignonDaemonNS {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         bool ret = db->checkPassword(m_pInfo->m_userName, secret);
 
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
         return ret;
     }
 
@@ -246,7 +221,7 @@ namespace SignonDaemonNS {
             SIGNON_BUS.send(errReply);
         }
         emit infoUpdated((int)SignOn::IdentityRemoved);
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
     }
 
     bool SignonIdentity::signOut()
@@ -316,7 +291,7 @@ namespace SignonDaemonNS {
             emit infoUpdated((int)SignOn::IdentityDataUpdated);
         }
 
-        m_lastOperationTime = QDateTime::currentDateTime();
+        keepInUse();
         return m_id;
     }
 
