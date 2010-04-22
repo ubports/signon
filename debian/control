@@ -115,7 +115,7 @@ Description: Single Sign On test plugins
 Package: signon-saslplugin
 Architecture: any
 Priority: optional
-Depends: ${shlibs:Depends}, ${misc:Depends}, signond0, libsasl2
+Depends: ${shlibs:Depends}, ${misc:Depends}, signond0, libsasl2, libsasl2-2, libsasl2-modules
 Description: SASL authentication plugin for Single Sign On
  SASL authentication plugin for Single Sign On.
 
