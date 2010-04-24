@@ -29,7 +29,7 @@
 
 #include "signoncommon.h"
 
-#define SSO_NORMALIZE_METHOD_SIGNATURE(method) \
+#define SIGNOND_NORMALIZE_METHOD_SIGNATURE(method) \
     DBusOperationQueueHandler::normalizedOperationSignature(method).data()
 
 /*

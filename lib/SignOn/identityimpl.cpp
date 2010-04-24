@@ -26,33 +26,39 @@
 #include <QDBusArgument>
 #include <QTimer>
 
+#include "libsignoncommon.h"
+#include "signoncommon.h"
 #include "identityimpl.h"
 #include "identityinfo.h"
 #include "identityinfoimpl.h"
 #include "authsessionimpl.h"
 
-#define SSO_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
+#define SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
 
-#define SSO_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("queryAvailableMethods()")
-#define SSO_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("requestCredentialsUpdate(const QString &)")
-#define SSO_IDENTITY_STORE_CREDENTIALS_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("storeCredentials(const IdentityInfo &)")
-#define SSO_IDENTITY_REMOVE_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("remove()")
-#define SSO_IDENTITY_QUERY_INFO_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("queryInfo()")
-#define SSO_IDENTITY_VERIFY_USER_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QString &)")
-#define SSO_IDENTITY_VERIFY_SECRET_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("verifySecret(const QString &)")
-#define SSO_IDENTITY_SIGN_OUT_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("signOut()")
+#define SIGNOND_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("queryAvailableMethods()")
+#define SIGNOND_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("requestCredentialsUpdate(const QString &)")
+#define SIGNOND_IDENTITY_STORE_CREDENTIALS_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("storeCredentials(const IdentityInfo &)")
+#define SIGNOND_IDENTITY_REMOVE_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("remove()")
+#define SIGNOND_IDENTITY_QUERY_INFO_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("queryInfo()")
+#define SIGNOND_IDENTITY_VERIFY_USER_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QString &)")
+#define SIGNOND_IDENTITY_VERIFY_SECRET_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifySecret(const QString &)")
+#define SIGNOND_IDENTITY_SIGN_OUT_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("signOut()")
 
 
 namespace SignOn {
 
+    /*
+         !!! TODO remove deprecated error signals emition when the time is right. !!!
+         *** One month after release of new error management
+    */
     IdentityImpl::IdentityImpl(Identity *parent, const quint32 id)
         : QObject(parent),
           m_parent(parent),
@@ -129,16 +135,16 @@ namespace SignOn {
         switch (m_state) {
             case NeedsRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                            SSO_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
+                                            SIGNOND_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
                 sendRegisterRequest();
                 break;
             case PendingRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                            SSO_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
+                                            SIGNOND_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
                 break;
             case NeedsUpdate:
                 m_operationQueueHandler.enqueueOperation(
-                                            SSO_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
+                                            SIGNOND_IDENTITY_QUERY_AVAILABLE_METHODS_METHOD);
 
                 /* This flag tells the queryInfo() reply slot that the current query
                    should not reply with the 'info()' signal */
@@ -148,6 +154,8 @@ namespace SignOn {
             case Removed:
                 emit m_parent->error(Identity::NotFoundError,
                                      QLatin1String("Removed from database."));
+                emit m_parent->error(Error(Error::IdentityNotFound,
+                                     QLatin1String("Removed from database.")));
                 return;
             case Ready:
                 /* fall trough */
@@ -164,13 +172,13 @@ namespace SignOn {
         switch (m_state) {
             case NeedsRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                SSO_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD,
+                                SIGNOND_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD,
                                 QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
                 sendRegisterRequest();
                 return;
             case PendingRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                SSO_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD,
+                                SIGNOND_IDENTITY_REQUEST_CREDENTIALS_UPDATE_METHOD,
                                 QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
                 return;
             case NeedsUpdate:
@@ -178,6 +186,9 @@ namespace SignOn {
             case Removed:
                 emit m_parent->error(Identity::NotFoundError,
                                      QLatin1String("Removed from database."));
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
                 return;
             case Ready:
                 /* fall trough */
@@ -193,6 +204,9 @@ namespace SignOn {
             TRACE() << "Error occurred.";
             emit m_parent->error(Identity::UnknownError,
                                  QLatin1String("DBUS Communication error occurred."));
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
     }
 
@@ -207,7 +221,7 @@ namespace SignOn {
                 IdentityInfo localInfo =
                     info.impl->m_empty ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_STORE_CREDENTIALS_METHOD,
+                                        SIGNOND_IDENTITY_STORE_CREDENTIALS_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(SignOn::IdentityInfo, localInfo)));
                 sendRegisterRequest();
                 return;
@@ -217,7 +231,7 @@ namespace SignOn {
                 IdentityInfo localInfo =
                     info.impl->m_empty ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_STORE_CREDENTIALS_METHOD,
+                                        SIGNOND_IDENTITY_STORE_CREDENTIALS_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(SignOn::IdentityInfo, localInfo)));
                 return;
                 }
@@ -251,6 +265,9 @@ namespace SignOn {
             TRACE() << "Error occurred.";
             emit m_parent->error(Identity::UnknownError,
                                  QLatin1String("DBUS Communication error occurred."));
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
     }
 
@@ -263,20 +280,23 @@ namespace SignOn {
                store operation.
         */
 
-        if (id() != SSO_NEW_IDENTITY) {
+        if (id() != SIGNOND_NEW_IDENTITY) {
             checkConnection();
 
             switch (m_state) {
                 case NeedsRegistration:
-                    m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_REMOVE_METHOD);
+                    m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_REMOVE_METHOD);
                     sendRegisterRequest();
                     return;
                 case PendingRegistration:
-                    m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_REMOVE_METHOD);
+                    m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_REMOVE_METHOD);
                     return;
                 case Removed:
                     emit m_parent->error(Identity::NotFoundError,
                                          QLatin1String("Already removed from database."));
+                    emit m_parent->error(
+                            Error(Error::IdentityNotFound,
+                                  QLatin1String("Already removed from database.")));
                     return;
                 case NeedsUpdate:
                     break;
@@ -292,10 +312,17 @@ namespace SignOn {
                 TRACE() << "Error occurred.";
                 emit m_parent->error(Identity::UnknownError,
                                      QLatin1String("DBUS Communication error occurred."));
+                emit m_parent->error(
+                        Error(Error::InternalCommunication,
+                              SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
             }
-        } else
+        } else {
             emit m_parent->error(Identity::UnknownError,
                                  QLatin1String("Remove request failed. The identity is not stored"));
+            emit m_parent->error(
+                    Error(Error::Unknown,
+                          QLatin1String("Remove request failed. The identity is not stored")));
+        }
     }
 
     void IdentityImpl::queryInfo()
@@ -305,15 +332,18 @@ namespace SignOn {
 
         switch (m_state) {
             case NeedsRegistration:
-                m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_QUERY_INFO_METHOD);
+                m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_QUERY_INFO_METHOD);
                 sendRegisterRequest();
                 return;
             case PendingRegistration:
-                m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_QUERY_INFO_METHOD);
+                m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_QUERY_INFO_METHOD);
                 return;
             case Removed:
                 emit m_parent->error(Identity::NotFoundError,
                                      QLatin1String("Removed from database."));
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
                 return;
             case NeedsUpdate:
                 m_infoQueried = true;
@@ -335,18 +365,21 @@ namespace SignOn {
         switch (m_state) {
             case NeedsRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_VERIFY_USER_METHOD,
+                                        SIGNOND_IDENTITY_VERIFY_USER_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
                 sendRegisterRequest();
                 return;
             case PendingRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_VERIFY_USER_METHOD,
+                                        SIGNOND_IDENTITY_VERIFY_USER_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
                 return;
             case Removed:
                 emit m_parent->error(Identity::NotFoundError,
                                  QLatin1String("Removed from database."));
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
                 return;
             case NeedsUpdate:
                 break;
@@ -362,6 +395,9 @@ namespace SignOn {
             TRACE() << "Error occurred.";
             emit m_parent->error(Identity::UnknownError,
                                  QLatin1String("DBUS Communication error occurred."));
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
     }
 
@@ -373,18 +409,21 @@ namespace SignOn {
         switch (m_state) {
             case NeedsRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_VERIFY_SECRET_METHOD,
+                                        SIGNOND_IDENTITY_VERIFY_SECRET_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, secret)));
                 sendRegisterRequest();
                 return;
             case PendingRegistration:
                 m_operationQueueHandler.enqueueOperation(
-                                        SSO_IDENTITY_VERIFY_SECRET_METHOD,
+                                        SIGNOND_IDENTITY_VERIFY_SECRET_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, secret)));
                 return;
             case Removed:
                 emit m_parent->error(Identity::NotFoundError,
                                  QLatin1String("Removed from database."));
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
                 return;
             case NeedsUpdate:
                 break;
@@ -400,6 +439,9 @@ namespace SignOn {
             TRACE() << "Error occurred.";
             emit m_parent->error(Identity::UnknownError,
                                  QLatin1String("DBUS Communication error occurred."));
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
     }
 
@@ -412,14 +454,14 @@ namespace SignOn {
            so that other client identity objects having the same id will
            be able to perform the operation.
         */
-        if (id() != SSO_NEW_IDENTITY) {
+        if (id() != SIGNOND_NEW_IDENTITY) {
             switch (m_state) {
                 case NeedsRegistration:
-                    m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_SIGN_OUT_METHOD);
+                    m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_SIGN_OUT_METHOD);
                     sendRegisterRequest();
                     return;
                 case PendingRegistration:
-                    m_operationQueueHandler.enqueueOperation(SSO_IDENTITY_SIGN_OUT_METHOD);
+                    m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_SIGN_OUT_METHOD);
                     return;
                 case Removed:
                     break;
@@ -437,6 +479,9 @@ namespace SignOn {
                 TRACE() << "Error occurred.";
                 emit m_parent->error(Identity::UnknownError,
                                      QLatin1String("DBUS Communication error occurred."));
+                emit m_parent->error(
+                        Error(Error::InternalCommunication,
+                              SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
             } else {
                 m_signOutRequestedByThisIdentity = true;
             }
@@ -456,7 +501,7 @@ namespace SignOn {
                     SLOT(authSessionCancelReply(AuthSession::AuthSessionError)));
 
             session->cancel();
-            QTimer::singleShot(SSO_AUTH_SESSION_CANCEL_TIMEOUT, session, SLOT(deleteLater()));
+            QTimer::singleShot(SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT, session, SLOT(deleteLater()));
         }
     }
 
@@ -466,8 +511,8 @@ namespace SignOn {
 
         bool deleteTheSender = false;
         switch (error) {
+            /* fall trough */
             case AuthSession::CanceledError:
-                /* fall trough */
             case AuthSession::WrongStateError: deleteTheSender = true; break;
             default: break;
         }
@@ -570,126 +615,67 @@ namespace SignOn {
         TRACE() << err.name();
 
         /* Signon specific errors */
-        if (err.name() == SSO_IDENTITY_UNKNOWN_ERR_NAME) {
+        if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
             emit m_parent->error(Identity::UnknownError, err.message());
+            emit m_parent->error(Error(Error::Unknown, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_INTERNAL_SERVER_ERR_NAME) {
+        } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
             emit m_parent->error(Identity::InternalServerError, err.message());
+            emit m_parent->error(Error(Error::InternalServer, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_NOT_FOUND_ERR_NAME) {
+        } else if (err.name() == SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME) {
             emit m_parent->error(Identity::NotFoundError, err.message());
+            emit m_parent->error(Error(Error::IdentityNotFound, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_METHOD_NOT_AVAILABLE_ERR_NAME) {
+        } else if (err.name() == SIGNOND_METHOD_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Identity::MethodNotAvailableError, err.message());
+            emit m_parent->error(Error(Error::MethodNotAvailable, err.message()));
             return;
-        } else if (err.name() == SSO_DAEMON_PERMISSION_DENIED_ERR_NAME) {
-            // todo - this will go away when improved OO error handling will be in place
+        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
             emit m_parent->error(Identity::PermissionDeniedError, err.message());
+            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_PERMISSION_DENIED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
             emit m_parent->error(Identity::PermissionDeniedError, err.message());
+            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_STORE_FAILED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_STORE_FAILED_ERR_NAME) {
             emit m_parent->error(Identity::StoreFailedError, err.message());
+            emit m_parent->error(Error(Error::StoreFailed, err.message()));
             if (m_tmpIdentityInfo) {
                 delete m_tmpIdentityInfo;
                 m_tmpIdentityInfo = NULL;
             }
             return;
-        } else if (err.name() == SSO_IDENTITY_REMOVE_FAILED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_REMOVE_FAILED_ERR_NAME) {
             emit m_parent->error(Identity::RemoveFailedError, err.message());
+            emit m_parent->error(Error(Error::RemoveFailed, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_SIGNOUT_FAILED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_SIGNOUT_FAILED_ERR_NAME) {
             emit m_parent->error(Identity::SignOutFailedError, err.message());
+            emit m_parent->error(Error(Error::SignOutFailed, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_CANCELED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME) {
             emit m_parent->error(Identity::CanceledError, err.message());
+            emit m_parent->error(Error(Error::IdentityOperationCanceled, err.message()));
             return;
-        } else if (err.name() == SSO_IDENTITY_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
+        } else if (err.name() == SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Identity::CredentialsNotAvailableError, err.message());
+            emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
         }
         else
             TRACE() << "Non internal SSO error reply.";
 
         /* Qt DBUS specific errors */
-        switch (err.type()) {
-            case QDBusError::Other:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::Failed:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::NoMemory:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::ServiceUnknown:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::NoReply:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::BadAddress:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::NotSupported:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::LimitsExceeded:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::AccessDenied:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::NoServer:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::Timeout:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::NoNetwork:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::AddressInUse:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::Disconnected:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::InvalidArgs:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::UnknownMethod:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::TimedOut:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::InvalidSignature:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::UnknownInterface:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::InternalError:
-                emit m_parent->error(Identity::UnknownError, err.message());
-                return;
-            case QDBusError::UnknownObject:
-                emit m_parent->error(
-                        Identity::NotFoundError,
-                        SSO_IDENTITY_NOT_FOUND_ERR_STR);
-                return;
-            case QDBusError::NoError:
-                emit m_parent->error(
-                        Identity::UnknownError,
-                        SSO_IDENTITY_UNKNOWN_ERR_STR);
-                return;
-            default:
-                break;
+        if (err.type() != QDBusError::NoError) {
+            emit m_parent->error(Identity::UnknownError, err.message());
+            emit m_parent->error(Error(Error::InternalCommunication, err.message()));
+            return;
         }
 
-        emit m_parent->error(Identity::UnknownError,
-                             QLatin1String("Unhandled error! This should not happen."));
+        emit m_parent->error(Identity::UnknownError, err.message());
+        emit m_parent->error(Error(Error::Unknown, err.message()));
     }
 
     void IdentityImpl::updateContents()
@@ -697,11 +683,13 @@ namespace SignOn {
         bool result = sendRequest("queryInfo", QList<QVariant>(),
                                   SLOT(queryInfoReply(const QList<QVariant> &)));
 
-
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(Identity::UnknownError,
-                                 SSO_IDENTITY_UNKNOWN_ERR_STR);
+                                 SIGNOND_UNKNOWN_ERR_STR);
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
     }
 
@@ -716,10 +704,10 @@ namespace SignOn {
 
     bool IdentityImpl::sendRegisterRequest()
     {
-        QDBusInterface iface(SIGNON_SERVICE,
-                             SIGNON_DAEMON_OBJECTPATH,
-                             SIGNON_DAEMON_INTERFACE,
-                             SIGNON_BUS);
+        QDBusInterface iface(SIGNOND_SERVICE,
+                             SIGNOND_DAEMON_OBJECTPATH,
+                             SIGNOND_DAEMON_INTERFACE,
+                             SIGNOND_BUS);
 
         if (!iface.isValid()) {
             TRACE() << "Signon Daemon not started. Start on demand "
@@ -739,7 +727,7 @@ namespace SignOn {
         QByteArray registerReplyMethodName =
             SLOT(registerReply(const QDBusObjectPath &));
 
-        if (id() != SSO_NEW_IDENTITY) {
+        if (id() != SIGNOND_NEW_IDENTITY) {
             registerMethodName = QLatin1String("registerStoredIdentity");
             args << m_identityInfo->id();
             registerReplyMethodName =
@@ -811,10 +799,10 @@ namespace SignOn {
 
     void IdentityImpl::registerReply(const QDBusObjectPath &objectPath, const QList<QVariant> &infoData)
     {
-        m_DBusInterface = new QDBusInterface(SIGNON_SERVICE,
+        m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              objectPath.path(),
                                              QString(),
-                                             SIGNON_BUS,
+                                             SIGNOND_BUS,
                                              this);
         if (!m_DBusInterface->isValid()) {
             TRACE() << "The interface cannot be registered!!! " << m_DBusInterface->lastError();
@@ -824,11 +812,15 @@ namespace SignOn {
             m_DBusInterface = NULL;
 
             int count = m_operationQueueHandler.queuedOperationsCount();
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i) {
                 emit m_parent->error(Identity::UnknownError,
                                      QLatin1String("Could not establish valid "
                                                    "connection to remote object."));
-
+                emit m_parent->error(
+                        Error(Error::Unknown,
+                              QLatin1String("Could not establish valid "
+                                            "connection to remote object.")));
+            }
             return;
         }
 

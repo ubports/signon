@@ -26,7 +26,7 @@
 #include <QStringList>
 #include <QMetaType>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 
 namespace SignOn {
 

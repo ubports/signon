@@ -31,9 +31,10 @@
 #include <QVariant>
 #include <QPointer>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "authsession.h"
 #include "identityinfo.h"
+#include "signonerror.h"
 
 #define SSO_NEW_IDENTITY 0
 
@@ -60,6 +61,7 @@ namespace SignOn {
          * @enum IdentityError
          * Codes for errors that may be reported by Identity objects
          * @see Identity::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum IdentityError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -227,11 +229,20 @@ namespace SignOn {
          * Emitted when an error occurs while performing an operation.
          * @param code the error code
          * @param message a description string for troubleshooting purposes
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(Identity::IdentityError code, const QString &message);
 
         /*!
-         * Emitted when the list of available methods have been obtained
+         * Emitted when an error occurs while performing an operation.
+         * @see SignOn::Error.
+         *
+         * @param err The error object.
+         */
+        void error(const Error &err);
+
+        /*!
+         * Emitted when the list of available mechanisms has been obtained
          * for identity.
          *
          * @param methods a list of available methods

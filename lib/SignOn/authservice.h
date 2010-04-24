@@ -27,7 +27,9 @@
 #include <QStringList>
 #include <QMap>
 
+#include "libsignoncommon.h"
 #include "identityinfo.h"
+#include "signonerror.h"
 
 namespace SignOn {
 
@@ -51,6 +53,7 @@ namespace SignOn {
          * @enum ServiceError
          * Codes for errors that may be reported by AuthService objects.
          * @see AuthService::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum ServiceError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -181,8 +184,17 @@ namespace SignOn {
          *
          * @param code error code
          * @param message error description
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(const AuthService::ServiceError code, const QString &message);
+
+        /*!
+         * Emitted when an error occurs while using the AuthService connection.
+         * @see SignOn::Error
+         *
+         * @param err The error object
+         */
+        void error(const Error &err);
 
         /*!
          * Emitted when the list of available authentication methods have been obtained

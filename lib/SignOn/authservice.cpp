@@ -22,7 +22,6 @@
  */
 #include "authservice.h"
 #include "authserviceimpl.h"
-#include "libsignoncommon.h"
 
 namespace SignOn {
 
