@@ -26,6 +26,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QEventLoop>
+#include <QDebug>
 
 static int finishedThreads = 0;
 static SsoClientThread* primary = NULL;

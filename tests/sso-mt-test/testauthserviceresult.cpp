@@ -21,8 +21,10 @@
  */
 #include "testauthserviceresult.h"
 
+#include <QDebug>
 
-#define YUPYYYY qDebug() << "Reply from SIGNON DAEMON---------------------------------" << __FUNCTION__;
+
+#define SIGNOND_TEST_REPLY_RECEIVED qDebug() << "Reply from SIGNON DAEMON---------------------------------" << __FUNCTION__;
 
 TestAuthServiceResult::TestAuthServiceResult()
 {
@@ -31,9 +33,9 @@ TestAuthServiceResult::TestAuthServiceResult()
 
 void TestAuthServiceResult::reset()
 {
-    m_responseReceived = Inexistent;
+    m_responseReceived = InexistentResp;
     m_err = AuthService::UnknownError;
-    m_errMsg = "";
+    m_errMsg = QString();
 
     m_identities.clear();
     m_methods.clear();
@@ -44,20 +46,32 @@ void TestAuthServiceResult::reset()
 
 void TestAuthServiceResult::error(AuthService::ServiceError code, const QString& message)
 {
-    YUPYYYY
-    m_responseReceived = Error;
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = ErrorResp;
     m_err = code;
     m_errMsg = message;
 
-    TRACE() << "Error:" << m_err << ", Message:" << m_errMsg;
+    qDebug() << "Error:" << m_err << ", Message:" << m_errMsg;
+
+    emit testCompleted();
+}
+
+void TestAuthServiceResult::error(const Error& error)
+{
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = ErrorResp;
+    m_error = (Error::ErrorType)error.type();
+    m_errMsg = error.message();
+
+    qDebug() << "Error:" << m_error << ", Message:" << m_errMsg;
 
     emit testCompleted();
 }
 
 void TestAuthServiceResult::methodsAvailable(const QStringList &methods)
 {
-    YUPYYYY
-    m_responseReceived = Normal;
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = NormalResp;
     m_methods = methods;
 
     emit testCompleted();
@@ -65,8 +79,8 @@ void TestAuthServiceResult::methodsAvailable(const QStringList &methods)
 
 void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QStringList &mechanisms)
 {
-    YUPYYYY
-    m_responseReceived = Normal;
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = NormalResp;
     m_mechanisms.first = method;
     m_mechanisms.second = mechanisms;
     m_queriedMechsMethod = method;
@@ -76,8 +90,8 @@ void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QSt
 
 void TestAuthServiceResult::identities(const QList<IdentityInfo> &identityList)
 {
-    YUPYYYY
-    m_responseReceived = Normal;
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = NormalResp;
     m_identities = identityList;
 
     emit testCompleted();
@@ -85,8 +99,8 @@ void TestAuthServiceResult::identities(const QList<IdentityInfo> &identityList)
 
 void TestAuthServiceResult::cleared()
 {
-    YUPYYYY
-    m_responseReceived = Normal;
+    SIGNOND_TEST_REPLY_RECEIVED
+    m_responseReceived = NormalResp;
     m_cleared = true;
 
     emit testCompleted();

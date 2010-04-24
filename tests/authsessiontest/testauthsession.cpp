@@ -192,11 +192,6 @@ void TestAuthSession::queryMechanisms_existing_method()
      stateCounter.clear();
      errorCounter.clear();
 
-     TRACE() << "SessionData:" << qMetaTypeId<SignOn::SessionData>();
-     TRACE() << "QVariantMap:" << qMetaTypeId<QVariantMap>();
-     TRACE() << "QVariantList:" << qMetaTypeId<QVariantList>();
-     TRACE() << "QStringList:" << qMetaTypeId<QStringList>();
-
      QCOMPARE(spy.count(), 4);
      QVERIFY(g_processReplyRealmsList.at(0) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(1) == "testRealm_after_test");
@@ -652,7 +647,6 @@ void TestAuthSession::queryMechanisms_existing_method()
 
        QCOMPARE(spy.count(), 0);
        QCOMPARE(errorCounter.count(), 1);
-       TRACE() << errorCounter.at(0).at(1).toString();
    }
 
  #endif

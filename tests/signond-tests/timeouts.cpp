@@ -27,6 +27,8 @@
 #include <QDBusObjectPath>
 #include <QDebug>
 
+#include <SignOn/signoncommon.h>
+
 using namespace SignOn;
 
 /*
@@ -104,13 +106,13 @@ void TimeoutsTest::identityError(Identity::IdentityError code,
 
 bool TimeoutsTest::triggerDisposableCleanup()
 {
-    QDBusConnection conn = SIGNON_BUS;
+    QDBusConnection conn = SIGNOND_BUS;
 
     /* create a new identity just to trigger the cleanup of disposable
      * objects */
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNON_SERVICE,
-                                                      SIGNON_DAEMON_OBJECTPATH,
-                                                      SIGNON_DAEMON_INTERFACE,
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
                                                       "registerNewIdentity");
     QDBusMessage reply = conn.call(msg);
     return (reply.type() == QDBusMessage::ReplyMessage);
@@ -118,10 +120,10 @@ bool TimeoutsTest::triggerDisposableCleanup()
 
 bool TimeoutsTest::identityAlive(const QString &path)
 {
-    QDBusConnection conn = SIGNON_BUS;
+    QDBusConnection conn = SIGNOND_BUS;
 
     QString interface = QLatin1String("com.nokia.singlesignon.SignonIdentity");
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNON_SERVICE,
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       path,
                                                       interface,
                                                       "queryInfo");
@@ -133,11 +135,11 @@ void TimeoutsTest::credentialsStored(const quint32 id)
 {
     QVERIFY(id != 0);
 
-    QDBusConnection conn = SIGNON_BUS;
+    QDBusConnection conn = SIGNOND_BUS;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNON_SERVICE,
-                                                      SIGNON_DAEMON_OBJECTPATH,
-                                                      SIGNON_DAEMON_INTERFACE,
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
                                                       "registerStoredIdentity");
     QList<QVariant> args;
     args << id;
