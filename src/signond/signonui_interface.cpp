@@ -76,5 +76,5 @@ QDBusPendingCall SignonUiAdaptor::callWithArgumentListAndBigTimeout(const QStrin
                                                       interface(),
                                                       method);
     msg.setArguments(args);
-    return connection().asyncCall(msg, SIGNON_MAX_TIMEOUT);
+    return connection().asyncCall(msg, SIGNOND_MAX_TIMEOUT);
 }

@@ -44,7 +44,7 @@ namespace SignonDaemonNS {
     {
         TRACE();
         //stop all operations from the current session
-        QDBusConnection connection(SIGNON_BUS);
+        QDBusConnection connection(SIGNOND_BUS);
         connection.unregisterObject(objectName());
     }
 
@@ -53,7 +53,7 @@ namespace SignonDaemonNS {
         TRACE();
         SignonAuthSession* sas = new SignonAuthSession(id, method);
 
-        QDBusConnection connection(SIGNON_BUS);
+        QDBusConnection connection(SIGNOND_BUS);
         if (!connection.isConnected()) {
             TRACE() << "Cannot get DBUS object connected";
             delete sas;

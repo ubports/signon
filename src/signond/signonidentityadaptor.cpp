@@ -41,15 +41,15 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::securityErrorReply(const char *failedMethodName)
     {
         QString errMsg;
-        QTextStream(&errMsg) << SSO_IDENTITY_PERMISSION_DENIED_ERR_STR
+        QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
                              << "Method:"
                              << failedMethodName;
 
         QDBusMessage errReply =
                     parentDBusContext().message().createErrorReply(
-                                            SSO_IDENTITY_PERMISSION_DENIED_ERR_NAME,
+                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
                                             errMsg);
-        SIGNON_BUS.send(errReply);
+        SIGNOND_BUS.send(errReply);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
@@ -144,7 +144,7 @@ namespace SignonDaemonNS {
                                                     const int type)
     {
         /* Access Control */
-        if (id != SSO_NEW_IDENTITY) {
+        if (id != SIGNOND_NEW_IDENTITY) {
             AccessControlManager::IdentityOwnership ownership =
                     AccessControlManager::isPeerOwnerOfIdentity(
                                                 parentDBusContext(), m_parent->id());

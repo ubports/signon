@@ -29,15 +29,16 @@
 
 #include "credentialsaccessmanager.h"
 
-#ifndef SIGNON_PLUGINS_DIR
-    #define SIGNON_PLUGINS_DIR QLatin1String("/usr/lib/signon")
+#ifndef SIGNOND_PLUGINS_DIR
+    #define SIGNOND_PLUGINS_DIR QLatin1String("/usr/lib/signon")
 #endif
 
-#ifndef SIGNON_PLUGIN_PREFIX
-    #define SIGNON_PLUGIN_PREFIX QLatin1String("lib")
+#ifndef SIGNOND_PLUGIN_PREFIX
+    #define SIGNOND_PLUGIN_PREFIX QLatin1String("lib")
 #endif
-#ifndef SIGNON_PLUGIN_SUFFIX
-    #define SIGNON_PLUGIN_SUFFIX QLatin1String("plugin.so")
+
+#ifndef SIGNOND_PLUGIN_SUFFIX
+    #define SIGNOND_PLUGIN_SUFFIX QLatin1String("plugin.so")
 #endif
 
 namespace SignonDaemonNS {

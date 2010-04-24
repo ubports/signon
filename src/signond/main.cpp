@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     //TODO Rewrite signal handlers
     installSigHandlers();
 
-    SIGNON_INITIALIZE_TRACE(SIGNON_TRACE_FILE, SIGNON_TRACE_FILE_MAX_SIZE)
+    SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
 
     SignonDaemon* daemon = new SignonDaemon(&app);
 

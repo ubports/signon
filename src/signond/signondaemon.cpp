@@ -60,7 +60,7 @@ namespace SignonDaemonNS {
     bool SignonDaemon::init()
     {
         /* DBus Service init */
-        QDBusConnection connection = SIGNON_BUS;
+        QDBusConnection connection = SIGNOND_BUS;
 
         if (!connection.isConnected()) {
             QDBusError err = connection.lastError();
@@ -78,12 +78,12 @@ namespace SignonDaemonNS {
         (void)new SignonDaemonAdaptor(this);
         registerOptions = QDBusConnection::ExportAdaptors;
 
-        if (!connection.registerObject(SIGNON_DAEMON_OBJECTPATH, this, registerOptions)) {
+        if (!connection.registerObject(SIGNOND_DAEMON_OBJECTPATH, this, registerOptions)) {
             TRACE() << "Object cannot be registered";
             return false;
         }
 
-        if (!connection.registerService(SIGNON_SERVICE)) {
+        if (!connection.registerService(SIGNOND_SERVICE)) {
             QDBusError err = connection.lastError();
             TRACE() << "Service cannot be registered: " << err.errorString(err.type());
             return false;
@@ -172,14 +172,14 @@ namespace SignonDaemonNS {
 
         TRACE() << "Registering new identity:";
 
-        SignonIdentity *identity = SignonIdentity::createIdentity(SSO_NEW_IDENTITY, this);
+        SignonIdentity *identity = SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
         if (identity == NULL)
         {
             QDBusMessage errReply = message().createErrorReply(
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_NAME,
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
-            SIGNON_BUS.send(errReply);
+                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
+            SIGNOND_BUS.send(errReply);
             return;
         }
 
@@ -204,9 +204,9 @@ namespace SignonDaemonNS {
         if (identity == NULL)
         {
             QDBusMessage errReply = message().createErrorReply(
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_NAME,
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
-            SIGNON_BUS.send(errReply);
+                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
+            SIGNOND_BUS.send(errReply);
             return;
         }
 
@@ -216,9 +216,9 @@ namespace SignonDaemonNS {
         if (info.m_id == 0)
         {
             QDBusMessage errReply = message().createErrorReply(
-                                                            SSO_IDENTITY_NOT_FOUND_ERR_NAME,
-                                                            SSO_IDENTITY_NOT_FOUND_ERR_STR);
-            SIGNON_BUS.send(errReply);
+                                                            SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                                                            SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            SIGNOND_BUS.send(errReply);
             objectPath = QDBusObjectPath();
             return;
         }
@@ -236,7 +236,7 @@ namespace SignonDaemonNS {
     {
         RequestCounter::instance()->addServiceResquest();
 
-        QDir pluginsDir(SIGNON_PLUGINS_DIR);
+        QDir pluginsDir(SIGNOND_PLUGINS_DIR);
          //TODO: in the future remove the sym links comment
          QStringList fileNames = pluginsDir.entryList(
                  QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
@@ -272,10 +272,10 @@ namespace SignonDaemonNS {
         {
             TRACE() << "Could not load plugin of type: " << method;
             QDBusMessage errReply = message().createErrorReply(
-                    SSO_DAEMON_METHOD_NOT_KNOWN_ERR_NAME,
-                    QString(SSO_DAEMON_METHOD_NOT_KNOWN_ERR_STR
+                    SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                    QString(SIGNOND_METHOD_NOT_KNOWN_ERR_STR
                             + QLatin1String("Method %1 is not known or could not load specific configuration.")).arg(method));
-            SIGNON_BUS.send(errReply);
+            SIGNOND_BUS.send(errReply);
             return QStringList();
         }
 
@@ -311,9 +311,9 @@ namespace SignonDaemonNS {
         if (db->errorOccurred())
         {
             QDBusMessage errReply = message().createErrorReply(
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_NAME,
-                    SSO_DAEMON_INTERNAL_SERVER_ERR_STR + QLatin1String("Querying database error occurred."));
-            SIGNON_BUS.send(errReply);
+                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Querying database error occurred."));
+            SIGNOND_BUS.send(errReply);
             return QList<QVariant>();
         }
 
@@ -333,10 +333,10 @@ namespace SignonDaemonNS {
         if (!db->clear())
         {
             QDBusMessage errReply = message().createErrorReply(
-                                                    SSO_DAEMON_INTERNAL_SERVER_ERR_NAME,
-                                                    QString(SSO_DAEMON_INTERNAL_SERVER_ERR_STR
+                                                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                                                    QString(SIGNOND_INTERNAL_SERVER_ERR_STR
                                                             + QLatin1String("Database error occurred.")));
-            SIGNON_BUS.send(errReply);
+            SIGNOND_BUS.send(errReply);
             return false;
         }
         return true;
@@ -380,7 +380,7 @@ namespace SignonDaemonNS {
 
     void SignonDaemon::listDBusInterfaces()
     {
-        QDBusReply<QStringList> reply = SIGNON_BUS.interface()->registeredServiceNames();
+        QDBusReply<QStringList> reply = SIGNOND_BUS.interface()->registeredServiceNames();
         QStringList list = reply.value();
 
         QString servicesList = QLatin1String("DBUS registered services: \n");
