@@ -29,6 +29,7 @@
 #include <QVariantMap>
 #include <SignOn/sessiondata.h>
 #include <SignOn/uisessiondata.h>
+#include <SignOn/signonerror.h>
 
 QT_BEGIN_NAMESPACE
 class QString;
@@ -39,6 +40,8 @@ QT_END_NAMESPACE
 
 /*!
  * Codes for errors that may be reported by authentication plugins.
+ * @deprecated this enum is deprecated.
+ * @see SignOn::Error::ErrorType
  */
 enum AuthPluginError {
     PLUGIN_ERROR_NONE = 0,                  /**< No errors. */
@@ -156,11 +159,6 @@ public:
 
 Q_SIGNALS:
     /*!
-      * @deprecated
-      */
-    void result(const SignOn::SessionData &data, AuthPluginError error);
-
-    /*!
      * Emitted when authentication process has been completed for given data
      * and there are no errors.
      *
@@ -174,8 +172,22 @@ Q_SIGNALS:
      *
      * @param error resulting error code.
      * @param errorMessage resulting error message.
+     * @deprecated This is deprecated, use error(const Error &err) instead.
+     * @see SignOn::Error
+     * @warning Do no use both this deprecated and the error(const Error &err) signal.
+     *          After switching to error(const Error &err), remove this deprecated
+     *          signal emition.
      */
     void error(const AuthPluginError error, const QString &errorMessage = QString());
+
+    /*!
+     * Emitted when authentication process has been completed for given data
+     * and resulting an error.
+     *
+     * @param err The error object.
+     * @param errorMessage resulting error message.
+     */
+    void error(const SignOn::Error &err);
 
     /*!
      * Emitted when authentication process need to interact with user.

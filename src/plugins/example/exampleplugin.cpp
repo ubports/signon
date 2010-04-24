@@ -22,7 +22,7 @@
 
 #include "exampleplugin.h"
 #include "exampledata.h"
-#include "SignOn/signoncommon.h"
+#include "SignOn/signonplugincommon.h"
 
 namespace ExamplePluginNS {
 

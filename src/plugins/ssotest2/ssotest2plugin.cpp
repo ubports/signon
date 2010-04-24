@@ -27,7 +27,7 @@
 #include "ssotest2plugin.h"
 #include "ssotest2data.h"
 
-#include "SignOn/signoncommon.h"
+#include "SignOn/signonplugincommon.h"
 #include "SignOn/uisessiondata.h"
 #include "SignOn/uisessiondata_priv.h"
 

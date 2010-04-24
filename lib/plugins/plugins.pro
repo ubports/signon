@@ -12,7 +12,7 @@ HEADERS = \
 headers.files = \
     SignOn/AuthPluginInterface \
     SignOn/authpluginif.h \
-    SignOn/signonplugin.h \
+    SignOn/signonplugincommon.h \
     SignOn/UiSessionData \
     SignOn/uisessiondata.h \
     SignOn/uisessiondata_priv.h
