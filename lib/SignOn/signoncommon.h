@@ -22,223 +22,181 @@
 #ifndef SIGNONCOMMON_H_
 #define SIGNONCOMMON_H_
 
-#ifdef TRACE
-    #undef TRACE
-#endif
 
-#include <QDebug>
+#ifdef __cplusplus
+    #include <QLatin1String>
+    #include <QDBusConnection>
 
-#define SIGNON_TRACE_FILE QLatin1String("signon_trace_file")
-#define SIGNON_TRACE_FILE_MAX_SIZE 256000 // 250 * 1024 bytes
-
-//#ifdef SIGNON_TRACE
-//    #undef SIGNON_TRACE
-//#endif
-
-#ifndef SIGNON_TRACE
-    #define SIGNON_TRACE
-#endif
-
-
-#ifdef SIGNON_TRACE
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define SIGNOND_STRING(s) QLatin1String(s)
+    #define SIGNOND_BUS       QDBusConnection::sessionBus()
 #else
-    #define TRACE() if(1) ; else qDebug()
-    #define BLAME() if(1) ; else qDebug()
+    #define SIGNOND_STRING(s) s
+    #define SIGNOND_BUS //TODO
 #endif
 
-#if __GNUC__ >= 4
-    #define SIGNON_EXPORT __attribute__ ((visibility("default")))
-#endif
 
-#ifndef SIGNON_EXPORT
-    #define SIGNON_EXPORT
-#endif
+#define SIGNOND_NEW_IDENTITY 0
 
-#define SSO_KEY_TOKEN            "sso_token"
-#define SSO_KEY_OPERATION        "sso_operation_code"
-#define SSO_KEY_USERNAME         "username"
-#define SSO_KEY_PASSWORD         "password"
-#define SSO_KEY_CHALLENGE        "challenge"
-#define SSO_KEY_STORECREDENTIALS "storeCredentials"
-
-#define SIGNON_UI_SERVICE           QLatin1String("com.nokia.singlesignonui")
-#define SIGNON_UI_DAEMON_OBJECTPATH QLatin1String("/SignonUi")
-
-#define SIGNON_SERVICE            QLatin1String("com.nokia.singlesignon")
-#define SIGNON_DAEMON_OBJECTPATH  QLatin1String("/SignonDaemon")
-#define SIGNON_DAEMON_INTERFACE   QLatin1String("com.nokia.singlesignon.SignonDaemon")
-#define SIGNON_BUS                QDBusConnection::sessionBus()
-#define SSO_ERR_PREFIX QString(SIGNON_SERVICE) + QLatin1String(".Error.")
-
-#define SSO_NEW_IDENTITY 0
-
-#define SIGNON_MAX_TIMEOUT 0x7FFFFFFF
+#define SIGNOND_MAX_TIMEOUT 0x7FFFFFFF
 
 /*
  * todo: the naming convention for interfaces should be clarified
  * */
 
 /*
- * SignonDaemon
+ * Common DBUS definitions
  * */
+#define SIGNOND_SERVICE_PREFIX     "com.nokia.singlesignon"
+#define SIGNOND_SERVICE            SIGNOND_STRING(SIGNOND_SERVICE_PREFIX)
 
-#define SSO_DAEMON_INTERNAL_SERVER_ERR_STR   QLatin1String("Internal server error occurred.")
-#define SSO_DAEMON_INTERNAL_SERVER_ERR_NAME  QString(SSO_ERR_PREFIX + QLatin1String("InternalServer"))
+#define SIGNOND_DAEMON_OBJECTPATH       SIGNOND_STRING("/SignonDaemon")
+#define SIGNOND_DAEMON_INTERFACE        SIGNOND_STRING(SIGNOND_SERVICE_PREFIX ".SignonDaemon")
+#define SIGNOND_IDENTITY_INTERFACE      SIGNOND_STRING(SIGNOND_SERVICE_PREFIX ".SignonIdentity")
+#define SIGNOND_AUTH_SESSION_INTERFACE  SIGNOND_STRING(SIGNOND_SERVICE_PREFIX ".SignonAuthSession")
 
-#define SSO_DAEMON_METHOD_NOT_KNOWN_ERR_STR   QLatin1String("Authentication method is not known.")
-#define SSO_DAEMON_METHOD_NOT_KNOWN_ERR_NAME  QString(SSO_ERR_PREFIX + QLatin1String("MethodNotKnown"))
-
-#define SSO_DAEMON_INVALID_QUERY_ERR_STR   QLatin1String("Query parameters are invalid.")
-#define SSO_DAEMON_INVALID_QUERY_ERR_NAME  QString(SSO_ERR_PREFIX + QLatin1String("InvalidQuery"))
-
-#define SSO_DAEMON_PERMISSION_DENIED_ERR_STR   QLatin1String("Client has insuficient permissions to access the service.")
-#define SSO_DAEMON_PERMISSION_DENIED_ERR_NAME  QString(SSO_ERR_PREFIX + QLatin1String("PermissionDenied"))
-
-#define SSO_DAEMON_UNKNOWN_ERR_STR   QLatin1String("Unknown error.")
-#define SSO_DAEMON_UNKNOWN_ERR_NAME  QString(SSO_ERR_PREFIX + QLatin1String("Unknown"))
+#define SIGNOND_ERR_PREFIX SIGNOND_SERVICE_PREFIX ".Error."
 
 /*
- * SignonIdentity
+ * Common server/client sides error names and messages
  * */
+#define SIGNOND_UNKNOWN_ERR_STR SIGNOND_STRING("Unknown error.")
+#define SIGNOND_UNKNOWN_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "Unknown")
 
-#define SSO_IDENTITY_UNKNOWN_ERR_STR  QLatin1String("Unknown error.")
-#define SSO_IDENTITY_UNKNOWN_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("Unknown"))
+#define SIGNOND_INTERNAL_SERVER_ERR_STR SIGNOND_STRING("Server internal error occurred.")
+#define SIGNOND_INTERNAL_SERVER_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "InternalServer")
 
-#define SSO_IDENTITY_INTERNAL_SERVER_ERR_STR  QLatin1String("Internal server error.")
-#define SSO_IDENTITY_INTERNAL_SERVER_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("InternalServer"))
+#define SIGNOND_INTERNAL_COMMUNICATION_ERR_STR SIGNOND_STRING("Communication with the Signon service failed..")
+#define SIGNOND_INTERNAL_COMMUNICATION_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "InternalCommunication")
 
-#define SSO_IDENTITY_NOT_FOUND_ERR_STR QLatin1String("Identity not found.")
-#define SSO_IDENTITY_NOT_FOUND_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("NotFound"))
+#define SIGNOND_PERMISSION_DENIED_ERR_STR SIGNOND_STRING("Client has insuficient permissions to access the service.")
+#define SIGNOND_PERMISSION_DENIED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "PermissionDenied")
 
-#define SSO_IDENTITY_METHOD_NOT_AVAILABLE_ERR_STR  QLatin1String("Authentication method not available.")
-#define SSO_IDENTITY_METHOD_NOT_AVAILABLE_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("MethodNotAvailable"))
+#define SIGNOND_METHOD_NOT_KNOWN_ERR_STR SIGNOND_STRING("Authentication method is not known.")
+#define SIGNOND_METHOD_NOT_KNOWN_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "MethodNotKnown")
 
-#define SSO_IDENTITY_PERMISSION_DENIED_ERR_STR  QLatin1String("Client has insuficient permissions to access this identity.")
-#define SSO_IDENTITY_PERMISSION_DENIED_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("PermissionDenied"))
+#define SIGNOND_SERVICE_NOT_AVAILABLE_ERR_STR SIGNOND_STRING("Signon service is currently not available.")
+#define SIGNOND_SERVICE_NOT_AVAILABLE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "ServiceNotAvailable")
 
-#define SSO_IDENTITY_STORE_FAILED_ERR_STR  QLatin1String("Storing of identity data failed")
-#define SSO_IDENTITY_STORE_FAILED_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("StoreFailed"))
+#define SIGNOND_INVALID_QUERY_ERR_STR SIGNOND_STRING("Query parameters are invalid.")
+#define SIGNOND_INVALID_QUERY_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "InvalidQuery")
 
-#define SSO_IDENTITY_REMOVE_FAILED_ERR_STR  QLatin1String("Removing identity failed.")
-#define SSO_IDENTITY_REMOVE_FAILED_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("RemoveFailed"))
+#define SIGNOND_METHOD_NOT_AVAILABLE_ERR_STR SIGNOND_STRING("Authentication method is not available.")
+#define SIGNOND_METHOD_NOT_AVAILABLE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "MethodNotAvailable")
 
-#define SSO_IDENTITY_SIGNOUT_FAILED_ERR_STR  QLatin1String("Signing out failed.")
-#define SSO_IDENTITY_SIGNOUT_FAILED_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("SignOutFailed"))
+#define SIGNOND_IDENTITY_NOT_FOUND_ERR_STR SIGNOND_STRING("The identity was not found on the server.")
+#define SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "IdentityNotFound")
 
-#define SSO_IDENTITY_CANCELED_ERR_STR  QLatin1String("Operation canceled by user.")
-#define SSO_IDENTITY_CANCELED_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("Canceled"))
+#define SIGNOND_STORE_FAILED_ERR_STR SIGNOND_STRING("Storing of the identity data failed.")
+#define SIGNOND_STORE_FAILED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "StoreFailed")
 
-#define SSO_IDENTITY_CREDENTIALS_NOT_AVAILABLE_ERR_STR  QLatin1String("Query failed.")
-#define SSO_IDENTITY_CREDENTIALS_NOT_AVAILABLE_ERR_NAME QString(SSO_ERR_PREFIX + QLatin1String("CredentialsNotAvailable"))
+#define SIGNOND_REMOVE_FAILED_ERR_STR SIGNOND_STRING("Removing identity data failed.")
+#define SIGNOND_REMOVE_FAILED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "RemoveFailed")
 
-/*
- * SignonDaemon communication client side detectable errors
- * */
+#define SIGNOND_SIGNOUT_FAILED_ERR_STR SIGNOND_STRING("Signing out failed.")
+#define SIGNOND_SIGNOUT_FAILED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "SignOutFailed")
 
-#define SSO_DAEMON_NOT_AVAILABLE_ERR_STR           QLatin1String("The Signon service is not available.")
-#define SSO_DAEMON_INTERNAL_COMMUNICATION_ERR_STR  QLatin1String("Communication with the Signon service failed.")
+#define SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR SIGNOND_STRING("Operation canceled by user.")
+#define SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "IdentityOperationCanceled")
+
+#define SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR SIGNOND_STRING("Query returned no results.")
+#define SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "CredentialsNotAvailable")
+
+#define SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR SIGNOND_STRING("Requested mechanism is not available.")
+#define SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "MechanismNotAvailable")
+
+#define SIGNOND_MISSING_DATA_ERR_STR SIGNOND_STRING("The SessionData object does not contain all necessary information.")
+#define SIGNOND_MISSING_DATA_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "MissingData")
+
+#define SIGNOND_INVALID_CREDENTIALS_ERR_STR SIGNOND_STRING("The supplied credentials are invalid for the mechanism implementation.")
+#define SIGNOND_INVALID_CREDENTIALS_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "InvalidCredentials")
+
+#define SIGNOND_WRONG_STATE_ERR_STR SIGNOND_STRING("Operation method has been called in a wrong state.")
+#define SIGNOND_WRONG_STATE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "WrongState")
+
+#define SIGNOND_OPERATION_NOT_SUPPORTED_ERR_STR SIGNOND_STRING("The operation is not supported by the mechanism implementation.")
+#define SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "OperationNotSupported")
+
+#define SIGNOND_NO_CONNECTION_ERR_STR SIGNOND_STRING("No network connection.")
+#define SIGNOND_NO_CONNECTION_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "NoConnection")
+
+#define SIGNOND_NETWORK_ERR_STR SIGNOND_STRING("Network connetion failed.")
+#define SIGNOND_NETWORK_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "Network")
+
+#define SIGNOND_SSL_ERR_STR SIGNOND_STRING("Ssl connection failed.")
+#define SIGNOND_SSL_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "Ssl")
+
+#define SIGNOND_RUNTIME_ERR_STR SIGNOND_STRING("Casting SessionData into subclass failed.")
+#define SIGNOND_RUNTIME_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "Runtime")
+
+#define SIGNOND_SESSION_CANCELED_ERR_STR SIGNOND_STRING("Session processing was canceled.")
+#define SIGNOND_SESSION_CANCELED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "SessionCanceled")
+
+#define SIGNOND_TIMED_OUT_ERR_STR SIGNOND_STRING("Session processing timed out.")
+#define SIGNOND_TIMED_OUT_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "TimedOut")
+
+#define SIGNOND_USER_INTERACTION_ERR_STR SIGNOND_STRING("User interaction dialog failed.")
+#define SIGNOND_USER_INTERACTION_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "UserInteraction")
+
+#define SIGNOND_OPERATION_FAILED_ERR_STR SIGNOND_STRING("Temporary failure in authentication.")
+#define SIGNOND_OPERATION_FAILED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "OperationFailed")
+
+#define SIGNOND_USER_ERROR_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "User")
 
 
-/*
- * !!! Deprecaded - TODO remove
- * */
-#define notFoundErrorStr                QLatin1String("The identity matching this Identity object was not found on the service")
-#define mechanismNotAvailableErrorStr   QLatin1String("The requested mechanism is not available")
-#define wrongStateErrorStr              QLatin1String("An operation method has been called in a wrong state")
-#define permissionDeniedErrorStr        QLatin1String("The operation cannot be performed due to insufficient client permissions")
-#define operationNotSupportedErrorStr   QLatin1String("The operation is not supported by the mechanism implementation")
-#define invalidChallengeErrorStr        QLatin1String("The challenge token is invalid for the mechanism implementation")
-#define invalidCredentialsErrorStr      QLatin1String("The supplied credentials are invalid for the mechanism implementation")
+#ifdef __cplusplus
+    namespace SignOn {
+        /*!
+         * @enum AuthSessionState
+         * Codes for the states of the AuthSession.
+         * @remarks This is not a part of the public AuthSession and should be kept as an internal enum.
+         *          This is not the same as AuthSession::AuthSessionState, it could even go with a different name.
+         * @todo The order of the states must be synchronized with AuthPluginState enum
+         */
+        enum AuthSessionState {
+            SessionNotStarted  = 0,         /**< No message. */
+            HostResolving,                  /**< Resolving remote server host name. */
+            ServerConnecting,               /**< Connecting to remote server. */
+            DataSending,                    /**< Sending data to remote server. */
+            ReplyWaiting,                   /**< Waiting reply from remote server. */
+            UserPending,                    /**< Waiting response from user. */
+            UiRefreshing,                   /**< Refreshing ui request. */
+            ProcessPending,                 /**< Waiting another process to start. */
+            SessionStarted,                 /**< Authentication session is started. */
+            ProcessCanceling,               /**< Canceling.current process: */
+            ProcessDone,                    /**< Authentication completed. > */
+            CustomState,                    /**< Custom message. */
+            MaxState
+        };
 
-
-/*
- * SignonAuthSession
- * */
-#define SSO_SESSION_ERR_PREFIX QString(SIGNON_SERVICE) + QLatin1String(".AuthSessionError.")
-
-#define unknownErrorMsg                 QLatin1String("Catch-all for errors not distinguished by another code")
-#define unknownErrorName                QLatin1String("com.nokia.singlesignon.AuthSessionError.UnknownError")
-
-#define mechanismNotAvailableErrorMsg   QLatin1String("The requested mechanism is not available")
-#define mechanismNotAvailableErrorName  QLatin1String("com.nokia.singlesignon.AuthSessionError.MechanismNotAvailableError")
-
-#define wrongStateErrorMsg              QLatin1String("An operation method has been called in a wrong state")
-#define wrongStateErrorName             QLatin1String("com.nokia.singlesignon.AuthSessionError.WrongStateError")
-
-#define permissionDeniedErrorMsg        QLatin1String("The operation cannot be performed due to insufficient client permissions")
-#define permissionDeniedErrorName       QLatin1String("com.nokia.singlesignon.AuthSessionError.PermissionDeniedError")
-
-#define operationNotSupportedErrorMsg   QLatin1String("The operation is not supported by the mechanism implementation")
-#define operationNotSupportedErrorName  QLatin1String("com.nokia.singlesignon.AuthSessionError.OperationNotSupportedError")
-
-#define noConnectionErrorMsg            QLatin1String("Network operation failed, no connection")
-#define noConnectionErrorName           QLatin1String("com.nokia.singlesignon.AuthSessionError.noConnectionErrorName")
-
-#define networkErrorMsg  QLatin1String("Network connetion failed")
-#define networkErrorName QString(SSO_SESSION_ERR_PREFIX + QLatin1String("NetworkError"))
-
-#define sslErrorMsg  QLatin1String("Ssl connetion failed")
-#define sslErrorName QString(SSO_SESSION_ERR_PREFIX + QLatin1String("SslError"))
-
-#define invalidCredentialsErrorMsg      QLatin1String("The supplied credentials are invalid for the mechanism implementation")
-#define invalidCredentialsErrorName     QLatin1String("com.nokia.singlesignon.AuthSessionError.InvalidCredentialsError")
-
-#define canceledErrorMsg               QLatin1String("Challenge was canceled")
-#define canceledErrorName              QLatin1String("com.nokia.singlesignon.AuthSessionError.CanceledError")
-
-#define userInteractionErrorMsg               QLatin1String("Problems in user interaction dialog")
-#define userInteractionErrorName              QLatin1String("com.nokia.singlesignon.AuthSessionError.UserInteractionError")
-
-#define timedOutErrorMsg                QLatin1String("Challenge was timed out")
-#define timedOutErrorName               QLatin1String("com.nokia.singlesignon.AuthSessionError.TimedOutError")
-
-#define missingDataErrorMsg             QLatin1String("The SessionData object does not contain necessary information")
-#define missingDataErrorName            QLatin1String("com.nokia.singlesignon.AuthSessionError.MissingDataError")
-
-#define runtimeErrorMsg                 QLatin1String("Runtime problems during authentication")
-#define runtimeErrorName                QLatin1String("com.nokia.singlesignon.AuthSessionError.RuntimeError")
-
-/*!
-  * @namespace Single Sign-On namespace for client side objects.
-  * @brief Namespace for client side objects.
-  *
-  */
-namespace SignOn {
-
-    /*
-     * Flag values used to inform identity clients about the server side identity state
-     * */
-    enum IdentityState {
-        IdentityDataUpdated = 0,
-        IdentityRemoved,
-        IdentitySignedOut
+        /*
+         * Flag values used to inform identity clients about the server side identity state
+         * TODO - the DBUS signal using this will be replaced by 3 specific signals, thus
+         *        this will be removed.
+         * */
+        enum IdentityState {
+            IdentityDataUpdated = 0,
+            IdentityRemoved,
+            IdentitySignedOut
+        };
+    }// namespace SignOn
+#else
+    enum SignonAuthSessionState {
+        SIGNON_AUTH_SESSION_STATE_NOT_STARTED = 0,   /**< No message. */
+        SIGNON_AUTH_SESSION_STATE_RESOLVING_HOST,    /**< Resolving remote server host name. */
+        SIGNON_AUTH_SESSION_STATE_CONNECTING,        /**< Connecting to remote server. */
+        SIGNON_AUTH_SESSION_STATE_SENDING_DATA,      /**< Sending data to remote server. */
+        SIGNON_AUTH_SESSION_STATE_WAITING_REPLY,     /**< Waiting reply from remote server. */
+        SIGNON_AUTH_SESSION_STATE_USER_PENDING,      /**< Waiting response from user. */
+        SIGNON_AUTH_SESSION_STATE_UI_REFRESHING,     /**< Refreshing ui request. */
+        SIGNON_AUTH_SESSION_STATE_PROCESS_PENDING,   /**< Waiting another process to start. */
+        SIGNON_AUTH_SESSION_STATE_STARTED,           /**< Authentication session is started. */
+        SIGNON_AUTH_SESSION_STATE_PROCESS_CANCELING, /**< Canceling.current process: */
+        SIGNON_AUTH_SESSION_STATE_PROCESS_DONE,      /**< Authentication completed. > */
+        SIGNON_AUTH_SESSION_STATE_CUSTOM,            /**< Custom message. */
+        SIGNON_AUTH_SESSION_STATE_LAST
     };
 
-    /*!
-     * @enum AuthSessionState
-     * Codes for the states of the AuthSession.
-     * @remarks This is not a part of the public AuthSession and should be kept as an internal enum.
-     *          This is not the same as AuthSession::AuthSessionState, it could even go with a different name.
-     * @todo The order of the states must be synchronized with AuthPluginState enum
-     */
-    enum AuthSessionState {
-        SessionNotStarted  = 0,         /**< No message. */
-        HostResolving,                  /**< Resolving remote server host name. */
-        ServerConnecting,               /**< Connecting to remote server. */
-        DataSending,                    /**< Sending data to remote server. */
-        ReplyWaiting,                   /**< Waiting reply from remote server. */
-        UserPending,                    /**< Waiting response from user. */
-        UiRefreshing,                   /**< Refreshing ui request. */
-        ProcessPending,                 /**< Waiting another process to start. */
-        SessionStarted,                 /**< Authentication session is started. */
-        ProcessCanceling,               /**< Canceling.current process: */
-        ProcessDone,                    /** < Authentication completed. > */
-        CustomState,                    /**< Custom message. */
-        MaxState
-    };
+#endif //__cplusplus
 
-} //namespace SignOn
 
 #endif /* SIGNONCOMMON_H_ */
