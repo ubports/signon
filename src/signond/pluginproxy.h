@@ -27,12 +27,6 @@
 #include <QDBusMessage>
 #include <QtCore>
 
-//#include "signond-common.h"
-//#include "SignOn/authpluginif.h"
-//#include "SignOn/signonplugincommon.h"
-//#include "SignOn/sessiondata.h"
-
-
 namespace SignonDaemonNS {
 
     /*!
