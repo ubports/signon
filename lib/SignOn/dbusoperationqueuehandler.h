@@ -27,7 +27,6 @@
 #include <QQueue>
 #include <QDBusInterface>
 
-#include "signoncommon.h"
 
 #define SIGNOND_NORMALIZE_METHOD_SIGNATURE(method) \
     DBusOperationQueueHandler::normalizedOperationSignature(method).data()

@@ -29,7 +29,7 @@
 /*
  * TODO: remove invocation of plugin operations into the main signond process
  * */
-//#include "SignOn/authpluginif.h"
+
 #include "pluginproxy.h"
 
 #include "signond-common.h"

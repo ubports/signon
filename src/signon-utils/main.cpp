@@ -37,7 +37,7 @@
 #include <QtCore/QStringList>
 #include <QtDBus/QtDBus>
 
-#include "SignOn/signoncommon.h"
+#include <signond/signoncommon.h>
 
 bool setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
 {

@@ -23,7 +23,7 @@
 #ifndef SIGNOND_COMMON_H_
 #define SIGNOND_COMMON_H_
 
-#include <SignOn/signoncommon.h>
+#include <signond/signoncommon.h>
 
 #ifdef TRACE
     #undef TRACE

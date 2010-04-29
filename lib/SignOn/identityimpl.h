@@ -34,7 +34,6 @@
 #include <QQueue>
 #include <QDBusObjectPath>
 
-#include "signoncommon.h"
 #include "libsignoncommon.h"
 #include "identity.h"
 #include "dbusoperationqueuehandler.h"

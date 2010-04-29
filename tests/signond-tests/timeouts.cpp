@@ -27,7 +27,7 @@
 #include <QDBusObjectPath>
 #include <QDebug>
 
-#include <SignOn/signoncommon.h>
+#include <signond/signoncommon.h>
 
 using namespace SignOn;
 

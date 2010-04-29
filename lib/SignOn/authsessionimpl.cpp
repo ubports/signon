@@ -23,9 +23,11 @@
 
 #include <QUuid>
 
+#include <signond/signoncommon.h>
+
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
-#include "signoncommon.h"
+
 
 #define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
     QLatin1String("Cannot create remote AuthSession object: " \

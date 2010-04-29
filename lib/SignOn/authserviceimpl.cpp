@@ -24,8 +24,9 @@
 #include <QDBusConnectionInterface>
 #include <QTimer>
 
+#include <signond/signoncommon.h>
+
 #include "libsignoncommon.h"
-#include "signoncommon.h"
 #include "identityinfo.h"
 #include "authserviceimpl.h"
 #include "authservice.h"
