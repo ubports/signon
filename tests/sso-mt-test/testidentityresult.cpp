@@ -20,6 +20,8 @@
  * 02110-1301 USA
  */
 
+#include <QDebug>
+
 #include "testidentityresult.h"
 
 
@@ -32,7 +34,7 @@ TestIdentityResult::TestIdentityResult()
 
 void TestIdentityResult::reset()
 {
-    m_responseReceived = Inexistent;
+    m_responseReceived = InexistentResp;
     m_err = Identity::UnknownError;
     m_errMsg = "";
 
@@ -49,41 +51,41 @@ bool TestIdentityResult::compareIdentityInfos(
         const IdentityInfo &info1,
         const IdentityInfo &info2, bool checkId, bool checlACL)
 {
-    TRACE() << QString("\nComparing identities %1 & %2.\n").arg(info1.id()).arg(info2.id());
+    qDebug() << QString("\nComparing identities %1 & %2.\n").arg(info1.id()).arg(info2.id());
 
     if(checkId && (info1.id() != info2.id()))
     {
-        TRACE() << "IDs:" << info1.id() << " " << info2.id();
+        qDebug() << "IDs:" << info1.id() << " " << info2.id();
         return false;
     }
 
     if(info1.caption() != info2.caption())
     {
-        TRACE() << "Captions:" << info1.caption() << " " << info2.caption();
+        qDebug() << "Captions:" << info1.caption() << " " << info2.caption();
         return false;
     }
 
     if(info1.methods() != info2.methods())
     {
-        TRACE() << "Methods:" << info1.methods() << " " << info2.methods();
+        qDebug() << "Methods:" << info1.methods() << " " << info2.methods();
         return false;
     }
 
     if(info1.realms() != info2.realms())
     {
-        TRACE() << "Realms:" << info1.realms() << " " << info2.realms();
+        qDebug() << "Realms:" << info1.realms() << " " << info2.realms();
         return false;
     }
 
     if(checlACL && (info1.accessControlList() != info2.accessControlList()))
     {
-        TRACE() << "ACLs:" << info1.accessControlList() << " " << info2.accessControlList();
+        qDebug() << "ACLs:" << info1.accessControlList() << " " << info2.accessControlList();
         return false;
     }
 
     if(info1.userName() != info2.userName())
     {
-        TRACE() << "Usernames:" << info1.userName() << " " << info2.userName();
+        qDebug() << "Usernames:" << info1.userName() << " " << info2.userName();
         return false;
     }
 
@@ -91,7 +93,7 @@ bool TestIdentityResult::compareIdentityInfos(
         if(info1.mechanisms(method) != info2.mechanisms(method))
         {
 
-            TRACE() << QString("Mechanisms for method %1:").arg(method)
+            qDebug() << QString("Mechanisms for method %1:").arg(method)
                     << info1.mechanisms(method) << " " << info2.mechanisms(method);
             return false;
         }
@@ -103,7 +105,7 @@ bool TestIdentityResult::compareIdentityInfos(
 void TestIdentityResult::error(Identity::IdentityError code, const QString& message)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Error;
+    m_responseReceived = ErrorResp;
     m_err = code;
     m_errMsg = message;
 
@@ -112,10 +114,21 @@ void TestIdentityResult::error(Identity::IdentityError code, const QString& mess
     emit testCompleted();
 }
 
+void TestIdentityResult::error(const Error& error)
+{
+    m_responseReceived = ErrorResp;
+    m_error = (Error::ErrorType)error.type();
+    m_errMsg = error.message();
+
+    qDebug() << "Error:" << m_error << ", Message:" << m_errMsg;
+
+    emit testCompleted();
+}
+
 void TestIdentityResult::methodsAvailable(const QStringList& methods)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_methods = methods;
 
     emit testCompleted();
@@ -124,7 +137,7 @@ void TestIdentityResult::methodsAvailable(const QStringList& methods)
 void TestIdentityResult::credentialsStored(const quint32 id)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_id = id;
 
     emit testCompleted();
@@ -133,7 +146,7 @@ void TestIdentityResult::credentialsStored(const quint32 id)
 void TestIdentityResult::info(const IdentityInfo &info)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_idInfo = info;
 
     emit testCompleted();
@@ -142,7 +155,7 @@ void TestIdentityResult::info(const IdentityInfo &info)
 void TestIdentityResult::userVerified(const bool valid)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_userVerified = valid;
 
     emit testCompleted();
@@ -151,7 +164,7 @@ void TestIdentityResult::userVerified(const bool valid)
 void TestIdentityResult::secretVerified(const bool valid)
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_secretVerified = valid;
 
     emit testCompleted();
@@ -160,7 +173,7 @@ void TestIdentityResult::secretVerified(const bool valid)
 void TestIdentityResult::removed()
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_removed = true;
 
     emit testCompleted();
@@ -169,7 +182,7 @@ void TestIdentityResult::removed()
 void TestIdentityResult::signedOut()
 {
     IT_IS_HAPPENING
-    m_responseReceived = Normal;
+    m_responseReceived = NormalResp;
     m_signedOut = true;
 
     emit testCompleted();

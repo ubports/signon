@@ -30,6 +30,8 @@
 #include "testidentityresult.h"
 #include "testauthserviceresult.h"
 
+#include <SignOn/signonerror.h>
+
 #ifdef SSO_CI_TESTMANAGEMENT
     #define SSOTESTCLIENT_USES_AUTHSESSION
 #endif
@@ -115,8 +117,11 @@ private:
     /*
      * Helpers
      * */
+    //deprecated
     static QString authErrCodeAsStr(const AuthService::ServiceError);
+    //deprecated
     static QString idErrCodeAsStr(const Identity::IdentityError);
+    static QString errCodeAsStr(const Error::ErrorType);
     bool storeCredentialsPrivate(const IdentityInfo &info);
 
 public Q_SLOTS:

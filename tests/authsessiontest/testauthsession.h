@@ -33,7 +33,7 @@
 
 #include <signal.h>
 
-#include "SignOn/signoncommon.h"
+#include "signond/signoncommon.h"
 #include "SignOn/authservice.h"
 
 //#ifdef SSOUI_TESTS_ENABLED

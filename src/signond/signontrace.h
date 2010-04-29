@@ -28,6 +28,8 @@
 #include <QDebug>
 #include <QDateTime>
 
+#include "signond-common.h"
+
 namespace SignOn {
 
     template <typename T = void>
@@ -78,7 +80,7 @@ namespace SignOn {
                 default: msgType = "Debug"; break;
             }
 
-            if (m_pInstance->m_outputFile.size() >= SIGNON_TRACE_FILE_MAX_SIZE) {
+            if (m_pInstance->m_outputFile.size() >= m_pInstance->m_maxFileSize) {
                 m_pInstance->m_outputFile.close();
                 m_pInstance->m_outputFile.remove();
             }
@@ -108,11 +110,5 @@ template <typename T>
     SignonTrace<T> *SignonTrace<T>::m_pInstance = 0;
 
 } //namespace SignOn
-
-#ifdef SIGNON_TRACE
-   #define SIGNON_INITIALIZE_TRACE(_file_name_, _maxFileSize_) initializeTrace(_file_name_, _maxFileSize_);
-#else
-    #define SIGNON_INITIALIZE_TRACE(_file_name_, _maxFileSize_)
-#endif //SIGNON_TRACE
 
 #endif // SIGNONTRACE_H

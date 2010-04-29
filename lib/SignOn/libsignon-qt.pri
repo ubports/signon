@@ -12,7 +12,7 @@ public_headers += \
     authsession.h \
     libsignoncommon.h \
     signon.h \
-    signoncommon.h
+    signonerror.h
 
 private_headers = authserviceimpl.h \
     identityimpl.h \
@@ -54,7 +54,8 @@ headers.files = $$public_headers \
 	AuthService \
 	AuthSession \
 	Identity \
-	SessionData
+        SessionData \
+        Error
 headers.path = $${INSTALL_PREFIX}/include/signon-qt/SignOn
 INSTALLS += headers
 

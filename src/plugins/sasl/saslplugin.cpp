@@ -26,7 +26,7 @@
 #include "saslplugin.h"
 #include "sasldata.h"
 
-#include "SignOn/signoncommon.h"
+#include "SignOn/signonplugincommon.h"
 
 #define N_CALLBACKS (16)
 #define SAMPLE_SEC_BUF_SIZE (2048)

@@ -34,7 +34,6 @@
 #include <QQueue>
 #include <QDateTime>
 
-#include "signoncommon.h"
 #include "authsession.h"
 #include "dbusoperationqueuehandler.h"
 

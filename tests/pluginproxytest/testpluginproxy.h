@@ -26,7 +26,7 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-#include "SignOn/signoncommon.h"
+#include "signond/signoncommon.h"
 #include "SignOn/sessiondata.h"
 #include "SignOn/authpluginif.h"
 #include "pluginproxy.h"

@@ -33,9 +33,7 @@
 #include <QDBusInterface>
 #include <QQueue>
 
-#include "signoncommon.h"
 #include "authservice.h"
-#include "dbusoperationqueuehandler.h"
 
 namespace SignOn {
 

@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = SignOn plugins
+SUBDIRS = signond SignOn plugins
 

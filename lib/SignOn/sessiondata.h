@@ -33,7 +33,7 @@
 #include <QStringList>
 #include <QVariant>
 
-#include <SignOn/signoncommon.h>
+#include <SignOn/libsignoncommon.h>
 
 namespace SignOn {
 

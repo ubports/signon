@@ -27,7 +27,7 @@
 #include <QDebug>
 #include <QMetaType>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "identityinfo.h"
 
 /*

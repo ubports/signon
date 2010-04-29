@@ -27,6 +27,7 @@
 
 #include "SignOn/authservice.h"
 #include "SignOn/identity.h"
+#include "SignOn/signonerror.h"
 
 using namespace SignOn;
 
@@ -37,13 +38,15 @@ class TestIdentityResult: public QObject
 public :
     enum ResponseType
     {
-        Normal = 0,
-        Error,
-        Inexistent
+        NormalResp = 0,
+        ErrorResp,
+        InexistentResp
     };
 
 public:
-    Identity::IdentityError m_err;
+    Error::ErrorType m_error;
+    Identity::IdentityError m_err; //deprecated
+
     QString m_errMsg;
 
     ResponseType m_responseReceived;
@@ -65,7 +68,8 @@ public:
                                      bool checlACL = false);
 
 public Q_SLOTS:
-    void error(Identity::IdentityError code, const QString& message);
+    void error(Identity::IdentityError code, const QString &message);//deprecated
+    void error(const Error &err);
     void methodsAvailable(const QStringList &methods);
     void credentialsStored(const quint32 id);
     void info(const IdentityInfo& info);
@@ -77,6 +81,6 @@ public Q_SLOTS:
 Q_SIGNALS:
     void testCompleted();
 };
-
+//}
 
 #endif // TESTSIDENTITYRESULT_H

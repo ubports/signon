@@ -29,7 +29,26 @@
 #include <QVariantMap>
 #include "SignOn/sessiondata.h"
 #include "SignOn/uisessiondata.h"
-#include "SignOn/signoncommon.h"
+
+
+#ifdef TRACE
+    #undef TRACE
+#endif
+
+#ifdef BLAME
+    #undef BLAME
+#endif
+
+#ifdef SIGNON_PLUGIN_TRACE
+    #include <QDebug>
+
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#else
+    #define TRACE() if(1) ; else qDebug()
+    #define BLAME() if(1) ; else qDebug()
+#endif
+
 
 enum PluginOperation {
     PLUGIN_OP_TYPE = 1,

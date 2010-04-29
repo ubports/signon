@@ -47,21 +47,23 @@ int finishedClients = 0;
 #ifdef SSO_TESTS_RUNNING_AS_UNTRUSTED
     #define END_SERVICE_TEST_IF_UNTRUSTED  \
         do {                                                    \
-            TRACE() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
-            QVERIFY(m_serviceResult.m_err == AuthService::PermissionDeniedError);     \
-            /* TODO this comment will go away once the improved OO error handling will be in place */\
-            /*QVERIFY(m_serviceResult.m_errMsg.contains(SSO_DAEMON_PERMISSION_DENIED_ERR_STR));*/ \
-            TEST_DONE                                                                 \
-            return;                                                                   \
+            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
+            /* todo - remove first condition 1 moth after new err mgmnt release. */ \
+            QVERIFY(m_serviceResult.m_err == AuthService::PermissionDeniedError \
+                    || m_serviceResult.m_error == Error::PermissionDenied);     \
+            QVERIFY(m_serviceResult.m_errMsg.contains(SSO_PERMISSION_DENIED_ERR_STR)); \
+            TEST_DONE                                                                  \
+            return;                                                                    \
         } while(0)
 
     #define END_IDENTITY_TEST_IF_UNTRUSTED \
         do {                                        \
-            TRACE() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
+            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
             qDebug() << QString("Code: %1, Msg: %2").arg(idErrCodeAsStr(m_identityResult.m_err)).arg(m_identityResult.m_errMsg); \
-            QVERIFY(m_identityResult.m_err == Identity::PermissionDeniedError);          \
-            /* TODO this comment will go away once the improved OO error handling will be in place */ \
-            /*QVERIFY(m_identityResult.m_errMsg.contains(SSO_IDENTITY_PERMISSION_DENIED_ERR_STR));*/ \
+            /* todo - remove first condition 1 moth after new err mgmnt release. */ \
+            QVERIFY(m_identityResult.m_err == Identity::PermissionDeniedError   \
+                    || m_serviceResult.m_error == Error::PermissionDenied);     \
+            QVERIFY(m_identityResult.m_errMsg.contains(SSO_PERMISSION_DENIED_ERR_STR));  \
             TEST_DONE                                                                    \
             return;                                                                      \
         } while(0)
@@ -69,17 +71,17 @@ int finishedClients = 0;
     // TODO - define this
     #define END_SESSION_TEST_IF_UNTRUSTED  \
         do {                                                    \
-            TRACE() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
+            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
             TEST_DONE                                           \
             return;                                             \
         } while(0)
 #else
     #define END_SERVICE_TEST_IF_UNTRUSTED  \
-        do { TRACE() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
+        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
     #define END_IDENTITY_TEST_IF_UNTRUSTED \
-        do { TRACE() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
+        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
     #define CHECK_FOR_SESSION_ACCESS_CONTROL_ERROR  \
-        do { TRACE() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
+        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
 #endif
 
 
@@ -226,6 +228,41 @@ QString SsoTestClient::idErrCodeAsStr(const Identity::IdentityError err)
     }
 }
 
+QString SsoTestClient::errCodeAsStr(const Error::ErrorType err)
+{
+    switch(err) {
+        case Error::Unknown: return "Unknown";
+        case Error::InternalServer: return "InternalServer";
+        case Error::InternalCommunication: return "InternalCommunication";
+        case Error::PermissionDenied: return "PermissionDenied";
+        case Error::MethodNotKnown: return "MethodNotKnown";
+        case Error::ServiceNotAvailable: return "ServiceNotAvailable";
+        case Error::InvalidQuery: return "InvalidQuery";
+        case Error::MethodNotAvailable: return "MethodNotAvailable";
+        case Error::IdentityNotFound: return "IdentityNotFound";
+        case Error::StoreFailed: return "StoreFailed";
+        case Error::RemoveFailed: return "RemoveFailed";
+        case Error::SignOutFailed: return "SignOutFailed";
+        case Error::IdentityOperationCanceled: return "IdentityOperationCanceled";
+        case Error::CredentialsNotAvailable: return "CredentialsNotAvailable";
+        case Error::AuthSessionErr: return "AuthSessionErr";
+        case Error::MechanismNotAvailable: return "MechanismNotAvailable";
+        case Error::MissingData: return "MissingData";
+        case Error::InvalidCredentials: return "InvalidCredentials";
+        case Error::WrongState: return "WrongState";
+        case Error::OperationNotSupported: return "OperationNotSupported";
+        case Error::NoConnection: return "NoConnection";
+        case Error::Network: return "Network";
+        case Error::Ssl: return "Ssl";
+        case Error::Runtime: return "Runtime";
+        case Error::SessionCanceled: return "SessionCanceled";
+        case Error::TimedOut: return "TimedOut";
+        case Error::UserInteraction: return "UserInteraction";
+        case Error::OperationFailed: return "OperationFailed";
+        default: return "DEFAULT error type reached.";
+    }
+}
+
 bool SsoTestClient::storeCredentialsPrivate(const IdentityInfo &info)
 {
     Identity *identity = Identity::newIdentity(info, this);
@@ -234,6 +271,9 @@ bool SsoTestClient::storeCredentialsPrivate(const IdentityInfo &info)
 
     connect(identity, SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(identity, SIGNAL(credentialsStored(const quint32)),
             &m_identityResult, SLOT(credentialsStored(const quint32)));
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
@@ -244,7 +284,7 @@ bool SsoTestClient::storeCredentialsPrivate(const IdentityInfo &info)
     loop.exec();
 
     bool ok = false;
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         m_storedIdentityInfo = info;
         m_storedIdentityId = identity->id();
@@ -253,7 +293,8 @@ bool SsoTestClient::storeCredentialsPrivate(const IdentityInfo &info)
     else
     {
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
-                 << ".\nError code: " << idErrCodeAsStr(m_identityResult.m_err);
+                 << ".\nOld error code: " << idErrCodeAsStr(m_identityResult.m_err)
+                 << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
         ok = false;
     }
     delete identity;
@@ -269,8 +310,11 @@ void SsoTestClient::initIdentityTest()
     QEventLoop loop;
 
     connect(&service, SIGNAL(cleared()), &m_serviceResult, SLOT(cleared()));
-    connect(&service, SIGNAL(error(AuthService::ServiceError, const QString &)),
-            &m_serviceResult, SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
+
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     service.clear();
@@ -312,6 +356,8 @@ void SsoTestClient::queryAvailableMetods()
 
     connect(identity, SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
 
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
@@ -320,22 +366,24 @@ void SsoTestClient::queryAvailableMetods()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
-        TRACE() << "Remote:" << m_identityResult.m_methods;
-        TRACE() << "Local:" << m_storedIdentityInfo.methods();
+        qDebug() << "Remote:" << m_identityResult.m_methods;
+        qDebug() << "Local:" << m_storedIdentityInfo.methods();
 
         QVERIFY(m_identityResult.m_methods == m_storedIdentityInfo.methods());
     }
     else
     {
         QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nOld error code: " << codeStr
+                 << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
         QVERIFY(false);
     }
 
@@ -356,7 +404,8 @@ void SsoTestClient::requestCredentialsUpdate()
 
     connect(identity, SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
-
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
     connect(identity, SIGNAL(credentialsStored(const quint32)),
             &m_identityResult, SLOT(credentialsStored(const quint32)));
 
@@ -367,17 +416,18 @@ void SsoTestClient::requestCredentialsUpdate()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent, "A response was not received.");
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp, "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QFAIL("Currently not implemented should have failed.");
     }
     else
     {
-        QCOMPARE(m_identityResult.m_err, Identity::UnknownError);
+        QVERIFY(m_identityResult.m_err == Identity::UnknownError
+                || m_identityResult.m_error == Error::Unknown);
         QCOMPARE(m_identityResult.m_errMsg, QString("Not implemented."));
     }
     TEST_DONE
@@ -433,6 +483,9 @@ void SsoTestClient::remove()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     identity->remove();
@@ -440,12 +493,12 @@ void SsoTestClient::remove()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QVERIFY(m_identityResult.m_removed);
         connect(
@@ -454,16 +507,21 @@ void SsoTestClient::remove()
             &m_identityResult,
             SLOT(info(const IdentityInfo &)));
 
-        TRACE() << "Going to query info";
+        qDebug() << "Going to query info";
         identity->queryInfo();
 
-        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::Error);
-        QVERIFY(m_identityResult.m_err == Identity::NotFoundError);
+        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
+        QVERIFY(m_identityResult.m_err == Identity::NotFoundError
+               || m_identityResult.m_error == Error::IdentityNotFound);
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+
         QFAIL("Should not have received error reply");
     }
 
@@ -542,6 +600,9 @@ void SsoTestClient::queryInfo()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     identity->queryInfo();
@@ -549,12 +610,12 @@ void SsoTestClient::queryInfo()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QVERIFY(m_identityResult.m_id == m_storedIdentityId);
         QVERIFY(TestIdentityResult::compareIdentityInfos(
@@ -563,10 +624,13 @@ void SsoTestClient::queryInfo()
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
 
-        QFAIL("Should not have received error reply");
+        QFAIL("Should not have received an error reply.");
     }
 
     TEST_DONE
@@ -607,6 +671,9 @@ void SsoTestClient::verifyUser()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     identity->verifyUser("message");
@@ -614,12 +681,12 @@ void SsoTestClient::verifyUser()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QFAIL("Currently not implemented should have failed.");
     }
@@ -666,6 +733,9 @@ void SsoTestClient::verifySecret()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     identity->verifySecret("TEST_PASSWORD_1");
@@ -673,20 +743,23 @@ void SsoTestClient::verifySecret()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QVERIFY(m_identityResult.m_secretVerified);
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
-        QFAIL("Should not have received error reply");
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+        QFAIL("Should not have received an error reply.");
     }
 
     TEST_DONE
@@ -729,6 +802,8 @@ void SsoTestClient::signOut()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
 
     //connect the other 2 identities to designated identity test result objects
     TestIdentityResult identityResult1;
@@ -745,6 +820,8 @@ void SsoTestClient::signOut()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &identityResult1,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
 
     connect(
             identity2,
@@ -756,7 +833,8 @@ void SsoTestClient::signOut()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &identityResult2,
             SLOT(error(Identity::IdentityError, const QString &)));
-
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
 
     connect(
             identity3,
@@ -768,6 +846,8 @@ void SsoTestClient::signOut()
             SIGNAL(error(Identity::IdentityError, const QString &)),
             &identityResult3,
             SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
 
     /* Interesting - NOT IN THE GOOD WAY !!!
         - this wait has to be added so that the last identity gets to be registered
@@ -780,31 +860,35 @@ void SsoTestClient::signOut()
     //this test is likelly to take longer
     QTest::qWait(2000);
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    QVERIFY2(identityResult1.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(identityResult1.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    QVERIFY2(identityResult2.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(identityResult2.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    QVERIFY2(identityResult3.m_responseReceived != TestIdentityResult::Inexistent,
+    QVERIFY2(identityResult3.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    if((m_identityResult.m_responseReceived == TestIdentityResult::Normal)
-       && (identityResult1.m_responseReceived == TestIdentityResult::Normal)
-       && (identityResult2.m_responseReceived == TestIdentityResult::Normal)
-       && (identityResult3.m_responseReceived == TestIdentityResult::Normal))
+    if((m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+       && (identityResult1.m_responseReceived == TestIdentityResult::NormalResp)
+       && (identityResult2.m_responseReceived == TestIdentityResult::NormalResp)
+       && (identityResult3.m_responseReceived == TestIdentityResult::NormalResp))
     {
        // probably will do something here in the future
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+
         QFAIL("Should not have received error reply");
     }
 
@@ -838,6 +922,8 @@ void SsoTestClient::initAuthServiceTest()
     connect(&service, SIGNAL(cleared()), &m_serviceResult, SLOT(cleared()));
     connect(&service, SIGNAL(error(AuthService::ServiceError, const QString &)),
             &m_serviceResult, SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
     service.clear();
@@ -861,6 +947,8 @@ void SsoTestClient::initAuthServiceTest()
 
         connect(identity, SIGNAL(error(Identity::IdentityError, const QString &)),
                 &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
+        connect(identity, SIGNAL(error(const Error &)),
+                &m_identityResult, SLOT(error(const Error &)));
         connect(identity, SIGNAL(credentialsStored(const quint32)),
                 &m_identityResult, SLOT(credentialsStored(const quint32)));
         connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
@@ -895,6 +983,8 @@ void SsoTestClient::queryMethods()
             SIGNAL(error(AuthService::ServiceError, const QString &)),
             &m_serviceResult,
             SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
 
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
@@ -903,18 +993,22 @@ void SsoTestClient::queryMethods()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::Inexistent,
+    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::Normal)
+    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         //this should compare the actual lists not only their count
         QCOMPARE(m_serviceResult.m_methods.count(), m_expectedNumberOfMethods);
     }
     else
     {
-        QString codeStr = authErrCodeAsStr(m_serviceResult.m_err);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = authErrCodeAsStr(m_serviceResult.m_err);
+        QString codeStr = errCodeAsStr(m_serviceResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+
         QFAIL("Should not have received error reply");
     }
 
@@ -940,6 +1034,8 @@ void SsoTestClient::queryMechanisms()
             SIGNAL(error(AuthService::ServiceError, const QString &)),
             &m_serviceResult,
             SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
 
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
@@ -948,16 +1044,16 @@ void SsoTestClient::queryMechanisms()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::Inexistent,
+    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::Normal)
+    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
-        TRACE() << m_serviceResult.m_queriedMechsMethod;
-        TRACE() << m_methodToQueryMechanisms;
+        qDebug() << m_serviceResult.m_queriedMechsMethod;
+        qDebug() << m_methodToQueryMechanisms;
 
-        TRACE() << m_serviceResult.m_mechanisms.second;
-        TRACE() << m_expectedMechanisms;
+        qDebug() << m_serviceResult.m_mechanisms.second;
+        qDebug() << m_expectedMechanisms;
 
         QCOMPARE(m_serviceResult.m_queriedMechsMethod, m_methodToQueryMechanisms);
         bool equal = (m_serviceResult.m_mechanisms.second == m_expectedMechanisms);
@@ -965,8 +1061,11 @@ void SsoTestClient::queryMechanisms()
     }
     else
     {
-        QString codeStr = authErrCodeAsStr(m_serviceResult.m_err);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = authErrCodeAsStr(m_serviceResult.m_err);
+        QString codeStr = errCodeAsStr(m_serviceResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
         QFAIL("Should not have received error reply");
     }
 
@@ -992,6 +1091,8 @@ void SsoTestClient::queryIdentities()
             SIGNAL(error(AuthService::ServiceError, const QString &)),
             &m_serviceResult,
             SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
 
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
@@ -1000,33 +1101,36 @@ void SsoTestClient::queryIdentities()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::Inexistent,
+    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
     END_SERVICE_TEST_IF_UNTRUSTED;
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::Normal)
+    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         QListIterator<IdentityInfo> it(m_serviceResult.m_identities);
         while(it.hasNext())
         {
             IdentityInfo info = it.next();
-            TRACE() << "Identity record: "
+            qDebug() << "Identity record: "
                     << "id:" << info.id()
                     << " username: " << info.userName()
                     << " caption: " << info.caption()
                     << " methods:";
 
             foreach(QString method, info.methods())
-                TRACE() << QPair<QString, QStringList>(method, info.mechanisms(method));
+                qDebug() << QPair<QString, QStringList>(method, info.mechanisms(method));
 
         }
         QCOMPARE(m_serviceResult.m_identities.count(), m_numberOfInsertedCredentials);
     }
     else
     {
-        QString codeStr = authErrCodeAsStr(m_serviceResult.m_err);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = authErrCodeAsStr(m_serviceResult.m_err);
+        QString codeStr = errCodeAsStr(m_serviceResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
         QFAIL("Should not have received error reply");
     }
 
@@ -1052,6 +1156,8 @@ void SsoTestClient::clear()
             SIGNAL(error(AuthService::ServiceError, const QString &)),
             &m_serviceResult,
             SLOT(error(AuthService::ServiceError, const QString &)));
+    connect(&service, SIGNAL(error(const Error &)),
+            &m_serviceResult, SLOT(error(const Error &)));
 
     connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
@@ -1060,12 +1166,12 @@ void SsoTestClient::clear()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::Inexistent,
+    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
     END_SERVICE_TEST_IF_UNTRUSTED;
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::Normal) {
+    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp) {
         connect(
                 &service,
                 SIGNAL(identities(const QList<IdentityInfo> &)),
@@ -1078,8 +1184,12 @@ void SsoTestClient::clear()
         loop.exec();
         QVERIFY(m_serviceResult.m_identities.count() == 0);
     } else {
-        QString codeStr = authErrCodeAsStr(m_serviceResult.m_err);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = authErrCodeAsStr(m_serviceResult.m_err);
+        QString codeStr = errCodeAsStr(m_serviceResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+        
         QFAIL("Should not have received error reply");
     }
 
@@ -1111,6 +1221,9 @@ bool SsoTestClient::testAddingNewCredentials(bool addMethods)
 
     connect(identity, SIGNAL(error(Identity::IdentityError, const QString &)),
             &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
+    connect(identity, SIGNAL(error(const Error &)),
+            &m_identityResult, SLOT(error(const Error &)));
+
     connect(identity, SIGNAL(credentialsStored(const quint32)),
             &m_identityResult, SLOT(credentialsStored(const quint32)));
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
@@ -1120,13 +1233,13 @@ bool SsoTestClient::testAddingNewCredentials(bool addMethods)
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Inexistent)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::InexistentResp)
     {
         qDebug() << "A response was not received.";
         return false;
     }
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         if(m_identityResult.m_id != identity->id())
         {
@@ -1157,8 +1270,11 @@ bool SsoTestClient::testAddingNewCredentials(bool addMethods)
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
         return false;
     }
     return true;
@@ -1191,28 +1307,30 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
 
         connect(existingIdentity, SIGNAL(error(Identity::IdentityError, const QString &)),
                 &m_identityResult, SLOT(error(Identity::IdentityError, const QString &)));
+        connect(existingIdentity, SIGNAL(error(const Error &)),
+                &m_identityResult, SLOT(error(const Error &)));
+
         connect(existingIdentity, SIGNAL(credentialsStored(const quint32)),
                 &m_identityResult, SLOT(credentialsStored(const quint32)));
         connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
         existingIdentity->storeCredentials(updateInfo);
-        TRACE();
+        qDebug();
         QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
         loop.exec();
     } while(0);
 
-    TRACE();
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Inexistent)
+    qDebug();
+    if(m_identityResult.m_responseReceived == TestIdentityResult::InexistentResp)
     {
         qDebug() << "A response was not received.";
         return false;
     }
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::Normal)
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QEventLoop loop;
         connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-        TRACE();
         connect(existingIdentity, SIGNAL(info(const IdentityInfo &)),
                 &m_identityResult, SLOT(info(const IdentityInfo &)));
 
@@ -1229,8 +1347,12 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     }
     else
     {
-        QString codeStr = idErrCodeAsStr(m_identityResult.m_err);
-        qDebug() << "Error reply: " << m_identityResult.m_errMsg << ".\nError code: " << codeStr;
+        QString oldCodeStr = idErrCodeAsStr(m_identityResult.m_err);
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nOld error code: " << oldCodeStr
+                 << ".\nError code: " << codeStr;
+
         return false;
     }
     return true;

@@ -29,8 +29,9 @@
 #include <QByteArray>
 #include <QVariant>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "sessiondata.h"
+#include "signonerror.h"
 
 
 namespace SignOn {
@@ -55,6 +56,7 @@ namespace SignOn {
          * @enum AuthSessionError
          * Codes for errors that may be reported by AuthSession objects
          * @see AuthSession::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum AuthSessionError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -208,8 +210,17 @@ namespace SignOn {
          * Emitted when an error occurs while performing an operation.
          * @param code the error code
          * @param message a description string for troubleshooting purposes
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(AuthSession::AuthSessionError code, const QString &message);
+
+        /*!
+         * Emitted when an error occurs while performing an operation.
+         * @see SignOn::Error.
+         *
+         * @param err The error object.
+         */
+        void error(const Error &err);
 
         /*!
          * Emitted when the list of available mechanisms have been obtained

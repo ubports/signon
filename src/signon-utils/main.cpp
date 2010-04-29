@@ -37,14 +37,14 @@
 #include <QtCore/QStringList>
 #include <QtDBus/QtDBus>
 
-#include "SignOn/signoncommon.h"
+#include <signond/signoncommon.h>
 
 bool setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
 {
-    QDBusInterface dbus_iface(SIGNON_SERVICE,
-                              SIGNON_DAEMON_OBJECTPATH,
-                              SIGNON_DAEMON_INTERFACE,
-                              SIGNON_BUS);
+    QDBusInterface dbus_iface(SIGNOND_SERVICE,
+                              SIGNOND_DAEMON_OBJECTPATH,
+                              SIGNOND_DAEMON_INTERFACE,
+                              SIGNOND_BUS);
 
     dbus_iface.call(QLatin1String("setDeviceLockCode"), oldLockCode, newLockCode);
 
@@ -53,10 +53,10 @@ bool setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockC
 
 bool setSim(const QByteArray &simData, const QByteArray &checkData)
 {
-    QDBusInterface dbus_iface(SIGNON_SERVICE,
-                              SIGNON_DAEMON_OBJECTPATH,
-                              SIGNON_DAEMON_INTERFACE,
-                              SIGNON_BUS);
+    QDBusInterface dbus_iface(SIGNOND_SERVICE,
+                              SIGNOND_DAEMON_OBJECTPATH,
+                              SIGNOND_DAEMON_INTERFACE,
+                              SIGNOND_BUS);
 
     dbus_iface.call(QLatin1String("setSIM"), simData, checkData);
 
@@ -65,10 +65,10 @@ bool setSim(const QByteArray &simData, const QByteArray &checkData)
 
 bool remoteLock(const QByteArray &lockCode)
 {
-    QDBusInterface dbus_iface(SIGNON_SERVICE,
-                              SIGNON_DAEMON_OBJECTPATH,
-                              SIGNON_DAEMON_INTERFACE,
-                              SIGNON_BUS);
+    QDBusInterface dbus_iface(SIGNOND_SERVICE,
+                              SIGNOND_DAEMON_OBJECTPATH,
+                              SIGNOND_DAEMON_INTERFACE,
+                              SIGNOND_BUS);
 
     dbus_iface.call(QLatin1String("remoteLock"), lockCode);
 
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
-    if (!SIGNON_BUS.isConnected()) {
+    if (!SIGNOND_BUS.isConnected()) {
         fprintf(stderr, "Cannot connect to the D-Bus session bus.\n"
                 "To start it, run:\n"
                 "\teval `dbus-launch --auto-syntax`\n");

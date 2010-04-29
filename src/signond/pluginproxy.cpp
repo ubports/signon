@@ -28,7 +28,18 @@
 #include <QStringList>
 #include <QThreadStorage>
 #include <QThread>
+
 #include "SignOn/uisessiondata_priv.h"
+#include "SignOn/signonplugincommon.h"
+
+/*
+ *   TODO: remove the "SignOn/authpluginif.h" include below after the removal
+ *         of the deprecated error handling (needed here only for the deprecated
+ *         AuthPluginError::PLUGIN_ERROR_GENERAL).
+ */
+#include "SignOn/authpluginif.h"
+
+using namespace SignOn;
 
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
@@ -58,7 +69,7 @@ namespace SignonDaemonNS {
             emit QProcess::finished(2, QProcess::NormalExit);
             exit(2);
         }
-#ifdef SIGNON_TRACE
+#ifdef SIGNOND_TRACE
         //this is run in remote plugin process, so trace should go to stderr
         fprintf(stderr, "got user: %s with uid: %d\n", passwdRecord->pw_name, passwdRecord->pw_uid);
 #endif
