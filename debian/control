@@ -30,7 +30,7 @@ Package: libsignon-qt-dev
 Architecture: any
 Priority: extra
 Section: libdevel
-Depends: libsignon-qt0 (= ${binary:Version}), libqt4-dev (>= 4.5), signond-dev
+Depends: libsignon-qt0 (= ${binary:Version}), libqt4-dev (>= 4.5)
 Description: Development files for libsignon-qt
  Headers and static libraries for the libsignon-qt.
 
