@@ -1,3 +1,10 @@
+signon (0.1.16-1) unstable; urgency=low
+
+  * Added unified OO Error handling for Signon framework.
+  * Created signond-dev package for Signon client library developers.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Thu, 29 Apr 2010 15:00:00 +0300
+
 signon (0.1.15-2) unstable; urgency=low
 
   * Fixes: NB#163509 - <MemLeak> valgrind shows memory leaks when libsignon-qt-tests are run 

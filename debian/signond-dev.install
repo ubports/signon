@@ -1,0 +1,5 @@
+usr/lib/pkgconfig/signond.pc
+usr/include/signond/signoncommon.h
+usr/share/dbus-1/interfaces/com.nokia.singlesignon.SignonDaemon.xml
+usr/share/dbus-1/interfaces/com.nokia.singlesignon.SignonIdentity.xml
+usr/share/dbus-1/interfaces/com.nokia.singlesignon.SignonAuthSession.xml
