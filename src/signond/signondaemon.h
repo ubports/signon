@@ -92,7 +92,7 @@ namespace SignonDaemonNS {
         SignonDaemon(QObject *parent);
         ~SignonDaemon();
 
-        bool init();
+        bool init(bool backup);
 
         /*!
          * Returns the number of seconds of inactivity after which identity
@@ -128,6 +128,14 @@ namespace SignonDaemonNS {
         // Interface method to remote lock the database
         bool remoteLock(const QByteArray &lockCode);
 
+    public Q_SLOTS: // backup METHODS
+        uchar backup(const QStringList &selectedCategories);
+        bool close();
+        bool prestart();
+        uchar restore(const QStringList &selectedCategories,
+                      const QString &productName,
+                      const QStringList &restoredFilePaths);
+
     protected Q_SLOTS:
         void displayRequestsCount();
 
@@ -147,6 +155,8 @@ namespace SignonDaemonNS {
          * The instance of CAM
          * */
         CredentialsAccessManager *m_pCAMManager;
+
+        bool m_backup;
 
         int m_identityTimeout;
     }; //class SignonDaemon

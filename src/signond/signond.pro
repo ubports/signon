@@ -8,6 +8,11 @@ QT += core \
     network \
     dbus
 QT -= gui
+
+#generate adaptor for backup
+system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
+    ../../lib/signond/com.nokia.singlesignon.backup.xml)
+
 HEADERS += accesscodehandler.h \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
@@ -27,7 +32,8 @@ HEADERS += accesscodehandler.h \
     pluginproxy.h \
     signonidentityinfo.h \
     signonui_interface.h \
-    signonidentityadaptor.h
+    signonidentityadaptor.h \
+    backupifadaptor.h
 SOURCES += accesscodehandler.cpp \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
@@ -46,7 +52,8 @@ SOURCES += accesscodehandler.cpp \
     main.cpp \
     signondaemon.cpp \
     signonidentityinfo.cpp \
-    signonidentityadaptor.cpp
+    signonidentityadaptor.cpp \
+    backupifadaptor.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
 CONFIG += thread \
@@ -59,6 +66,8 @@ DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
 LIBS += -lcreds \
     -lcryptsetup
+
+QMAKE_CLEAN +=backupifadaptor.cpp backupifadaptor.h
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
 
