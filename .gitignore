@@ -16,5 +16,10 @@ build-stamp
 configure-stamp
 debian
 
+doc/html
+doc/qch
+doc/signon.tags
 
-
+lib/SignOn/doc/html
+lib/SignOn/doc/qch
+lib/SignOn/doc/SignOn.tags
