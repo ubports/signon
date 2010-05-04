@@ -23,6 +23,7 @@
 
 #include "testpluginproxy.h"
 #include "timeouts.h"
+#include "backuptest.h"
 
 #ifdef CAM_UNIT_TESTS_FIXED
 #include "credentialsaccessmanagertest.h"
@@ -46,5 +47,9 @@ int main(int argc, char **argv)
 
     TimeoutsTest timeoutsTest;
     QTest::qExec(&timeoutsTest, argc, argv);
+
+    TestBackup testBackup;
+    QTest::qExec(&testBackup, argc, argv);
+
 }
 

@@ -499,6 +499,9 @@ namespace SignonDaemonNS {
                 target = config.m_dbFileSystemPath;
             else
                 target = QDir::homePath() + QDir::separator() + config.m_dbName;
+            if (!QFile::remove(target+QLatin1String(".bak"))) {
+                TRACE() << "Cannot remove backup copy of database";
+            }
             if (!QFile::rename(target, target+QLatin1String(".bak"))) {
                 TRACE() << "Cannot make backup copy of database";
             }
@@ -509,6 +512,10 @@ namespace SignonDaemonNS {
                 }
                 m_pCAMManager->openCredentialsSystem();
                 return 2;
+            }
+            //try to remove backup database
+            if (!QFile::remove(target+QLatin1String(".bak"))) {
+                TRACE() << "Cannot remove backup copy of database";
             }
             //TODO check database integrity
             if (!m_backup) {

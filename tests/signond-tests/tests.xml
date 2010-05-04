@@ -14,6 +14,10 @@
 	name="signond:signond-tests:signonremoteplugin-test">
             <step>/usr/bin/signonremoteplugin-test.sh</step>
         </case>
+        <case description="signond:signond-tests:backup-test"
+	name="signond:signond-tests:backup-test">
+            <step>/usr/bin/signond-tests</step>
+        </case>
         <environments>
         <scratchbox>true</scratchbox>
         <hardware>true</hardware>
