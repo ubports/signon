@@ -34,17 +34,21 @@ class TimeoutsTest: public QObject
 {
     Q_OBJECT
 
-private slots:
+public Q_SLOTS:
+    void credentialsStored(const quint32 id);
+    void identityError(Identity::IdentityError code, const QString &message);
 
+#if defined(SSO_CI_TESTMANAGEMENT)
+     void runAllTests();
+#endif
+
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void init();
 
     void identityTimeout();
 
-public slots:
-    void credentialsStored(const quint32 id);
-    void identityError(Identity::IdentityError code, const QString &message);
 
 signals:
     void finished();
