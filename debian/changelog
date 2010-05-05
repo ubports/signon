@@ -1,3 +1,9 @@
+signon (0.2) unstable; urgency=low
+
+  * Fixes: NB#164518 -  signond-tests-runPluginProxyTests FAILED
+
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Wed, 05 May 2010 13:50:47 +0300
+
 signon (0.1.14-1) unstable; urgency=low
 
   * Fixes: NB#161778 - <MemLeak> valgrind libaccounts-qt-tests
