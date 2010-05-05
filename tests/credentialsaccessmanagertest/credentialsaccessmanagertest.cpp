@@ -161,7 +161,6 @@ void CredentialsAccessManagerTest::deleteCredentialsSystem()
     //TODO
     TEST_DONE
 }
-
 #if defined(SSO_CI_TESTMANAGEMENT)
     void CredentialsAccessManagerTest::runAllTests()
     {

@@ -17,7 +17,7 @@ for( folder, DOC_FOLDERS ) {
 #-----------------------------------------------------------------------------
 # extra build targets for generating and cleaning documentation
 #-----------------------------------------------------------------------------
-for( subdir, SUBDIRS) {
+for( subdir, src) {
     DOC_INPUT += $${_PRO_FILE_PWD_}/$${subdir}
 }
 

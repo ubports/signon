@@ -22,10 +22,13 @@
  */
 
 #include <QObject>
+#include <QMetaType>
 
+#include "libsignoncommon.h"
 #include "authsession.h"
 #include "authsessionimpl.h"
-#include <QMetaType>
+
+
 namespace SignOn {
 
     AuthSession::AuthSession(quint32 id, const QString &methodName, QObject *parent)
@@ -37,13 +40,13 @@ namespace SignOn {
         qRegisterMetaType<AuthSessionState>("AuthSession::AuthSessionState");
 
         if (qMetaTypeId<SessionData>() < QMetaType::User)
-            qCritical() << "AuthSession::AuthSession() - SessionData meta type not registered.";
+            BLAME() << "AuthSession::AuthSession() - SessionData meta type not registered.";
 
         if (qMetaTypeId<AuthSessionError>() < QMetaType::User)
-            qCritical() << "AuthSession::AuthSession() - AuthSessionError meta type not registered.";
+            BLAME() << "AuthSession::AuthSession() - AuthSessionError meta type not registered.";
 
         if (qMetaTypeId<AuthSessionState>() < QMetaType::User)
-            qCritical() << "AuthSession::AuthSession() - AuthSessionState meta type not registered.";
+            BLAME() << "AuthSession::AuthSession() - AuthSessionState meta type not registered.";
 
     }
 
@@ -71,4 +74,5 @@ namespace SignOn {
     {
         impl->cancel();
     }
+
 } //namespace SignOn

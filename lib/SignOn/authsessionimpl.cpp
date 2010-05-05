@@ -23,22 +23,25 @@
 
 #include <QUuid>
 
+#include <signond/signoncommon.h>
+
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
 
-#define SSO_AUTHSESSION_CONNECTION_PROBLEM \
+
+#define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
     QLatin1String("Cannot create remote AuthSession object: " \
                   "check the signon daemon and authentication plugin.")
 
-#define SSO_SESSION_PROCESS_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("process(const SessionData &, const QString &)")
-#define SSO_SESSION_SET_ID_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("setId(quint32)")
-#define SSO_SESSION_QUERY_AVAILABLE_MECHANISMS_METHOD \
-    SSO_NORMALIZE_METHOD_SIGNATURE("queryAvailableMechanisms(const QStringList &)")
+#define SIGNOND_SESSION_PROCESS_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("process(const SessionData &, const QString &)")
+#define SIGNOND_SESSION_SET_ID_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("setId(quint32)")
+#define SIGNOND_SESSION_QUERY_AVAILABLE_MECHANISMS_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("queryAvailableMechanisms(const QStringList &)")
 
-#ifndef SSO_NEW_IDENTITY
-    #define SSO_NEW_IDENTITY 0
+#ifndef SIGNOND_NEW_IDENTITY
+    #define SIGNOND_NEW_IDENTITY 0
 #endif
 
 namespace SignOn {
@@ -55,6 +58,10 @@ namespace SignOn {
         return result;
     }
 
+    /*
+         !!! TODO remove deprecated error signals emition when the time is right. !!!
+         *** One month after release of new error management
+    */
     AuthSessionImpl::AuthSessionImpl(AuthSession *parent, quint32 id, const QString &methodName)
         : QObject(parent),
           m_parent(parent),
@@ -81,8 +88,11 @@ namespace SignOn {
     {
         if (!m_DBusInterface || !m_DBusInterface->isValid()) {
             emit m_parent->error(AuthSession::UnknownError,
-                                 QLatin1String("general error in AuthSession: "
+                                 QLatin1String("General error in AuthSession: "
                                                "cannot register interface"));
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
             return;
         }
 
@@ -109,30 +119,41 @@ namespace SignOn {
                                                                  this,
                                                                  slot,
                                                                  SLOT(errorSlot(const QDBusError&)),
-                                                                 SIGNON_MAX_TIMEOUT);
+                                                                 SIGNOND_MAX_TIMEOUT);
             }
         } else {
             m_DBusInterface->callWithArgumentList(QDBus::NoBlock, operation, arguments);
         }
 
-        if (!res)
+        if (!res) {
             emit m_parent->error(AuthSession::UnknownError, m_DBusInterface->lastError().message());
-        else
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          m_DBusInterface->lastError().message()));
+
+        } else {
             emit m_parent->stateChanged(AuthSession::ProcessPending,
                                         QLatin1String("The request is added to queue."));
+        }
     }
 
     void AuthSessionImpl::setId(quint32 id)
     {
-        if (id == SSO_NEW_IDENTITY) {
+        if (id == SIGNOND_NEW_IDENTITY) {
             qCritical() << "wrong value for credentials id";
             return;
         }
 
         if (!m_isValid) {
-            emit m_parent->error(AuthSession::UnknownError,
-                QString(QLatin1String("AuthSession(%1) cannot perform operation"))
-                .arg(m_methodName));
+            emit m_parent->error(
+                    AuthSession::UnknownError,
+                    QString(QLatin1String("AuthSession(%1) cannot perform operation"))
+                        .arg(m_methodName));
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          QString(QLatin1String("AuthSession(%1) cannot perform operation."))
+                            .arg(m_methodName)));
             return;
         }
 
@@ -147,7 +168,7 @@ namespace SignOn {
             send2interface(remoteFunctionName, 0, arguments);
         else
             m_operationQueueHandler.enqueueOperation(
-                                        SSO_SESSION_SET_ID_METHOD,
+                                        SIGNOND_SESSION_SET_ID_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(quint32, id)));
     }
 
@@ -186,9 +207,9 @@ namespace SignOn {
         arguments += m_id;
         arguments += m_methodName;
 
-        QDBusInterface iface(SIGNON_SERVICE,
-                             SIGNON_DAEMON_OBJECTPATH,
-                             SIGNON_DAEMON_INTERFACE);
+        QDBusInterface iface(SIGNOND_SERVICE,
+                             SIGNOND_DAEMON_OBJECTPATH,
+                             SIGNOND_DAEMON_INTERFACE);
 
         if (iface.lastError().isValid()) {
             qCritical() << "cannot initialize interface: " << iface.lastError();
@@ -211,9 +232,13 @@ namespace SignOn {
     void AuthSessionImpl::queryAvailableMechanisms(const QStringList &wantedMechanisms)
     {
         if (!checkConnection()) {
-            qCritical() << SSO_AUTHSESSION_CONNECTION_PROBLEM;
+            qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
             emit m_parent->error(AuthSession::InternalCommunicationError,
-                                 SSO_AUTHSESSION_CONNECTION_PROBLEM);
+                                 SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
             return;
         }
 
@@ -226,15 +251,19 @@ namespace SignOn {
             send2interface(remoteFunctionName, SLOT(mechanismsAvailableSlot(const QStringList&)), arguments);
         else
             m_operationQueueHandler.enqueueOperation(
-                            SSO_SESSION_QUERY_AVAILABLE_MECHANISMS_METHOD,
+                            SIGNOND_SESSION_QUERY_AVAILABLE_MECHANISMS_METHOD,
                             QList<QGenericArgument *>() << (new Q_ARG(QStringList, wantedMechanisms)));
     }
 
     void AuthSessionImpl::process(const SessionData &sessionData, const QString &mechanism)
     {
         if (!checkConnection()) {
-            qCritical() << SSO_AUTHSESSION_CONNECTION_PROBLEM;
-            emit m_parent->error(AuthSession::InternalCommunicationError, SSO_AUTHSESSION_CONNECTION_PROBLEM);
+            qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
+            emit m_parent->error(AuthSession::InternalCommunicationError, SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
             return;
         }
 
@@ -243,6 +272,11 @@ namespace SignOn {
             emit m_parent->error(AuthSession::UnknownError,
                 QString(QLatin1String("AuthSession(%1) is busy"))
                 .arg(m_methodName));
+
+            emit m_parent->error(
+                    Error(Error::Unknown,
+                          QString(QLatin1String("AuthSession(%1) is busy"))
+                             .arg(m_methodName)));
             return;
         }
 
@@ -265,7 +299,7 @@ namespace SignOn {
             args << (new Q_ARG(QVariantMap, sessionDataVa))
                  << (new Q_ARG(QString, mechanism));
 
-            m_operationQueueHandler.enqueueOperation(SSO_SESSION_PROCESS_METHOD,
+            m_operationQueueHandler.enqueueOperation(SIGNOND_SESSION_PROCESS_METHOD,
                                                      args);
         }
 
@@ -274,20 +308,29 @@ namespace SignOn {
     void AuthSessionImpl::cancel()
     {
         if (!checkConnection()) {
-            qCritical() << SSO_AUTHSESSION_CONNECTION_PROBLEM;
-            emit m_parent->error(AuthSession::InternalCommunicationError, SSO_AUTHSESSION_CONNECTION_PROBLEM);
+            qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
+            emit m_parent->error(AuthSession::InternalCommunicationError, SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
             return;
         }
 
-        if (!m_isBusy && (!m_operationQueueHandler.queueContainsOperation(SSO_SESSION_PROCESS_METHOD))) {
+        if (!m_isBusy && (!m_operationQueueHandler.queueContainsOperation(SIGNOND_SESSION_PROCESS_METHOD))) {
             qCritical() << "no requests to be cancelled";
             return;
         }
 
         if (!m_DBusInterface) {
-            m_operationQueueHandler.removeOperation(SSO_SESSION_PROCESS_METHOD);
+            m_operationQueueHandler.removeOperation(SIGNOND_SESSION_PROCESS_METHOD);
             emit m_parent->error(AuthSession::CanceledError,
-                                 QLatin1String("process is cancelled"));
+                                 QLatin1String("Process is cancelled."));
+
+            emit m_parent->error(
+                    Error(Error::SessionCanceled,
+                          QLatin1String("Process is cancelled.")));
+
         } else {
             TRACE() << "Sending cancel-request";
             m_DBusInterface->call(QDBus::NoBlock,
@@ -312,16 +355,23 @@ namespace SignOn {
             m_isAuthInProcessing = false;
 
             int numberOfErrorReplies = m_operationQueueHandler.queuedOperationsCount();
-            for (int i = 0; i < numberOfErrorReplies; i++)
+            for (int i = 0; i < numberOfErrorReplies; i++) {
                 emit m_parent->error(
                         AuthSession::InternalCommunicationError,
-                        SSO_AUTHSESSION_CONNECTION_PROBLEM);
+                        SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
+
+                emit m_parent->error(
+                        Error(Error::InternalCommunication,
+                              SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
+            }
 
             return;
         }
 
         m_isBusy = false;
-        AuthSession::AuthSessionError errCode = AuthSession::UnknownError;
+        AuthSession::AuthSessionError errCodeDeprecated = AuthSession::UnknownError;
+        int errCode = Error::Unknown;
+        QString errMessage;
 
         if (err.type() != QDBusError::Other) {
             qCritical() << err.type();
@@ -337,50 +387,71 @@ namespace SignOn {
                 m_DBusInterface = NULL;
             }
 
-            errCode = AuthSession::UnknownError;
-        } else {
-            if (err.name() == canceledErrorName)
-                errCode = AuthSession::CanceledError;
-            else if (err.name() == timedOutErrorName)
-                errCode = AuthSession::TimedOutError;
-            else if (err.name() == invalidCredentialsErrorName)
-                errCode = AuthSession::InvalidCredentialsError;
-            else if (err.name() == noConnectionErrorName)
-                errCode = AuthSession::NoConnectionError;
-            else if (err.name() == operationNotSupportedErrorName)
-                errCode = AuthSession::OperationNotSupportedError;
-            else if (err.name() == permissionDeniedErrorName)
-                errCode = AuthSession::PermissionDeniedError;
-            else if (err.name() == wrongStateErrorName)
-                errCode = AuthSession::WrongStateError;
-            else if (err.name() == mechanismNotAvailableErrorName)
-                errCode = AuthSession::PermissionDeniedError;
-            else if (err.name() == missingDataErrorName)
-                 errCode = AuthSession::MissingDataError;
-            else if (err.name() == runtimeErrorName)
-                 errCode = AuthSession::RuntimeError;
-            else if (err.name() == noConnectionErrorName)
-                 errCode = AuthSession::NoConnectionError;
-            else if (err.name() == networkErrorName)
-                 errCode = AuthSession::NetworkError;
-            else if (err.name() == sslErrorName)
-                 errCode = AuthSession::SslError;
-            else if (err.name() == userInteractionErrorName)
-                 errCode = AuthSession::UserInteractionError;
-            else
-                errCode = AuthSession::UnknownError;
+            errCodeDeprecated = AuthSession::UnknownError;
+        } else if (err.name() == SIGNOND_SESSION_CANCELED_ERR_NAME) {
+            errCodeDeprecated = AuthSession::CanceledError;
+            errCode = Error::SessionCanceled;
+        } else if (err.name() == SIGNOND_TIMED_OUT_ERR_NAME) {
+            errCodeDeprecated = AuthSession::TimedOutError;
+            errCode = Error::TimedOut;
+        } else if (err.name() == SIGNOND_INVALID_CREDENTIALS_ERR_NAME) {
+            errCodeDeprecated = AuthSession::InvalidCredentialsError;
+            errCode = Error::InvalidCredentials;
+        } else if (err.name() == SIGNOND_NO_CONNECTION_ERR_NAME) {
+            errCodeDeprecated = AuthSession::NoConnectionError;
+            errCode = Error::NoConnection;
+        } else if (err.name() == SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME) {
+            errCodeDeprecated = AuthSession::OperationNotSupportedError;
+            errCode = Error::OperationNotSupported;
+        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
+            errCodeDeprecated = AuthSession::PermissionDeniedError;
+            errCode = Error::PermissionDenied;
+        } else if (err.name() == SIGNOND_WRONG_STATE_ERR_NAME) {
+            errCodeDeprecated = AuthSession::WrongStateError;
+            errCode = Error::WrongState;
+        } else if (err.name() == SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME) {
+            errCodeDeprecated = AuthSession::MechanismNotAvailableError;
+            errCode = Error::MechanismNotAvailable;
+        } else if (err.name() == SIGNOND_MISSING_DATA_ERR_NAME) {
+             errCodeDeprecated = AuthSession::MissingDataError;
+             errCode = Error::MissingData;
+        } else if (err.name() == SIGNOND_RUNTIME_ERR_NAME) {
+            errCodeDeprecated = AuthSession::RuntimeError;
+            errCode = Error::Runtime;
+        } else if (err.name() == SIGNOND_NO_CONNECTION_ERR_NAME) {
+            errCodeDeprecated = AuthSession::NoConnectionError;
+            errCode = Error::NoConnection;
+        } else if (err.name() == SIGNOND_NETWORK_ERR_NAME) {
+            errCodeDeprecated = AuthSession::NetworkError;
+            errCode = Error::Network;
+        } else if (err.name() == SIGNOND_SSL_ERR_NAME) {
+            errCodeDeprecated = AuthSession::SslError;
+            errCode = Error::Ssl;
+        } else if (err.name() == SIGNOND_USER_INTERACTION_ERR_NAME) {
+            errCodeDeprecated = AuthSession::UserInteractionError;
+            errCode = Error::UserInteraction;
+        } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
+            errCodeDeprecated = AuthSession::UnknownError;
+
+            //the error message comes in as "code:message"
+            bool ok = false;
+            errCode = err.message().section(QLatin1Char(':'), 0, 0).toInt(&ok);
+            errMessage = err.message().section(QLatin1Char(':'), 1, 1);
+            if(!ok)
+                errCode = Error::Unknown;
+            if(errMessage.isEmpty())
+                errMessage = err.message();
         }
 
-        /*
-         * * TODO: find a normal way how to wrap message into AuthSessionError
-         * */
-        emit m_parent->error(errCode, err.message());
+        emit m_parent->error(errCodeDeprecated, err.message());
+        emit m_parent->error(Error(errCode, errMessage));
+
     }
 
     void AuthSessionImpl::authenticationSlot(const QString &path)
     {
         if (QString() != path) {
-            m_DBusInterface = new QDBusInterface(SIGNON_SERVICE,
+            m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                                  path,
                                                  QString());
             connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
@@ -390,10 +461,14 @@ namespace SignOn {
                 m_operationQueueHandler.execQueuedOperations();
         } else {
             int numberOfErrorReplies = m_operationQueueHandler.queuedOperationsCount();
-            for (int i = 0; i < numberOfErrorReplies; i++)
+            for (int i = 0; i < numberOfErrorReplies; i++) {
                 emit m_parent->error(AuthSession::UnknownError,
                                      QLatin1String("The given session cannot be accessed"));
 
+                emit m_parent->error(
+                        Error(Error::Unknown,
+                              QLatin1String("The given session cannot be accessed.")));
+            }
             m_isValid = false;
         }
 

@@ -37,10 +37,9 @@
 #include <QSocketNotifier>
 #include <QThread>
 
-#include "SignOn/signoncommon.h"
 #include "SignOn/uisessiondata.h"
 #include "SignOn/authpluginif.h"
-#include "SignOn/signonplugin.h"
+#include "SignOn/signonplugincommon.h"
 
 extern "C" {
 #include <sys/types.h>
@@ -60,12 +59,6 @@ extern "C" {
     #define SIGNON_PLUGIN_SUFFIX "plugin.so"
 #endif
 
-#ifndef SIGNON_PLUGINS_DIR
-    #define SIGNON_PLUGINS_DIR "/usr/lib/signon"
-#endif
-
-
-
 namespace RemotePluginProcessNS {
 
 /*!
@@ -80,10 +73,10 @@ namespace RemotePluginProcessNS {
         CancelEventThread(AuthPluginInterface *plugin);
         ~CancelEventThread();
 
-    void run();
+        void run();
 
     public Q_SLOTS:
-      void cancel();
+        void cancel();
 
     private:
         AuthPluginInterface *m_plugin;
@@ -112,7 +105,7 @@ class RemotePluginProcess : public QObject
         bool setupSignalHandlers();
         bool setupProxySettings();
 
-    void challenge(QDataStream &in, QDataStream &out);
+        void challenge(QDataStream &in, QDataStream &out);
 
     public Q_SLOTS:
 
@@ -148,14 +141,15 @@ class RemotePluginProcess : public QObject
 
     private Q_SLOTS:
         void result(const SignOn::SessionData &data);
+        //TODO - the below slot is deprecated, see the definition's comment
         void error(const AuthPluginError error, const QString &errorMessage);
+        void error(const SignOn::Error &err);
         void userActionRequired(const SignOn::UiSessionData &data);
         void refreshed(const SignOn::UiSessionData &data);
         void statusChanged(const AuthPluginState state, const QString &message);
 
     Q_SIGNALS :
         void processStopped();
-
 };
 
 } //namespace RemotePluginProcessNS

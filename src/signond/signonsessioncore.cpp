@@ -28,11 +28,13 @@
 #include "signonui_interface.h"
 #include "SignOn/uisessiondata_priv.h"
 
-#define MAX_IDLE_TIME SSO_MAX_IDLE_TIME
+#include "SignOn/authpluginif.h"
+
+#define MAX_IDLE_TIME SIGNOND_MAX_IDLE_TIME
 /*
  * the watchdog searches for idle sessions with period of half of idle timeout
  * */
-#define IDLE_WATCHDOG_TIMEOUT SSO_MAX_IDLE_TIME * 500
+#define IDLE_WATCHDOG_TIMEOUT SIGNOND_MAX_IDLE_TIME * 500
 
 namespace SignonDaemonNS {
 
@@ -342,8 +344,8 @@ namespace SignonDaemonNS {
         }
 
         if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
-            QDBusMessage errReply = data.m_msg.createErrorReply(runtimeErrorName,
-                                                                runtimeErrorMsg);
+            QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
+                                                                SIGNOND_RUNTIME_ERR_STR);
             data.m_conn.send(errReply);
             m_listOfRequests.removeFirst();
             QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
@@ -358,54 +360,124 @@ namespace SignonDaemonNS {
         QString errName;
         QString errMessage;
 
-        switch (err) {
-            case PLUGIN_ERROR_INVALID_STATE:
-                errMessage = wrongStateErrorMsg;
-                errName = wrongStateErrorName;
-                break;
-            case PLUGIN_ERROR_NOT_AUTHORIZED:
-                errMessage = invalidCredentialsErrorMsg;
-                errName = invalidCredentialsErrorName;
-                break;
-            case PLUGIN_ERROR_PERMISSION_DENIED:
-                errMessage = permissionDeniedErrorMsg;
-                errName = permissionDeniedErrorName;
-                break;
-            case PLUGIN_ERROR_NO_CONNECTION:
-                errMessage = noConnectionErrorMsg;
-                errName = noConnectionErrorName;
-                break;
-            case PLUGIN_ERROR_NETWORK_ERROR:
-                errMessage = networkErrorMsg;
-                errName = networkErrorName;
-                break;
-            case PLUGIN_ERROR_SSL_ERROR:
-                errMessage = sslErrorMsg;
-                errName = sslErrorName;
-                break;
-            case PLUGIN_ERROR_OPERATION_FAILED:
-                errMessage = operationNotSupportedErrorMsg;
-                errName = operationNotSupportedErrorName;
-                break;
-             case PLUGIN_ERROR_MISSING_DATA:
-                errMessage = missingDataErrorMsg;
-                errName = missingDataErrorName;
-                break;
-            case PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED:
-                errMessage = mechanismNotAvailableErrorMsg;
-                errName = mechanismNotAvailableErrorName;
-                break;
-            case PLUGIN_ERROR_RUNTIME:
-                errMessage = runtimeErrorMsg;
-                errName = runtimeErrorName;
-                break;
-            default:
-                errName = unknownErrorName;
-                errMessage = unknownErrorMsg;
-                break;
-        };
+        //TODO - deprecated switch - remove if clause 1 moth after release of new error management
+        if(err < Error::AuthSessionErr) {
+            switch (err) {
+                case PLUGIN_ERROR_INVALID_STATE:
+                    errMessage = SIGNOND_WRONG_STATE_ERR_STR;
+                    errName = SIGNOND_WRONG_STATE_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_NOT_AUTHORIZED:
+                    errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
+                    errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_PERMISSION_DENIED:
+                    errMessage = SIGNOND_PERMISSION_DENIED_ERR_STR;
+                    errName = SIGNOND_PERMISSION_DENIED_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_NO_CONNECTION:
+                    errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
+                    errName = SIGNOND_NO_CONNECTION_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_NETWORK_ERROR:
+                    errMessage = SIGNOND_NETWORK_ERR_STR;
+                    errName = SIGNOND_NETWORK_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_SSL_ERROR:
+                    errMessage = SIGNOND_SSL_ERR_STR;
+                    errName = SIGNOND_SSL_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_OPERATION_FAILED:
+                    errMessage = SIGNOND_OPERATION_FAILED_ERR_NAME;
+                    errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
+                    break;
+                 case PLUGIN_ERROR_MISSING_DATA:
+                    errMessage = SIGNOND_MISSING_DATA_ERR_STR;
+                    errName = SIGNOND_MISSING_DATA_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED:
+                    errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
+                    errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_RUNTIME:
+                    errMessage = SIGNOND_RUNTIME_ERR_STR;
+                    errName = SIGNOND_RUNTIME_ERR_NAME;
+                    break;
+                default:
+                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    errName = SIGNOND_UNKNOWN_ERR_NAME;
+                    break;
+            };
+        }
 
-        QDBusMessage errReply = msg.createErrorReply(errName, ( message.isEmpty() ? errMessage : message ));
+        if(err > Error::AuthSessionErr && err < Error::UserErr) {
+            switch(err) {
+                case Error::MechanismNotAvailable:
+                    errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
+                    errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
+                    break;
+                case Error::MissingData:
+                    errName = SIGNOND_MISSING_DATA_ERR_NAME;
+                    errMessage = SIGNOND_MISSING_DATA_ERR_STR;
+                    break;
+                case Error::InvalidCredentials:
+                    errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
+                    errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
+                    break;
+                case Error::WrongState:
+                    errName = SIGNOND_WRONG_STATE_ERR_NAME;
+                    errMessage = SIGNOND_WRONG_STATE_ERR_STR;
+                    break;
+                case Error::OperationNotSupported:
+                    errName = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME;
+                    errMessage = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_STR;
+                    break;
+                case Error::NoConnection:
+                    errName = SIGNOND_NO_CONNECTION_ERR_NAME;
+                    errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
+                    break;
+                case Error::Network:
+                    errName = SIGNOND_NETWORK_ERR_NAME;
+                    errMessage = SIGNOND_NETWORK_ERR_STR;
+                    break;
+                case Error::Ssl:
+                    errName = SIGNOND_SSL_ERR_NAME;
+                    errMessage = SIGNOND_SSL_ERR_STR;
+                    break;
+                case Error::Runtime:
+                    errName = SIGNOND_RUNTIME_ERR_NAME;
+                    errMessage = SIGNOND_RUNTIME_ERR_STR;
+                    break;
+                case Error::SessionCanceled:
+                    errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
+                    errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
+                    break;
+                case Error::TimedOut:
+                    errName = SIGNOND_TIMED_OUT_ERR_NAME;
+                    errMessage = SIGNOND_TIMED_OUT_ERR_STR;
+                    break;
+                case Error::UserInteraction:
+                    errName = SIGNOND_USER_INTERACTION_ERR_NAME;
+                    errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
+                    break;
+                case Error::OperationFailed:
+                    errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
+                    errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
+                    break;
+                default:
+                    errName = SIGNOND_UNKNOWN_ERR_NAME;
+                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    break;
+            };
+        }
+
+        if(err > Error::UserErr) {
+            errName = SIGNOND_USER_ERROR_ERR_NAME;
+            errMessage = (QString::fromLatin1("%1:%2")).arg(err).arg(message);
+        }
+
+        QDBusMessage errReply;
+        errReply = msg.createErrorReply(errName, ( message.isEmpty() ? errMessage : message ));
         conn.send(errReply);
     }
 

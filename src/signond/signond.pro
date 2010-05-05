@@ -8,8 +8,7 @@ QT += core \
     network \
     dbus
 QT -= gui
-HEADERS += \
-    accesscodehandler.h \
+HEADERS += accesscodehandler.h \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
@@ -22,6 +21,7 @@ HEADERS += \
     signond-common.h \
     signondaemonadaptor.h \
     signondaemon.h \
+    signondisposable.h \
     signontrace.h \
     simdbusadaptor.h \
     pluginproxy.h \
@@ -40,6 +40,7 @@ SOURCES += accesscodehandler.cpp \
     signonauthsession.cpp \
     signonidentity.cpp \
     signondaemonadaptor.cpp \
+    signondisposable.cpp \
     signonui_interface.cpp \
     pluginproxy.cpp \
     main.cpp \
@@ -48,15 +49,16 @@ SOURCES += accesscodehandler.cpp \
     signonidentityadaptor.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
-
 CONFIG += thread \
     debug_and_release \
     build_all \
     link_pkgconfig
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
-DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
-LIBS += -lcreds -lcryptsetup
+DEFINES += QT_NO_CAST_TO_ASCII \
+    QT_NO_CAST_FROM_ASCII
+LIBS += -lcreds \
+    -lcryptsetup
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
 

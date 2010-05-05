@@ -31,9 +31,10 @@
 #include <QVariant>
 #include <QPointer>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "authsession.h"
 #include "identityinfo.h"
+#include "signonerror.h"
 
 #define SSO_NEW_IDENTITY 0
 
@@ -43,11 +44,12 @@ namespace SignOn {
 
     /*!
      * @class Identity
+     * @headerfile identity.h SignOn/Identity
+     *
      * Represents an database entry for a single identity.
      * Identity is client side presentation of a credential.
      */
-    SIGNON_EXPORT
-    class Identity : public QObject
+    class SIGNON_EXPORT Identity : public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(Identity)
@@ -59,6 +61,7 @@ namespace SignOn {
          * @enum IdentityError
          * Codes for errors that may be reported by Identity objects
          * @see Identity::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum IdentityError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -76,6 +79,9 @@ namespace SignOn {
         };
 
     protected:
+        /*!
+         * @internal
+         */
         Identity(const quint32 id = SSO_NEW_IDENTITY,
                  QObject *parent = 0);
 
@@ -166,7 +172,6 @@ namespace SignOn {
          * used to create a new identity using Identity::newIdentity()
          *
          * @param info the credentials to store
-         * @param secret secret key to store
          */
         void storeCredentials(const IdentityInfo &info = IdentityInfo());
 
@@ -224,14 +229,23 @@ namespace SignOn {
          * Emitted when an error occurs while performing an operation.
          * @param code the error code
          * @param message a description string for troubleshooting purposes
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(Identity::IdentityError code, const QString &message);
 
         /*!
-         * Emitted when the list of available mechanisms have been obtained
+         * Emitted when an error occurs while performing an operation.
+         * @see SignOn::Error.
+         *
+         * @param err The error object.
+         */
+        void error(const Error &err);
+
+        /*!
+         * Emitted when the list of available mechanisms has been obtained
          * for identity.
          *
-         * @param mechanisms a list of available mechanisms
+         * @param methods a list of available methods
          */
         void methodsAvailable(const QStringList &methods);
 

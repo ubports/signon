@@ -29,15 +29,16 @@
 
 #include "credentialsaccessmanager.h"
 
-#ifndef SIGNON_PLUGINS_DIR
-    #define SIGNON_PLUGINS_DIR QLatin1String("/usr/lib/signon")
+#ifndef SIGNOND_PLUGINS_DIR
+    #define SIGNOND_PLUGINS_DIR QLatin1String("/usr/lib/signon")
 #endif
 
-#ifndef SIGNON_PLUGIN_PREFIX
-    #define SIGNON_PLUGIN_PREFIX QLatin1String("lib")
+#ifndef SIGNOND_PLUGIN_PREFIX
+    #define SIGNOND_PLUGIN_PREFIX QLatin1String("lib")
 #endif
-#ifndef SIGNON_PLUGIN_SUFFIX
-    #define SIGNON_PLUGIN_SUFFIX QLatin1String("plugin.so")
+
+#ifndef SIGNOND_PLUGIN_SUFFIX
+    #define SIGNOND_PLUGIN_SUFFIX QLatin1String("plugin.so")
 #endif
 
 namespace SignonDaemonNS {
@@ -93,6 +94,15 @@ namespace SignonDaemonNS {
 
         bool init();
 
+        /*!
+         * Returns the number of seconds of inactivity after which identity
+         * objects might be automatically deleted.
+         */
+        int identityTimeout() const
+        {
+            return m_identityTimeout;
+        }
+
     public Q_SLOTS:
         bool initSecureStorage(const QByteArray &lockCode);
 
@@ -137,6 +147,8 @@ namespace SignonDaemonNS {
          * The instance of CAM
          * */
         CredentialsAccessManager *m_pCAMManager;
+
+        int m_identityTimeout;
     }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

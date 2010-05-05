@@ -27,11 +27,13 @@
 #include <QQueue>
 #include <QDBusInterface>
 
-#include "signoncommon.h"
 
-#define SSO_NORMALIZE_METHOD_SIGNATURE(method) \
+#define SIGNOND_NORMALIZE_METHOD_SIGNATURE(method) \
     DBusOperationQueueHandler::normalizedOperationSignature(method).data()
 
+/*
+ * @cond IMPL
+ */
 namespace SignOn {
 
     class DBusOperationQueueHandler
@@ -82,5 +84,9 @@ namespace SignOn {
     };
 
 } //SignOn
+
+/*
+ * @endcond IMPL
+ */
 
 #endif // DBUSOPERATIONQUEUEHANDLER_H

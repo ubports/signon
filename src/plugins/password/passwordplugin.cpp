@@ -21,7 +21,7 @@
  */
 
 #include "passwordplugin.h"
-#include "SignOn/signoncommon.h"
+#include "SignOn/signonplugincommon.h"
 
 using namespace SignOn;
 

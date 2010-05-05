@@ -33,6 +33,7 @@
 #include <QtCore/QVariant>
 #include <QtDBus/QtDBus>
 #include <QtDBus/QDBusPendingCall>
+
 #include "signond-common.h"
 
 /*

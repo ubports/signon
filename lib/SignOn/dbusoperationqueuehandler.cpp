@@ -27,9 +27,12 @@
 #include <QDebug>
 #include <QMetaType>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "identityinfo.h"
 
+/*
+ * @cond IMPL
+ */
 namespace SignOn {
 
     /* --------------- DBusOperationQueueHandler::Operation ---------------- */
@@ -187,3 +190,6 @@ namespace SignOn {
         return false;
     }
 } //SignOn
+/*
+ * @endcond IMPL
+ */

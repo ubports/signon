@@ -27,7 +27,9 @@
 #include <errno.h>
 
 #include <signal.h>
-#include "SignOn/signoncommon.h"
+
+#include <signond/signoncommon.h>
+
 #include "testsinglesignon.h"
 
 #include "ssotestclient.h"

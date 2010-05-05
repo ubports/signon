@@ -22,6 +22,7 @@
  */
 
 #include "signondaemonadaptor.h"
+#include "signondisposable.h"
 #include "accesscontrolmanager.h"
 
 namespace SignonDaemonNS {
@@ -43,26 +44,30 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
     {
+        SignonDisposable::destroyUnused();
+
         m_parent->registerNewIdentity(objectPath);
     }
 
     void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
     {
         QString errMsg;
-        QTextStream(&errMsg) << SSO_DAEMON_PERMISSION_DENIED_ERR_STR
+        QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
                              << "Method:"
                              << failedMethodName;
 
         QDBusMessage errReply =
                     parentDBusContext().message().createErrorReply(
-                                            SSO_DAEMON_PERMISSION_DENIED_ERR_NAME,
+                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
                                             errMsg);
-        SIGNON_BUS.send(errReply);
+        SIGNOND_BUS.send(errReply);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
     void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
+        SignonDisposable::destroyUnused();
+
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), id)) {
             securityErrorReply(__func__);
@@ -79,8 +84,10 @@ namespace SignonDaemonNS {
 
     QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id, const QString &type)
     {
+        SignonDisposable::destroyUnused();
+
         /* Access Control */
-        if (id != SSO_NEW_IDENTITY) {
+        if (id != SIGNOND_NEW_IDENTITY) {
             if (!AccessControlManager::isPeerAllowedToUseAuthSession(
                                             parentDBusContext(), id)) {
                 securityErrorReply(__func__);

@@ -26,6 +26,7 @@
 
 #include "SignOn/authservice.h"
 #include "SignOn/identity.h"
+#include "SignOn/signonerror.h"
 
 using namespace SignOn;
 
@@ -36,13 +37,14 @@ class TestAuthServiceResult: public QObject
 public :
     enum ResponseType
     {
-        Normal = 0,
-        Error,
-        Inexistent
+        NormalResp = 0,
+        ErrorResp,
+        InexistentResp
     };
 
 public:
     AuthService::ServiceError m_err;
+    Error::ErrorType m_error;
     QString m_errMsg;
 
     ResponseType m_responseReceived;
@@ -58,7 +60,8 @@ public:
     void reset();
 
 public Q_SLOTS:
-    void error(AuthService::ServiceError code, const QString& message);
+    void error(AuthService::ServiceError code, const QString& message);//deprecated
+    void error(const Error &err);
     void methodsAvailable(const QStringList &methods);
     void mechanismsAvailable(const QString &method, const QStringList &mechanisms);
     void identities(const QList<IdentityInfo> &identityList);

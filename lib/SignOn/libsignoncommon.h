@@ -24,6 +24,36 @@
 #ifndef LIBSIGNONCOMMON_H
 #define LIBSIGNONCOMMON_H
 
+#ifdef TRACE
+    #undef TRACE
+#endif
+
+#ifdef BLAME
+    #undef BLAME
+#endif
+
+#ifndef LIBSIGNON_TRACE
+    #define LIBSIGNON_TRACE
+#endif
+
+#ifdef LIBSIGNON_TRACE
+    #include <QDebug>
+
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#else
+    #define TRACE() if(1) ; else qDebug()
+    #define BLAME() if(1) ; else qDebug()
+#endif
+
+#if __GNUC__ >= 4
+    #define SIGNON_EXPORT __attribute__ ((visibility("default")))
+#endif
+
+#ifndef SIGNON_EXPORT
+    #define SIGNON_EXPORT
+#endif
+
 /*
    TODO - Add here a common data container for IdentityInfo,
           dbus register it and use it as qt dbus type

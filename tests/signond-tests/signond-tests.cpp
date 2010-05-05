@@ -22,11 +22,13 @@
  */
 
 #include "testpluginproxy.h"
+#include "timeouts.h"
 
 #ifdef CAM_UNIT_TESTS_FIXED
 #include "credentialsaccessmanagertest.h"
 #endif
 
+#include <QCoreApplication>
 #include <QtTest/QtTest>
 #include <QtCore>
 
@@ -34,17 +36,23 @@ class SignondTest : public QObject
 {
      Q_OBJECT
 
- private Q_SLOTS:
-
+private Q_SLOTS:
+     void runTimeoutTests();
      void runPluginProxyTests();
      void runCAMTests();
 
- private:
+public:
      TestPluginProxy testPluginProxy;
+     TimeoutsTest testTimeouts;
 #ifdef CAM_UNIT_TESTS_FIXED
      CredentialsAccessManagerTest testCAM;
 #endif
 };
+
+void SignondTest::runTimeoutTests()
+{
+    testTimeouts.runAllTests();
+}
 
 void SignondTest::runPluginProxyTests()
 {
@@ -53,11 +61,19 @@ void SignondTest::runPluginProxyTests()
 
 void SignondTest::runCAMTests()
 {
-#if CAM_UNIT_TESTS_FIXED
+#if !defined(CAM_UNIT_TESTS_FIXED)
+    QSKIP("This test requires fixes in CAM", SkipSingle);
+#else
     testCAM.runAllTests();
 #endif
 }
 
-QTEST_MAIN(SignondTest);
+int main(int argc, char **argv)
+{
+    QCoreApplication app(argc, argv);
+    SignondTest signondTest;
+    QTest::qExec(&signondTest, argc, argv);
+}
+
 #include "signond-tests.moc"
 

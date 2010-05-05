@@ -23,7 +23,48 @@
 #ifndef SIGNOND_COMMON_H_
 #define SIGNOND_COMMON_H_
 
-#include "SignOn/signoncommon.h"
+#include <signond/signoncommon.h>
+
+#ifdef TRACE
+    #undef TRACE
+#endif
+
+#ifdef BLAME
+    #undef BLAME
+#endif
+
+#include <QDebug>
+
+#ifndef SIGNOND_TRACE
+    #define SIGNOND_TRACE
+#endif
+
+#ifdef SIGNOND_TRACE
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+
+    #define SIGNOND_TRACE_FILE QLatin1String("signon_trace_file")
+    #define SIGNOND_TRACE_FILE_MAX_SIZE 256000 // 250 * 1024 bytes
+
+    #define SIGNOND_INITIALIZE_TRACE(_file_name_, _maxFileSize_) \
+        initializeTrace(_file_name_, _maxFileSize_);
+#else
+    #define TRACE() if(1) ; else qDebug()
+    #define BLAME() if(1) ; else qDebug()
+
+    #define SIGNOND_INITIALIZE_TRACE(_file_name_, _maxFileSize_)
+#endif //SIGNON_TRACE
+
+/*
+ * Idle timeout for remote identities and their plugin processes
+ * */
+#define SIGNOND_MAX_IDLE_TIME 300
+
+/*
+ * Signon UI DBUS defs
+ * */
+#define SIGNON_UI_SERVICE           QLatin1String("com.nokia.singlesignonui")
+#define SIGNON_UI_DAEMON_OBJECTPATH QLatin1String("/SignonUi")
+
 
 #endif // SIGNOND_COMMON_H_
-

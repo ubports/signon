@@ -27,17 +27,21 @@
 #include <QStringList>
 #include <QMap>
 
+#include "libsignoncommon.h"
 #include "identityinfo.h"
+#include "signonerror.h"
 
 namespace SignOn {
 
     /*!
      * @class AuthService
+     * @headerfile authservice.h SignOn/AuthService
+     *
      * Represents signond for client application.
      * The class is for managing identities.
      * Most applications can use this by using widgets from libSignOnUI.
      */
-    class AuthService : public QObject
+    class SIGNON_EXPORT AuthService : public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(AuthService)
@@ -49,6 +53,7 @@ namespace SignOn {
          * @enum ServiceError
          * Codes for errors that may be reported by AuthService objects.
          * @see AuthService::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum ServiceError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -82,8 +87,8 @@ namespace SignOn {
         {
         public:
             /*!
-             * Contructor creates an IdentityRegExp, as specified by regExp.
-             * @param regExp the regular expression as string.
+             * Contructor creates an IdentityRegExp, as specified by pattern.
+             * @param pattern the regular expression as string.
              */
             IdentityRegExp(const QString &pattern);
 
@@ -179,8 +184,17 @@ namespace SignOn {
          *
          * @param code error code
          * @param message error description
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(const AuthService::ServiceError code, const QString &message);
+
+        /*!
+         * Emitted when an error occurs while using the AuthService connection.
+         * @see SignOn::Error
+         *
+         * @param err The error object
+         */
+        void error(const Error &err);
 
         /*!
          * Emitted when the list of available authentication methods have been obtained

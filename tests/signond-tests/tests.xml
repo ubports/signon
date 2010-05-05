@@ -2,14 +2,27 @@
 <testdefinition version="0.1">
     <suite name="signond" domain="Accounts and SSO">
     <set description="signond:signond-tests" name="./signond-tests" feature="SSO CORE">
+       
         <case description="signond:signond-tests:runPluginProxyTests"
 	name="signond-tests-runPluginProxyTests">
             <step>/usr/bin/signond-tests runPluginProxyTests</step>
         </case>
+        
         <case description="signond:signond-tests:runCAMTests"
 	name="signond-tests-runCAMTests">
             <step>/usr/bin/signond-tests runCAMTests</step>
         </case>
+        
+        <case description="signond:signond-tests:runCAMTests"
+            name="signond-tests-runCAMTests">
+            <step>/usr/bin/signond-tests runTimeoutTests</step>
+        </case>
+        
+        <case description="signond:signond-tests:signonremoteplugin-test"
+	name="signond:signond-tests:signonremoteplugin-test">
+            <step>/usr/bin/signonremoteplugin-test.sh</step>
+        </case>
+        
         <environments>
         <scratchbox>true</scratchbox>
         <hardware>true</hardware>

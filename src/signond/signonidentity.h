@@ -31,6 +31,7 @@
 
 #include "signond-common.h"
 #include "signondaemon.h"
+#include "signondisposable.h"
 #include "signonidentityinfo.h"
 #include "credentialsaccessmanager.h"
 
@@ -43,7 +44,7 @@ namespace SignonDaemonNS {
      * Daemon side representation of identity.
      * @todo description.
      */
-     class SignonIdentity: public QObject, protected QDBusContext
+    class SignonIdentity: public SignonDisposable, protected QDBusContext
     {
         Q_OBJECT
         Q_CLASSINFO("D-Bus Interface", "com.nokia.singlesignon.SignonIdentity")
@@ -78,13 +79,9 @@ namespace SignonDaemonNS {
     Q_SIGNALS:
         void infoUpdated(int);
 
-    private Q_SLOTS:
-        void check4Idle();
-
     private:
-        SignonIdentity(quint32 id, SignonDaemon *parent);
+        SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
         bool init();
-        void subscribeWatchdog(SignonIdentity *subscriber);
         bool credentialsStored() const { return m_id > 0 ? true : false; }
 
     private:
@@ -92,7 +89,6 @@ namespace SignonDaemonNS {
         SignonUiAdaptor *m_signonui;
         SignonIdentityInfo *m_pInfo;
         SignonDaemon *m_pSignonDaemon;
-        QDateTime m_lastOperationTime;
 
     }; //class SignonDaemon
 

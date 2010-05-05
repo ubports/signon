@@ -28,11 +28,14 @@ class CredentialsAccessManagerTest : public QObject
 {
     Q_OBJECT
 
+private slots:
+
 #if defined(SSO_CI_TESTMANAGEMENT)
     void runAllTests();
 #else
     private slots:
 #endif
+
     void initTestCase();
     void cleanupTestCase();
 

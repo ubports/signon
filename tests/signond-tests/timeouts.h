@@ -1,7 +1,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2010 Nokia Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
  *
@@ -19,36 +19,47 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-#ifndef SIGNONPLUGIN_H
-#define SIGNONPLUGIN_H
 
-#include <QtCore/qobject.h>
-#include <QtCore/qpointer.h>
-#include <QtCore/qplugin.h>
+#ifndef TIMEOUTS_TEST_H
+#define TIMEOUTS_TEST_H
 
-#include <QVariantMap>
-#include "SignOn/sessiondata.h"
-#include "SignOn/uisessiondata.h"
-#include "SignOn/signoncommon.h"
+#include <SignOn/Identity>
 
-enum PluginOperation {
-    PLUGIN_OP_TYPE = 1,
-    PLUGIN_OP_MECHANISMS,
-    PLUGIN_OP_PROCESS,
-    PLUGIN_OP_PROCESS_UI,
-    PLUGIN_OP_REFRESH,
-    PLUGIN_OP_CANCEL,
-    PLUGIN_OP_STOP,
-    PLUGIN_OP_LAST
+#include <QtTest/QtTest>
+#include <QtCore>
+
+using namespace SignOn;
+
+class TimeoutsTest: public QObject
+{
+    Q_OBJECT
+
+public Q_SLOTS:
+    void credentialsStored(const quint32 id);
+    void identityError(Identity::IdentityError code, const QString &message);
+
+#if defined(SSO_CI_TESTMANAGEMENT)
+     void runAllTests();
+#endif
+
+private Q_SLOTS:
+    void initTestCase();
+    void cleanupTestCase();
+    void init();
+
+    void identityTimeout();
+
+
+signals:
+    void finished();
+
+private:
+    bool triggerDisposableCleanup();
+    bool identityAlive(const QString &path);
+
+    QProcess *daemonProcess;
+    bool completed;
 };
 
-enum PluginResponse {
-    PLUGIN_RESPONSE_RESULT = 1,
-    PLUGIN_RESPONSE_ERROR,
-    PLUGIN_RESPONSE_SIGNAL,
-    PLUGIN_RESPONSE_UI,
-    PLUGIN_RESPONSE_REFRESHED,
-    PLUGIN_RESPONSE_LAST
-};
+#endif // TIMEOUTS_TEST_H
 
-#endif // SIGNONPLUGIN_H

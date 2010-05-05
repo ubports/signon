@@ -29,18 +29,21 @@
 #include <QByteArray>
 #include <QVariant>
 
-#include "signoncommon.h"
+#include "libsignoncommon.h"
 #include "sessiondata.h"
+#include "signonerror.h"
 
 
 namespace SignOn {
 
     /*!
      * @class AuthSession
+     * @headerfile authsession.h SignOn/AuthSession
+     *
      * Represents a session to authentication plugin/server.
      * AuthSession is used to maintain connection to authentication plugin.
      */
-    class AuthSession: public QObject
+    class SIGNON_EXPORT AuthSession: public QObject
     {
         Q_OBJECT
         Q_DISABLE_COPY(AuthSession)
@@ -53,6 +56,7 @@ namespace SignOn {
          * @enum AuthSessionError
          * Codes for errors that may be reported by AuthSession objects
          * @see AuthSession::error()
+         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
          */
         enum AuthSessionError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -97,6 +101,9 @@ namespace SignOn {
         };
 
     protected:
+        /*!
+         * @internal
+         */
         AuthSession(quint32 id, const QString &methodName, QObject *parent = 0);
         ~AuthSession();
 
@@ -189,12 +196,10 @@ namespace SignOn {
         /*!
          * Sign message by using secret stored into identity.
          * This convenience interface to do special challenge to signature service.
-         * When signing is completed, signal signedMessage() is emitted.
-         * If the operation fails, a signal error() is emitted.
-         *
-         * @param message string to be signed
          * @param params extra information for signing.
          * @param mechanism mechanism to use for signing.
+         *
+         * @deprecated
          */
         void signMessage(const SessionData &params, const QString &mechanism = 0) {
             process(params, mechanism);
@@ -205,8 +210,17 @@ namespace SignOn {
          * Emitted when an error occurs while performing an operation.
          * @param code the error code
          * @param message a description string for troubleshooting purposes
+         * @deprecated This method is deprecated. Use error(const Error &err), instead.
          */
         void error(AuthSession::AuthSessionError code, const QString &message);
+
+        /*!
+         * Emitted when an error occurs while performing an operation.
+         * @see SignOn::Error.
+         *
+         * @param err The error object.
+         */
+        void error(const Error &err);
 
         /*!
          * Emitted when the list of available mechanisms have been obtained
@@ -231,8 +245,10 @@ namespace SignOn {
         void response(const SessionData &sessionData);
 
         /*!
-         *
+         * Provides information about the state of the authentication
+         * request.
          * @param state is the current state of the authentication request.
+         * @param message a textual description of the state.
          */
         void stateChanged(AuthSession::AuthSessionState state, const QString &message);
 

@@ -33,9 +33,7 @@
 #include <QDBusInterface>
 #include <QQueue>
 
-#include "signoncommon.h"
 #include "authservice.h"
-#include "dbusoperationqueuehandler.h"
 
 namespace SignOn {
 
@@ -46,7 +44,6 @@ namespace SignOn {
      * AuthService class implementation.
      * @sa AuthService
      */
-    SIGNON_EXPORT
     class AuthServiceImpl : public QObject
     {
         Q_OBJECT

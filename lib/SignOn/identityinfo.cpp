@@ -23,6 +23,7 @@
 
 #include <QVariant>
 
+#include "libsignoncommon.h"
 #include "identityinfo.h"
 #include "identityinfoimpl.h"
 #include "identity.h"
@@ -35,7 +36,7 @@ namespace SignOn {
         qRegisterMetaType<IdentityInfo>("SignOn::IdentityInfo");
 
         if (qMetaTypeId<IdentityInfo>() < QMetaType::User)
-            qCritical() << "IdentityInfo::IdentityInfo() - IdentityInfo meta type not registered.";
+            BLAME() << "IdentityInfo::IdentityInfo() - IdentityInfo meta type not registered.";
 
         impl->m_empty = true;
         impl->m_id = 0;

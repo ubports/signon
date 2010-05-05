@@ -24,10 +24,13 @@
 #include <QDBusConnectionInterface>
 #include <QTimer>
 
+#include <signond/signoncommon.h>
+
+#include "libsignoncommon.h"
 #include "identityinfo.h"
 #include "authserviceimpl.h"
-#include "libsignoncommon.h"
 #include "authservice.h"
+#include "signonerror.h"
 
 
 namespace SignOn {
@@ -54,14 +57,18 @@ namespace SignOn {
 
     /* ----------------------- AuthServiceImpl ----------------------- */
 
+    /*
+         !!! TODO remove deprecated error signals emition when the time is right. !!!
+         *** One month after release of new error management
+    */
     AuthServiceImpl::AuthServiceImpl(AuthService *parent)
         : m_parent(parent)
     {
         TRACE();
-        m_DBusInterface = new QDBusInterface(SIGNON_SERVICE,
-                                             SIGNON_DAEMON_OBJECTPATH,
-                                             SIGNON_DAEMON_INTERFACE,
-                                             SIGNON_BUS,
+        m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
+                                             SIGNOND_DAEMON_OBJECTPATH,
+                                             SIGNOND_DAEMON_INTERFACE,
+                                             SIGNOND_BUS,
                                              this);
         if (!m_DBusInterface->isValid())
             BLAME() << "Signon Daemon not started. Start on demand "
@@ -86,10 +93,15 @@ namespace SignOn {
                                                 this,
                                                 SLOT(queryMethodsReply(const QStringList&)),
                                                 SLOT(errorReply(const QDBusError &)));
-        if (!result)
+        if (!result) {
             emit m_parent->error(
                     AuthService::InternalCommunicationError,
-                    SSO_DAEMON_INTERNAL_COMMUNICATION_ERR_STR);
+                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        }
     }
 
     void AuthServiceImpl::queryMechanisms(const QString &method)
@@ -107,12 +119,17 @@ namespace SignOn {
                                                 this,
                                                 SLOT(queryMechanismsReply(const QStringList &)),
                                                 SLOT(errorReply(const QDBusError &)));
-        if (!result)
+        if (!result) {
             emit m_parent->error(
                     AuthService::InternalCommunicationError,
-                    SSO_DAEMON_INTERNAL_COMMUNICATION_ERR_STR);
-        else
+                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        } else {
             m_methodsForWhichMechsWereQueried.enqueue(method);
+        }
     }
 
     void AuthServiceImpl::queryIdentities(const AuthService::IdentityFilter &filter)
@@ -157,10 +174,15 @@ namespace SignOn {
                                                 this,
                                                 SLOT(queryIdentitiesReply(const QList<QVariant> &)),
                                                 SLOT(errorReply(const QDBusError &)));
-        if (!result)
+        if (!result) {
             emit m_parent->error(
                     AuthService::InternalCommunicationError,
-                    SSO_DAEMON_INTERNAL_COMMUNICATION_ERR_STR);
+                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        }
     }
 
     void AuthServiceImpl::clear()
@@ -175,10 +197,15 @@ namespace SignOn {
                                                 this,
                                                 SLOT(clearReply()),
                                                 SLOT(errorReply(const QDBusError &)));
-        if (!result)
+        if (!result) {
             emit m_parent->error(
                     AuthService::InternalCommunicationError,
-                    SSO_DAEMON_INTERNAL_COMMUNICATION_ERR_STR);
+                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        }
     }
 
     bool AuthServiceImpl::callWithTimeout(const QString &operation,
@@ -196,7 +223,7 @@ namespace SignOn {
                                                               this,
                                                               replySlot,
                                                               SLOT(errorReply(const QDBusError&)),
-                                                              SIGNON_MAX_TIMEOUT);
+                                                              SIGNOND_MAX_TIMEOUT);
     }
 
     void AuthServiceImpl::queryMethodsReply(const QStringList &methods)
@@ -266,100 +293,37 @@ namespace SignOn {
         TRACE();
 
         /* Signon specific errors */
-        if (err.name() == SSO_DAEMON_UNKNOWN_ERR_NAME) {
+        if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
             emit m_parent->error(AuthService::UnknownError, err.message());
+            emit m_parent->error(Error(Error::Unknown, err.message()));
             return;
-        } else if (err.name() == SSO_DAEMON_INTERNAL_SERVER_ERR_NAME) {
+        } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
             emit m_parent->error(AuthService::InternalServerError, err.message());
+            emit m_parent->error(Error(Error::InternalServer, err.message()));
             return;
-        } else if (err.name() == SSO_DAEMON_METHOD_NOT_KNOWN_ERR_NAME) {
+        } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {
             emit m_parent->error(AuthService::MethodNotKnownError, err.message());
+            emit m_parent->error(Error(Error::MethodNotKnown, err.message()));
             return;
-        } else if (err.name() == SSO_DAEMON_INVALID_QUERY_ERR_NAME) {
+        } else if (err.name() == SIGNOND_INVALID_QUERY_ERR_NAME) {
             emit m_parent->error(AuthService::InvalidQueryError, err.message());
+            emit m_parent->error(Error(Error::InvalidQuery, err.message()));
             return;
-        } else if (err.name() == SSO_DAEMON_PERMISSION_DENIED_ERR_NAME) {
+        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
             emit m_parent->error(AuthService::PermissionDeniedError, err.message());
+            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
         }
 
         /* Qt DBUS specific errors */
-        switch (err.type()) {
-        case QDBusError::Other:
+        if (err.type() != QDBusError::NoError) {
             emit m_parent->error(AuthService::UnknownError, err.message());
+            emit m_parent->error(Error(Error::InternalCommunication, err.message()));
             return;
-        case QDBusError::Failed:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NoMemory:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::ServiceUnknown:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NoReply:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::BadAddress:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NotSupported:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::LimitsExceeded:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::AccessDenied:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NoServer:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::Timeout:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NoNetwork:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::AddressInUse:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::Disconnected:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::InvalidArgs:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::UnknownMethod:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::TimedOut:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::InvalidSignature:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::UnknownInterface:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::InternalError:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::UnknownObject:
-            emit m_parent->error(AuthService::UnknownError, err.message());
-            return;
-        case QDBusError::NoError:
-            emit m_parent->error(
-                    AuthService::UnknownError,
-                    QLatin1String("DBus replyes no error occurred, "
-                                  "still error reply was sent."));
-            return;
-        default:
-            break;
         }
 
-        emit m_parent->error(AuthService::UnknownError,
-                             QLatin1String("Unhandled error! This should not happen."));
+        emit m_parent->error(AuthService::UnknownError, err.message());
+        emit m_parent->error(Error(Error::Unknown, err.message()));
     }
 
 } //namespace SignOn
