@@ -244,6 +244,8 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
         state = SaslData::CONTINUE;
     } else {
         state = SaslData::DONE;
+        sasl_dispose(&d->m_conn);
+        d->m_conn = NULL;
     }
 
     //set state into info
