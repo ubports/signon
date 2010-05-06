@@ -56,10 +56,12 @@ public:
 
         if (m_conn) {
             sasl_dispose(&m_conn);
+            m_conn = NULL;
         }
-        if (m_psecret)
+        if (m_psecret) {
             free(m_psecret);
-        m_psecret = NULL;
+            m_psecret = NULL;
+        }
     }
 
     sasl_callback_t m_callbacks[N_CALLBACKS];
@@ -92,14 +94,10 @@ SaslPlugin::~SaslPlugin()
 {
     TRACE();
 
-    if (d->m_conn) {
-        sasl_dispose(&(d->m_conn));
-        d->m_conn = NULL;
-    }
-
-    sasl_done();
     delete d;
     d = 0;
+
+    sasl_done();
 }
 
 QString SaslPlugin::type() const
