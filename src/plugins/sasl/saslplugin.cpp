@@ -156,14 +156,14 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
     }
 
     //check state
-    if (d->m_input.state() == PLUGIN_STATE_CONTINUE && !d->m_conn) {
+    if (d->m_input.state() == SaslData::CONTINUE && !d->m_conn) {
         TRACE() << "init not done for CONTINUE";
         emit error(PLUGIN_ERROR_INVALID_STATE);
         return;
     }
 
     //initial connection
-    if (d->m_input.state() != PLUGIN_STATE_CONTINUE) {
+    if (d->m_input.state() != SaslData::CONTINUE) {
         res = sasl_client_new(d->m_input.Service().toUtf8().constData(),
                               d->m_input.Fqdn().toUtf8().constData(),
                               d->m_input.IpLocal().toUtf8().constData(),
@@ -239,11 +239,11 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
     }
 
     //Negotiation complete
-    PluginState state;
+    SaslData::State state;
     if (res == SASL_CONTINUE) {
-        state = PLUGIN_STATE_CONTINUE;
+        state = SaslData::CONTINUE;
     } else {
-        state = PLUGIN_STATE_DONE;
+        state = SaslData::DONE;
     }
 
     //set state into info

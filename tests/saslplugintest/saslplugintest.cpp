@@ -150,7 +150,7 @@ void SaslPluginTest::testPluginProcess()
     QVERIFY(m_error == PLUGIN_ERROR_MISSING_DATA);
 
     //try with wron state
-    info.setstate(PLUGIN_STATE_CONTINUE);
+    info.setstate(SaslData::CONTINUE);
     info.setUserName(QString("test"));
     m_testPlugin->process(info, QString("ANONYMOUS"));
     m_loop.exec();
