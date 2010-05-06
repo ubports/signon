@@ -23,6 +23,7 @@
 
 #include "testpluginproxy.h"
 #include "timeouts.h"
+#include "backuptest.h"
 
 #ifdef CAM_UNIT_TESTS_FIXED
 #include "credentialsaccessmanagertest.h"
@@ -40,10 +41,12 @@ private Q_SLOTS:
      void runTimeoutTests();
      void runPluginProxyTests();
      void runCAMTests();
+     void runBackupTests();
 
 public:
      TestPluginProxy testPluginProxy;
      TimeoutsTest testTimeouts;
+     TestBackup testBackup;
 #ifdef CAM_UNIT_TESTS_FIXED
      CredentialsAccessManagerTest testCAM;
 #endif
@@ -66,6 +69,11 @@ void SignondTest::runCAMTests()
 #else
     testCAM.runAllTests();
 #endif
+}
+
+void SignondTest::runBackupTests()
+{
+    testBackup.runAllTests();
 }
 
 int main(int argc, char **argv)

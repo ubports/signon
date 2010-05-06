@@ -40,29 +40,29 @@ static bool was_unix_signal = false;
 
 void signal_handler(int)
 {
-	if (!was_unix_signal)
-	{
-		was_unix_signal = true;
-		QCoreApplication::instance()->quit();
-	}
-	else
-		exit(0);
+    if (!was_unix_signal)
+    {
+        was_unix_signal = true;
+        QCoreApplication::instance()->quit();
+    }
+    else
+        exit(0);
 }
 
 void installSigHandlers()
 {
-	was_unix_signal =0;
+    was_unix_signal =0;
 
-	struct sigaction handler;
+    struct sigaction handler;
 
-	memset(&handler, 0, sizeof(handler));
+    memset(&handler, 0, sizeof(handler));
 
-	handler.sa_handler = signal_handler;
+    handler.sa_handler = signal_handler;
 
-	sigaction(SIGTERM, &handler, NULL);
-	sigaction(SIGINT, &handler, NULL);
-	sigaction(SIGKILL, &handler, NULL);
-	sigaction(SIGSTOP, &handler, NULL);
+    sigaction(SIGTERM, &handler, NULL);
+    sigaction(SIGINT, &handler, NULL);
+    sigaction(SIGKILL, &handler, NULL);
+    sigaction(SIGSTOP, &handler, NULL);
 }
 
 
@@ -76,12 +76,10 @@ int main(int argc, char *argv[])
     SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
 
     SignonDaemon* daemon = new SignonDaemon(&app);
-
-    if (!daemon->init())
-    {
+    bool startedForBackup = app.arguments().contains(QLatin1String("-backup"));
+    if (!daemon->init(startedForBackup)) {
         qCritical() << "Signon daemon could not start.";
-        return 0;
-    }
-    else
+        return 1;
+    } else
         return app.exec();
 }
