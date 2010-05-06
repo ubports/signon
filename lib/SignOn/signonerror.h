@@ -106,7 +106,7 @@ namespace SignOn {
          * @param type The error's type.
          * @param message The error's message.
          */
-        Error(int type, const QString &message) : m_type(type), m_message(message)
+        Error(int type, const QString &message = QString()) : m_type(type), m_message(message)
             { registerType(); }
 
         /*!
