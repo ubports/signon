@@ -48,7 +48,6 @@ public:
         m_secprops.min_ssf = 0;
         m_secprops.security_flags = 0;
         m_psecret = NULL;
-        m_state = PLUGIN_STATE_INIT;
     }
 
     ~Private() {
@@ -73,7 +72,6 @@ public:
     QByteArray m_username;
     QByteArray m_authname;
     QByteArray m_realm;
-    uint m_state;
 };
 
 SaslPlugin::SaslPlugin(QObject *parent)
@@ -241,14 +239,15 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
     }
 
     //Negotiation complete
+    PluginState state;
     if (res == SASL_CONTINUE) {
-        d->m_state = PLUGIN_STATE_CONTINUE;
+        state = PLUGIN_STATE_CONTINUE;
     } else {
-        d->m_state = PLUGIN_STATE_DONE;
+        state = PLUGIN_STATE_DONE;
     }
 
     //set state into info
-    response.setstate(d->m_state);
+    response.setstate(state);
     emit result(response);
     return;
 }
