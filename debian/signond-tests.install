@@ -1,3 +1,4 @@
 usr/bin/signond-tests
+usr/bin/signonremoteplugin-test.sh
 usr/share/signond-tests/*
 
