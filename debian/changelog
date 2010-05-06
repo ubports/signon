@@ -1,5 +1,6 @@
 signon (0.2) unstable; urgency=low
 
+  * Implemented: SWP#ASSOH-49, SWP#ASSOH-50
   * Fixes: NB#164518 -  signond-tests-runPluginProxyTests FAILED
 
  -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Wed, 05 May 2010 13:50:47 +0300
