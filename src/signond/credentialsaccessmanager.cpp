@@ -49,7 +49,7 @@ using namespace SignonDaemonNS;
 
 CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String("signon.db")),
-          m_useEncryption(true),
+          m_useEncryption(false), //TODO this need to be set true when encryption is ready
           m_dbFileSystemPath(QLatin1String("/home/user/signonfs")),
           m_fileSystemType(QLatin1String("ext3")),
           m_fileSystemSize(4)

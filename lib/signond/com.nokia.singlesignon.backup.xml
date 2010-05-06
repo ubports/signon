@@ -1,0 +1,21 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="com.nokia.backupclient">
+	<method name="prestart">
+		<arg name="result" type="b" direction="out"/>
+	</method>	
+        <method name="backup">
+            <arg name="selectedCategories" type="as" direction="in"/>
+            <arg name="result" type="y" direction="out"/>
+        </method>
+        <method name="restore">
+            <arg name="selectedCategories" type="as" direction="in"/>
+            <arg name="productName" type="s" direction="in"/>
+            <arg name="restoredFilePaths" type="as" direction="in"/>
+            <arg name="result" type="y" direction="out"/>
+        </method>
+	<method name="close">
+	    <arg name="result" type="b" direction="out"/>
+	</method>
+    </interface>
+</node>

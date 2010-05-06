@@ -161,7 +161,17 @@ void CredentialsAccessManagerTest::deleteCredentialsSystem()
     //TODO
     TEST_DONE
 }
-
-#if !defined(SSO_CI_TESTMANAGEMENT)
+#if defined(SSO_CI_TESTMANAGEMENT)
+    void CredentialsAccessManagerTest::runAllTests()
+    {
+        initTestCase();
+        createCredentialsSystem();
+        openCredentialsSystem();
+        testCredentialsDatabase();
+        closeCredentialsSystem();
+        deleteCredentialsSystem();
+        cleanupTestCase();
+    }
+#else
     QTEST_MAIN(CredentialsAccessManagerTest)
 #endif
