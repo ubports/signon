@@ -3,4 +3,5 @@ usr/bin/signonpluginprocess
 
 # TODO: the folder of authentication plugins must be changed to: 
 usr/share/dbus-1/services/com.nokia.singlesignon.service
-
+usr/share/dbus-1/services/com.nokia.singlesignon.backup.service
+usr/share/backup-framework/applications/singlesignon.conf
