@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.nokia.singlesignon.backup
+Exec=/usr/bin/signond -backup
