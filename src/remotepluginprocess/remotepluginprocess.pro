@@ -23,4 +23,8 @@ CONFIG += \
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti
 
+#DEFINES += QT_NO_CAST_TO_ASCII \
+#    QT_NO_CAST_FROM_ASCII
+DEFINES += SIGNON_PLUGIN_TRACE
+
 include( ../../common-installs-config.pri )
