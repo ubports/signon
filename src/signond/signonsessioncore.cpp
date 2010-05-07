@@ -403,14 +403,25 @@ namespace SignonDaemonNS {
                     errMessage = SIGNOND_RUNTIME_ERR_STR;
                     errName = SIGNOND_RUNTIME_ERR_NAME;
                     break;
+                case PLUGIN_ERROR_USER_INTERACTION:
+                    errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
+                    errName = SIGNOND_USER_INTERACTION_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_CANCELED:
+                    errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
+                    errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
+                    break;
                 default:
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    if (message.isEmpty())
+                        errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    else
+                        errMessage = message;
                     errName = SIGNOND_UNKNOWN_ERR_NAME;
                     break;
             };
         }
 
-        if(err > Error::AuthSessionErr && err < Error::UserErr) {
+        if (Error::AuthSessionErr < err && err < Error::UserErr) {
             switch(err) {
                 case Error::MechanismNotAvailable:
                     errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
@@ -465,8 +476,11 @@ namespace SignonDaemonNS {
                     errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                     break;
                 default:
+                    if (message.isEmpty())
+                        errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    else
+                        errMessage = message;
                     errName = SIGNOND_UNKNOWN_ERR_NAME;
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
                     break;
             };
         }
