@@ -14,7 +14,6 @@ INCLUDEPATH += . \
     $${TOP_SRC_DIR}/src/plugins \
 
 CONFIG += thread \
-    debug_and_release \
     build_all \
     link_pkgconfig
 

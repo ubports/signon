@@ -16,9 +16,9 @@ INCLUDEPATH += . \
                $$TOP_SRC_DIR/src/signond \
                $$TOP_SRC_DIR/lib/plugins
 
-CONFIG +=  debug_and_release \
-           build_all \
-           link_pkgconfig
+CONFIG += \
+    build_all \
+    link_pkgconfig
 
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti

@@ -33,12 +33,6 @@
 class SaslPluginTest;
 namespace SaslPluginNS {
 
-enum PluginState {
-    PLUGIN_STATE_INIT = 0,
-    PLUGIN_STATE_CONTINUE,
-    PLUGIN_STATE_DONE
-};
-
 /*!
  * @class SaslPlugin
  * SASL authentication plugin.

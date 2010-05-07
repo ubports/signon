@@ -42,7 +42,6 @@ QT += core \
 QT -= gui
 
 CONFIG += qdbus \
-    debug_and_release \
     build_all \
     link_pkgconfig
 QMAKE_CXXFLAGS += -fno-exceptions \
