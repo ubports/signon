@@ -57,7 +57,6 @@ SOURCES += accesscodehandler.cpp \
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
 CONFIG += thread \
-    debug_and_release \
     build_all \
     link_pkgconfig
 QMAKE_CXXFLAGS += -fno-exceptions \

@@ -5,7 +5,6 @@ DESTDIR = lib/signon
 QT += core
 
 CONFIG += plugin \
-        debug_and_release \
         build_all \
         warn_on \
         link_pkgconfig
