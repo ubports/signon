@@ -1,3 +1,11 @@
+signon (0.3-1) unstable; urgency=low
+
+  * Remove debug_and_release build option.
+  * Add backup functionality.
+  * Fixed memory leak in SASL plugin.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Fri, 07 May 2010 15:46:03 +0300
+
 signon (0.2) unstable; urgency=low
 
   * Implemented: SWP#ASSOH-49, SWP#ASSOH-50
