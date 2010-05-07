@@ -37,7 +37,11 @@ namespace SignOn {
      * @attention All this class' definitions must be inline.
      */
     class SIGNON_EXPORT Error
+#ifdef SIGNON_INTERNAL
+    : public QObject { Q_OBJECT
+#else
     {
+#endif
     public:
         /*!
          * @enum ErrorType Error codes for all the Signon by default supported errors.
