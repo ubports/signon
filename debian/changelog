@@ -1,3 +1,9 @@
+signon (0.4-1) unstable; urgency=low
+
+  * Fixes: NB#166151 - SignOn::AuthSession::error signal emitted with wrong error code on cancel of authentication
+
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Mon, 10 May 2010 09:58:03 +0300
+
 signon (0.3-1) unstable; urgency=low
 
   * Remove debug_and_release build option.
