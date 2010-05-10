@@ -78,6 +78,7 @@ namespace SignOn {
                                             necessary information. */
             InvalidCredentials,        /**< The supplied credentials are invalid for
                                             the mechanism implementation. */
+            NotAuthorized,             /**< Authorization failed. */
             WrongState,                /**< An operation method has been called in
                                             a wrong state. */
             OperationNotSupported,     /**< The operation is not supported by the
