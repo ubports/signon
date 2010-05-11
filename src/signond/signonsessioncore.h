@@ -152,8 +152,7 @@ namespace SignonDaemonNS {
 
         QDBusPendingCallWatcher *m_watcher;
 
-        //TODO: rename it to m_cancelId;
-        QString m_cancelled;
+        QString m_canceled;
         QDateTime m_lastOperationTime;
 
         int m_refCount;

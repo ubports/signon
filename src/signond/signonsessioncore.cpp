@@ -276,7 +276,7 @@ namespace SignonDaemonNS {
 
         if (requestIndex < m_listOfRequests.size()) {
             if (requestIndex == 0) {
-                m_cancelled = cancelKey;
+                m_canceled = cancelKey;
                 m_plugin->cancel();
 
                 if (m_watcher && !m_watcher->isFinished()) {
@@ -287,8 +287,8 @@ namespace SignonDaemonNS {
             }
 
             /*
-             * We must let to the m_listOfRequests to have the cancelled request data
-             * in order to delay the next request execution until the actual cancellation
+             * We must let to the m_listOfRequests to have the canceled request data
+             * in order to delay the next request execution until the actual cancelation
              * will happen. We will know about that precisely: plugin must reply via
              * resultSlot or via errorSlot.
              * */
@@ -296,8 +296,8 @@ namespace SignonDaemonNS {
                             m_listOfRequests.head() :
                             m_listOfRequests.takeAt(requestIndex)));
 
-            QDBusMessage errReply = rd.m_msg.createErrorReply(QLatin1String("com.nokia.singlesignon.AuthSessionError.CancelledError"),
-                                                              QLatin1String("process is cancelled"));
+            QDBusMessage errReply = rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
+                                                              SIGNOND_SESSION_CANCELED_ERR_STR);
             rd.m_conn.send(errReply);
             TRACE() << "Size of the queue is " << m_listOfRequests.size();
         }
@@ -504,7 +504,7 @@ namespace SignonDaemonNS {
 
         RequestData rd = m_listOfRequests.dequeue();
 
-        if (cancelKey != m_cancelled) {
+        if (cancelKey != m_canceled) {
             QVariantList arguments;
             QVariantMap data2 = filterVariantMap(data);
 
@@ -515,7 +515,7 @@ namespace SignonDaemonNS {
 
             TRACE() << "sending reply: " << arguments;
             rd.m_conn.send(rd.m_msg.createReply(arguments));
-            m_cancelled = QString();
+            m_canceled = QString();
 
             if (m_watcher && !m_watcher->isFinished()) {
                 m_signonui->cancelUiRequest(rd.m_cancelKey);
@@ -524,7 +524,7 @@ namespace SignonDaemonNS {
             }
         }
 
-        m_cancelled = QString();
+        m_canceled = QString();
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
         m_lastOperationTime = QDateTime::currentDateTime();
     }
@@ -533,7 +533,7 @@ namespace SignonDaemonNS {
     {
         TRACE();
 
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             QString uiRequestId = m_listOfRequests.head().m_cancelKey;
 
             if (m_watcher) {
@@ -566,7 +566,7 @@ namespace SignonDaemonNS {
     {
         TRACE();
 
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             QString uiRequestId = m_listOfRequests.head().m_cancelKey;
 
             if (m_watcher) {
@@ -595,7 +595,7 @@ namespace SignonDaemonNS {
 
         RequestData rd = m_listOfRequests.dequeue();
 
-        if (cancelKey != m_cancelled) {
+        if (cancelKey != m_canceled) {
             replyError(rd.m_conn, rd.m_msg, err, message);
 
             if (m_watcher && !m_watcher->isFinished()) {
@@ -605,14 +605,14 @@ namespace SignonDaemonNS {
             }
         }
 
-        m_cancelled = QString();
+        m_canceled = QString();
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
         m_lastOperationTime = QDateTime::currentDateTime();
     }
 
     void SignonSessionCore::stateChangedSlot(const QString &cancelKey, int state, const QString &message)
     {
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             RequestData rd = m_listOfRequests.head();
             emit stateChanged(rd.m_cancelKey, (int)state, message);
         }
@@ -704,7 +704,7 @@ namespace SignonDaemonNS {
 
         TRACE() << m_listOfRequests.head().m_params;
 
-        if (m_listOfRequests.head().m_cancelKey != m_cancelled) {
+        if (m_listOfRequests.head().m_cancelKey != m_canceled) {
             if (isRequestToRefresh) {
                 TRACE() << "REFRESH IS REQUIRED";
 

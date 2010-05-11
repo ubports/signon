@@ -318,18 +318,18 @@ namespace SignOn {
         }
 
         if (!m_isBusy && (!m_operationQueueHandler.queueContainsOperation(SIGNOND_SESSION_PROCESS_METHOD))) {
-            qCritical() << "no requests to be cancelled";
+            qCritical() << "no requests to be canceled";
             return;
         }
 
         if (!m_DBusInterface) {
             m_operationQueueHandler.removeOperation(SIGNOND_SESSION_PROCESS_METHOD);
             emit m_parent->error(AuthSession::CanceledError,
-                                 QLatin1String("Process is cancelled."));
+                                 QLatin1String("Process is canceled."));
 
             emit m_parent->error(
                     Error(Error::SessionCanceled,
-                          QLatin1String("Process is cancelled.")));
+                          QLatin1String("Process is canceled.")));
 
         } else {
             TRACE() << "Sending cancel-request";
@@ -432,16 +432,16 @@ namespace SignOn {
             errCode = Error::UserInteraction;
         } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
             errCodeDeprecated = AuthSession::UnknownError;
-
             //the error message comes in as "code:message"
             bool ok = false;
             errCode = err.message().section(QLatin1Char(':'), 0, 0).toInt(&ok);
             errMessage = err.message().section(QLatin1Char(':'), 1, 1);
-            if(!ok)
+            if (!ok)
                 errCode = Error::Unknown;
-            if(errMessage.isEmpty())
-                errMessage = err.message();
         }
+
+        if (errMessage.isEmpty())
+            errMessage = err.message();
 
         emit m_parent->error(errCodeDeprecated, err.message());
         emit m_parent->error(Error(errCode, errMessage));
