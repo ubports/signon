@@ -31,7 +31,7 @@ using namespace SignOn;
 namespace SsoTestPluginNS {
 
     static QMutex mutex;
-    static bool is_cancelled = false;
+    static bool is_canceled = false;
 
     SsoTestPlugin::SsoTestPlugin(QObject *parent) : AuthPluginInterface(parent)
     {
@@ -55,7 +55,7 @@ namespace SsoTestPluginNS {
     {
         TRACE();
         QMutexLocker locker(&mutex);
-        is_cancelled = true;
+        is_canceled = true;
     }
     /*
      * dummy plugin is used for testing purposes only
@@ -82,16 +82,16 @@ namespace SsoTestPluginNS {
         outData.setRealm("testRealm_after_test");
 
         for (int i = 0; i < 10; i++)
-            if (!is_cancelled) {
+            if (!is_canceled) {
                 TRACE() << "Signal is sent";
                 emit statusChanged(PLUGIN_STATE_WAITING, QLatin1String("hello from the test plugin"));
                 usleep(0.1 * 1000000);
             }
 
-        if (is_cancelled) {
-            TRACE() << "Operation is cancelled";
+        if (is_canceled) {
+            TRACE() << "Operation is canceled";
             QMutexLocker locker(&mutex);
-            is_cancelled = false;
+            is_canceled = false;
             emit error(PLUGIN_ERROR_OPERATION_FAILED, QLatin1String("The operation is canceled"));
             return;
         }

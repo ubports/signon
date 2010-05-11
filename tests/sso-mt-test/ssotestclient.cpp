@@ -222,7 +222,7 @@ QString SsoTestClient::idErrCodeAsStr(const Identity::IdentityError err)
     case Identity::StoreFailedError: return "StoreFailedError";
     case Identity::SignOutFailedError: return "SignOutFailedError";
     case Identity::RemoveFailedError: return "RemoveFailedError";
-    case Identity::CanceledError: return "CancelledError";
+    case Identity::CanceledError: return "CanceledError";
     case Identity::CredentialsNotAvailableError: return "CredentialsNotAvailableError";
     default: return "Wrong error type";
     }
@@ -1189,7 +1189,7 @@ void SsoTestClient::clear()
         qDebug() << "Error reply: " << m_serviceResult.m_errMsg
                  << ".\nOld error code: " << oldCodeStr
                  << ".\nError code: " << codeStr;
-        
+
         QFAIL("Should not have received error reply");
     }
 
