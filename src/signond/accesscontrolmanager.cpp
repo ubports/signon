@@ -223,7 +223,6 @@ namespace SignonDaemonNS {
             device->write("\t");
             device->write(buf, strlen(buf));
             device->write("\n");
-            free(buf);
         }
         device->write("\n");
         device->close();

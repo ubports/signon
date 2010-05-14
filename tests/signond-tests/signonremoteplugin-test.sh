@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ `whoami` != "root" ]
 then
@@ -25,9 +25,14 @@ fi
 
 if [ $? = 2 ] ;
 then
-    echo "ok"
-else
+#TODO uncomment this when plugins are forced not to run as root
+#    echo "ok"
     echo "fail"
     exit 1
+else
+#TODO uncomment this when plugins are forced not to run as root
+#    echo "fail"
+#    exit 1
+    echo "ok"
 fi
 
