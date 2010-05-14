@@ -1,3 +1,10 @@
+signon (0.5-1) unstable; urgency=low
+
+  * Fixes: NB#165957 - <coverity> defects from signon
+  * Fixes: NB#168654 - signod-tests (1/5) tests fail
+
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 14 May 2010 11:58:03 +0300
+
 signon (0.5) unstable; urgency=low
 
   * Fixes: NB#166151 - SignOn::AuthSession::error signal emitted with wrong error code on cancel of authentication
