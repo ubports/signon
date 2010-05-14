@@ -68,10 +68,9 @@ namespace SignonDaemonNS {
         m_pSimDBusAdaptor = new SimDBusAdaptor(this);
 
         //TODO remove while loop later
-        while (!(initialized = m_pSimDBusAdaptor->initialize()) && (attempts > 0)) {
+        while (m_pSimDBusAdaptor && !(initialized = m_pSimDBusAdaptor->initialize()) && (attempts > 0)) {
             TRACE() << "FAILED to initialize SIM DBUS Adaptor. Retrying init step...";
-            if (m_pSimDBusAdaptor)
-                delete m_pSimDBusAdaptor;
+            delete m_pSimDBusAdaptor;
 
             m_pSimDBusAdaptor = new SimDBusAdaptor(this);
             --attempts;
