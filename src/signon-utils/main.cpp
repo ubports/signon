@@ -39,40 +39,50 @@
 
 #include <signond/signoncommon.h>
 
-bool setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
+
+void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 {
     QDBusInterface dbus_iface(SIGNOND_SERVICE,
                               SIGNOND_DAEMON_OBJECTPATH,
                               SIGNOND_DAEMON_INTERFACE,
                               SIGNOND_BUS);
 
-    dbus_iface.call(QLatin1String("setDeviceLockCode"), oldLockCode, newLockCode);
+    QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);
 
-    return true;
+    switch(reply.type()) {
+        case QDBusMessage::ReplyMessage:
+            fprintf(stderr, "\nCommand successfully executed.\n");
+            break;
+        case QDBusMessage::ErrorMessage:
+            fprintf(stderr, "\nCommand execution failed.\n");
+            fprintf(stderr, reply.errorName().toLatin1().data());
+            fprintf(stderr, reply.errorMessage().toLatin1().data());
+            break;
+        case QDBusMessage::InvalidMessage:
+            fprintf(stderr, "\nInvalid reply from Signon daemon.\n");
+            break;
+        default:
+            fprintf(stderr, "\nUnknown error.\n");
+    }
 }
 
-bool setSim(const QByteArray &simData, const QByteArray &checkData)
+void setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
-                              SIGNOND_BUS);
-
-    dbus_iface.call(QLatin1String("setSIM"), simData, checkData);
-
-    return true;
+    QList<QVariant> args = QList<QVariant>() << oldLockCode << newLockCode;
+    dbusCall(QLatin1String("setDeviceLockCode"), args);
 }
 
-bool remoteLock(const QByteArray &lockCode)
+void initSecureStorage(const QByteArray &unlockData)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
-                              SIGNOND_BUS);
+    qDebug() << "initSecureStorage" << unlockData;
+    QList<QVariant> args = QList<QVariant>() << unlockData;
+    dbusCall(QLatin1String("initSecureStorage"), args);
+}
 
-    dbus_iface.call(QLatin1String("remoteLock"), lockCode);
-
-    return true;
+void remoteLock(const QByteArray &lockCode)
+{
+    QList<QVariant> args = QList<QVariant>() << lockCode;
+    dbusCall(QLatin1String("remoteLock"), args);
 }
 
 void showHelp()
@@ -80,9 +90,9 @@ void showHelp()
     fprintf(stderr, "\nUsage: signon-utils [option] [params] ...\n\n");
     fprintf(stderr, "Option           Params                       Meaning\n");
     fprintf(stderr, "----------------------------------------------------------------------\n");
-    fprintf(stderr, "--lock-code      oldLockCode, newLockCode     Device lock code change.\n");
-    fprintf(stderr, "--sim-change     param                        SIM card change.\n");
-    fprintf(stderr, "--remote-lock    param                        Remote database lock/wipe, I guess.\n");
+    fprintf(stderr, "--lock-code      newLockCode, oldLockCode     Device lock code change.\n");
+    fprintf(stderr, "--init-storage   unlockData                   Initialize secure storage.\n");
+    fprintf(stderr, "--remote-lock    lockData                     Remote database lock.\n");
     fprintf(stderr, "--help           none                         Shows this message. \n\n");
 }
 
@@ -140,11 +150,11 @@ int main(int argc, char **argv)
                 showError("--lock-code");
         }
 
-        if (args[idx] == QLatin1String("--sim-change")) {
+        if (args[idx] == QLatin1String("--init-storage")) {
             if (expectedArgsOk(args, idx, 1))
-                setSim(args[idx+1].toUtf8(), args[idx+2].toUtf8());
+                initSecureStorage(args[idx+1].toUtf8());
             else
-                showError("--sim-change");
+                showError("--init-storage");
         }
 
         if (args[idx] == QLatin1String("--remote-lock")) {
