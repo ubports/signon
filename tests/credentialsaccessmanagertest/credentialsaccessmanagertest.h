@@ -21,7 +21,9 @@
 
 #include "credentialsaccessmanager.h"
 
-
+/* TODO - update this test when all the functionality is implemented
+          (SIM & Device Lock Code).
+*/
 using namespace SignonDaemonNS;
 
 class CredentialsAccessManagerTest : public QObject
