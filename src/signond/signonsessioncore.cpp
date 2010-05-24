@@ -328,18 +328,22 @@ namespace SignonDaemonNS {
 
         if (m_id) {
             CredentialsDB *db = qobject_cast<SignonDaemon*>(parent())->m_pCAMManager->credentialsDB();
-            SignonIdentityInfo info = db->credentials(m_id);
-            if (!db->errorOccurred()) {
-                /*
-                 * TODO: reconsider this code: maybe some more data is required
-                 * */
-                parameters[QLatin1String("Secret")] = info.m_password;
-                parameters[QLatin1String("UserName")] = info.m_userName;
+            if (db != NULL) {
+                SignonIdentityInfo info = db->credentials(m_id);
+                if (info.m_id != SIGNOND_NEW_IDENTITY) {
+                    /*
+                     * TODO: reconsider this code: maybe some more data is required
+                     * */
+                    parameters[QLatin1String("Secret")] = info.m_password;
+                    parameters[QLatin1String("UserName")] = info.m_userName;
+                } else {
+                    BLAME() << "Error occurred while getting data from credentials database.";
+                    /*
+                     * TODO: actual behavior should be clarified for this case
+                     * */
+                }
             } else {
-                qCritical() << "!!!problems with getting data from credentials database!!!";
-                /*
-                 * TODO: actual behavior should be clarified for this case
-                 * */
+                BLAME() << "Null database handler object.";
             }
         }
 
@@ -673,29 +677,26 @@ namespace SignonDaemonNS {
 
             if (resultParameters.contains(SSOUI_KEY_REMEMBER) &&
                resultParameters[SSOUI_KEY_REMEMBER].toBool() ) {
-                if (parent()->m_storedIdentities.contains(m_id)) {
-                    SignonIdentity *idty = parent()->m_storedIdentities.value(m_id);
+                
+                CredentialsDB *db = qobject_cast<SignonDaemon*>(parent())->m_pCAMManager->credentialsDB();
+                if (db != NULL) {
+                    SignonIdentityInfo info = db->credentials(m_id);
 
-                    if (idty) {
-                        bool isOk;
-                        SignonIdentityInfo info = idty->queryInfo(isOk);
+                    if (info.m_id != SIGNOND_NEW_IDENTITY) {
+                        info.m_userName = resultParameters[SSOUI_KEY_USERNAME].toString();
+                        info.m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
 
-                        if (isOk) {
-                            QString newUsername = resultParameters[SSOUI_KEY_USERNAME].toString();
-                            QString newSecret = resultParameters[SSOUI_KEY_PASSWORD].toString();
-
-                            idty->storeCredentials(m_id,
-                                                   newUsername,
-                                                   newSecret,
-                                                   info.m_password.isEmpty(),
-                                                   SignonIdentityInfo::mapListToMapVariant(info.m_methods),
-                                                   info.m_caption,
-                                                   info.m_realms,
-                                                   info.m_accessControlList,
-                                                   info.m_type);
-                        }
+                        if (!(db->updateCredentials(info, !(info.m_password.isEmpty()))))
+                            TRACE() << "Error occured while updating credentials.";
+                    } else {
+                        TRACE() << "Error occured while updating credentials."
+                                   "Query existing data operation failed.";
                     }
+
+                } else {
+                    BLAME() << "Error occured while updating credentials. Null database handler object.";
                 }
+
                 resultParameters.remove(SSOUI_KEY_REMEMBER);
             }
             m_listOfRequests.head().m_params = resultParameters;

@@ -46,23 +46,21 @@ namespace SignonDaemonNS {
             { return *static_cast<QDBusContext *>(m_parent); }
 
     public Q_SLOTS:
-        bool initSecureStorage(const QByteArray &lockCode);
-
         void registerNewIdentity(QDBusObjectPath &objectPath);
         void registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData);
+        QString getAuthSessionObjectPath(const quint32 id, const QString &type);
+
         QStringList queryMethods();
         QStringList queryMechanisms(const QString &method);
         QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
         bool clear();
-        QString getAuthSessionObjectPath(const quint32 id, const QString &type);
+
+        // Interface method to initialize the secure storage
+        bool initSecureStorage(const QByteArray &lockCode);
 
         // Interface method to set the device lock code
         bool setDeviceLockCode(const QByteArray &oldLockCode,
                                const QByteArray &newLockCode);
-
-        // Interface method to set the sim
-        bool setSim(const QByteArray &simData,
-                    const QByteArray &checkData);
 
         // Interface method to remote lock the database
         bool remoteLock(const QByteArray &lockCode);

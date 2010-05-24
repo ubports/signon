@@ -133,14 +133,6 @@ namespace SignonDaemonNS {
         return m_parent->setDeviceLockCode(oldLockCode, newLockCode);
     }
 
-    bool SignonDaemonAdaptor::setSim(const QByteArray &simData,
-                                     const QByteArray &checkData)
-    {
-        /* TODO - this should be access controlled, too. Have to identify the
-                  caller process/es. */
-        return m_parent->setSim(simData, checkData);
-    }
-
     bool SignonDaemonAdaptor::remoteLock(const QByteArray &lockCode)
     {
         /* TODO - this should be access controlled, too. Have to identify the

@@ -36,22 +36,30 @@ extern "C" {
 using namespace SignonDaemonNS;
 using namespace SignOn;
 
-static bool was_unix_signal = false;
+static bool unix_signal_installed = false;
+SignonDaemon* g_signonDaemon = NULL;
 
-void signal_handler(int)
+//TODO - if possible, improve this
+void signal_handler(int signal)
 {
-    if (!was_unix_signal)
-    {
-        was_unix_signal = true;
+    if (unix_signal_installed) {
+        if (signal == SIGHUP) {
+            if (g_signonDaemon)
+                delete g_signonDaemon;
+            sleep(1);
+            g_signonDaemon = new SignonDaemon(QCoreApplication::instance());
+            if (!g_signonDaemon->init(false)) {
+                qFatal("Signon daemon could not restart on SIGHUP.");
+            }
+            return;
+        }
         QCoreApplication::instance()->quit();
     }
-    else
-        exit(0);
 }
 
 void installSigHandlers()
 {
-    was_unix_signal =0;
+    unix_signal_installed = true;
 
     struct sigaction handler;
 
@@ -63,23 +71,24 @@ void installSigHandlers()
     sigaction(SIGINT, &handler, NULL);
     sigaction(SIGKILL, &handler, NULL);
     sigaction(SIGSTOP, &handler, NULL);
+    sigaction(SIGHUP, &handler, NULL);
 }
-
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
 
-    //TODO Rewrite signal handlers
     installSigHandlers();
 
     SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
 
-    SignonDaemon* daemon = new SignonDaemon(&app);
+    g_signonDaemon = new SignonDaemon(&app);
+
     bool startedForBackup = app.arguments().contains(QLatin1String("-backup"));
-    if (!daemon->init(startedForBackup)) {
-        qCritical() << "Signon daemon could not start.";
-        return 1;
-    } else
+    if (!g_signonDaemon->init(startedForBackup)) {
+        qFatal("Signon daemon could not start.");
+        return 0;
+    }
+    else
         return app.exec();
 }

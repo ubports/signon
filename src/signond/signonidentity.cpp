@@ -30,9 +30,21 @@
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
 
+
+#define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
+        if (!(CredentialsAccessManager::instance()->credentialsSystemOpened())) { \
+            QDBusMessage errReply = message().createErrorReply(                   \
+                    internalServerErrName,                                        \
+                    internalServerErrStr + QLatin1String("Could not access Signon Database.")); \
+            SIGNOND_BUS.send(errReply); \
+            return _ret_arg_;           \
+        }                               \
+    } while(0)
+
 namespace SignonDaemonNS {
 
-    static QTimer idleAssasinTimer;
+    const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
+    const QString internalServerErrStr = SIGNOND_INTERNAL_SERVER_ERR_STR;
 
     SignonIdentity::SignonIdentity(quint32 id, int timeout,
                                    SignonDaemon *parent)
@@ -146,6 +158,9 @@ namespace SignonDaemonNS {
     {
         RequestCounter::instance()->addIdentityResquest();
         TRACE() << "QUERYING INFO";
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
+
         bool ok;
         SignonIdentityInfo info = queryInfo(ok, false);
 
@@ -178,6 +193,8 @@ namespace SignonDaemonNS {
         RequestCounter::instance()->addIdentityResquest();
         Q_UNUSED(displayMessage)
 
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
+
         QDBusMessage errReply = message().createErrorReply(SIGNOND_UNKNOWN_ERR_NAME,
                                                            QLatin1String("Not implemented."));
         SIGNOND_BUS.send(errReply);
@@ -188,6 +205,8 @@ namespace SignonDaemonNS {
     bool SignonIdentity::verifySecret(const QString &secret)
     {
         RequestCounter::instance()->addIdentityResquest();
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
         bool ok;
         queryInfo(ok);
@@ -211,6 +230,9 @@ namespace SignonDaemonNS {
     void SignonIdentity::remove()
     {
         RequestCounter::instance()->addIdentityResquest();
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE();
+
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         if (!db->removeCredentials(m_id)) {
             TRACE() << "Error occurred while inserting/updating credemtials.";
@@ -253,21 +275,40 @@ namespace SignonDaemonNS {
                                              const QStringList &accessControlList,
                                              const int type)
     {
+        RequestCounter::instance()->addIdentityResquest();
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
+
         QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
 
         QStringList accessControlListLocal = accessControlList;
         if (!aegisIdToken.isNull())
             accessControlListLocal.prepend(aegisIdToken);
 
-        RequestCounter::instance()->addIdentityResquest();
-
         SignonIdentityInfo info(id, userName, secret, methods, caption,
                                 realms, accessControlListLocal, type);
 
         TRACE() << info.serialize();
+        storeCredentials(info, storeSecret);
+        if (m_id == SIGNOND_NEW_IDENTITY) {
+            QDBusMessage errReply = message().createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                                                               SIGNOND_STORE_FAILED_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+        }
 
+        keepInUse();
+        return m_id;
+    }
+
+    quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info, bool storeSecret)
+    {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        bool newIdentity = (id == SIGNOND_NEW_IDENTITY);
+        if (db == NULL) {
+            BLAME() << "NULL database handler object.";
+            return SIGNOND_NEW_IDENTITY;
+        }
+
+        bool newIdentity = (info.m_id == SIGNOND_NEW_IDENTITY);
 
         if (newIdentity)
             m_id = db->insertCredentials(info, storeSecret);
@@ -279,9 +320,6 @@ namespace SignonDaemonNS {
                 m_id = SIGNOND_NEW_IDENTITY;
 
             TRACE() << "Error occurred while inserting/updating credentials.";
-            QDBusMessage errReply = message().createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
-                                                               SIGNOND_STORE_FAILED_ERR_STR);
-            SIGNOND_BUS.send(errReply);
         } else {
             if (m_pInfo) {
                 delete m_pInfo;
@@ -291,8 +329,6 @@ namespace SignonDaemonNS {
             TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
             emit infoUpdated((int)SignOn::IdentityDataUpdated);
         }
-
-        keepInUse();
         return m_id;
     }
 
