@@ -67,8 +67,10 @@ DEFINES += SIGNOND_TRACE \
     SIGNON_PLUGIN_TRACE
 LIBS += -lcreds \
     -lcryptsetup
+PKGCONFIG += CellularQt
 
 QMAKE_CLEAN +=backupifadaptor.cpp backupifadaptor.h
+
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
 

@@ -36,30 +36,34 @@ extern "C" {
 using namespace SignonDaemonNS;
 using namespace SignOn;
 
-static bool unix_signal_installed = false;
-SignonDaemon* g_signonDaemon = NULL;
+static bool unix_signals_installed = false;
+static SignonDaemon *g_signonDaemon = NULL;
+static QCoreApplication *g_qApp = NULL;
 
-//TODO - if possible, improve this
+
 void signal_handler(int signal)
 {
-    if (unix_signal_installed) {
+    if (unix_signals_installed) {
         if (signal == SIGHUP) {
-            if (g_signonDaemon)
+            if (g_signonDaemon) {
                 delete g_signonDaemon;
+                g_signonDaemon = NULL;
+            }
             sleep(1);
-            g_signonDaemon = new SignonDaemon(QCoreApplication::instance());
+            g_signonDaemon = new SignonDaemon(g_qApp);
             if (!g_signonDaemon->init(false)) {
-                qFatal("Signon daemon could not restart on SIGHUP.");
+                fprintf(stderr, "Signon daemon could not restart on SIGHUP.\n");
             }
             return;
         }
-        QCoreApplication::instance()->quit();
+
+        exit(0);
     }
 }
 
 void installSigHandlers()
 {
-    unix_signal_installed = true;
+    unix_signals_installed = true;
 
     struct sigaction handler;
 
@@ -77,6 +81,7 @@ void installSigHandlers()
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
+    g_qApp = QCoreApplication::instance();
 
     installSigHandlers();
 
