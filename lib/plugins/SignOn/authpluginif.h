@@ -105,7 +105,9 @@ class AuthPluginInterface : public QObject
     Q_OBJECT
 
 public:
-    AuthPluginInterface(QObject *parent = 0) : QObject(parent) {}
+    AuthPluginInterface(QObject *parent = 0) : QObject(parent)
+        { qRegisterMetaType<SignOn::Error>("SignOn::Error"); }
+
     /*!
      * Destructor.
      */
