@@ -138,7 +138,7 @@ namespace SignonDaemonNS {
             @param mounthPath Path of the file system to be unmounted.
             @returns true upon success, false otherwise.
         */
-        static bool unmount(const QString &mountPath);
+        static bool umount(const QString &mountPath);
 
     private:
         /*!
@@ -245,6 +245,12 @@ namespace SignonDaemonNS {
         static bool removeKeySlot(const QString &deviceName,
                                   const QByteArray &key,
                                   const QByteArray &remainingKey);
+
+        /*!
+            Loads the `dm_mod` kernel module
+            @returns whether the dm_mod was successfully loaded or not.
+        */
+        static bool loadDmMod();
 
         /*!
             @returns the last error as string.

@@ -24,124 +24,99 @@
 
 #include "accesscodehandler.h"
 #include "signond-common.h"
-#include "simdbusadaptor.h"
 
-#include <QThreadPool>
 
 namespace SignonDaemonNS {
 
-    // todo remove hardcoded lockCode and integrate functionality when the lock code lib will be available
-    static const QString lockCode = QLatin1String("4321");
-
-    static const int simTaskPriority = 2;
-    static const int initializeAttempts = 5;
+    QString simStatusAsStr(const SIMStatus::Status status)
+    {
+        QString statusStr;
+        switch (status) {
+        case SIMStatus::UnknownStatus: statusStr = QLatin1String("UnknownStatus"); break;
+        case SIMStatus::Ok: statusStr = QLatin1String("Ok"); break;
+        case SIMStatus::NoSIM: statusStr = QLatin1String("NoSIM"); break;
+        case SIMStatus::PermanentlyBlocked: statusStr = QLatin1String("PermanentlyBlocked"); break;
+        case SIMStatus::NotReady: statusStr = QLatin1String("NotReady"); break;
+        case SIMStatus::PINRequired: statusStr = QLatin1String("PINRequired"); break;
+        case SIMStatus::PUKRequired: statusStr = QLatin1String("PUKRequired"); break;
+        case SIMStatus::Rejected: statusStr = QLatin1String("Rejected"); break;
+        case SIMStatus::SIMLockRejected: statusStr = QLatin1String("SIMLockRejected"); break;
+        default: statusStr = QLatin1String("Not Handled.");
+        }
+        return statusStr;
+    }
 
     AccessCodeHandler::AccessCodeHandler(QObject *parent)
         : QObject(parent),
-          QRunnable(),
-          m_pSimDBusAdaptor(NULL),
-          m_code(QString()),
-          m_codeType(UNKNOWN),
-          m_codeChanged(false)
+          m_code(QByteArray()),
+          m_lastSimStatus(SIMStatus::UnknownStatus),
+          m_simIdentity(new SIMIdentity(this)),
+          m_simStatus(new SIMStatus(this))
     {
-    }
+        connect(m_simIdentity,
+                SIGNAL(iccidComplete(QString, SIMError)),
+                SLOT(simIccidComplete(QString, SIMError)));
 
-    AccessCodeHandler::AccessCodeHandler(const CodeType &type, QObject *parent)
-        : QObject(parent),
-          QRunnable(),
-          m_pSimDBusAdaptor(NULL),
-          m_code(QString()),
-          m_codeType(type),
-          m_codeChanged(false)
-    {
+        connect(m_simStatus,
+                SIGNAL(statusChanged(SIMStatus::Status)),
+                SLOT(simStatusChanged(SIMStatus::Status)));
     }
 
     AccessCodeHandler::~AccessCodeHandler()
     {
     }
 
-    bool AccessCodeHandler::initialize(void)
+    void AccessCodeHandler::simIccidComplete(QString iccid, SIMError error)
     {
-        int attempts = initializeAttempts;
-        bool initialized = false;
+        //TODO handle stuff here - cases of sim available vs sim changed
+        if(error == Cellular::SIM::NoError) {
+            QByteArray iccidBa = iccid.toLocal8Bit();
 
-        m_pSimDBusAdaptor = new SimDBusAdaptor(this);
+            if(codeAvailable() && (iccidBa != m_code)) {
+                m_code = iccid.toLocal8Bit();
+                emit simChanged(m_code);
+            } else {
+                m_code = iccid.toLocal8Bit();
+                emit simAvailable(m_code);
+            }
 
-        //TODO remove while loop later
-        while (m_pSimDBusAdaptor && !(initialized = m_pSimDBusAdaptor->initialize()) && (attempts > 0)) {
-            TRACE() << "FAILED to initialize SIM DBUS Adaptor. Retrying init step...";
-            delete m_pSimDBusAdaptor;
+            TRACE() << "ICC-ID:[" << m_code << "]";
+        } else {
+            TRACE() << "Error occurred while querying icc-id. Code:" << error;
+        }
+    }
 
-            m_pSimDBusAdaptor = new SimDBusAdaptor(this);
-            --attempts;
+    void AccessCodeHandler::simStatusChanged(SIMStatus::Status status)
+    {
+        TRACE() << simStatusAsStr(status);
+
+        //Todo- if possible think of a more stable solution.
+        if((m_lastSimStatus == SIMStatus::NoSIM || m_lastSimStatus == SIMStatus::NotReady)
+            && (status == SIMStatus::Ok)) {
+            querySim();
         }
 
-        if (!initialized)
-            return false;
-
-        TRACE() << "SimDBusAdaptor successfully initialized...";
-
-        QObject::connect(
-                    m_pSimDBusAdaptor,
-                    SIGNAL(simChanged(const QString &)),
-                    this,
-                    SLOT(simChanged(const QString &)),
-                    Qt::DirectConnection);
-
-        setAutoDelete(false);
-        QThreadPool::globalInstance()->start(this, simTaskPriority);
-        QThreadPool::globalInstance()->setMaxThreadCount(2);
-
-        TRACE() << "AccessCodeHandler successfully initialized...";
-        return true;
+        m_lastSimStatus = status;
     }
 
-    void AccessCodeHandler::finalize()
+    bool AccessCodeHandler::isValid()
     {
-        setAutoDelete(true);
-        QThreadPool::globalInstance()->releaseThread();
-        QThreadPool::globalInstance()->setMaxThreadCount(QThread::idealThreadCount());
+        return (m_simIdentity->isValid() && m_simStatus->isValid());
     }
 
-    void AccessCodeHandler::run()
+    void AccessCodeHandler::querySim()
     {
-        QMutexLocker locker(&m_mutex);
-        QThreadPool::globalInstance()->releaseThread();
-
-        sleep(1);
-        m_pSimDBusAdaptor->checkSim();
-
-        QThreadPool::globalInstance()->tryStart(this);
-        QThreadPool::globalInstance()->reserveThread();
-    }
-
-    void AccessCodeHandler::simChanged(const QString &newSimPin)
-    {
-        TRACE() << "SIM CHANGED to " << newSimPin;
-
-        m_codeChanged = true;
-        m_code = newSimPin;
-
-        // do not integrate with the multiple key slots feature - for the moment
-        //emit newSimAvailable(m_code);
+        TRACE() << "Querying SIM.";
+        m_simIdentity->iccid();
     }
 
     bool AccessCodeHandler::codeAvailable()
     {
-        QMutexLocker locker(&m_mutex);
-        return !m_code.isEmpty();
+        return !m_code.isNull();
     }
 
-    bool AccessCodeHandler::codeChanged()
+    QByteArray AccessCodeHandler::currentCode() const
     {
-        QMutexLocker locker(&m_mutex);
-        return m_codeChanged;
-    }
-
-    QString AccessCodeHandler::currentCode()
-    {
-        QMutexLocker locker(&m_mutex);
-        m_codeChanged = false;
         return m_code;
     }
 

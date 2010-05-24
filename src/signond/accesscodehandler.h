@@ -30,40 +30,29 @@
 #ifndef ACCESSCODEHANDLER_H
 #define ACCESSCODEHANDLER_H
 
-#include <QRunnable>
-#include <QMutex>
 #include <QObject>
+#include <QDBusError>
+
+#include <SIM>
+
+using namespace Cellular::SIM;
 
 namespace SignonDaemonNS {
 
-    class SimDBusAdaptor;
-
     /*!
      * @class AccessCodeHandler
-     * AccessCodeHandler handles getting the access code (SIM pin or device lock code)
+     * AccessCodeHandler handles getting the access code (SIM data only for the moment)
      * which is used by the CryptoManager as a key for the mounting of the encrypted file system.
      * @ingroup Accounts_and_SSO_Framework
-     * AccessCodeHandler inherits QObject and QRunnable.
-     *@sa SimDBusAdaptor
+     * AccessCodeHandler inherits QObject.
      * @sa CryptoManager
+     * @todo Rename this object (SIM specific) if no connection to the device lock code will come up.
      */
-    class AccessCodeHandler : public QObject, public QRunnable
+    class AccessCodeHandler : public QObject
     {
         Q_OBJECT
 
-        friend class SimDBusAdaptor;
-
     public:
-        /*!
-         * @enum CodeType
-         * @brief Describes the code type to be handled.
-         */
-        enum CodeType {
-            SIM_PIN = 0,
-            LOCK_CODE,
-            UNKNOWN
-        };
-
         /*!
           * Constructs an AcessCodeHandler object with the given parent.
           * @param parent the parent object
@@ -72,32 +61,23 @@ namespace SignonDaemonNS {
         AccessCodeHandler(QObject *parent = 0);
 
         /*!
-          * @brief Constructs an AcessCodeHandler object with the given parent and code type
-          * @param type type of code expected to be handled
-          * @param parent the parent object
-          * @sa AccessCodeHandler(const CodeType &type, QObject *parent = 0)
-          */
-        AccessCodeHandler(const CodeType &type, QObject *parent = 0);
-
-        /*!
           * Destructor, releases allocated resources.
-          * AccessCodeHandler::finalize() must be called first.
-          * Future versions will include auto finalize feature.
           */
         virtual ~AccessCodeHandler();
 
         /*!
-          * Initializes the AccessCodeHandler object.
-          * AccessCodeHandler::newSimAvailable(const QString &simPin) will be emitted upon successfull SIM interogation.
-          * Device lock code not supported yet.
+          *
+          *
           * @retval true uppon success. Error handling not supported yet.
           */
-        bool initialize();
+        bool isValid();
 
         /*!
-          *  Finalizes the AccessCodeHandler object, stopping all running tasks and the SimDBusAdaptor.
+          *
+          *
+          * @retval true uppon success. Error handling not supported yet.
           */
-        void finalize();
+        void querySim();
 
         /*!
          * @retval true, if an access code is available for using, false otherwise.
@@ -105,49 +85,32 @@ namespace SignonDaemonNS {
         bool codeAvailable();
 
         /*!
-          * @retval true, if the access code changed.
-          * @deprecated this method is currently deprecated.
-          */
-        bool codeChanged();
-
-        /*!
-          * Loop method, checking for the access code. Uses thread prioritisation.
-          */
-        virtual void run();
-
-
-        /*!
             @returns the currently available access code.
         */
-        QString currentCode();
-
-        /*!
-            @returns the code type in use.
-        */
-        CodeType codeType() const { return m_codeType; }
-
-        /*!
-            Sets the code type in use.
-            @param codeType the code type in use.
-        */
-        void setType(const CodeType &codeType);
+        QByteArray currentCode() const;
 
     Q_SIGNALS:
         /*!
-            Is emitted when a new SIM is available.
-            @param simPin, the newly available SIM pin.
+            Is emitted when a the SIM data (icc-id) is available.
+            @param simData, the SIM's icc-id.
         */
-        void newSimAvailable(const QString &simPin);
+        void simAvailable(const QByteArray &simData);
+
+        /*!
+            Is emitted when the SIM is changed.
+            @param simData, the new SIM's icc-id.
+        */
+        void simChanged(const QByteArray &simData);
 
     private Q_SLOTS:
-        void simChanged(const QString &newSimPin);
+        void simIccidComplete(QString iccid, SIMError error);
+        void simStatusChanged(SIMStatus::Status status);
 
     private:
-        SimDBusAdaptor *m_pSimDBusAdaptor;
-        QString m_code;
-        CodeType m_codeType;
-        bool m_codeChanged;
-        QMutex m_mutex;
+        QByteArray m_code;
+        SIMStatus::Status m_lastSimStatus;
+        SIMIdentity *m_simIdentity;
+        SIMStatus *m_simStatus;
     };
 
 } // namespace SignonDaemonNS

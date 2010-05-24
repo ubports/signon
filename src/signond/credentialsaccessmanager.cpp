@@ -51,8 +51,9 @@ CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String("signon.db")),
           m_useEncryption(false), //TODO this need to be set true when encryption is ready
           m_dbFileSystemPath(QLatin1String("/home/user/signonfs")),
-          m_fileSystemType(QLatin1String("ext3")),
-          m_fileSystemSize(4)
+          m_fileSystemType(QLatin1String("ext2")),
+          m_fileSystemSize(4),
+          m_encryptionPassphrase(QByteArray())
 {}
 
 void CAMConfiguration::serialize(QIODevice *device)
@@ -86,6 +87,7 @@ CredentialsAccessManager *CredentialsAccessManager::m_pInstance = NULL;
 CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
         : QObject(parent),
           m_isInitialized(false),
+          m_accessCodeFetched(false),
           m_systemOpened(false),
           m_error(NoError),
           m_pCredentialsDB(NULL),
@@ -109,9 +111,28 @@ CredentialsAccessManager *CredentialsAccessManager::instance(QObject *parent)
     return m_pInstance;
 }
 
+void CredentialsAccessManager::finalize()
+{
+    if (m_systemOpened)
+        closeCredentialsSystem();
+
+    if (m_pAccessCodeHandler) {
+        m_pAccessCodeHandler->blockSignals(true);
+        delete m_pAccessCodeHandler;
+    }
+
+    if (m_pCryptoFileSystemManager)
+        delete m_pCryptoFileSystemManager;
+
+    m_accessCodeFetched = false;
+    m_isInitialized = false;
+    m_error = NoError;
+}
+
 bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 {
     if (m_isInitialized) {
+        TRACE() << "CAM already initialized.";
         m_error = AlreadyInitialized;
         return false;
     }
@@ -123,13 +144,36 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     TRACE() << "\n\nInitualizing CredentialsAccessManager with configuration: " << config.data();
 
     if (m_CAMConfiguration.m_useEncryption) {
-
-        //TODO initialize the AccessCodeHandler here for the SIM data usage
-
         m_pCryptoFileSystemManager = new CryptoManager(this);
         m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.m_dbFileSystemPath);
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
+
+        if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
+
+            m_pCryptoFileSystemManager->setEncryptionKey(
+                    m_CAMConfiguration.m_encryptionPassphrase);
+            m_accessCodeFetched = true;
+
+            if (!openCredentialsSystemPriv()) {
+                BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
+            }
+        }
+
+        m_pAccessCodeHandler = new AccessCodeHandler(this);
+        connect(m_pAccessCodeHandler,
+                SIGNAL(simAvailable(QByteArray)),
+                SLOT(accessCodeFetched(QByteArray)));
+
+        connect(m_pAccessCodeHandler,
+                SIGNAL(simChanged(QByteArray)),
+                SLOT(accessCodeFetched(QByteArray)));
+
+        //todo create handling for the sim change too.
+        if (!m_pAccessCodeHandler->isValid())
+            BLAME() << "AccessCodeHandler invalid, SIM data might not be available.";
+
+        m_pAccessCodeHandler->querySim();
     }
 
     m_isInitialized = true;
@@ -139,10 +183,9 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     return true;
 }
 
-bool CredentialsAccessManager::openCredentialsSystem()
-{
-    RETURN_IF_NOT_INITIALIZED(false);
 
+bool CredentialsAccessManager::openCredentialsSystemPriv()
+{
     //todo remove this variable after LUKS implementation becomes stable.
     QString dbPath;
 
@@ -161,11 +204,6 @@ bool CredentialsAccessManager::openCredentialsSystem()
 
         if (fileSystemLoaded()) {
             m_error = CredentialsDbAlreadyDeployed;
-            return false;
-        }
-
-        if (!fetchAccessCode()) {
-            m_error = FailedToFetchAccessCode;
             return false;
         }
 
@@ -191,6 +229,18 @@ bool CredentialsAccessManager::openCredentialsSystem()
     }
 
     return m_systemOpened;
+}
+
+bool CredentialsAccessManager::openCredentialsSystem()
+{
+    RETURN_IF_NOT_INITIALIZED(false);
+
+    if (m_CAMConfiguration.m_useEncryption && !m_accessCodeFetched) {
+        m_error = AccessCodeNotReady;
+        return false;
+    }
+
+    return openCredentialsSystemPriv();
 }
 
 bool CredentialsAccessManager::closeCredentialsSystem()
@@ -237,6 +287,37 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
     return m_error == NoError;
 }
 
+bool CredentialsAccessManager::setDeviceLockCodeKey(const QByteArray &newLockCode,
+                                                    const QByteArray &existingLockCode)
+{
+    if (!m_CAMConfiguration.m_useEncryption)
+        return false;
+
+    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(existingLockCode)) {
+        BLAME() << "Existing lock code check failed.";
+        return false;
+    }
+
+    if (!m_pCryptoFileSystemManager->addEncryptionKey(
+            newLockCode, existingLockCode)) {
+        BLAME() << "Failed to add new device lock code.";
+        return false;
+    }
+
+    if (!m_pCryptoFileSystemManager->removeEncryptionKey(existingLockCode, newLockCode)) {
+        BLAME() << "Failed to remove old device lock code.";
+        return false;
+    }
+    return true;
+}
+
+bool CredentialsAccessManager::lockSecureStorage(const QByteArray &lockData)
+{
+    // TODO - implement this, research how to.
+    Q_UNUSED(lockData)
+    return false;
+}
+
 CredentialsDB *CredentialsAccessManager::credentialsDB() const
 {
     RETURN_IF_NOT_INITIALIZED(NULL);
@@ -247,11 +328,6 @@ CredentialsDB *CredentialsAccessManager::credentialsDB() const
 bool CredentialsAccessManager::deployCredentialsSystem()
 {
     if (m_CAMConfiguration.m_useEncryption) {
-        if (!fetchAccessCode()) {
-            m_error = FailedToFetchAccessCode;
-            return false;
-        }
-
         if (!m_pCryptoFileSystemManager->setupFileSystem()) {
             m_error = CredentialsDbSetupFailed;
             return false;
@@ -314,21 +390,36 @@ bool CredentialsAccessManager::closeDB()
     return true;
 }
 
-bool CredentialsAccessManager::fetchAccessCode(uint timeout)
+void CredentialsAccessManager::accessCodeFetched(const QByteArray &accessCode)
 {
-    Q_UNUSED(timeout)
-    //TODO use device lock code here and remove hardcoded joke 'passphrase'
-    m_pCryptoFileSystemManager->setAccessCode("1234");
+    /* todo - this will be improved when missing components are available
+             a. sim random data query
+             b. device lock code UI query
+     */
+    if (accessCode.isEmpty()) {
+        BLAME() << "Fetched empty access code.";
+        m_error = FailedToFetchAccessCode;
+        return;
+    }
 
-    return true;
-}
+    m_accessCodeFetched = true;
 
-bool CredentialsAccessManager::addEncryptionKey(const QByteArray &key, const QByteArray &existingKey)
-{
-    return m_pCryptoFileSystemManager->addEncryptionKey(key, existingKey);
-}
+    //todo - query Device Lock Code here - UI dialog.
+    QByteArray lockCode = "1234";
 
-bool CredentialsAccessManager::removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey)
-{
-    return m_pCryptoFileSystemManager->removeEncryptionKey(key, remainingKey);
+    //add the key to a keyslot
+    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(accessCode)) {
+        if (!m_pCryptoFileSystemManager->addEncryptionKey(accessCode, lockCode)) //device lock code here
+            BLAME() << "Could not store encryption key.";
+    }
+
+    m_pCryptoFileSystemManager->setEncryptionKey(accessCode);
+
+    if (!credentialsSystemOpened()) {
+        if (openCredentialsSystem()) {
+            TRACE() << "Credentials system opened.";
+        } else {
+            BLAME() << "Failed to open credentials system.";
+        }
+    }
 }

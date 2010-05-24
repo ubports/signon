@@ -56,8 +56,10 @@ namespace SignonDaemonNS {
         };
 
     public:
+
         /*!
-          @enum Supported encrypted partion filesystem type.
+          @enum FileSystemType
+          Supported encrypted partion filesystem type.
         */
         enum FileSystemType {
             Ext2 = 0,
@@ -77,7 +79,7 @@ namespace SignonDaemonNS {
             @param fileSystemPath path of the ecnrypted file system's file/device
             @param parent Parent object
         */
-        CryptoManager(const QByteArray &accessCode, const QString &fileSystemPath, QObject *parent = 0);
+        CryptoManager(const QByteArray &encryptionKey, const QString &fileSystemPath, QObject *parent = 0);
 
         /*!
             Destroys a CryptoManager object.
@@ -88,13 +90,7 @@ namespace SignonDaemonNS {
             Sets the access code.
             @param code, the encrypted file system key.
         */
-        void setAccessCode(const QByteArray &code) { m_accessCode = code; }
-
-        /*!
-            @todo decide if this is needed.
-            @returns the access code, the encrypted file system key.
-        */
-        QByteArray accessCode() const { return m_accessCode; }
+        void setEncryptionKey(const QByteArray &key) { m_accessCode = key; }
 
         /*!
             Sets the file system type.
@@ -173,6 +169,7 @@ namespace SignonDaemonNS {
 
         /*!
             @returns true, if the file system contains a specific file.
+            @attention The file system must be mounted prior to calling this.
         */
         bool fileSystemContainsFile(const QString &filePath);
 
@@ -181,26 +178,38 @@ namespace SignonDaemonNS {
         */
         QString fileSystemMountPath() const;
 
-    public Q_SLOTS:
         /*!
-            Add an encryption key to one of the available keyslots of the LUKS partition's header.
-            @param key The key to be added.
-            @param existingKey An already existing key.
-            @returns true, if succeeded, false otherwise.
-            @todo implement this
+            @attention if the file system is not mounted, this method will always return false.
+            @returns whether the key `key` is occupying a keyslot in the encrypted file system.
         */
-        bool addEncryptionKey(const QByteArray &key, const QByteArray &existingKey);
+        bool encryptionKeyInUse(const QByteArray &key);
+
+        /*!
+            Adds an encryption key to one of the available keyslots of the LUKS partition's header.
+            Use the `keyTag` parameter in order to store and keep track of the key.
+            @sa isEncryptionKey(const QByteArray &key)
+            @param key The key to be added/set.
+            @param existingKey An already existing key.
+            @param keyTag String to idenitify and keep track of the key `key` for future references.
+            @returns true, if succeeded, false otherwise.
+        */
+        bool addEncryptionKey(const QByteArray &key,
+                              const QByteArray &existingKey,
+                              const QString &keyTag = QString());
 
         /*!
             Releases an existing used keyslot in the LUKS partition's header.
             @param key The key to be removed.
+            @param remainingKey @todo Check if this is needed.
             @returns true, if succeeded, false otherwise.
-            @todo implement this
         */
         bool removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey);
 
     private:
-        bool mountMappedDevice(const QString &deviceName);
+        void storeEncryptionKey(const QByteArray &key, const QString &keyTag = QString());
+        void removeEncryptionKey(const QByteArray &key);
+
+        bool mountMappedDevice();
         bool unmountMappedDevice();
         void updateMountState(const FileSystemMountState state);
 
@@ -216,6 +225,7 @@ namespace SignonDaemonNS {
         QString m_fileSystemPath;
         QString m_fileSystemMapPath;
         QString m_fileSystemName;
+        QString m_fileSystemMountPath;
         QString m_loopDeviceName;
 
         FileSystemMountState m_mountState;

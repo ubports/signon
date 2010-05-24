@@ -68,6 +68,7 @@ namespace SignonDaemonNS {
         QString m_dbFileSystemPath; /*!< The path of the encrypted file system. */
         QString m_fileSystemType;   /*!< The encrypted file system type (ext2, ext3, ext4). */
         quint32 m_fileSystemSize;   /*!< The encrypted file system size. */
+        QByteArray m_encryptionPassphrase; /*!< Passphrase used for opening encrypted FS. */
     };
 
     /*!
@@ -78,6 +79,7 @@ namespace SignonDaemonNS {
         NotInitialized,
         AlreadyInitialized,
         AccessCodeHandlerInitFailed,
+        AccessCodeNotReady,
         FailedToFetchAccessCode,
         AccessCodeInvalid,
         EncryptionInUse,
@@ -142,6 +144,12 @@ namespace SignonDaemonNS {
         bool init(const CAMConfiguration &configuration = CAMConfiguration());
 
         /*!
+            Finalizes the CAM instance, this could include, closing the credentials system
+            and resetting the configuration. After this call the CAM needs to be reinitialized.
+        */
+        void finalize();
+
+        /*!
             Opens the credentials system, creates the CreadentialsDB object;
             if encryption is configured this will also mount the encrypted file system, based on
             the AccessControlHandler obtained keys.
@@ -180,7 +188,7 @@ namespace SignonDaemonNS {
           For convenience method.
           @returns true if the credentials system is opened, false otherwise.
         */
-        bool credentialsSystemOpenened() const { return m_systemOpened; }
+        bool credentialsSystemOpened() const { return m_systemOpened; }
 
         /*!
           @returns the credentials database object.
@@ -192,35 +200,36 @@ namespace SignonDaemonNS {
         */
         const CAMConfiguration &configuration() const { return m_CAMConfiguration; }
 
+        /*!
+          @sa CredentialsAccessError
+          @returns the last CAM's internally reported error.
+        */
         CredentialsAccessError lastError() const { return m_error; }
 
-     public Q_SLOTS:
         /*!
           Add an encryption key to one of the available keyslots for the encrypted storage.
           @param key The key to be added.
           @param existingKey An already existing key.
           @returns true, if succeeded, false otherwise.
         */
-        bool addEncryptionKey(const QByteArray &key, const QByteArray &existingKey);
+        bool setDeviceLockCodeKey(const QByteArray &newLockCode,
+                                  const QByteArray &existingLockCode);
 
         /*!
-          Removes the key 'key' from the encrypted storage header, releasing the corresponding keyslot.
-          @param key The key to be removed.
-          @param key Another valid remaining key.
+          Locks the secure storage.
+          @param lockKey The key for locking the secure storage.
+          @todo Figure this out.
           @returns true, if succeeded, false otherwise.
         */
-        bool removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey);
+        bool lockSecureStorage(const QByteArray &lockKey);
 
-    Q_SIGNALS:
-        /*!
-          Is emitted when the SIM is changed.
-          @deprecated This method is currently deprecated.
-        */
-        void simChanged();
+    private Q_SLOTS:
+        void accessCodeFetched(const QByteArray &accessCode);
 
     private:
         // 1st time start - deploys the database.
         bool deployCredentialsSystem();
+        bool openCredentialsSystemPriv();
         bool fileSystemLoaded(bool checkForDatabase = false);
         bool fileSystemDeployed();
         bool fetchAccessCode(uint timeout = 30);
@@ -231,6 +240,7 @@ namespace SignonDaemonNS {
         static CredentialsAccessManager *m_pInstance;
 
         bool m_isInitialized;
+        bool m_accessCodeFetched;
         bool m_systemOpened;
         mutable CredentialsAccessError m_error;
 

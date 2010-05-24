@@ -30,6 +30,7 @@
 #include <QFile>
 #include <QDir>
 #include <QMetaEnum>
+#include <QSettings>
 
 #define MOUNT_DIR "/home/user/"
 #define DEVICE_MAPPER_DIR "/device/mapper/"
@@ -39,6 +40,7 @@
 
 namespace SignonDaemonNS {
 
+    const QLatin1String keysStorageFileName = QLatin1String("keys");
 
     CryptoManager::CryptoManager(QObject *parent)
             : QObject(parent),
@@ -46,20 +48,21 @@ namespace SignonDaemonNS {
               m_fileSystemPath(QString()),
               m_fileSystemMapPath(QString()),
               m_fileSystemName(QString()),
+              m_fileSystemMountPath(QString()),
               m_loopDeviceName(QString()),
-              m_fileSystemType(Ext3),
+              m_fileSystemType(Ext2),
               m_fileSystemSize(4)
     {
         updateMountState(Unmounted);
     }
 
-    CryptoManager::CryptoManager(const QByteArray &accessCode,
+    CryptoManager::CryptoManager(const QByteArray &encryptionKey,
                                  const QString &fileSystemPath,
                                  QObject *parent)
             : QObject(parent),
-              m_accessCode(accessCode),
+              m_accessCode(encryptionKey),
               m_loopDeviceName(QString()),
-              m_fileSystemType(Ext3),
+              m_fileSystemType(Ext2),
               m_fileSystemSize(4)
     {
         setFileSystemPath(fileSystemPath);
@@ -74,14 +77,19 @@ namespace SignonDaemonNS {
     void CryptoManager::setFileSystemPath(const QString &path)
     {
         m_fileSystemPath = path;
+        QString fileSystemNameBase;
 
-        //Generated based on the file system path
+        //todo - improve this using QDir/QFile specific methods.
         if (m_fileSystemPath.contains(QDir::separator()))
             m_fileSystemName = m_fileSystemPath.section(QDir::separator(), -1);
         else
             m_fileSystemName = m_fileSystemPath;
 
         m_fileSystemMapPath = QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName;
+        m_fileSystemName = m_fileSystemName;
+        m_fileSystemMountPath = QLatin1String(MOUNT_DIR)
+                                + m_fileSystemName
+                                + QLatin1String("-mnt");
     }
 
     bool CryptoManager::setFileSystemSize(const quint32 size)
@@ -114,6 +122,11 @@ namespace SignonDaemonNS {
     {
         if (m_mountState == Mounted) {
             TRACE() << "Ecrypyted file system already mounted.";
+            return false;
+        }
+
+        if (!CryptsetupHandler::loadDmMod()) {
+            BLAME() << "Could not load `dm_mod`!";
             return false;
         }
 
@@ -160,12 +173,13 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        if (!mountMappedDevice(m_fileSystemName)) {
+        if (!mountMappedDevice()) {
             BLAME() << "Failed to mount ecrypted file system.";
             unmountFileSystem();
             return false;
         }
         updateMountState(Mounted);
+        storeEncryptionKey(m_accessCode);
 
         return true;
     }
@@ -175,6 +189,11 @@ namespace SignonDaemonNS {
     {
         if (m_mountState == Mounted) {
             TRACE() << "Ecrypyted file system already mounted.";
+            return false;
+        }
+
+        if(!CryptsetupHandler::loadDmMod()) {
+            BLAME() << "Could not load `dm_mod`!";
             return false;
         }
 
@@ -191,14 +210,16 @@ namespace SignonDaemonNS {
         }
         updateMountState(LoopSet);
 
-        if (!CryptsetupHandler::openFile(m_accessCode, m_loopDeviceName, m_fileSystemName)) {
+        if (!CryptsetupHandler::openFile(m_accessCode,
+                                         m_loopDeviceName,
+                                         m_fileSystemName)) {
             BLAME() << "Failed to LUKS open.";
             unmountFileSystem();
             return false;
         }
         updateMountState(LoopLuksOpened);
 
-        if (!mountMappedDevice(m_fileSystemName)) {
+        if (!mountMappedDevice()) {
             TRACE() << "Failed to mount ecrypted file system.";
             unmountFileSystem();
             return false;
@@ -258,24 +279,18 @@ namespace SignonDaemonNS {
     //TODO - debug this method. Current test scenarios do no cover this one
     bool CryptoManager::fileSystemContainsFile(const QString &filePath)
     {
-        if (m_mountState != Mounted) {
+        if (!fileSystemMounted()) {
             TRACE() << "Ecrypyted file system not mounted.";
             return false;
         }
 
-        QString filePathL = QDir::toNativeSeparators(filePath);
-
-        if (filePathL.startsWith(QDir::separator()))
-            filePathL = QLatin1String(MOUNT_DIR) + m_fileSystemPath + filePath;
-        else
-            filePathL = QLatin1String(MOUNT_DIR) + m_fileSystemPath + QDir::separator() + filePath;
-
-        return QFile::exists(filePathL);
+        QDir mountDir(m_fileSystemMountPath);
+        return mountDir.exists(QDir::toNativeSeparators(filePath));
     }
 
     QString CryptoManager::fileSystemMountPath() const
     {
-        return QLatin1String(MOUNT_DIR) + m_fileSystemName;
+        return m_fileSystemMountPath;
     }
 
     void CryptoManager::updateMountState(const FileSystemMountState state)
@@ -284,41 +299,108 @@ namespace SignonDaemonNS {
         m_mountState = state;
     }
 
-    bool CryptoManager::mountMappedDevice(const QString &mountName)
+    bool CryptoManager::mountMappedDevice()
     {
         //create mnt dir if not existant
-        QString mountNameAbs = QLatin1String(MOUNT_DIR) + mountName;
-
-        if (!QFile::exists(mountNameAbs)) {
+        if (!QFile::exists(m_fileSystemMountPath)) {
             QDir dir;
-            dir.mkdir(mountNameAbs);
+            dir.mkdir(m_fileSystemMountPath);
         }
 
-        MountHandler::mount(m_fileSystemMapPath, mountNameAbs);
+        MountHandler::mount(m_fileSystemMapPath, m_fileSystemMountPath);
         return true;
     }
 
     bool CryptoManager::unmountMappedDevice()
     {
-        return MountHandler::unmount(QLatin1String(MOUNT_DIR) + m_fileSystemName);
+        return MountHandler::umount(m_fileSystemMountPath);
     }
 
-    bool CryptoManager::addEncryptionKey(const QByteArray &key, const QByteArray &existingKey)
+    bool CryptoManager::addEncryptionKey(const QByteArray &key,
+                                         const QByteArray &existingKey,
+                                         const QString &keyTag)
     {
-        if (!CryptsetupHandler::addKeySlot(m_fileSystemPath, key, existingKey)) {
-            TRACE() << "FAILED to add new key slot to the encrypted file system.";
-            return false;
+        /*
+         * TODO -- limit number of stored keys to the total available slots - 1.
+         */
+        if (m_mountState >= LoopLuksOpened) {
+            if (!CryptsetupHandler::addKeySlot(
+                    m_loopDeviceName, key, existingKey)) {
+                TRACE() << "FAILED to occupy key slot on the encrypted file system header.";
+                return false;
+            }
+
+            storeEncryptionKey(key, keyTag);
         }
         return true;
     }
 
-    bool CryptoManager::removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey)
+    bool CryptoManager::removeEncryptionKey(const QByteArray &key,
+                                            const QByteArray &remainingKey)
     {
-        if (!CryptsetupHandler::removeKeySlot(m_fileSystemPath, key, remainingKey)) {
-            TRACE() << "FAILED to add new key slot to the encrypted file system.";
+        if (m_mountState >= LoopLuksOpened) {
+            if (!CryptsetupHandler::removeKeySlot(
+                    m_loopDeviceName, key, remainingKey)) {
+                TRACE() << "FAILED to release key slot from the encrypted file system header.";
+                return false;
+            }
+            removeEncryptionKey(key);
+        }
+        return true;
+    }
+
+
+    void CryptoManager::storeEncryptionKey(const QByteArray &key, const QString &keyTag)
+    {
+        /* If it's worth it, optimize this to have only the actual keys which occupy key slots
+           - this is for the case when the SIMs in use outnumber the LUKS key slots
+         */
+        TRACE() << fileSystemMountPath() + QDir::separator() + keysStorageFileName;
+        QSettings usedEncryptionKeysFile(
+                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
+                QSettings::IniFormat);
+
+        if (keyTag.isEmpty()) {
+            int keysCount = usedEncryptionKeysFile.childKeys().count();
+            usedEncryptionKeysFile.setValue(
+                QString(QLatin1String("key%1")).arg(keysCount + 1), key);
+        } else {
+            usedEncryptionKeysFile.setValue(keyTag, key);
+        }
+    }
+
+    bool CryptoManager::encryptionKeyInUse(const QByteArray &key)
+    {
+        if (!fileSystemMounted()) {
+            TRACE() << "Encrypted FS not mounted.";
             return false;
         }
+
+        if (m_accessCode == key)
+            return true;
+
+        QSettings usedEncryptionKeysFile(
+                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
+                QSettings::IniFormat);
+
+        foreach(QString childKey, usedEncryptionKeysFile.childKeys())
+            if (usedEncryptionKeysFile.value(childKey).toByteArray() == key)
+                return true;
+
         return false;
+    }
+
+    void CryptoManager::removeEncryptionKey(const QByteArray &key)
+    {
+        QSettings usedEndryptionKeysFile(
+                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
+                QSettings::IniFormat);
+
+        foreach (QString keyStr, usedEndryptionKeysFile.childKeys())
+            if (usedEndryptionKeysFile.value(keyStr).toByteArray() == key) {
+                usedEndryptionKeysFile.remove(keyStr);
+                break;
+            }
     }
 
     //TODO - remove this after stable version is achieved.

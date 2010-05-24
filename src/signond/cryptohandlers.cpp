@@ -144,7 +144,7 @@ namespace SignonDaemonNS {
                      MS_SYNCHRONOUS | MS_NOEXEC, NULL) == 0);
     }
 
-    bool MountHandler::unmount(const QString &mountPath)
+    bool MountHandler::umount(const QString &mountPath)
     {
         /* Unmount a filesystem.  */
 
@@ -152,7 +152,7 @@ namespace SignonDaemonNS {
         //Until this is fixed the system has an "unmount encrypted partition impossibe" bug
 
         TRACE() << mountPath.toUtf8().constData();
-        int ret = ::umount(mountPath.toUtf8().constData());
+        int ret = ::umount2(mountPath.toUtf8().constData(), MNT_FORCE);
         TRACE() << ret;
 
         switch(errno) {
@@ -242,17 +242,16 @@ namespace SignonDaemonNS {
         options.key_size = SIGNON_LUKS_KEY_SIZE / 8;
         options.key_slot = SIGNON_LUKS_BASE_KEYSLOT;
 
-        char *localDeviceName = (char *)malloc((deviceName.length() + 1) * sizeof(char));
+        char *localDeviceName = (char *)malloc(deviceName.length() + 1);
         Q_ASSERT(localDeviceName != NULL);
 
         strcpy(localDeviceName, deviceName.toLatin1().constData());
         options.device = localDeviceName;
 
-
         options.cipher = SIGNON_LUKS_CIPHER;
         options.new_key_file = NULL;
 
-        char *localKey = (char *)malloc(key.length() * sizeof(char));
+        char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
         strcpy(localKey, key.constData());
 
@@ -293,17 +292,17 @@ namespace SignonDaemonNS {
     {
         struct crypt_options options;
 
-        char *localDeviceMap = (char *)malloc((deviceMap.length() + 1) * sizeof(char));
+        char *localDeviceMap = (char *)malloc(deviceMap.length() + 1);
         Q_ASSERT(localDeviceMap != NULL);
         strcpy(localDeviceMap, deviceMap.toLatin1().constData());
         options.name = localDeviceMap;
 
-        char *localDeviceName = (char *)malloc((deviceName.length() + 1) * sizeof(char));
+        char *localDeviceName = (char *)malloc(deviceName.length() + 1);
         Q_ASSERT(localDeviceName != NULL);
         strcpy(localDeviceName, deviceName.toLatin1().constData());
         options.device = localDeviceName;
 
-        char *localKey = (char *)malloc(key.length() * sizeof(char));
+        char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
         strcpy(localKey, key.constData());
         options.key_material = localKey;
@@ -343,7 +342,7 @@ namespace SignonDaemonNS {
     {
         struct crypt_options options;
 
-        char *localDeviceMap = (char *)malloc((deviceMap.length() + 1) * sizeof(char));
+        char *localDeviceMap = (char *)malloc(deviceMap.length() + 1);
         Q_ASSERT(localDeviceMap != NULL);
         strcpy(localDeviceMap, deviceMap.toLatin1().constData());
         options.name = localDeviceMap;
@@ -377,22 +376,98 @@ namespace SignonDaemonNS {
                                        const QByteArray &key,
                                        const QByteArray &existingKey)
     {
-        Q_UNUSED(deviceName)
-        Q_UNUSED(key)
-        Q_UNUSED(existingKey)
-        //todo - multiple SIMs as keyslots feature
-        return false;
+        struct crypt_options options;
+
+        options.key_size = SIGNON_LUKS_KEY_SIZE / 8;
+        options.cipher = SIGNON_LUKS_CIPHER;
+
+        char *localDeviceName = (char *)malloc(deviceName.length() + 1);
+        Q_ASSERT(localDeviceName != NULL);
+        strcpy(localDeviceName, deviceName.toLatin1().constData());
+
+        options.device = localDeviceName;
+        options.new_key_file = NULL;
+        options.key_file = NULL;
+        options.key_slot = -1;
+
+        options.key_material = existingKey.constData();
+        options.key_material2 = key.constData();
+        
+        options.material_size = existingKey.length();
+        options.material_size2 = key.length();
+
+        options.flags = 0;
+        options.iteration_time = 1000;
+        options.timeout = 0;
+
+        static struct interface_callbacks cmd_icb;
+        cmd_icb.yesDialog = yesDialog;
+        cmd_icb.log = cmdLineLog;
+        options.icb = &cmd_icb;
+
+        int ret = crypt_luksAddKey(&options);
+
+        if (localDeviceName)
+            free(localDeviceName);
+
+        if (ret != 0)
+            TRACE() << "Cryptsetup add key API call result:" << ret << "." <<  error();
+
+        return (ret == 0);
     }
 
     bool CryptsetupHandler::removeKeySlot(const QString &deviceName,
                                           const QByteArray &key,
                                           const QByteArray &remainingKey)
     {
-        Q_UNUSED(deviceName)
-        Q_UNUSED(remainingKey)
-        Q_UNUSED(key)
-        //todo - multiple SIMs as keyslots feature
-        return false;
+        struct crypt_options options;
+
+        options.key_size = SIGNON_LUKS_KEY_SIZE / 8;
+        options.cipher = SIGNON_LUKS_CIPHER;
+
+        char *localDeviceName = (char *)malloc(deviceName.length() + 1);
+        Q_ASSERT(localDeviceName != NULL);
+        strcpy(localDeviceName, deviceName.toLatin1().constData());
+
+        options.device = localDeviceName;
+        options.new_key_file = NULL;
+        options.key_file = NULL;
+        options.key_slot = -1;
+
+        TRACE() << "Key to be deleted:" << key.constData()
+                << ", Remaining key:" << remainingKey.constData();
+
+        options.key_material = key.constData();
+        options.key_material2 = remainingKey.constData();
+
+        options.material_size = key.length();
+        options.material_size2 = remainingKey.length();
+
+        options.flags = 0;
+        options.timeout = 0;
+
+        static struct interface_callbacks cmd_icb;
+        cmd_icb.yesDialog = yesDialog;
+        cmd_icb.log = cmdLineLog;
+        options.icb = &cmd_icb;
+
+        int ret = crypt_luksRemoveKey(&options);
+
+        if (localDeviceName)
+            free(localDeviceName);
+
+        if (ret != 0)
+            TRACE() << "Cryptsetup remove key API call result:" << ret << "." <<  error();
+
+        return (ret == 0);
+    }
+
+    bool CryptsetupHandler::loadDmMod()
+    {
+        SystemCommandLineCallHandler handler;
+        return handler.makeCall(
+                            QLatin1String("modprobe"),
+                            QStringList() << QString::fromLatin1("dm_mod"));
     }
 
     QString CryptsetupHandler::error()
