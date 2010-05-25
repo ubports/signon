@@ -69,7 +69,7 @@ namespace SignonDaemonNS {
     void AccessCodeHandler::simIccidComplete(QString iccid, SIMError error)
     {
         //TODO handle stuff here - cases of sim available vs sim changed
-        if(error == Cellular::SIM::NoError) {
+        if (error == Cellular::SIM::NoError) {
             QByteArray iccidBa = iccid.toLocal8Bit();
 
             if(codeAvailable() && (iccidBa != m_code)) {
@@ -91,7 +91,7 @@ namespace SignonDaemonNS {
         TRACE() << simStatusAsStr(status);
 
         //Todo- if possible think of a more stable solution.
-        if((m_lastSimStatus == SIMStatus::NoSIM || m_lastSimStatus == SIMStatus::NotReady)
+        if ((m_lastSimStatus == SIMStatus::NoSIM || m_lastSimStatus == SIMStatus::NotReady)
             && (status == SIMStatus::Ok)) {
             querySim();
         }

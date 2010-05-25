@@ -304,21 +304,21 @@ namespace SignonDaemonNS {
         RequestCounter::instance()->addServiceResquest();
 
         QDir pluginsDir(SIGNOND_PLUGINS_DIR);
-         //TODO: in the future remove the sym links comment
-         QStringList fileNames = pluginsDir.entryList(
-                 QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
+        //TODO: in the future remove the sym links comment
+        QStringList fileNames = pluginsDir.entryList(
+                QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
 
-         QStringList ret;
-         QString fileName;
-         foreach (fileName, fileNames) {
-             if (fileName.startsWith(QLatin1String("lib"))) {
-                 fileName = fileName.mid(3, fileName.indexOf(QLatin1String("plugin")) -3);
-                 if ((fileName.length() > 0) && !ret.contains(fileName))
-                     ret << fileName;
-             }
-         }
+        QStringList ret;
+        QString fileName;
+        foreach (fileName, fileNames) {
+            if (fileName.startsWith(QLatin1String("lib"))) {
+                fileName = fileName.mid(3, fileName.indexOf(QLatin1String("plugin")) -3);
+                if ((fileName.length() > 0) && !ret.contains(fileName))
+                    ret << fileName;
+            }
+        }
 
-         return ret;
+        return ret;
     }
 
     QStringList SignonDaemon::queryMechanisms(const QString &method)
@@ -333,8 +333,7 @@ namespace SignonDaemonNS {
 
         PluginProxy *plugin = PluginProxy::createNewPluginProxy(method);
 
-        if (!plugin)
-        {
+        if (!plugin) {
             TRACE() << "Could not load plugin of type: " << method;
             QDBusMessage errReply = message().createErrorReply(
                     SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
@@ -559,7 +558,7 @@ namespace SignonDaemonNS {
                  }
             }
         }
-    return 0;
+        return 0;
     }
 
     void SignonDaemon::listDBusInterfaces()

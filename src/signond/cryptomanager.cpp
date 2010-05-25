@@ -192,7 +192,7 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        if(!CryptsetupHandler::loadDmMod()) {
+        if (!CryptsetupHandler::loadDmMod()) {
             BLAME() << "Could not load `dm_mod`!";
             return false;
         }
@@ -383,7 +383,7 @@ namespace SignonDaemonNS {
                 fileSystemMountPath() + QDir::separator() + keysStorageFileName,
                 QSettings::IniFormat);
 
-        foreach(QString childKey, usedEncryptionKeysFile.childKeys())
+        foreach (QString childKey, usedEncryptionKeysFile.childKeys())
             if (usedEncryptionKeysFile.value(childKey).toByteArray() == key)
                 return true;
 

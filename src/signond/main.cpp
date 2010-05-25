@@ -43,6 +43,7 @@ static QCoreApplication *g_qApp = NULL;
 
 void signal_handler(int signal)
 {
+    //todo - update this so that no memory is allocated/deleted in the signals' handler scope
     if (unix_signals_installed) {
         if (signal == SIGHUP) {
             if (g_signonDaemon) {

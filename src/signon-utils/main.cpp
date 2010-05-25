@@ -26,8 +26,7 @@
     bool setDeviceLockCode(const QByteArray &oldLockCode,
                                const QByteArray &newLockCode);
 
-    bool setSim(const QByteArray& simData,
-                const QByteArray& checkData);
+    bool initSecureStorage(const QByteArray& lockCode);
 
     bool remoteLock(const QByteArray &lockCode)
 */
@@ -49,20 +48,20 @@ void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 
     QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);
 
-    switch(reply.type()) {
-        case QDBusMessage::ReplyMessage:
-            fprintf(stderr, "\nCommand successfully executed.\n");
-            break;
-        case QDBusMessage::ErrorMessage:
-            fprintf(stderr, "\nCommand execution failed.\n");
-            fprintf(stderr, reply.errorName().toLatin1().data());
-            fprintf(stderr, reply.errorMessage().toLatin1().data());
-            break;
-        case QDBusMessage::InvalidMessage:
-            fprintf(stderr, "\nInvalid reply from Signon daemon.\n");
-            break;
-        default:
-            fprintf(stderr, "\nUnknown error.\n");
+    switch (reply.type()) {
+    case QDBusMessage::ReplyMessage:
+        fputs("\nCommand successfully executed.\n", stderr);
+        break;
+    case QDBusMessage::ErrorMessage:
+        fputs("\nCommand execution failed.\n", stderr);
+        fputs(reply.errorName().toLatin1().data(), stderr);
+        fputs(reply.errorMessage().toLatin1().data(), stderr);
+        break;
+    case QDBusMessage::InvalidMessage:
+        fputs("\nInvalid reply from Signon daemon.\n", stderr);
+        break;
+    default:
+        fputs("\nUnknown error.\n", stderr);
     }
 }
 
@@ -87,13 +86,13 @@ void remoteLock(const QByteArray &lockCode)
 
 void showHelp()
 {
-    fprintf(stderr, "\nUsage: signon-utils [option] [params] ...\n\n");
-    fprintf(stderr, "Option           Params                       Meaning\n");
-    fprintf(stderr, "----------------------------------------------------------------------\n");
-    fprintf(stderr, "--lock-code      newLockCode, oldLockCode     Device lock code change.\n");
-    fprintf(stderr, "--init-storage   unlockData                   Initialize secure storage.\n");
-    fprintf(stderr, "--remote-lock    lockData                     Remote database lock.\n");
-    fprintf(stderr, "--help           none                         Shows this message. \n\n");
+    fputs("\nUsage: signon-utils [option] [params] ...\n\n", stderr);
+    fputs("Option           Params                       Meaning\n", stderr);
+    fputs("----------------------------------------------------------------------\n", stderr);
+    fputs("--lock-code      newLockCode, oldLockCode     Device lock code change.\n", stderr);
+    fputs("--init-storage   unlockCode                   Initialize secure storage.\n", stderr);
+    fputs("--remote-lock    lockCode                     Remote database lock.\n", stderr);
+    fputs("--help           none                         Shows this message.\n\n", stderr);
 }
 
 void showError(const char *command)
@@ -124,9 +123,9 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
 
     if (!SIGNOND_BUS.isConnected()) {
-        fprintf(stderr, "Cannot connect to the D-Bus session bus.\n"
-                "To start it, run:\n"
-                "\teval `dbus-launch --auto-syntax`\n");
+        fputs("Cannot connect to the D-Bus session bus.\n"
+              "To start it, run:\n"
+              "\teval `dbus-launch --auto-syntax`\n", stderr);
         return 0;
     }
 

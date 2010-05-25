@@ -120,11 +120,11 @@ namespace SignonDaemonNS {
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
     {
         QString mkfsApp = QString::fromLatin1("mkfs.ext3");
-        switch(fileSystemType) {
-            case Ext2: mkfsApp = QString::fromLatin1("mkfs.ext2"); break;
-            case Ext3: mkfsApp = QString::fromLatin1("mkfs.ext3"); break;
-            case Ext4: mkfsApp = QString::fromLatin1("mkfs.ext4"); break;
-            default: break;
+        switch (fileSystemType) {
+        case Ext2: mkfsApp = QString::fromLatin1("mkfs.ext2"); break;
+        case Ext3: mkfsApp = QString::fromLatin1("mkfs.ext3"); break;
+        case Ext4: mkfsApp = QString::fromLatin1("mkfs.ext4"); break;
+        default: break;
         }
 
         SystemCommandLineCallHandler handler;
@@ -155,16 +155,16 @@ namespace SignonDaemonNS {
         int ret = ::umount2(mountPath.toUtf8().constData(), MNT_FORCE);
         TRACE() << ret;
 
-        switch(errno) {
-            case EAGAIN: TRACE() << "EAGAIN"; break;
-            case EBUSY: TRACE() << "EBUSY"; break;
-            case EFAULT: TRACE() << "EFAULT"; break;
-            case EINVAL: TRACE() << "EINVAL"; break;
-            case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
-            case ENOENT: TRACE() << "ENOENT"; break;
-            case ENOMEM: TRACE() << "ENOMEM"; break;
-            case EPERM: TRACE() << "EPERM"; break;
-            default: TRACE() << "UNKNOWN ERROR!!";
+        switch (errno) {
+        case EAGAIN: TRACE() << "EAGAIN"; break;
+        case EBUSY: TRACE() << "EBUSY"; break;
+        case EFAULT: TRACE() << "EFAULT"; break;
+        case EINVAL: TRACE() << "EINVAL"; break;
+        case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
+        case ENOENT: TRACE() << "ENOENT"; break;
+        case ENOMEM: TRACE() << "ENOMEM"; break;
+        case EPERM: TRACE() << "EPERM"; break;
+        default: TRACE() << "UNKNOWN ERROR!!";
         }
 
         //TODO - Remove 1st, uncommend 2nd lines after the fix above.
@@ -221,8 +221,7 @@ namespace SignonDaemonNS {
 
     static void cmdLineLog(int type, char *msg)
     {
-        switch(type)
-        {
+        switch (type) {
         case CRYPT_LOG_NORMAL:
             TRACE() << msg;
             break;
