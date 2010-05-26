@@ -1,4 +1,4 @@
-signon (0.7-1) unstable; urgency=low
+signon (0.7-2) unstable; urgency=low
 
   * Improvements of Signon CAM. Device lock code and SIM key support for LUKS secure storage.
 
