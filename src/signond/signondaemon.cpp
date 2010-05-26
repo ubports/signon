@@ -29,8 +29,19 @@
 #include "signondaemonadaptor.h"
 #include "signonidentity.h"
 #include "signonauthsession.h"
+#include "backupifadaptor.h"
 
 #define IDENTITY_MAX_IDLE_TIME (60 * 5) // five minutes
+
+#define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
+        if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
+            QDBusMessage errReply = message().createErrorReply(            \
+                    internalServerErrName,                                 \
+                    internalServerErrStr + QLatin1String("Could not access Signon Database.")); \
+            SIGNOND_BUS.send(errReply); \
+            return _ret_arg_;           \
+        }                               \
+    } while(0)
 
 using namespace SignOn;
 
@@ -38,16 +49,22 @@ namespace SignonDaemonNS {
 
     RequestCounter *RequestCounter::m_pInstance = NULL;
 
+    const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
+    const QString internalServerErrStr = SIGNOND_INTERNAL_SERVER_ERR_STR;
+
     SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
     {
-        m_pCAMManager = NULL;
+        m_backup = false;
+        m_pCAMManager = CredentialsAccessManager::instance();
     }
 
     SignonDaemon::~SignonDaemon()
     {
+        if (m_backup) exit(0);
+
+        SignonAuthSession::stopAllAuthSessions();
         qDeleteAll(m_storedIdentities);
         qDeleteAll(m_unstoredIdentities);
-        SignonAuthSession::stopAllAuthSessions();
 
         if (m_pCAMManager) {
             m_pCAMManager->closeCredentialsSystem();
@@ -57,8 +74,42 @@ namespace SignonDaemonNS {
         delete RequestCounter::instance();
     }
 
-    bool SignonDaemon::init()
+    bool SignonDaemon::init(bool backup)
     {
+        m_backup = backup;
+
+        /* backup dbus interface */
+        QDBusConnection sessionConnection = QDBusConnection::sessionBus();
+
+        if (!sessionConnection.isConnected()) {
+            QDBusError err = sessionConnection.lastError();
+            TRACE() << "Session connection cannot be established:" << err.errorString(err.type());
+            TRACE() << err.message();
+            return false;
+        }
+
+        QDBusConnection::RegisterOptions registerSessionOptions = QDBusConnection::ExportAdaptors;
+
+        (void)new BackupIfAdaptor(this);
+
+        if (!sessionConnection.registerObject(SIGNOND_DAEMON_OBJECTPATH
+                                              + QLatin1String("/backup"), this, registerSessionOptions)) {
+            TRACE() << "Object cannot be registered";
+            return false;
+        }
+
+        if (!sessionConnection.registerService(SIGNOND_SERVICE+QLatin1String(".backup"))) {
+            QDBusError err = sessionConnection.lastError();
+            TRACE() << "Service cannot be registered: " << err.errorString(err.type());
+            return false;
+        }
+
+        if (m_backup) {
+            TRACE() << "Signond initialized in backup mode.";
+            //skit rest of initialization in backup mode
+            return true;
+        }
+
         /* DBus Service init */
         QDBusConnection connection = SIGNOND_BUS;
 
@@ -99,8 +150,6 @@ namespace SignonDaemonNS {
 
         TRACE() << "Signond SUCCESSFULLY initialized.";
 
-        listDBusInterfaces();
-
         // TODO - remove this
         QTimer *requestCounterTimer = new QTimer(this);
         requestCounterTimer->setInterval(500000);
@@ -114,30 +163,45 @@ namespace SignonDaemonNS {
         return true;
     }
 
-
     bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
     {
-        Q_UNUSED(lockCode)
-
         m_pCAMManager = CredentialsAccessManager::instance();
         CAMConfiguration config;
-        //Leaving encryption disabled for the moment: dm_mod not loaded by default.
+
+        //Leaving encryption disabled for the moment.
         config.m_useEncryption = false;
+        config.m_encryptionPassphrase = lockCode;
 
-        if (!m_pCAMManager->init(config))  {
-            qFatal("Signond: Cannot set proper configuration of CAM");
-            delete m_pCAMManager;
-            m_pCAMManager = NULL;
+        /* If auto start fails(SIM not present or has invalid data)
+           and this is called by DBUS retry init of secure storage.
+        */
+        if (!m_pCAMManager->credentialsSystemOpened()) {
+            if (calledFromDBus()) {
+                TRACE() << "Initialize secure storage called from DBUS...";
+                m_pCAMManager->finalize();
+            }
+
+            if (!m_pCAMManager->init(config)) {
+                qCritical("Signond: Cannot set proper configuration of CAM");
+                delete m_pCAMManager;
+                m_pCAMManager = NULL;
+                return false;
+            }
+
+            //If not encryption in use just init the storage here - unsecure
+            if (config.m_useEncryption == false) {
+                if (!m_pCAMManager->openCredentialsSystem()) {
+                    qCritical("Signond: Cannot open CAM credentials system...");
+                    delete m_pCAMManager;
+                    m_pCAMManager = NULL;
+                    return false;
+                }
+            }
+        } else {
+            TRACE() << "Secure storage already initialized...";
             return false;
         }
 
-        if (!m_pCAMManager->openCredentialsSystem()) {
-            qFatal("Signond: openCredentialsSystem failed with code %d",
-                   m_pCAMManager->lastError());
-            delete m_pCAMManager;
-            m_pCAMManager = NULL;
-            return false;
-        }
         return true;
     }
 
@@ -162,8 +226,10 @@ namespace SignonDaemonNS {
 
     void SignonDaemon::identityStored(SignonIdentity *identity)
     {
-        m_unstoredIdentities.remove(identity->objectName());
-        m_storedIdentities.insert(identity->id(), identity);
+        if (m_unstoredIdentities.contains(identity->objectName())) {
+            m_unstoredIdentities.remove(identity->objectName());
+            m_storedIdentities.insert(identity->id(), identity);
+        }
     }
 
     void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
@@ -174,11 +240,10 @@ namespace SignonDaemonNS {
 
         SignonIdentity *identity = SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
-        if (identity == NULL)
-        {
+        if (identity == NULL) {
             QDBusMessage errReply = message().createErrorReply(
-                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
+                    internalServerErrName,
+                    internalServerErrStr + QLatin1String("Could not create remote Identity object."));
             SIGNOND_BUS.send(errReply);
             return;
         }
@@ -192,6 +257,8 @@ namespace SignonDaemonNS {
     {
         RequestCounter::instance()->addServiceResquest();
 
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE();
+
         TRACE() << "Registering identity:" << id;
 
         //1st check if the existing identity is in cache
@@ -204,8 +271,8 @@ namespace SignonDaemonNS {
         if (identity == NULL)
         {
             QDBusMessage errReply = message().createErrorReply(
-                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Could not create remote Identity object."));
+                    internalServerErrName,
+                    internalServerErrStr + QLatin1String("Could not create remote Identity object."));
             SIGNOND_BUS.send(errReply);
             return;
         }
@@ -237,23 +304,21 @@ namespace SignonDaemonNS {
         RequestCounter::instance()->addServiceResquest();
 
         QDir pluginsDir(SIGNOND_PLUGINS_DIR);
-         //TODO: in the future remove the sym links comment
-         QStringList fileNames = pluginsDir.entryList(
-                 QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
+        //TODO: in the future remove the sym links comment
+        QStringList fileNames = pluginsDir.entryList(
+                QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
 
-         QStringList ret;
-         QString fileName;
-         foreach(fileName, fileNames)
-         {
-             if (fileName.startsWith(QLatin1String("lib")))
-             {
-                 fileName = fileName.mid(3, fileName.indexOf(QLatin1String("plugin")) -3);
-                 if ((fileName.length() > 0) && !ret.contains(fileName))
-                     ret << fileName;
-             }
-         }
+        QStringList ret;
+        QString fileName;
+        foreach (fileName, fileNames) {
+            if (fileName.startsWith(QLatin1String("lib"))) {
+                fileName = fileName.mid(3, fileName.indexOf(QLatin1String("plugin")) -3);
+                if ((fileName.length() > 0) && !ret.contains(fileName))
+                    ret << fileName;
+            }
+        }
 
-         return ret;
+        return ret;
     }
 
     QStringList SignonDaemon::queryMechanisms(const QString &method)
@@ -268,8 +333,7 @@ namespace SignonDaemonNS {
 
         PluginProxy *plugin = PluginProxy::createNewPluginProxy(method);
 
-        if (!plugin)
-        {
+        if (!plugin) {
             TRACE() << "Could not load plugin of type: " << method;
             QDBusMessage errReply = message().createErrorReply(
                     SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
@@ -290,6 +354,8 @@ namespace SignonDaemonNS {
     {
         RequestCounter::instance()->addServiceResquest();
 
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
+
         TRACE() << "\n\n\n Querying identities\n\n";
 
         CredentialsDB *db = m_pCAMManager->credentialsDB();
@@ -300,19 +366,17 @@ namespace SignonDaemonNS {
 
         QMap<QString, QString> filterLocal;
         QMapIterator<QString, QVariant> it(filter);
-        while(it.hasNext())
-        {
+        while (it.hasNext()) {
             it.next();
             filterLocal.insert(it.key(), it.value().toString());
         }
 
         QList<SignonIdentityInfo> credentials = db->credentials(filterLocal);
 
-        if (db->errorOccurred())
-        {
+        if (db->errorOccurred()) {
             QDBusMessage errReply = message().createErrorReply(
-                    SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                    SIGNOND_INTERNAL_SERVER_ERR_STR + QLatin1String("Querying database error occurred."));
+                    internalServerErrName,
+                    internalServerErrStr + QLatin1String("Querying database error occurred."));
             SIGNOND_BUS.send(errReply);
             return QList<QVariant>();
         }
@@ -323,6 +387,9 @@ namespace SignonDaemonNS {
     bool SignonDaemon::clear()
     {
         RequestCounter::instance()->addServiceResquest();
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
+
         TRACE() << "\n\n\n Clearing DB\n\n";
         CredentialsDB *db = m_pCAMManager->credentialsDB();
         if (!db) {
@@ -330,8 +397,7 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        if (!db->clear())
-        {
+        if (!db->clear()) {
             QDBusMessage errReply = message().createErrorReply(
                                                     SIGNOND_INTERNAL_SERVER_ERR_NAME,
                                                     QString(SIGNOND_INTERNAL_SERVER_ERR_STR
@@ -347,35 +413,152 @@ namespace SignonDaemonNS {
         return SignonAuthSession::getAuthSessionObjectPath(id, type, this);
     }
 
-    bool SignonDaemon::setDeviceLockCode(const QByteArray &oldLockCode,
-                                         const QByteArray &newLockCode)
+    bool SignonDaemon::setDeviceLockCode(const QByteArray &newLockCode,
+                                         const QByteArray &oldLockCode)
     {
-        Q_UNUSED(oldLockCode)
-        Q_UNUSED(newLockCode)
+        TRACE() << "SignonDaemon::setDeviceLockCode()";
+        if (m_pCAMManager == NULL) {
+            /*
+             * Initialized CAM if it is not already so.
+             * If the old lock code is not provided, assume this is a 1st time call and
+             * attempt the formatting of the CAM secure storage with the new lock code.
+             * If the secure storage has already been formatted the initSecureStorage call
+             * will fail!
+             */
+            QByteArray lockCode = oldLockCode;
+            if (oldLockCode.isEmpty())
+                lockCode = newLockCode;
 
-        // TODO - implement this
-        TRACE() << "setDeviceLockCode:   oldLockCode = " << oldLockCode << ", newLockCode = " << newLockCode;
-        return false;
-    }
+            if (!initSecureStorage(lockCode))
+                return false;
+        }
 
-    bool SignonDaemon::setSim(const QByteArray& simData,
-                              const QByteArray& checkData)
-    {
-        Q_UNUSED(simData)
-        Q_UNUSED(checkData)
-
-        // TODO - implement this
-        TRACE() << "setSim:   simData = " << simData << ", checkData = " << checkData;
-        return false;
+        if (!m_pCAMManager->setDeviceLockCodeKey(newLockCode, oldLockCode)) {
+            TRACE() << "Failed to set new device lock code.";
+            return false;
+        }
+        return true;
     }
 
     bool SignonDaemon::remoteLock(const QByteArray &lockCode)
     {
         Q_UNUSED(lockCode)
-
-        // TODO - implement this
+        // TODO - implement this, research how to.
         TRACE() << "remoteLock:   lockCode = " << lockCode;
         return false;
+    }
+
+    /*
+     * backup/restore
+     * TODO move fixed strings into config
+     */
+    uchar SignonDaemon::backup(const QStringList &selectedCategories)
+    {
+        TRACE() << "backup";
+        if (selectedCategories.contains(QLatin1String("settings"), Qt::CaseInsensitive)) {
+            //backup requested
+            if (!m_backup && m_pCAMManager->credentialsSystemOpened()) {
+                //umount file system
+                m_pCAMManager->closeCredentialsSystem();
+                 if (m_pCAMManager->credentialsSystemOpened()) return 2;
+            }
+            //do backup copy
+            CAMConfiguration config;
+            QString source;
+            if (config.m_useEncryption)
+                source = config.m_dbFileSystemPath;
+            else
+                source = QDir::homePath() + QDir::separator() + config.m_dbName;
+            QDir target;
+            if (!target.mkpath(QLatin1String("/home/user/.signon/"))) {
+                TRACE() << "Cannot create target directory";
+                m_pCAMManager->openCredentialsSystem();
+                return 2;
+            }
+            if (!QFile::copy(source, QLatin1String("/home/user/.signon/signondb.bin"))) {
+                TRACE() << "Cannot copy database";
+                m_pCAMManager->openCredentialsSystem();
+                return 2;
+            }
+            if (!m_backup) {
+                //mount file system back
+                if (!m_pCAMManager->openCredentialsSystem()) {
+                    TRACE() << "Cannot reopen database";
+                    return 2;
+                }
+            }
+        }
+        return 0;
+    }
+
+    bool SignonDaemon::close()
+    {
+        TRACE() << "close";
+        if (m_backup) {
+            //close daemon
+            TRACE() << "close daemon";
+            this->deleteLater();
+        }
+        return true;
+     }
+
+    bool SignonDaemon::prestart()
+    {
+        TRACE() << "prestart";
+        return true;
+    }
+
+    uchar SignonDaemon::restore(const QStringList &selectedCategories,
+                                const QString &productName,
+                                const QStringList &restoredFilePaths)
+    {
+        Q_UNUSED(productName);
+        Q_UNUSED(restoredFilePaths);
+        TRACE() << "restore";
+        if (selectedCategories.contains(QLatin1String("settings"), Qt::CaseInsensitive)) {
+            //restore requested
+            if (m_pCAMManager->credentialsSystemOpened()) {
+                //umount file system
+                if (!m_pCAMManager->closeCredentialsSystem()) {
+                    TRACE() << "database cannot be closed";
+                    return 2;
+                }
+            }
+            //do restore
+            //TODO add checking if encryption status has changed
+            CAMConfiguration config;
+            QString target;
+            if (config.m_useEncryption)
+                target = config.m_dbFileSystemPath;
+            else
+                target = QDir::homePath() + QDir::separator() + config.m_dbName;
+            if (!QFile::remove(target+QLatin1String(".bak"))) {
+                TRACE() << "Cannot remove backup copy of database";
+            }
+            if (!QFile::rename(target, target+QLatin1String(".bak"))) {
+                TRACE() << "Cannot make backup copy of database";
+            }
+            if (!QFile::copy(QLatin1String("/home/user/.signon/signondb.bin"), target)) {
+                TRACE() << "Cannot copy database";
+                if (!QFile::rename(target+QLatin1String(".bak"), target)) {
+                    TRACE() << "Cannot restore backup copy of database";
+                }
+                m_pCAMManager->openCredentialsSystem();
+                return 2;
+            }
+            //try to remove backup database
+            if (!QFile::remove(target+QLatin1String(".bak"))) {
+                TRACE() << "Cannot remove backup copy of database";
+            }
+            //TODO check database integrity
+            if (!m_backup) {
+                //mount file system back
+                 if (!m_pCAMManager->openCredentialsSystem()) {
+                     return 2;
+                 }
+            }
+        }
+        return 0;
     }
 
     void SignonDaemon::listDBusInterfaces()

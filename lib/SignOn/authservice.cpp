@@ -27,7 +27,12 @@ namespace SignOn {
 
     AuthService::AuthService(QObject *parent)
         : QObject(parent), impl(new AuthServiceImpl(this))
-    {}
+    {
+        qRegisterMetaType<Error>("SignOn::Error");
+
+        if (qMetaTypeId<Error>() < QMetaType::User)
+            BLAME() << "AuthService::AuthService() - SignOn::Error meta type not registered.";
+    }
 
     AuthService::~AuthService()
     {}

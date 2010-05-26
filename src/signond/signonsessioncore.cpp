@@ -276,7 +276,7 @@ namespace SignonDaemonNS {
 
         if (requestIndex < m_listOfRequests.size()) {
             if (requestIndex == 0) {
-                m_cancelled = cancelKey;
+                m_canceled = cancelKey;
                 m_plugin->cancel();
 
                 if (m_watcher && !m_watcher->isFinished()) {
@@ -287,8 +287,8 @@ namespace SignonDaemonNS {
             }
 
             /*
-             * We must let to the m_listOfRequests to have the cancelled request data
-             * in order to delay the next request execution until the actual cancellation
+             * We must let to the m_listOfRequests to have the canceled request data
+             * in order to delay the next request execution until the actual cancelation
              * will happen. We will know about that precisely: plugin must reply via
              * resultSlot or via errorSlot.
              * */
@@ -296,8 +296,8 @@ namespace SignonDaemonNS {
                             m_listOfRequests.head() :
                             m_listOfRequests.takeAt(requestIndex)));
 
-            QDBusMessage errReply = rd.m_msg.createErrorReply(QLatin1String("com.nokia.singlesignon.AuthSessionError.CancelledError"),
-                                                              QLatin1String("process is cancelled"));
+            QDBusMessage errReply = rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
+                                                              SIGNOND_SESSION_CANCELED_ERR_STR);
             rd.m_conn.send(errReply);
             TRACE() << "Size of the queue is " << m_listOfRequests.size();
         }
@@ -328,18 +328,22 @@ namespace SignonDaemonNS {
 
         if (m_id) {
             CredentialsDB *db = qobject_cast<SignonDaemon*>(parent())->m_pCAMManager->credentialsDB();
-            SignonIdentityInfo info = db->credentials(m_id);
-            if (!db->errorOccurred()) {
-                /*
-                 * TODO: reconsider this code: maybe some more data is required
-                 * */
-                parameters[QLatin1String("Secret")] = info.m_password;
-                parameters[QLatin1String("UserName")] = info.m_userName;
+            if (db != NULL) {
+                SignonIdentityInfo info = db->credentials(m_id);
+                if (info.m_id != SIGNOND_NEW_IDENTITY) {
+                    /*
+                     * TODO: reconsider this code: maybe some more data is required
+                     * */
+                    parameters[QLatin1String("Secret")] = info.m_password;
+                    parameters[QLatin1String("UserName")] = info.m_userName;
+                } else {
+                    BLAME() << "Error occurred while getting data from credentials database.";
+                    /*
+                     * TODO: actual behavior should be clarified for this case
+                     * */
+                }
             } else {
-                qCritical() << "!!!problems with getting data from credentials database!!!";
-                /*
-                 * TODO: actual behavior should be clarified for this case
-                 * */
+                BLAME() << "Null database handler object.";
             }
         }
 
@@ -403,14 +407,25 @@ namespace SignonDaemonNS {
                     errMessage = SIGNOND_RUNTIME_ERR_STR;
                     errName = SIGNOND_RUNTIME_ERR_NAME;
                     break;
+                case PLUGIN_ERROR_USER_INTERACTION:
+                    errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
+                    errName = SIGNOND_USER_INTERACTION_ERR_NAME;
+                    break;
+                case PLUGIN_ERROR_CANCELED:
+                    errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
+                    errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
+                    break;
                 default:
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    if (message.isEmpty())
+                        errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    else
+                        errMessage = message;
                     errName = SIGNOND_UNKNOWN_ERR_NAME;
                     break;
             };
         }
 
-        if(err > Error::AuthSessionErr && err < Error::UserErr) {
+        if (Error::AuthSessionErr < err && err < Error::UserErr) {
             switch(err) {
                 case Error::MechanismNotAvailable:
                     errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
@@ -465,8 +480,11 @@ namespace SignonDaemonNS {
                     errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                     break;
                 default:
+                    if (message.isEmpty())
+                        errMessage = SIGNOND_UNKNOWN_ERR_STR;
+                    else
+                        errMessage = message;
                     errName = SIGNOND_UNKNOWN_ERR_NAME;
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
                     break;
             };
         }
@@ -490,7 +508,7 @@ namespace SignonDaemonNS {
 
         RequestData rd = m_listOfRequests.dequeue();
 
-        if (cancelKey != m_cancelled) {
+        if (cancelKey != m_canceled) {
             QVariantList arguments;
             QVariantMap data2 = filterVariantMap(data);
 
@@ -501,7 +519,7 @@ namespace SignonDaemonNS {
 
             TRACE() << "sending reply: " << arguments;
             rd.m_conn.send(rd.m_msg.createReply(arguments));
-            m_cancelled = QString();
+            m_canceled = QString();
 
             if (m_watcher && !m_watcher->isFinished()) {
                 m_signonui->cancelUiRequest(rd.m_cancelKey);
@@ -510,7 +528,7 @@ namespace SignonDaemonNS {
             }
         }
 
-        m_cancelled = QString();
+        m_canceled = QString();
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
         m_lastOperationTime = QDateTime::currentDateTime();
     }
@@ -519,7 +537,7 @@ namespace SignonDaemonNS {
     {
         TRACE();
 
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             QString uiRequestId = m_listOfRequests.head().m_cancelKey;
 
             if (m_watcher) {
@@ -552,7 +570,7 @@ namespace SignonDaemonNS {
     {
         TRACE();
 
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             QString uiRequestId = m_listOfRequests.head().m_cancelKey;
 
             if (m_watcher) {
@@ -581,7 +599,7 @@ namespace SignonDaemonNS {
 
         RequestData rd = m_listOfRequests.dequeue();
 
-        if (cancelKey != m_cancelled) {
+        if (cancelKey != m_canceled) {
             replyError(rd.m_conn, rd.m_msg, err, message);
 
             if (m_watcher && !m_watcher->isFinished()) {
@@ -591,14 +609,14 @@ namespace SignonDaemonNS {
             }
         }
 
-        m_cancelled = QString();
+        m_canceled = QString();
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
         m_lastOperationTime = QDateTime::currentDateTime();
     }
 
     void SignonSessionCore::stateChangedSlot(const QString &cancelKey, int state, const QString &message)
     {
-        if (cancelKey != m_cancelled && m_listOfRequests.size()) {
+        if (cancelKey != m_canceled && m_listOfRequests.size()) {
             RequestData rd = m_listOfRequests.head();
             emit stateChanged(rd.m_cancelKey, (int)state, message);
         }
@@ -659,29 +677,26 @@ namespace SignonDaemonNS {
 
             if (resultParameters.contains(SSOUI_KEY_REMEMBER) &&
                resultParameters[SSOUI_KEY_REMEMBER].toBool() ) {
-                if (parent()->m_storedIdentities.contains(m_id)) {
-                    SignonIdentity *idty = parent()->m_storedIdentities.value(m_id);
+                
+                CredentialsDB *db = qobject_cast<SignonDaemon*>(parent())->m_pCAMManager->credentialsDB();
+                if (db != NULL) {
+                    SignonIdentityInfo info = db->credentials(m_id);
 
-                    if (idty) {
-                        bool isOk;
-                        SignonIdentityInfo info = idty->queryInfo(isOk);
+                    if (info.m_id != SIGNOND_NEW_IDENTITY) {
+                        info.m_userName = resultParameters[SSOUI_KEY_USERNAME].toString();
+                        info.m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
 
-                        if (isOk) {
-                            QString newUsername = resultParameters[SSOUI_KEY_USERNAME].toString();
-                            QString newSecret = resultParameters[SSOUI_KEY_PASSWORD].toString();
-
-                            idty->storeCredentials(m_id,
-                                                   newUsername,
-                                                   newSecret,
-                                                   info.m_password.isEmpty(),
-                                                   SignonIdentityInfo::mapListToMapVariant(info.m_methods),
-                                                   info.m_caption,
-                                                   info.m_realms,
-                                                   info.m_accessControlList,
-                                                   info.m_type);
-                        }
+                        if (!(db->updateCredentials(info, !(info.m_password.isEmpty()))))
+                            TRACE() << "Error occured while updating credentials.";
+                    } else {
+                        TRACE() << "Error occured while updating credentials."
+                                   "Query existing data operation failed.";
                     }
+
+                } else {
+                    BLAME() << "Error occured while updating credentials. Null database handler object.";
                 }
+
                 resultParameters.remove(SSOUI_KEY_REMEMBER);
             }
             m_listOfRequests.head().m_params = resultParameters;
@@ -690,7 +705,7 @@ namespace SignonDaemonNS {
 
         TRACE() << m_listOfRequests.head().m_params;
 
-        if (m_listOfRequests.head().m_cancelKey != m_cancelled) {
+        if (m_listOfRequests.head().m_cancelKey != m_canceled) {
             if (isRequestToRefresh) {
                 TRACE() << "REFRESH IS REQUIRED";
 

@@ -37,7 +37,11 @@ namespace SignOn {
      * @attention All this class' definitions must be inline.
      */
     class SIGNON_EXPORT Error
+#ifdef SIGNON_INTERNAL
+    : public QObject { Q_OBJECT
+#else
     {
+#endif
     public:
         /*!
          * @enum ErrorType Error codes for all the Signon by default supported errors.
@@ -74,6 +78,7 @@ namespace SignOn {
                                             necessary information. */
             InvalidCredentials,        /**< The supplied credentials are invalid for
                                             the mechanism implementation. */
+            NotAuthorized,             /**< Authorization failed. */
             WrongState,                /**< An operation method has been called in
                                             a wrong state. */
             OperationNotSupported,     /**< The operation is not supported by the
@@ -106,7 +111,7 @@ namespace SignOn {
          * @param type The error's type.
          * @param message The error's message.
          */
-        Error(int type, const QString &message) : m_type(type), m_message(message)
+        Error(int type, const QString &message = QString()) : m_type(type), m_message(message)
             { registerType(); }
 
         /*!

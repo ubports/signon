@@ -33,6 +33,11 @@ namespace SaslPluginNS {
 class SaslData : public SignOn::SessionData
 {
 public:
+    enum State {
+        DONE,
+        CONTINUE,
+    };
+
     /*!
      * Declare property Example setter and getter
      */

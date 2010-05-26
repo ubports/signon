@@ -26,8 +26,7 @@
     bool setDeviceLockCode(const QByteArray &oldLockCode,
                                const QByteArray &newLockCode);
 
-    bool setSim(const QByteArray& simData,
-                const QByteArray& checkData);
+    bool initSecureStorage(const QByteArray& lockCode);
 
     bool remoteLock(const QByteArray &lockCode)
 */
@@ -39,51 +38,61 @@
 
 #include <signond/signoncommon.h>
 
-bool setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
+
+void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 {
     QDBusInterface dbus_iface(SIGNOND_SERVICE,
                               SIGNOND_DAEMON_OBJECTPATH,
                               SIGNOND_DAEMON_INTERFACE,
                               SIGNOND_BUS);
 
-    dbus_iface.call(QLatin1String("setDeviceLockCode"), oldLockCode, newLockCode);
+    QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);
 
-    return true;
+    switch (reply.type()) {
+    case QDBusMessage::ReplyMessage:
+        fputs("\nCommand successfully executed.\n", stderr);
+        break;
+    case QDBusMessage::ErrorMessage:
+        fputs("\nCommand execution failed.\n", stderr);
+        fputs(reply.errorName().toLatin1().data(), stderr);
+        fputs(reply.errorMessage().toLatin1().data(), stderr);
+        break;
+    case QDBusMessage::InvalidMessage:
+        fputs("\nInvalid reply from Signon daemon.\n", stderr);
+        break;
+    default:
+        fputs("\nUnknown error.\n", stderr);
+    }
 }
 
-bool setSim(const QByteArray &simData, const QByteArray &checkData)
+void setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
-                              SIGNOND_BUS);
-
-    dbus_iface.call(QLatin1String("setSIM"), simData, checkData);
-
-    return true;
+    QList<QVariant> args = QList<QVariant>() << oldLockCode << newLockCode;
+    dbusCall(QLatin1String("setDeviceLockCode"), args);
 }
 
-bool remoteLock(const QByteArray &lockCode)
+void initSecureStorage(const QByteArray &unlockData)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
-                              SIGNOND_BUS);
+    qDebug() << "initSecureStorage" << unlockData;
+    QList<QVariant> args = QList<QVariant>() << unlockData;
+    dbusCall(QLatin1String("initSecureStorage"), args);
+}
 
-    dbus_iface.call(QLatin1String("remoteLock"), lockCode);
-
-    return true;
+void remoteLock(const QByteArray &lockCode)
+{
+    QList<QVariant> args = QList<QVariant>() << lockCode;
+    dbusCall(QLatin1String("remoteLock"), args);
 }
 
 void showHelp()
 {
-    fprintf(stderr, "\nUsage: signon-utils [option] [params] ...\n\n");
-    fprintf(stderr, "Option           Params                       Meaning\n");
-    fprintf(stderr, "----------------------------------------------------------------------\n");
-    fprintf(stderr, "--lock-code      oldLockCode, newLockCode     Device lock code change.\n");
-    fprintf(stderr, "--sim-change     param                        SIM card change.\n");
-    fprintf(stderr, "--remote-lock    param                        Remote database lock/wipe, I guess.\n");
-    fprintf(stderr, "--help           none                         Shows this message. \n\n");
+    fputs("\nUsage: signon-utils [option] [params] ...\n\n", stderr);
+    fputs("Option           Params                       Meaning\n", stderr);
+    fputs("----------------------------------------------------------------------\n", stderr);
+    fputs("--lock-code      newLockCode, oldLockCode     Device lock code change.\n", stderr);
+    fputs("--init-storage   unlockCode                   Initialize secure storage.\n", stderr);
+    fputs("--remote-lock    lockCode                     Remote database lock.\n", stderr);
+    fputs("--help           none                         Shows this message.\n\n", stderr);
 }
 
 void showError(const char *command)
@@ -114,9 +123,9 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
 
     if (!SIGNOND_BUS.isConnected()) {
-        fprintf(stderr, "Cannot connect to the D-Bus session bus.\n"
-                "To start it, run:\n"
-                "\teval `dbus-launch --auto-syntax`\n");
+        fputs("Cannot connect to the D-Bus session bus.\n"
+              "To start it, run:\n"
+              "\teval `dbus-launch --auto-syntax`\n", stderr);
         return 0;
     }
 
@@ -140,11 +149,11 @@ int main(int argc, char **argv)
                 showError("--lock-code");
         }
 
-        if (args[idx] == QLatin1String("--sim-change")) {
+        if (args[idx] == QLatin1String("--init-storage")) {
             if (expectedArgsOk(args, idx, 1))
-                setSim(args[idx+1].toUtf8(), args[idx+2].toUtf8());
+                initSecureStorage(args[idx+1].toUtf8());
             else
-                showError("--sim-change");
+                showError("--init-storage");
         }
 
         if (args[idx] == QLatin1String("--remote-lock")) {

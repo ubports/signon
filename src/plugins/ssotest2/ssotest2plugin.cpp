@@ -34,7 +34,7 @@
 namespace SsoTest2PluginNS {
 
     static QMutex mutex;
-    static bool is_cancelled = false;
+    static bool is_canceled = false;
     static QEventLoop uiLoop;
     static SignOn::UiSessionData uiData;
 
@@ -61,7 +61,7 @@ namespace SsoTest2PluginNS {
     {
         TRACE();
         QMutexLocker locker(&mutex);
-        is_cancelled = true;
+        is_canceled = true;
     }
     /*
      * dummy plugin is used for testing purposes only
@@ -144,7 +144,7 @@ namespace SsoTest2PluginNS {
         QStringList chainOfResults;
 
         for (int i = 0; i < testData.ChainOfStates().length(); i++)
-            if (!is_cancelled) {
+            if (!is_canceled) {
                 quint32 currState = testData.CurrentState();
                 QString message = QString("message from plugin, state : %1").arg(currState);
                 TRACE() << message;
@@ -183,10 +183,10 @@ namespace SsoTest2PluginNS {
                 testData.setCurrentState(currState+1);
             }
 
-        if (is_cancelled) {
-            TRACE() << "Operation is cancelled";
+        if (is_canceled) {
+            TRACE() << "Operation is canceled";
             QMutexLocker locker(&mutex);
-            is_cancelled = false;
+            is_canceled = false;
             emit error(PLUGIN_ERROR_OPERATION_FAILED);
             return;
         }

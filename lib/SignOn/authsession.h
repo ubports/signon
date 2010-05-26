@@ -187,7 +187,7 @@ namespace SignOn {
 
         /*!
          * Cancel ongoing challenge.
-         * Signal error() is emitted with argument CancelledError when cancelled
+         * Signal error() is emitted with argument CanceledError when canceled
          * challenge is procecced. If there is no challenge to cancel, error with
          * argument WrongStateError is emitted.
          */

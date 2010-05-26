@@ -16,11 +16,15 @@ INCLUDEPATH += . \
                $$TOP_SRC_DIR/src/signond \
                $$TOP_SRC_DIR/lib/plugins
 
-CONFIG +=  debug_and_release \
-           build_all \
-           link_pkgconfig
+CONFIG += \
+    build_all \
+    link_pkgconfig
 
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti
+
+#DEFINES += QT_NO_CAST_TO_ASCII \
+#    QT_NO_CAST_FROM_ASCII
+DEFINES += SIGNON_PLUGIN_TRACE
 
 include( ../../common-installs-config.pri )

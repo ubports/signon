@@ -29,7 +29,6 @@
 #include "credentialsdb.cpp"
 #include "cryptohandlers.cpp"
 #include "cryptomanager.cpp"
-#include "simdbusadaptor.cpp"
 #include "signonidentityinfo.cpp"
 
 #endif //_EXTERNAL_INCLUDED_

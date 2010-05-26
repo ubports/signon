@@ -432,7 +432,7 @@ namespace RemotePluginProcessNS {
             {
                 m_plugin->cancel(); break;
                 //still do not have clear understanding
-                //of the cancellation-stop mechanism
+                //of the cancelation-stop mechanism
                 //is_stopped = true;
             }
             break;

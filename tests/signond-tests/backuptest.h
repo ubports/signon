@@ -20,46 +20,41 @@
  * 02110-1301 USA
  */
 
-#ifndef TESTPLUGINPROXY_H_
-#define TESTPLUGINPROXY_H_
+#ifndef BACKUPTEST_H_
+#define BACKUPTEST_H_
 
 #include <QtTest/QtTest>
 #include <QtCore>
 
 #include "signond/signoncommon.h"
-#include "SignOn/sessiondata.h"
-#include "SignOn/authpluginif.h"
-#include "pluginproxy.h"
 
-using namespace SignonDaemonNS;
 using namespace SignOn;
 
-class TestPluginProxy: public QObject
+class TestBackup: public QObject
 {
     Q_OBJECT
 
+public Q_SLOTS:
 #if defined(SSO_CI_TESTMANAGEMENT)
-     public Q_SLOTS:
      void runAllTests();
-#else
-     private Q_SLOTS:
 #endif
+
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
+    void init();
+    void cleanup();
 
-    void create_nonexisting();
-    void create_dummy();
-    void type_for_dummy();
-    void mechanisms_for_dummy();
-    void process_for_dummy();
-    void processUi_for_dummy();
-    void process_wrong_mech_for_dummy();
-    void process_and_cancel_for_dummy();
-    void wrong_user_for_dummy();
+    //backup mode
+    void backupTest();
+    void restoreTest();
+
+    void backupNormalTest();
+    void restoreNormalTest();
 
 private:
-    PluginProxy *m_proxy;
+    QProcess *daemonProcess;
 };
 
 
-#endif //TESTPLUGINPROXY_H_
+#endif //BACKUPTEST_H_
