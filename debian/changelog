@@ -1,3 +1,43 @@
+signon (0.6-1) unstable; urgency=low
+
+  * Fix versioning.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Tue, 18 May 2010 11:12:04 +0300
+
+signon (0.5-1) unstable; urgency=low
+
+  * Fixes: NB#165957 - <coverity> defects from signon
+  * Fixes: NB#168654 - signod-tests (1/5) tests fail
+
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 14 May 2010 11:58:03 +0300
+
+signon (0.5) unstable; urgency=low
+
+  * Fixes: NB#166151 - SignOn::AuthSession::error signal emitted with wrong error code on cancel of authentication
+
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 14 May 2010 09:58:03 +0300
+
+signon (0.4-1) unstable; urgency=low
+
+  * Fixes: NB#166151 - SignOn::AuthSession::error signal emitted with wrong error code on cancel of authentication
+
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Mon, 10 May 2010 09:58:03 +0300
+
+signon (0.3-1) unstable; urgency=low
+
+  * Remove debug_and_release build option.
+  * Add backup functionality.
+  * Fixed memory leak in SASL plugin.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Fri, 07 May 2010 15:46:03 +0300
+
+signon (0.2) unstable; urgency=low
+
+  * Implemented: SWP#ASSOH-49, SWP#ASSOH-50
+  * Fixes: NB#164518 -  signond-tests-runPluginProxyTests FAILED
+
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Wed, 05 May 2010 13:50:47 +0300
+
 signon (0.1.16-1) unstable; urgency=low
 
   * Added unified OO Error handling for Signon framework.
