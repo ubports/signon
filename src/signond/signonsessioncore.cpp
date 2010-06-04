@@ -551,13 +551,10 @@ namespace SignonDaemonNS {
             m_listOfRequests.head().m_params = filterVariantMap(data);
             m_listOfRequests.head().m_params[SSOUI_KEY_REQUESTID] = uiRequestId;
 
-            if (!m_id && m_listOfRequests.head().m_params.contains(SSOUI_KEY_REMEMBER))
-                m_listOfRequests.head().m_params.remove(SSOUI_KEY_REMEMBER);
-
-                //TODO: figure out how we going to synchronize
-                //different login dialogs in order not to show
-                //multiple login dialogs for the same credentials
-    //            data2["CredentialsId"] = m_id;
+            //TODO: figure out how we going to synchronize
+            //different login dialogs in order not to show
+            //multiple login dialogs for the same credentials
+            //data2["CredentialsId"] = m_id;
             m_watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(m_listOfRequests.head().m_params),
                                                     this);
             connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
@@ -663,7 +660,6 @@ namespace SignonDaemonNS {
 
     void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
     {
-        TRACE();
         QDBusPendingReply<QVariantMap> reply = *call;
         bool isRequestToRefresh = false;
         Q_ASSERT_X( m_listOfRequests.size() != 0, __func__, "queue of requests is empty");
@@ -675,33 +671,26 @@ namespace SignonDaemonNS {
                 resultParameters.remove(SSOUI_KEY_REFRESH);
             }
 
-            if (resultParameters.contains(SSOUI_KEY_REMEMBER) &&
-               resultParameters[SSOUI_KEY_REMEMBER].toBool() ) {
-                
+            if (m_id != SIGNOND_NEW_IDENTITY) {
                 CredentialsDB *db = qobject_cast<SignonDaemon*>(parent())->m_pCAMManager->credentialsDB();
                 if (db != NULL) {
                     SignonIdentityInfo info = db->credentials(m_id);
 
-                    if (info.m_id != SIGNOND_NEW_IDENTITY) {
-                        info.m_userName = resultParameters[SSOUI_KEY_USERNAME].toString();
-                        info.m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
+                    info.m_userName = resultParameters[SSOUI_KEY_USERNAME].toString();
+                    info.m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
 
-                        if (!(db->updateCredentials(info, !(info.m_password.isEmpty()))))
-                            TRACE() << "Error occured while updating credentials.";
-                    } else {
-                        TRACE() << "Error occured while updating credentials."
-                                   "Query existing data operation failed.";
-                    }
-
-                } else {
-                    BLAME() << "Error occured while updating credentials. Null database handler object.";
+                    if (!(db->updateCredentials(info)))
+                        TRACE() << "Error occured while updating credentials.";
                 }
 
-                resultParameters.remove(SSOUI_KEY_REMEMBER);
+            } else {
+                    BLAME() << "Error occured while updating credentials. Null database handler object.";
             }
+
             m_listOfRequests.head().m_params = resultParameters;
-        } else
+        } else {
             m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR, (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
+        }
 
         TRACE() << m_listOfRequests.head().m_params;
 
