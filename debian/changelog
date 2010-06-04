@@ -1,3 +1,9 @@
+signon (0.8-1) unstable; urgency=low
+
+  * Fixes: NB#166172 - Credentials entered in Signon-ui are not being updated in signon.db.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Fri, 04 Jun 2010 16:00:00 +0300
+
 signon (0.7-2) unstable; urgency=low
 
   * Improvements of Signon CAM. Device lock code and SIM key support for LUKS secure storage.
