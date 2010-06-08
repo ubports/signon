@@ -7,7 +7,9 @@ include( ../../common-installs-config.pri )
 CONFIG += static
 
 HEADERS = \
-    SignOn/authpluginif.h
+    SignOn/authpluginif.h \
+    SignOn/uisessiondata.h \
+    SignOn/uisessiondata_priv.h
 
 headers.files = \
     SignOn/AuthPluginInterface \
