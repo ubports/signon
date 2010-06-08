@@ -37,7 +37,7 @@ class SaslPluginTest : public QObject
 
 public slots:
     void result(const SignOn::SessionData& data);
-    void pluginError(AuthPluginError error);
+    void pluginError(const SignOn::Error &error);
 
 private slots:
     void initTestCase();
@@ -64,7 +64,7 @@ private slots:
 
 private:
     SaslPlugin* m_testPlugin;
-    AuthPluginError m_error;
+    int m_errorType;
     SignOn::SessionData m_response;
     QEventLoop m_loop;
 };
