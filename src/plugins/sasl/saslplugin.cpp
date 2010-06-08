@@ -221,7 +221,7 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
     TRACE() <<buf;
     //here we have initial response
-    if (res == SASL_CONTINUE) {
+    if (res == SASL_CONTINUE && buf.count() > 0) {
         res = sasl_client_step(d->m_conn, buf.constData(),
                                buf.count(), NULL,
                                &data, &len);
