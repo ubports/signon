@@ -142,13 +142,6 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
     TRACE() << "mechanism: " << mechanism;
 
-    //check that required parameters are set
-    if (!mechanisms().contains(mechanism)) {
-        //unsupported mechanism
-        emit error(PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
-        return;
-    }
-
     if (!check_and_fix_parameters(d->m_input)) {
         TRACE() << "missing parameters";
         emit error(PLUGIN_ERROR_MISSING_DATA);
@@ -194,13 +187,18 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
                                 &len,
                                 &chosenmech);
 
-        TRACE() << chosenmech;
-
         if (res != SASL_OK && res != SASL_CONTINUE) {
             TRACE() << "err Starting SASL negotiation";
-            emit error(PLUGIN_ERROR_GENERAL);
+            if (res == SASL_NOMECH)
+              emit error(PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
+            else
+              emit error(PLUGIN_ERROR_GENERAL);
             return;
         }
+
+        TRACE() << chosenmech;
+
+        response.setChosenMechanism(QByteArray(chosenmech));
 
         buf.clear();
         if (res == SASL_CONTINUE) {
