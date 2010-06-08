@@ -26,8 +26,8 @@
 
 #include <sasl/sasl.h>
 
-#include "SignOn/sessiondata.h"
-#include "SignOn/authpluginif.h"
+#include "SignOn/SessionData"
+#include "SignOn/AuthPluginInterface"
 #include "sasldata.h"
 
 class SaslPluginTest;
