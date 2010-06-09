@@ -551,6 +551,11 @@ namespace SignonDaemonNS {
             m_listOfRequests.head().m_params = filterVariantMap(data);
             m_listOfRequests.head().m_params[SSOUI_KEY_REQUESTID] = uiRequestId;
 
+            if (m_id == SIGNOND_NEW_IDENTITY)
+                m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = false;
+            else
+                m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
+
             //TODO: figure out how we going to synchronize
             //different login dialogs in order not to show
             //multiple login dialogs for the same credentials
