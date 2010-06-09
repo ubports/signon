@@ -1,3 +1,14 @@
+signon (0.9-1) unstable; urgency=low
+
+  * Signond fix of bug #171614 (share with SignOnUI the information about
+    whether used credentials are stored in the DB).
+  * Fixes: NB#172740 - Don't proceed with sasl_client_step() if challenge is
+    empty (patch by Isaacson Eitan)
+  * Fixes: NB#172742 - Let libsasl2 choose the mechanism (patch by Isaacson
+    Eitan)
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Wed, 09 Jun 2010 12:12:54 +0300
+
 signon (0.8-1) unstable; urgency=low
 
   * Fixes: NB#166172 - Credentials entered in Signon-ui are not being updated in signon.db.
