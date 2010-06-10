@@ -63,8 +63,8 @@ namespace SignonDaemonNS {
         if (m_backup) exit(0);
 
         SignonAuthSession::stopAllAuthSessions();
-        qDeleteAll(m_storedIdentities);
-        qDeleteAll(m_unstoredIdentities);
+        m_storedIdentities.clear();
+        m_unstoredIdentities.clear();
 
         if (m_pCAMManager) {
             m_pCAMManager->closeCredentialsSystem();
