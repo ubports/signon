@@ -118,7 +118,9 @@ namespace SignOn {
     {
         foreach (AuthSession *authSession, m_authSessions) {
             if (authSession->name() == methodName) {
-                TRACE() << "Authentication session for this method already requested.";
+                qWarning() << QString::fromLatin1(
+                        "Authentication session for method "
+                        "`%1` already requested.").arg(methodName);
                 return 0;
             }
         }
