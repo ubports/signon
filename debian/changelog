@@ -1,3 +1,10 @@
+signon (1.0-1) unstable; urgency=low
+
+  * Fixes: NB#173216 - Random signond crash found during google sign-in.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Sat, 12 Jun 2010 12:45:00 +0300
+
+
 signon (0.8-1) unstable; urgency=low
 
   * Fixes: NB#166172 - Credentials entered in Signon-ui are not being updated in signon.db.
