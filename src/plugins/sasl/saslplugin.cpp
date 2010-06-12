@@ -24,7 +24,6 @@
 #include <sasl/saslutil.h>
 
 #include "saslplugin.h"
-#include "sasldata.h"
 
 #include "SignOn/signonplugincommon.h"
 
@@ -63,6 +62,8 @@ public:
         }
     }
 
+    static SignOn::Error mapSaslError(int res);
+
     sasl_callback_t m_callbacks[N_CALLBACKS];
     sasl_conn_t *m_conn;
     sasl_security_properties_t m_secprops;
@@ -73,6 +74,22 @@ public:
     QByteArray m_authname;
     QByteArray m_realm;
 };
+
+SignOn::Error SaslPlugin::Private::mapSaslError(int res)
+{
+    using SignOn::Error;
+
+    switch (res) {
+    case SASL_OK:
+        return 0;
+    case SASL_BADPARAM:
+        return Error::InvalidQuery;
+    case SASL_NOMECH:
+        return Error::MechanismNotAvailable;
+    default:
+        return Error::Unknown;
+    }
+}
 
 SaslPlugin::SaslPlugin(QObject *parent)
     : AuthPluginInterface(parent)
@@ -142,23 +159,18 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
     TRACE() << "mechanism: " << mechanism;
 
-    //check that required parameters are set
-    if (!mechanisms().contains(mechanism)) {
-        //unsupported mechanism
-        emit error(PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
-        return;
-    }
+    using SignOn::Error;
 
     if (!check_and_fix_parameters(d->m_input)) {
         TRACE() << "missing parameters";
-        emit error(PLUGIN_ERROR_MISSING_DATA);
+        emit error(Error::MissingData);
         return;
     }
 
     //check state
     if (d->m_input.state() == SaslData::CONTINUE && !d->m_conn) {
         TRACE() << "init not done for CONTINUE";
-        emit error(PLUGIN_ERROR_INVALID_STATE);
+        emit error(Error::WrongState);
         return;
     }
 
@@ -173,7 +185,7 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
         if (res != SASL_OK) {
             TRACE() << "err Allocating sasl connection state";
-            emit error(PLUGIN_ERROR_MISSING_DATA);
+            emit error(Private::mapSaslError(res));
             return;
         }
 
@@ -183,7 +195,7 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
         if (res != SASL_OK) {
             TRACE() << "err Setting security properties";
-            emit error(PLUGIN_ERROR_GENERAL);
+            emit error(Private::mapSaslError(res));
             return;
         }
 
@@ -194,13 +206,15 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
                                 &len,
                                 &chosenmech);
 
-        TRACE() << chosenmech;
-
         if (res != SASL_OK && res != SASL_CONTINUE) {
             TRACE() << "err Starting SASL negotiation";
-            emit error(PLUGIN_ERROR_GENERAL);
+            emit error(Private::mapSaslError(res));
             return;
         }
+
+        TRACE() << chosenmech;
+
+        response.setChosenMechanism(QByteArray(chosenmech));
 
         buf.clear();
         if (res == SASL_CONTINUE) {
@@ -221,7 +235,7 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
     TRACE() <<buf;
     //here we have initial response
-    if (res == SASL_CONTINUE) {
+    if (res == SASL_CONTINUE && buf.count() > 0) {
         res = sasl_client_step(d->m_conn, buf.constData(),
                                buf.count(), NULL,
                                &data, &len);
@@ -229,7 +243,7 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
 
     if (res != SASL_OK && res != SASL_CONTINUE) {
         TRACE() << "err Performing SASL negotiation";
-        emit error(PLUGIN_ERROR_GENERAL);
+        emit error(Private::mapSaslError(res));
         return;
     }
 

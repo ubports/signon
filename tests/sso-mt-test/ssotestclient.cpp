@@ -534,13 +534,21 @@ void SsoTestClient::sessionTest()
 
     Identity *id = Identity::newIdentity();
 
-    AuthSessionP session1 = id->createSession("method1");
-    AuthSessionP session2 = id->createSession("method2");
-    AuthSessionP session3 = id->createSession("method3");
-    AuthSessionP session4 = id->createSession("method4");
-    AuthSessionP session5 = NULL;
+    QLatin1String method1Str("mtd1");
+
+    AuthSessionP session1 = id->createSession(method1Str);
+    QVERIFY2(session1 != 0, "Could not create auth session.");
+
+    AuthSessionP session2 = id->createSession(method1Str);
+    QVERIFY2(session2 == 0, "Multiple auth. sessions with same method created.");
+
+    AuthSessionP session3 = id->createSession("method2");
+    QVERIFY2(session3 != 0, "Could not create auth session.");
 
     id->destroySession(session1);
+    session2 = id->createSession(method1Str);
+    AuthSessionP session5 = NULL;
+
     id->destroySession(session5);
 
     delete id;

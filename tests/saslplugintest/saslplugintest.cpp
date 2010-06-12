@@ -77,10 +77,10 @@ void SaslPluginTest::result(const SignOn::SessionData& data)
 }
 
 //slot for receiving error
-void SaslPluginTest::pluginError(AuthPluginError error)
+void SaslPluginTest::pluginError(const SignOn::Error &error)
 {
-    qDebug() << "got error";
-    m_error = error;
+    qDebug() << "got error" << error.type();
+    m_errorType = error.type();
     m_loop.exit();
 }
 
@@ -130,31 +130,26 @@ void SaslPluginTest::testPluginProcess()
 {
     TEST_START
 
+    using SignOn::Error;
+
     SaslData info;
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError)),
-                  this,  SLOT(pluginError(AuthPluginError)),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error&)),
+                  this,  SLOT(pluginError(const SignOn::Error&)),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
-
-    //try without mechanism
-    m_testPlugin->process(info);
-    m_loop.exec();
-
-    QVERIFY(m_error == PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
 
     //try without username
     m_testPlugin->process(info, QString("ANONYMOUS"));
     m_loop.exec();
-    QVERIFY(m_error == PLUGIN_ERROR_MISSING_DATA);
+    QVERIFY(m_errorType == Error::MissingData);
 
-    //try with wron state
-    info.setstate(SaslData::CONTINUE);
+    //try without mechanism
     info.setUserName(QString("test"));
-    m_testPlugin->process(info, QString("ANONYMOUS"));
+    m_testPlugin->process(info);
     m_loop.exec();
-    QVERIFY(m_error == PLUGIN_ERROR_INVALID_STATE);
+    QVERIFY(m_errorType == Error::MechanismNotAvailable);
 
     //rest of process is tested with real authentication mechanisms
     TEST_DONE

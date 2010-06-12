@@ -116,6 +116,15 @@ namespace SignOn {
 
     AuthSession *IdentityImpl::createSession(const QString &methodName, QObject *parent)
     {
+        foreach (AuthSession *authSession, m_authSessions) {
+            if (authSession->name() == methodName) {
+                qWarning() << QString::fromLatin1(
+                        "Authentication session for method "
+                        "`%1` already requested.").arg(methodName);
+                return 0;
+            }
+        }
+
         AuthSession *session = new AuthSession(id(), methodName, parent);
         m_authSessions.append(session);
         return session;
