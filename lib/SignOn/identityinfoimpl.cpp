@@ -38,7 +38,8 @@ namespace SignOn {
           m_realms(QStringList()),
           m_authMethods(QMap<MethodName, QVariant>()),
           m_accessControlList(QStringList()),
-          m_type(IdentityInfo::Other)
+          m_type(IdentityInfo::Other),
+          m_isEmpty(true)
     {
     }
 
@@ -77,6 +78,11 @@ namespace SignOn {
         return m_type;
     }
 
+    bool IdentityInfoImpl::isEmpty() const
+    {
+        return m_isEmpty;
+    }
+
     void IdentityInfoImpl::copy(const IdentityInfoImpl &other)
     {
         m_id = other.m_id;
@@ -88,6 +94,7 @@ namespace SignOn {
         m_realms = other.m_realms;
         m_accessControlList = other.m_accessControlList;
         m_type = other.m_type;
+        m_isEmpty = other.m_isEmpty;
     }
 
     void IdentityInfoImpl::clear()
@@ -101,6 +108,7 @@ namespace SignOn {
         m_realms.clear();
         m_accessControlList.clear();
         m_type = IdentityInfo::Other;
+        m_isEmpty = true;
     }
 
 } //namespace SignOn

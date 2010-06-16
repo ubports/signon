@@ -64,7 +64,7 @@ void SignonDisposable::destroyUnused()
     foreach (SignonDisposable *object, disposableObjects) {
         if (ts.tv_sec - object->lastActivity > object->maxInactivity) {
             TRACE() << "Object unused, deleting: " << object;
-            object->deleteLater();
+            object->destroy();
         }
     }
 }

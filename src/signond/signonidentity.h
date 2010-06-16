@@ -51,9 +51,10 @@ namespace SignonDaemonNS {
 
         friend class SignonIdentityAdaptor;
 
-    public:
         virtual ~SignonIdentity();
 
+    public:
+        void destroy();
         static SignonIdentity *createIdentity(quint32 id, SignonDaemon *parent);
         quint32 id() const { return m_id; }
 
@@ -78,6 +79,8 @@ namespace SignonDaemonNS {
                                  const QStringList &accessControlList,
                                  const int type);
     Q_SIGNALS:
+        void destroyed();
+        //TODO - split this into the 3 separate signals(updated, removed, signed out)
         void infoUpdated(int);
 
     private:

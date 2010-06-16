@@ -121,6 +121,12 @@ namespace SignonDaemonNS {
         return identity;
     }
 
+    void SignonIdentity::destroy()
+    {
+        emit destroyed();
+        deleteLater();
+    }
+
     SignonIdentityInfo SignonIdentity::queryInfo(bool &ok, bool queryPassword)
     {
         ok = true;
