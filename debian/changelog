@@ -1,3 +1,9 @@
+signon (1.0-3) unstable; urgency=low
+
+  * Fixes: NB#173454 - Add API file to signon.
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Wed, 16 Jun 2010 10:08:39 +0300
+
 signon (1.0-2) unstable; urgency=low
 
   * Fixes: NB#173216 - Random signond crash found during google sign-in.
