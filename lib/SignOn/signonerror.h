@@ -24,6 +24,10 @@
 #ifndef SIGNONERROR_H
 #define SIGNONERROR_H
 
+#ifdef SIGNON_INTERNAL
+    #include <QObject>
+#endif
+
 #include <QString>
 
 #include <SignOn/libsignoncommon.h>

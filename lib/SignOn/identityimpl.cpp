@@ -229,7 +229,8 @@ namespace SignOn {
             case NeedsRegistration:
                 {
                 IdentityInfo localInfo =
-                    info.impl->m_empty ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
+                    info.impl->isEmpty() ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
+
                 m_operationQueueHandler.enqueueOperation(
                                         SIGNOND_IDENTITY_STORE_CREDENTIALS_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(SignOn::IdentityInfo, localInfo)));
@@ -239,7 +240,7 @@ namespace SignOn {
             case PendingRegistration:
                 {
                 IdentityInfo localInfo =
-                    info.impl->m_empty ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
+                    info.impl->isEmpty() ? *m_identityInfo : *(m_tmpIdentityInfo = new IdentityInfo(info));
                 m_operationQueueHandler.enqueueOperation(
                                         SIGNOND_IDENTITY_STORE_CREDENTIALS_METHOD,
                                         QList<QGenericArgument *>() << (new Q_ARG(SignOn::IdentityInfo, localInfo)));
@@ -253,6 +254,13 @@ namespace SignOn {
                 /* fall trough */
             default:
                 break;
+        }
+
+        if (info.impl->isEmpty()) {
+            emit m_parent->error(
+                Error(Error::StoreFailed,
+                      QLatin1String("Invalid Identity data.")));
+            return;
         }
 
         QList<QVariant> args;
@@ -798,7 +806,9 @@ namespace SignOn {
         if (m_state == PendingRegistration || m_state == NeedsRegistration)
             return;
 
-        if (!m_DBusInterface || !m_DBusInterface->isValid())
+        if (!m_DBusInterface
+            || !m_DBusInterface->isValid()
+            || m_DBusInterface->lastError().isValid())
             updateState(NeedsRegistration);
     }
 
@@ -840,12 +850,19 @@ namespace SignOn {
                 this,
                 SLOT(infoUpdated(int)));
 
+        connect(m_DBusInterface, SIGNAL(destroyed()), SLOT(removeObjectDestroyed()));
+
         if (!infoData.empty())
             updateCachedData(infoData);
 
         updateState(Ready);
         if (m_operationQueueHandler.queuedOperationsCount() > 0)
             m_operationQueueHandler.execQueuedOperations();
+    }
+
+    void IdentityImpl::removeObjectDestroyed()
+    {
+        updateState(NeedsRegistration);
     }
 
 } //namespace SignOn

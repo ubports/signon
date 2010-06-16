@@ -38,7 +38,6 @@ namespace SignOn {
         if (qMetaTypeId<IdentityInfo>() < QMetaType::User)
             BLAME() << "IdentityInfo::IdentityInfo() - IdentityInfo meta type not registered.";
 
-        impl->m_empty = true;
         impl->m_id = 0;
         impl->m_storeSecret = false;
     }
@@ -61,9 +60,9 @@ namespace SignOn {
             const QMap<MethodName, MechanismsList> &methods)
         : impl(new IdentityInfoImpl(this))
     {
-        impl->m_empty = false;
         impl->m_caption = caption;
         impl->m_userName = userName;
+        impl->m_isEmpty = false;
 
         QMapIterator<QString, QStringList> it(methods);
         while (it.hasNext()) {
@@ -91,6 +90,7 @@ namespace SignOn {
     void IdentityInfo::setUserName(const QString &userName)
     {
         impl->m_userName = userName;
+        impl->m_isEmpty = false;
     }
 
     const QString IdentityInfo::userName() const
@@ -145,6 +145,7 @@ namespace SignOn {
     {
         impl->m_secret = secret;
         impl->m_storeSecret = storeSecret;
+        impl->m_isEmpty = false;
     }
 
     bool IdentityInfo::isStoringSecret() const

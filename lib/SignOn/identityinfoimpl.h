@@ -53,6 +53,7 @@ namespace SignOn {
         void setType(IdentityInfo::CredentialsType type);
         IdentityInfo::CredentialsType type() const;
 
+        bool isEmpty() const;
         bool hasMethod(const MethodName &method) const;
         void clear();
 
@@ -74,6 +75,7 @@ namespace SignOn {
         QMap<MethodName, QVariant> m_authMethods; //The variant is holding the MechanismsList
         QStringList m_accessControlList;
         IdentityInfo::CredentialsType m_type;
+        bool m_isEmpty;
     };
 
 } //namespace SignOn

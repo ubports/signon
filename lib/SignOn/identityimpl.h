@@ -81,6 +81,7 @@ namespace SignOn {
         void verifySecretReply(const bool valid);
         void signOutReply();
         void infoUpdated(int);
+        void removeObjectDestroyed();
 
     private Q_SLOTS:
         void queryAvailableMethods();
