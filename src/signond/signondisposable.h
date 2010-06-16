@@ -40,6 +40,9 @@ class SignonDisposable: public QObject
 {
     Q_OBJECT
 
+protected:
+    virtual ~SignonDisposable();
+
 public:
     /*!
      * Construct an object that can be automatically destroyed after
@@ -49,7 +52,12 @@ public:
      * @param parent the parent object.
      */
     SignonDisposable(int maxInactivity, QObject *parent);
-    virtual ~SignonDisposable();
+
+    /*!
+     * Performs any predestruction operations and the destruction itself.
+     * Reimplement this for smoother control.
+     */
+    virtual void destroy() { deleteLater(); }
 
     /*!
      * Mark the object as used. Calling this method causes the inactivity
