@@ -1,4 +1,4 @@
-signon (1.1-1) unstable; urgency=low
+signon (1.1-2) unstable; urgency=low
 
   * Fixes: NB#174223 - Account configuration fails after registering new account.
 
