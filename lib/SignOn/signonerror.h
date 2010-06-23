@@ -24,10 +24,12 @@
 #ifndef SIGNONERROR_H
 #define SIGNONERROR_H
 
+
 #ifdef SIGNON_INTERNAL
     #include <QObject>
 #endif
 
+#include <QMetaType>
 #include <QString>
 
 #include <SignOn/libsignoncommon.h>
@@ -108,7 +110,12 @@ namespace SignOn {
          * Copy constructor
          * @param src Error object to be copied.
          */
-        Error(const Error &src) : m_type(src.type()), m_message(src.message()) {}
+
+        Error(const Error &src) :
+#ifdef SIGNON_INTERNAL
+            QObject(),
+#endif
+            m_type(src.type()), m_message(src.message()) {}
 
         /*!
          * For convenience constructor.

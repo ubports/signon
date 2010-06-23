@@ -682,8 +682,12 @@ namespace SignOn {
             emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
         }
-        else
+        else {
+            if (m_state == this->PendingRegistration)
+                updateState(NeedsRegistration);
+
             TRACE() << "Non internal SSO error reply.";
+        }
 
         /* Qt DBUS specific errors */
         if (err.type() != QDBusError::NoError) {
@@ -736,6 +740,8 @@ namespace SignOn {
                         << "\nMessage: " << err.message()
                         << "\nType: " << QDBusError::errorString(err.type());
 
+                m_operationQueueHandler.clearOperationsQueue();
+                updateState(NeedsRegistration);
                 return false;
             }
         }

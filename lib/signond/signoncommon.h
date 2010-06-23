@@ -110,6 +110,9 @@
 #define SIGNOND_INVALID_CREDENTIALS_ERR_STR SIGNOND_STRING("The supplied credentials are invalid for the mechanism implementation.")
 #define SIGNOND_INVALID_CREDENTIALS_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "InvalidCredentials")
 
+#define SIGNOND_NOT_AUTHORIZED_ERR_STR SIGNOND_STRING("Not authorized to access service account.")
+#define SIGNOND_NOT_AUTHORIZED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "NotAuthorized")
+
 #define SIGNOND_WRONG_STATE_ERR_STR SIGNOND_STRING("Operation method has been called in a wrong state.")
 #define SIGNOND_WRONG_STATE_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "WrongState")
 

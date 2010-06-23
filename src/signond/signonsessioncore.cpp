@@ -439,6 +439,10 @@ namespace SignonDaemonNS {
                     errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
                     errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
                     break;
+                case Error::NotAuthorized:
+                    errName = SIGNOND_NOT_AUTHORIZED_ERR_NAME;
+                    errMessage = SIGNOND_NOT_AUTHORIZED_ERR_STR;
+                    break;
                 case Error::WrongState:
                     errName = SIGNOND_WRONG_STATE_ERR_NAME;
                     errMessage = SIGNOND_WRONG_STATE_ERR_STR;
