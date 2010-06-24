@@ -1,3 +1,9 @@
+signon (1.2-1) unstable; urgency=low
+
+  * Framework internals improvements.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Thu, 24 Jun 2010 13:30:00 +0300
+
 signon (1.1-2) unstable; urgency=low
 
   * Fixes: NB#174223 - Account configuration fails after registering new account.
