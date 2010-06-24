@@ -29,6 +29,7 @@ namespace SignOn {
     Identity::Identity(const quint32 id, QObject *parent) : QObject(parent)
     {
         qRegisterMetaType<Error>("SignOn::Error");
+        qRegisterMetaType<Error>("Error");
 
         if (qMetaTypeId<Error>() < QMetaType::User)
             BLAME() << "Identity::Identity() - SignOn::Error meta type not registered.";

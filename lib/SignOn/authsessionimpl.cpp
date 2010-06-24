@@ -397,9 +397,9 @@ namespace SignOn {
         } else if (err.name() == SIGNOND_INVALID_CREDENTIALS_ERR_NAME) {
             errCodeDeprecated = AuthSession::InvalidCredentialsError;
             errCode = Error::InvalidCredentials;
-        } else if (err.name() == SIGNOND_NO_CONNECTION_ERR_NAME) {
-            errCodeDeprecated = AuthSession::NoConnectionError;
-            errCode = Error::NoConnection;
+        } else if (err.name() == SIGNOND_NOT_AUTHORIZED_ERR_NAME) {
+            errCodeDeprecated = AuthSession::InvalidCredentialsError;
+            errCode = Error::NotAuthorized;
         } else if (err.name() == SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME) {
             errCodeDeprecated = AuthSession::OperationNotSupportedError;
             errCode = Error::OperationNotSupported;
