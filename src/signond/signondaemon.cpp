@@ -452,112 +452,144 @@ namespace SignonDaemonNS {
      * backup/restore
      * TODO move fixed strings into config
      */
-    uchar SignonDaemon::backup(const QStringList &selectedCategories)
+
+    static QString &backupCopyFilename()
+    {
+        static QString name(QLatin1String("/home/user/.signon/signondb.bin"));
+        return name;
+    }
+
+    uchar SignonDaemon::backupStarts()
     {
         TRACE() << "backup";
-        if (selectedCategories.contains(QLatin1String("settings"), Qt::CaseInsensitive)) {
-            //backup requested
-            if (!m_backup && m_pCAMManager->credentialsSystemOpened()) {
-                //umount file system
-                m_pCAMManager->closeCredentialsSystem();
-                 if (m_pCAMManager->credentialsSystemOpened()) return 2;
-            }
-            //do backup copy
-            CAMConfiguration config;
-            QString source;
-            if (config.m_useEncryption)
-                source = config.m_dbFileSystemPath;
-            else
-                source = QDir::homePath() + QDir::separator() + config.m_dbName;
-            QDir target;
-            if (!target.mkpath(QLatin1String("/home/user/.signon/"))) {
-                TRACE() << "Cannot create target directory";
-                m_pCAMManager->openCredentialsSystem();
+        if (!m_backup && m_pCAMManager->credentialsSystemOpened())
+        {
+            m_pCAMManager->closeCredentialsSystem();
+            if (m_pCAMManager->credentialsSystemOpened())
+            {
+                qCritical() << "Cannot close credentials database";
                 return 2;
             }
-            if (!QFile::copy(source, QLatin1String("/home/user/.signon/signondb.bin"))) {
-                TRACE() << "Cannot copy database";
-                m_pCAMManager->openCredentialsSystem();
+        }
+
+        //do backup copy
+        CAMConfiguration config;
+        QString source;
+        if (config.m_useEncryption)
+            source = config.m_dbFileSystemPath;
+        else
+            source = QDir::homePath() + QDir::separator() + config.m_dbName;
+
+        QDir target;
+        if (!target.mkpath(QLatin1String("/home/user/.signon/")))
+        {
+            qCritical() << "Cannot create target directory";
+            m_pCAMManager->openCredentialsSystem();
+            return 2;
+        }
+
+        if (!QFile::copy(source, backupCopyFilename()))
+        {
+            qCritical() << "Cannot copy database";
+            m_pCAMManager->openCredentialsSystem();
+            return 2;
+        }
+
+        if (!m_backup)
+        {
+            //mount file system back
+            if (!m_pCAMManager->openCredentialsSystem()) {
+                qCritical() << "Cannot reopen database";
                 return 2;
-            }
-            if (!m_backup) {
-                //mount file system back
-                if (!m_pCAMManager->openCredentialsSystem()) {
-                    TRACE() << "Cannot reopen database";
-                    return 2;
-                }
             }
         }
         return 0;
     }
 
-    bool SignonDaemon::close()
+    uchar SignonDaemon::backupFinished()
     {
         TRACE() << "close";
-        if (m_backup) {
+
+        QFile copy(backupCopyFilename());
+
+        if (copy.exists())
+            QFile::remove(backupCopyFilename());
+
+        if (m_backup)
+        {
             //close daemon
             TRACE() << "close daemon";
             this->deleteLater();
         }
-        return true;
+
+        return 0;
      }
 
-    bool SignonDaemon::prestart()
+    /*
+     * Does nothing but start-on-demand
+     * */
+    uchar SignonDaemon::restoreStarts()
     {
-        TRACE() << "prestart";
-        return true;
+        TRACE();
+        return 0;
     }
 
-    uchar SignonDaemon::restore(const QStringList &selectedCategories,
-                                const QString &productName,
-                                const QStringList &restoredFilePaths)
+    uchar SignonDaemon::restoreFinished()
     {
-        Q_UNUSED(productName);
-        Q_UNUSED(restoredFilePaths);
         TRACE() << "restore";
-        if (selectedCategories.contains(QLatin1String("settings"), Qt::CaseInsensitive)) {
-            //restore requested
-            if (m_pCAMManager->credentialsSystemOpened()) {
-                //umount file system
-                if (!m_pCAMManager->closeCredentialsSystem()) {
-                    TRACE() << "database cannot be closed";
-                    return 2;
-                }
-            }
-            //do restore
-            //TODO add checking if encryption status has changed
-            CAMConfiguration config;
-            QString target;
-            if (config.m_useEncryption)
-                target = config.m_dbFileSystemPath;
-            else
-                target = QDir::homePath() + QDir::separator() + config.m_dbName;
-            if (!QFile::remove(target+QLatin1String(".bak"))) {
-                TRACE() << "Cannot remove backup copy of database";
-            }
-            if (!QFile::rename(target, target+QLatin1String(".bak"))) {
-                TRACE() << "Cannot make backup copy of database";
-            }
-            if (!QFile::copy(QLatin1String("/home/user/.signon/signondb.bin"), target)) {
-                TRACE() << "Cannot copy database";
-                if (!QFile::rename(target+QLatin1String(".bak"), target)) {
-                    TRACE() << "Cannot restore backup copy of database";
-                }
-                m_pCAMManager->openCredentialsSystem();
+        //restore requested
+        if (m_pCAMManager->credentialsSystemOpened())
+        {
+            //umount file system
+            if (!m_pCAMManager->closeCredentialsSystem())
+            {
+                qCritical() << "database cannot be closed";
                 return 2;
             }
-            //try to remove backup database
-            if (!QFile::remove(target+QLatin1String(".bak"))) {
-                TRACE() << "Cannot remove backup copy of database";
-            }
-            //TODO check database integrity
-            if (!m_backup) {
-                //mount file system back
-                 if (!m_pCAMManager->openCredentialsSystem()) {
-                     return 2;
-                 }
-            }
         }
+
+        //do restore
+        //TODO add checking if encryption status has changed
+        CAMConfiguration config;
+        QString target;
+        if (config.m_useEncryption)
+            target = config.m_dbFileSystemPath;
+        else
+            target = QDir::homePath() + QDir::separator() + config.m_dbName;
+
+        if (!QFile::remove(target+QLatin1String(".bak")))
+        {
+            qCritical() << "Cannot remove backup copy of database";
+        }
+
+        if (!QFile::rename(target, target+QLatin1String(".bak")))
+        {
+            qCritical() << "Cannot make backup copy of database";
+        }
+
+        if (!QFile::rename(backupCopyFilename(), target))
+        {
+            qCritical() << "Cannot copy database";
+
+            if (!QFile::rename(target+QLatin1String(".bak"), target))
+                qCritical() << "Cannot restore backup copy of database";
+
+            m_pCAMManager->openCredentialsSystem();
+            return 2;
+        }
+
+        //try to remove backup database
+        if (!QFile::remove(target+QLatin1String(".bak")))
+            qCritical() << "Cannot remove backup copy of database";
+
+        //TODO check database integrity
+        if (!m_backup)
+        {
+            //mount file system back
+             if (!m_pCAMManager->openCredentialsSystem())
+                 return 2;
+        }
+
         return 0;
     }
 

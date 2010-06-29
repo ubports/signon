@@ -129,15 +129,14 @@ namespace SignonDaemonNS {
         bool remoteLock(const QByteArray &lockCode);
 
     public Q_SLOTS: // backup METHODS
-        uchar backup(const QStringList &selectedCategories);
-        bool close();
-        bool prestart();
-        uchar restore(const QStringList &selectedCategories,
-                      const QString &productName,
-                      const QStringList &restoredFilePaths);
+        uchar backupStarts();
+        uchar backupFinished();
+        uchar restoreStarts();
+        uchar restoreFinished();
 
     private Q_SLOTS:
         void displayRequestsCount();
+
 
     private:
         void unregisterIdentity(SignonIdentity *identity);
