@@ -1,3 +1,9 @@
+signon (1.3) unstable; urgency=low
+
+  * Fixes: NB#174437 - signond0 is using an obsolete backup method
+
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Tue, 29 Jun 2010 13:15:00 +0300
+ 
 signon (1.2-1) unstable; urgency=low
 
   * Framework internals improvements.
