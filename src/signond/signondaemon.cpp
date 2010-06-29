@@ -71,6 +71,19 @@ namespace SignonDaemonNS {
             m_pCAMManager->deleteLater();
         }
 
+        QDBusConnection sessionConnection = QDBusConnection::sessionBus();
+
+        sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH
+                                           + QLatin1String("/backup"));
+        sessionConnection.unregisterService(SIGNOND_SERVICE
+                                            + QLatin1String(".backup"));
+
+        if (m_backup == false)
+        {
+            sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH);
+            sessionConnection.unregisterService(SIGNOND_SERVICE);
+        }
+
         delete RequestCounter::instance();
     }
 
