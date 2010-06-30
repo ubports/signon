@@ -32,6 +32,7 @@
 #include "backupifadaptor.h"
 
 #define IDENTITY_MAX_IDLE_TIME (60 * 5) // five minutes
+#define AUTHSESSION_MAX_IDLE_TIME (60 * 5) // five minutes
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
@@ -136,6 +137,10 @@ namespace SignonDaemonNS {
         int envIdentityTimeout = qgetenv("SSO_IDENTITY_TIMEOUT").toInt();
         m_identityTimeout = envIdentityTimeout > 0 ?
             envIdentityTimeout : IDENTITY_MAX_IDLE_TIME;
+
+        int envAuthSessionTimeout = qgetenv("SSO_AUTHSESSION_TIMEOUT").toInt();
+        m_authSessionTimeout = envAuthSessionTimeout > 0 ?
+            envAuthSessionTimeout : AUTHSESSION_MAX_IDLE_TIME;
 
         QDBusConnection::RegisterOptions registerOptions = QDBusConnection::ExportAllContents;
 

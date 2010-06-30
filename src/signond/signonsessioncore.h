@@ -35,6 +35,7 @@
 #include "signond-common.h"
 
 #include "signondaemon.h"
+#include "signondisposable.h"
 #include "credentialsaccessmanager.h"
 #include "signonui_interface.h"
 
@@ -86,16 +87,11 @@ namespace SignonDaemonNS {
      * Daemon side representation of authentication session.
      * @todo description.
      */
-    class SignonSessionCore: public QObject
+    class SignonSessionCore: public SignonDisposable
     {
         Q_OBJECT
 
     public:
-        inline SignonDaemon *parent() const
-        {
-            return static_cast<SignonDaemon *>(QObject::parent());
-        }
-
         static SignonSessionCore *sessionCore(const quint32 id, const QString &method, SignonDaemon *parent);
         virtual ~SignonSessionCore();
         quint32 id() const;
@@ -105,9 +101,9 @@ namespace SignonDaemonNS {
          * just for any case
          * */
         static void stopAllAuthSessions();
-        static void subscribeWatchdog(SignonSessionCore *subscriber);
-        static void unsubscribeWatchdog(SignonSessionCore *unsubscriber);
         static QStringList loadedPluginMethods(const QString &method);
+
+        void destroy();
 
     public Q_SLOTS:
         QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
@@ -133,12 +129,10 @@ namespace SignonDaemonNS {
         void processError(const QString &cancelKey, int err, const QString &message);
         void stateChangedSlot(const QString &cancelKey, int state, const QString &message);
 
-        void checkForIdle();
-
         void queryUiSlot(QDBusPendingCallWatcher *call);
 
     protected:
-        SignonSessionCore(quint32 id, const QString &method, QObject *parent);
+        SignonSessionCore(quint32 id, const QString &method, int timeout, SignonDaemon *parent);
 
         void childEvent(QChildEvent *ce);
 
@@ -153,12 +147,9 @@ namespace SignonDaemonNS {
         QDBusPendingCallWatcher *m_watcher;
 
         QString m_canceled;
-        QDateTime m_lastOperationTime;
 
-        int m_refCount;
         quint32 m_id;
         QString m_method;
-        bool isValid;
 
     Q_DISABLE_COPY(SignonSessionCore)
 }; //class SignonDaemon
