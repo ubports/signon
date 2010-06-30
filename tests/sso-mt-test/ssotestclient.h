@@ -103,6 +103,8 @@ private:
     void cancel_with_delay();
     void cancel_without_process();
 
+    void handle_destroyed_signal();
+
 #ifdef SSOUI_TESTS_ENABLED
     void processUi_with_existing_identity();
     void processUi_and_cancel();

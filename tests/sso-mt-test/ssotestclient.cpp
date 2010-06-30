@@ -183,6 +183,7 @@ void SsoTestClient::runAuthSessionTests()
     cancel_immidiately();
     cancel_with_delay();
     cancel_without_process();
+    handle_destroyed_signal();
 
 #ifdef SSOUI_TESTS_ENABLED
 //    processUi_with_existing_identity();
@@ -1453,6 +1454,13 @@ void SsoTestClient::cancel_without_process()
 {
     TEST_START
     testAuthSession.cancel_without_process();
+    TEST_DONE
+}
+
+void SsoTestClient::handle_destroyed_signal()
+{
+    TEST_START
+    testAuthSession.handle_destroyed_signal();
     TEST_DONE
 }
 
