@@ -5,3 +5,6 @@ usr/bin/signonpluginprocess
 usr/share/dbus-1/services/com.nokia.singlesignon.service
 usr/share/dbus-1/services/com.nokia.singlesignon.backup.service
 usr/share/backup-framework/applications/singlesignon.conf
+
+# clear device script
+/etc/osso-cud-scripts/signon-cud.sh

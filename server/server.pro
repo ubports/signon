@@ -13,3 +13,7 @@ INSTALLS += service
 backuprestore.path = $${INSTALL_PREFIX}/share/backup-framework/applications
 backuprestore.files = singlesignon.conf
 INSTALLS += backuprestore
+
+clearuserdata.path = /etc/osso-cud-scripts
+clearuserdata.files = signon-cud.sh
+INSTALLS += clearuserdata
