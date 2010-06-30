@@ -24,119 +24,120 @@
 #include "signonauthsession.h"
 #include "signonauthsessionadaptor.h"
 
-namespace SignonDaemonNS {
+using namespace SignonDaemonNS;
 
-    SignonAuthSession::SignonAuthSession(quint32 id,
-                                         const QString &method) :
-                                         m_id(id),
-                                         m_method(method)
-    {
-        TRACE();
+SignonAuthSession::SignonAuthSession(quint32 id,
+                                     const QString &method) :
+                                     m_id(id),
+                                     m_method(method)
+{
+    TRACE();
 
-        static quint32 incr = 0;
-        QString objectName = QLatin1String("/com/nokia/singlesignon/AuthSession_") + QString::number(incr++, 16);
-        TRACE() << objectName;
+    static quint32 incr = 0;
+    QString objectName = QLatin1String("/com/nokia/singlesignon/AuthSession_") + QString::number(incr++, 16);
+    TRACE() << objectName;
 
-        setObjectName(objectName);
+    setObjectName(objectName);
+}
+
+SignonAuthSession::~SignonAuthSession()
+{
+    TRACE();
+    emit remoteObjectDestroyed();
+
+    //stop all operations from the current session
+    QDBusConnection connection(SIGNOND_BUS);
+    connection.unregisterObject(objectName());
+}
+
+QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
+                                                    const QString &method, SignonDaemon *parent)
+{
+    TRACE();
+    SignonAuthSession* sas = new SignonAuthSession(id, method);
+
+    QDBusConnection connection(SIGNOND_BUS);
+    if (!connection.isConnected()) {
+        TRACE() << "Cannot get DBUS object connected";
+        delete sas;
+        return QString();
     }
 
-    SignonAuthSession::~SignonAuthSession()
-    {
-        TRACE();
-        //stop all operations from the current session
-        QDBusConnection connection(SIGNOND_BUS);
-        connection.unregisterObject(objectName());
+    (void)new SignonAuthSessionAdaptor(sas);
+    QString objectName = sas->objectName();
+    if (!connection.registerObject(sas->objectName(), sas, QDBusConnection::ExportAdaptors)) {
+        TRACE() << "Object cannot be registered: " << objectName;
+        delete sas;
+        return QString();
     }
 
-    QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id, const QString &method, SignonDaemon *parent)
-    {
-        TRACE();
-        SignonAuthSession* sas = new SignonAuthSession(id, method);
-
-        QDBusConnection connection(SIGNOND_BUS);
-        if (!connection.isConnected()) {
-            TRACE() << "Cannot get DBUS object connected";
-            delete sas;
-            return QString();
-        }
-
-        (void)new SignonAuthSessionAdaptor(sas);
-        QString objectName = sas->objectName();
-        if (!connection.registerObject(sas->objectName(), sas, QDBusConnection::ExportAdaptors)) {
-            TRACE() << "Object cannot be registered: " << objectName;
-            delete sas;
-            return QString();
-        }
-
-        SignonSessionCore *core = SignonSessionCore::sessionCore(id, method, parent);
-        if (!core) {
-            TRACE() << "Cannot retrieve proper tasks queue";
-            delete sas;
-            return QString();
-        }
-
-        sas->setParent(core);
-
-        connect(core, SIGNAL(stateChanged(const QString&, int, const QString&)),
-                sas, SLOT(stateChangedSlot(const QString&, int, const QString&)));
-
-        TRACE() << "SignonAuthSession is created successfully: " << objectName;
-        return objectName;
+    SignonSessionCore *core = SignonSessionCore::sessionCore(id, method, parent);
+    if (!core) {
+        TRACE() << "Cannot retrieve proper tasks queue";
+        delete sas;
+        return QString();
     }
 
-    void SignonAuthSession::stopAllAuthSessions()
-    {
-        SignonSessionCore::stopAllAuthSessions();
-    }
+    sas->setParent(core);
 
-    quint32 SignonAuthSession::id() const
-    {
-        return m_id;
-    }
+    connect(core, SIGNAL(stateChanged(const QString&, int, const QString&)),
+            sas, SLOT(stateChangedSlot(const QString&, int, const QString&)));
 
-    QStringList SignonAuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
-    {
-        return parent()->queryAvailableMechanisms(wantedMechanisms);
-    }
+    TRACE() << "SignonAuthSession is created successfully: " << objectName;
+    return objectName;
+}
 
-    QVariantMap SignonAuthSession::process(const QVariantMap &sessionDataVa,
-                                           const QString &mechanism)
-    {
-        TRACE();
-        setDelayedReply(true);
-        parent()->process(connection(),
-                          message(),
-                          sessionDataVa,
-                          mechanism,
-                          objectName());
-        return QVariantMap();
-    }
+void SignonAuthSession::stopAllAuthSessions()
+{
+    SignonSessionCore::stopAllAuthSessions();
+}
 
-    void SignonAuthSession::cancel()
-    {
-        TRACE();
-        parent()->cancel(objectName());
-    }
+quint32 SignonAuthSession::id() const
+{
+    return m_id;
+}
 
-    void SignonAuthSession::setId(quint32 id)
-    {
-        m_id = id;
-        parent()->setId(id);
-    }
+QStringList SignonAuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
+{
+    return parent()->queryAvailableMechanisms(wantedMechanisms);
+}
 
-    void SignonAuthSession::objectUnref()
-    {
-        TRACE();
+QVariantMap SignonAuthSession::process(const QVariantMap &sessionDataVa,
+                                       const QString &mechanism)
+{
+    TRACE();
+    setDelayedReply(true);
+    parent()->process(connection(),
+                      message(),
+                      sessionDataVa,
+                      mechanism,
+                      objectName());
+    return QVariantMap();
+}
 
-        cancel();
-        delete this;
-    }
+void SignonAuthSession::cancel()
+{
+    TRACE();
+    parent()->cancel(objectName());
+}
 
-    void SignonAuthSession::stateChangedSlot(const QString &sessionKey, int state, const QString &message)
-    {
-        TRACE();
+void SignonAuthSession::setId(quint32 id)
+{
+    m_id = id;
+    parent()->setId(id);
+}
 
-        if (sessionKey == objectName())
-            emit stateChanged(state, message);
-    }
-} //namespace SignonDaemonNS
+void SignonAuthSession::objectUnref()
+{
+    TRACE();
+    cancel();
+    deleteLater();
+}
+
+void SignonAuthSession::stateChangedSlot(const QString &sessionKey, int state, const QString &message)
+{
+    TRACE();
+
+    if (sessionKey == objectName())
+        emit stateChanged(state, message);
+}
