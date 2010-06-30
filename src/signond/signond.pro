@@ -67,9 +67,18 @@ DEFINES += SIGNOND_TRACE \
     SIGNON_PLUGIN_TRACE
 LIBS += -lcreds \
     -lcryptsetup
-PKGCONFIG += CellularQt
 
-QMAKE_CLEAN +=backupifadaptor.cpp backupifadaptor.h
+#TODO: add some sort of pkgconfig
+#directory autodetection
+PKG_CONFIG_PATH = /usr/lib/pkgconfig
+
+exists ($(PKG_CONFIG_PATH)/CellularQt.pc) {
+    PKGCONFIG += CellularQt
+    DEFINES += SIGNON_USES_CELLULAR_QT
+}
+
+QMAKE_CLEAN += backupifadaptor.cpp \
+               backupifadaptor.h
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
