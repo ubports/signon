@@ -25,99 +25,125 @@
 #include "accesscodehandler.h"
 #include "signond-common.h"
 
+using namespace SignonDaemonNS;
 
-namespace SignonDaemonNS {
+#ifndef SIGNON_USES_CELLULAR_QT
 
-    QString simStatusAsStr(const SIMStatus::Status status)
-    {
-        QString statusStr;
-        switch (status) {
-        case SIMStatus::UnknownStatus: statusStr = QLatin1String("UnknownStatus"); break;
-        case SIMStatus::Ok: statusStr = QLatin1String("Ok"); break;
-        case SIMStatus::NoSIM: statusStr = QLatin1String("NoSIM"); break;
-        case SIMStatus::PermanentlyBlocked: statusStr = QLatin1String("PermanentlyBlocked"); break;
-        case SIMStatus::NotReady: statusStr = QLatin1String("NotReady"); break;
-        case SIMStatus::PINRequired: statusStr = QLatin1String("PINRequired"); break;
-        case SIMStatus::PUKRequired: statusStr = QLatin1String("PUKRequired"); break;
-        case SIMStatus::Rejected: statusStr = QLatin1String("Rejected"); break;
-        case SIMStatus::SIMLockRejected: statusStr = QLatin1String("SIMLockRejected"); break;
-        default: statusStr = QLatin1String("Not Handled.");
-        }
-        return statusStr;
+AccessCodeHandler::AccessCodeHandler(QObject *parent)
+                                    : QObject(parent)
+                                    , m_code ("1234")
+{
+}
+
+AccessCodeHandler::~AccessCodeHandler()
+{
+}
+
+bool AccessCodeHandler::isValid()
+{
+    return true;
+}
+
+void AccessCodeHandler::querySim()
+{
+    return;
+}
+
+#else
+
+QString simStatusAsStr(const SIMStatus::Status status)
+{
+    QString statusStr;
+    switch (status) {
+    case SIMStatus::UnknownStatus: statusStr = QLatin1String("UnknownStatus"); break;
+    case SIMStatus::Ok: statusStr = QLatin1String("Ok"); break;
+    case SIMStatus::NoSIM: statusStr = QLatin1String("NoSIM"); break;
+    case SIMStatus::PermanentlyBlocked: statusStr = QLatin1String("PermanentlyBlocked"); break;
+    case SIMStatus::NotReady: statusStr = QLatin1String("NotReady"); break;
+    case SIMStatus::PINRequired: statusStr = QLatin1String("PINRequired"); break;
+    case SIMStatus::PUKRequired: statusStr = QLatin1String("PUKRequired"); break;
+    case SIMStatus::Rejected: statusStr = QLatin1String("Rejected"); break;
+    case SIMStatus::SIMLockRejected: statusStr = QLatin1String("SIMLockRejected"); break;
+    default: statusStr = QLatin1String("Not Handled.");
     }
+    return statusStr;
+}
 
-    AccessCodeHandler::AccessCodeHandler(QObject *parent)
-        : QObject(parent),
-          m_code(QByteArray()),
-          m_lastSimStatus(SIMStatus::UnknownStatus),
-          m_simIdentity(new SIMIdentity(this)),
-          m_simStatus(new SIMStatus(this))
-    {
-        connect(m_simIdentity,
-                SIGNAL(iccidComplete(QString, SIMError)),
-                SLOT(simIccidComplete(QString, SIMError)));
+AccessCodeHandler::AccessCodeHandler(QObject *parent)
+    : QObject(parent),
+      m_code(QByteArray()),
+      m_lastSimStatus(SIMStatus::UnknownStatus),
+      m_simIdentity(new SIMIdentity(this)),
+      m_simStatus(new SIMStatus(this))
+{
+    connect(m_simIdentity,
+            SIGNAL(iccidComplete(QString, SIMError)),
+            SLOT(simIccidComplete(QString, SIMError)));
 
-        connect(m_simStatus,
-                SIGNAL(statusChanged(SIMStatus::Status)),
-                SLOT(simStatusChanged(SIMStatus::Status)));
-    }
+    connect(m_simStatus,
+            SIGNAL(statusChanged(SIMStatus::Status)),
+            SLOT(simStatusChanged(SIMStatus::Status)));
+}
 
-    AccessCodeHandler::~AccessCodeHandler()
-    {
-    }
+AccessCodeHandler::~AccessCodeHandler()
+{
+}
 
-    void AccessCodeHandler::simIccidComplete(QString iccid, SIMError error)
-    {
-        //TODO handle stuff here - cases of sim available vs sim changed
-        if (error == Cellular::SIM::NoError) {
-            QByteArray iccidBa = iccid.toLocal8Bit();
+void AccessCodeHandler::simIccidComplete(QString iccid, SIMError error)
+{
+    //TODO handle stuff here - cases of sim available vs sim changed
+    if (error == Cellular::SIM::NoError) {
+        QByteArray iccidBa = iccid.toLocal8Bit();
 
-            if(codeAvailable() && (iccidBa != m_code)) {
-                m_code = iccid.toLocal8Bit();
-                emit simChanged(m_code);
-            } else {
-                m_code = iccid.toLocal8Bit();
-                emit simAvailable(m_code);
-            }
-
-            TRACE() << "ICC-ID:[" << m_code << "]";
+        if(codeAvailable() && (iccidBa != m_code)) {
+            m_code = iccid.toLocal8Bit();
+            emit simChanged(m_code);
         } else {
-            TRACE() << "Error occurred while querying icc-id. Code:" << error;
-        }
-    }
-
-    void AccessCodeHandler::simStatusChanged(SIMStatus::Status status)
-    {
-        TRACE() << simStatusAsStr(status);
-
-        //Todo- if possible think of a more stable solution.
-        if ((m_lastSimStatus == SIMStatus::NoSIM || m_lastSimStatus == SIMStatus::NotReady)
-            && (status == SIMStatus::Ok)) {
-            querySim();
+            m_code = iccid.toLocal8Bit();
+            emit simAvailable(m_code);
         }
 
-        m_lastSimStatus = status;
+        TRACE() << "ICC-ID:[" << m_code << "]";
+    } else {
+        TRACE() << "Error occurred while querying icc-id. Code:" << error;
+    }
+}
+
+void AccessCodeHandler::simStatusChanged(SIMStatus::Status status)
+{
+    TRACE() << simStatusAsStr(status);
+
+    //Todo- if possible think of a more stable solution.
+    if ((m_lastSimStatus == SIMStatus::NoSIM || m_lastSimStatus == SIMStatus::NotReady)
+        && (status == SIMStatus::Ok)) {
+        querySim();
     }
 
-    bool AccessCodeHandler::isValid()
-    {
-        return (m_simIdentity->isValid() && m_simStatus->isValid());
-    }
+    m_lastSimStatus = status;
+}
 
-    void AccessCodeHandler::querySim()
-    {
-        TRACE() << "Querying SIM.";
-        m_simIdentity->iccid();
-    }
+bool AccessCodeHandler::isValid()
+{
+    return (m_simIdentity->isValid() && m_simStatus->isValid());
+}
 
-    bool AccessCodeHandler::codeAvailable()
-    {
-        return !m_code.isNull();
-    }
+void AccessCodeHandler::querySim()
+{
+    TRACE() << "Querying SIM.";
+    m_simIdentity->iccid();
+}
 
-    QByteArray AccessCodeHandler::currentCode() const
-    {
-        return m_code;
-    }
 
-} //namespace SignonDaemonNS
+#endif
+
+bool AccessCodeHandler::codeAvailable()
+{
+    return !m_code.isNull();
+}
+
+QByteArray AccessCodeHandler::currentCode() const
+{
+    return m_code;
+}
+
+

@@ -33,9 +33,12 @@
 #include <QObject>
 #include <QDBusError>
 
-#include <SIM>
 
-using namespace Cellular::SIM;
+#ifdef SIGNON_USES_CELLULAR_QT
+    #include <SIM>
+    using namespace Cellular::SIM;
+#endif
+
 
 namespace SignonDaemonNS {
 
@@ -102,15 +105,19 @@ namespace SignonDaemonNS {
         */
         void simChanged(const QByteArray &simData);
 
+#ifdef SIGNON_USES_CELLULAR_QT
     private Q_SLOTS:
         void simIccidComplete(QString iccid, SIMError error);
         void simStatusChanged(SIMStatus::Status status);
+#endif
 
     private:
         QByteArray m_code;
+#ifdef SIGNON_USES_CELLULAR_QT
         SIMStatus::Status m_lastSimStatus;
         SIMIdentity *m_simIdentity;
         SIMStatus *m_simStatus;
+#endif
     };
 
 } // namespace SignonDaemonNS
