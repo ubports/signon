@@ -79,7 +79,7 @@ namespace SignonDaemonNS {
                                  const QStringList &accessControlList,
                                  const int type);
     Q_SIGNALS:
-        void destroyed();
+        void unregistered();
         //TODO - split this into the 3 separate signals(updated, removed, signed out)
         void infoUpdated(int);
 

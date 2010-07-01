@@ -455,8 +455,8 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
 
-        connect(m_DBusInterface, SIGNAL(remoteObjectDestroyed()),
-                this, SLOT(destroyedSlot()));
+        connect(m_DBusInterface, SIGNAL(unregistered()),
+                this, SLOT(unregisteredSlot()));
 
         if (m_operationQueueHandler.queuedOperationsCount() > 0)
             m_operationQueueHandler.execQueuedOperations();
@@ -494,7 +494,7 @@ void AuthSessionImpl::stateSlot(int state, const QString &message)
     emit m_parent->stateChanged((AuthSession::AuthSessionState)state, message);
 }
 
-void AuthSessionImpl::destroyedSlot()
+void AuthSessionImpl::unregisteredSlot()
 {
     delete m_DBusInterface;
     m_DBusInterface = NULL;

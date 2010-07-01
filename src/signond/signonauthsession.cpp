@@ -43,7 +43,7 @@ SignonAuthSession::SignonAuthSession(quint32 id,
 SignonAuthSession::~SignonAuthSession()
 {
     TRACE();
-    emit remoteObjectDestroyed();
+    emit unregistered();
 
     //stop all operations from the current session
     QDBusConnection connection(SIGNOND_BUS);

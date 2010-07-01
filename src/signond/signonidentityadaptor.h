@@ -62,6 +62,7 @@ namespace SignonDaemonNS {
                                  const QStringList &accessControlList,
                                  const int type);
     Q_SIGNALS:
+        void unregistered();
         void infoUpdated(int);
 
     private:

@@ -54,7 +54,7 @@ namespace SignonDaemonNS {
 
     Q_SIGNALS:
         void stateChanged(int state, const QString &message);
-        void remoteObjectDestroyed();
+        void unregistered();
     };
 
 } //namespace SignonDaemonNS

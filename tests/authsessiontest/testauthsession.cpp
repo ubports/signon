@@ -565,7 +565,6 @@ void TestAuthSession::queryMechanisms_existing_method()
       * 5 minutes + 10 seconds
       * */
      QTimer::singleShot(5 * 62 *1000, &loop, SLOT(quit()));
-
      loop.exec();
 
      AuthSession *as2;

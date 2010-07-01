@@ -123,7 +123,7 @@ namespace SignonDaemonNS {
 
     void SignonIdentity::destroy()
     {
-        emit destroyed();
+        emit unregistered();
         deleteLater();
     }
 

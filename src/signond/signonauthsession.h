@@ -65,7 +65,7 @@ namespace SignonDaemonNS {
 
     Q_SIGNALS:
         void stateChanged(int state, const QString &message);
-        void remoteObjectDestroyed();
+        void unregistered();
 
     private Q_SLOTS:
         void stateChangedSlot(const QString &sessionKey, int state, const QString &message);
