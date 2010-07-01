@@ -1,3 +1,9 @@
+signon (1.4) unstable; urgency=low
+
+  * Fixes: NB#173282 - Signond depends on CellularQt
+
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Thu, 01 Jul 2010 13:15:00 +0300
+
 signon (1.3) unstable; urgency=low
 
   * Fixes: NB#174437 - signond0 is using an obsolete backup method
