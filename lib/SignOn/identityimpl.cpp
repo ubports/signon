@@ -856,7 +856,7 @@ namespace SignOn {
                 this,
                 SLOT(infoUpdated(int)));
 
-        connect(m_DBusInterface, SIGNAL(destroyed()), SLOT(removeObjectDestroyed()));
+        connect(m_DBusInterface, SIGNAL(unregistered()), SLOT(removeObjectDestroyed()));
 
         if (!infoData.empty())
             updateCachedData(infoData);

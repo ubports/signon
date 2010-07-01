@@ -5,6 +5,8 @@
       <arg name="state" type="i" direction="out"/>
       <arg name="message" type="s" direction="out"/>
     </signal>
+    <signal name="unregistered">
+    </signal>
     <method name="queryAvailableMechanisms">
       <arg type="as" direction="out"/>
       <arg name="wantedMechanisms" type="as" direction="in"/>

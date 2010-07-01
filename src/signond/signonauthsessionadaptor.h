@@ -54,6 +54,7 @@ namespace SignonDaemonNS {
 
     Q_SIGNALS:
         void stateChanged(int state, const QString &message);
+        void unregistered();
     };
 
 } //namespace SignonDaemonNS

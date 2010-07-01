@@ -548,6 +548,42 @@ void TestAuthSession::queryMechanisms_existing_method()
      QCOMPARE(spyError.count(), 1);
  }
 
+ void TestAuthSession::handle_destroyed_signal()
+ {
+     AuthSession *as;
+     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
+     g_currentSession = as;
+
+     QSignalSpy spy(as, SIGNAL(mechanismsAvailable(const QStringList&)));
+     QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QEventLoop loop;
+
+     QObject::connect(as, SIGNAL(mechanismsAvailable(const QStringList&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+
+     /*
+      * 5 minutes + 10 seconds
+      * */
+     QTimer::singleShot(5 * 62 *1000, &loop, SLOT(quit()));
+     loop.exec();
+
+     AuthSession *as2;
+     SSO_TEST_CREATE_AUTH_SESSION(as2, "ssotest");
+
+     QTimer::singleShot(5 * 1000, &loop, SLOT(quit()));
+     loop.exec();
+
+     QStringList wantedMechs;
+     as->queryAvailableMechanisms(wantedMechs);
+
+     if(!errorCounter.count())
+         loop.exec();
+
+     QCOMPARE(spy.count(), 1);
+     QStringList result = spy.at(0).at(0).toStringList();
+     QCOMPARE(result.size(), 3);
+ }
+
  void TestAuthSession::cancel()
  {
      g_currentSession->cancel();

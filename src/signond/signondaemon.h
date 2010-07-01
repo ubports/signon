@@ -103,6 +103,11 @@ namespace SignonDaemonNS {
             return m_identityTimeout;
         }
 
+        int authSessionTimeout() const
+        {
+            return m_authSessionTimeout;
+        }
+
     public Q_SLOTS:
         /* Immediate reply calls */
 
@@ -158,6 +163,7 @@ namespace SignonDaemonNS {
         bool m_backup;
 
         int m_identityTimeout;
+        int m_authSessionTimeout;
     }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

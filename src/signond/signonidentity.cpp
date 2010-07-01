@@ -50,7 +50,8 @@ namespace SignonDaemonNS {
                                    SignonDaemon *parent)
             : SignonDisposable(timeout, parent),
               m_pInfo(NULL),
-              m_pSignonDaemon(parent)
+              m_pSignonDaemon(parent),
+              m_registered(false)
     {
         m_id = id;
 
@@ -71,8 +72,12 @@ namespace SignonDaemonNS {
 
     SignonIdentity::~SignonIdentity()
     {
-        QDBusConnection connection = SIGNOND_BUS;
-        connection.unregisterObject(objectName());
+        if (m_registered)
+        {
+            emit unregistered();
+            QDBusConnection connection = SIGNOND_BUS;
+            connection.unregisterObject(objectName());
+        }
 
         if (credentialsStored())
             m_pSignonDaemon->m_storedIdentities.remove(m_id);
@@ -104,7 +109,7 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        return true;
+        return (m_registered = true);
     }
 
     SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
@@ -123,7 +128,14 @@ namespace SignonDaemonNS {
 
     void SignonIdentity::destroy()
     {
-        emit destroyed();
+        if (m_registered)
+        {
+            emit unregistered();
+            QDBusConnection connection = SIGNOND_BUS;
+            connection.unregisterObject(objectName());
+            m_registered = false;
+        }
+
         deleteLater();
     }
 
