@@ -714,5 +714,11 @@ void SignonSessionCore::destroy()
         return;
     }
 
+    if (m_id)
+        sessionsOfStoredCredentials.remove(sessionName(m_id, m_method));
+    else
+        sessionsOfNonStoredCredentials.removeOne(this);
+
+    qDeleteAll(children());
     deleteLater();
 }
