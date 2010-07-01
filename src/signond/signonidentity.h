@@ -93,6 +93,7 @@ namespace SignonDaemonNS {
         SignonUiAdaptor *m_signonui;
         SignonIdentityInfo *m_pInfo;
         SignonDaemon *m_pSignonDaemon;
+        bool m_registered;
 
     }; //class SignonDaemon
 

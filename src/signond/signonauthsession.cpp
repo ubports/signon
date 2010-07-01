@@ -29,7 +29,8 @@ using namespace SignonDaemonNS;
 SignonAuthSession::SignonAuthSession(quint32 id,
                                      const QString &method) :
                                      m_id(id),
-                                     m_method(method)
+                                     m_method(method),
+                                     m_registered(false)
 {
     TRACE();
 
@@ -43,11 +44,13 @@ SignonAuthSession::SignonAuthSession(quint32 id,
 SignonAuthSession::~SignonAuthSession()
 {
     TRACE();
-    emit unregistered();
 
-    //stop all operations from the current session
-    QDBusConnection connection(SIGNOND_BUS);
-    connection.unregisterObject(objectName());
+    if (m_registered)
+    {
+        emit unregistered();
+        QDBusConnection connection(SIGNOND_BUS);
+        connection.unregisterObject(objectName());
+    }
 }
 
 QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
@@ -78,6 +81,7 @@ QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
         return QString();
     }
 
+    sas->objectRegistered();
     sas->setParent(core);
 
     connect(core, SIGNAL(stateChanged(const QString&, int, const QString&)),
@@ -131,6 +135,15 @@ void SignonAuthSession::objectUnref()
 {
     TRACE();
     cancel();
+
+    if (m_registered)
+    {
+        emit unregistered();
+        QDBusConnection connection(SIGNOND_BUS);
+        connection.unregisterObject(objectName());
+        m_registered = false;
+    }
+
     deleteLater();
 }
 
@@ -140,4 +153,9 @@ void SignonAuthSession::stateChangedSlot(const QString &sessionKey, int state, c
 
     if (sessionKey == objectName())
         emit stateChanged(state, message);
+}
+
+void SignonAuthSession::objectRegistered()
+{
+    m_registered = true;
 }

@@ -55,6 +55,7 @@ namespace SignonDaemonNS {
         static QString getAuthSessionObjectPath(const quint32 id, const QString &method, SignonDaemon *parent);
         static void stopAllAuthSessions();
         quint32 id() const;
+        void objectRegistered();
 
     public Q_SLOTS:
         QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
@@ -77,6 +78,7 @@ namespace SignonDaemonNS {
     private:
         quint32 m_id;
         QString m_method;
+        bool m_registered;
 
     Q_DISABLE_COPY(SignonAuthSession)
 }; //class SignonDaemon
