@@ -90,7 +90,8 @@ namespace SignOn {
 
     DBusOperationQueueHandler::DBusOperationQueueHandler(QObject *clientObject)
         : m_clientObject(clientObject),
-          m_maxNumberOfOperationParameters(6)
+          m_maxNumberOfOperationParameters(6),
+          m_operationsStopped(false)
     {
     }
 
@@ -111,7 +112,9 @@ namespace SignOn {
 
     void DBusOperationQueueHandler::execQueuedOperations()
     {
-        while (!m_operationsQueue.empty()) {
+        m_operationsStopped = false;
+
+        while (m_operationsStopped == false && !m_operationsQueue.empty()) {
             Operation *op = m_operationsQueue.dequeue();
 
             if (op->m_args.size() > m_maxNumberOfOperationParameters) {
@@ -170,9 +173,8 @@ namespace SignOn {
 
     void DBusOperationQueueHandler::removeOperation(const char *name, bool removeAll)
     {
-        Operation op(name);
         foreach (Operation *operation, m_operationsQueue) {
-            if (*operation == op) {
+            if (operation != NULL && qstrcmp(operation->m_name, name) == 0) {
                 m_operationsQueue.removeOne(operation);
                 if (!removeAll)
                     break;
@@ -182,9 +184,8 @@ namespace SignOn {
 
     bool DBusOperationQueueHandler::queueContainsOperation(const char *name)
     {
-        Operation op(name);
         foreach (Operation *operation, m_operationsQueue)
-            if (*operation == op)
+            if (operation != NULL && qstrcmp(operation->m_name, name) == 0)
                 return true;
 
         return false;

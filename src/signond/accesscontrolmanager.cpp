@@ -115,10 +115,14 @@ namespace SignonDaemonNS {
         RETURN_IF_AC_DISABLED(true);
 
         QStringList peerTokens = accessTokens(peerContext);
+
+        TRACE() << peerTokens << " vs. " << tokens;
+
         foreach(QString token, tokens)
             if (peerTokens.contains(token))
                 return true;
 
+        TRACE() << "given peer does not have needed permissions";
         return false;
     }
 

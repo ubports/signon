@@ -73,6 +73,8 @@ namespace SignOn {
         void removeOperation(const char *name, bool removeAll = true);
 
         bool queueContainsOperation(const char *name);
+        void stopOperationsProcessing()
+        { m_operationsStopped = true; }
 
         static QByteArray normalizedOperationSignature(const char *operationName)
             { return QMetaObject::normalizedSignature(operationName); }
@@ -81,6 +83,7 @@ namespace SignOn {
         QObject *m_clientObject;
         const int m_maxNumberOfOperationParameters;
         QQueue<Operation *> m_operationsQueue;
+        bool m_operationsStopped;
     };
 
 } //SignOn

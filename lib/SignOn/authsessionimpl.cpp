@@ -214,6 +214,7 @@ bool AuthSessionImpl::initInterface()
         m_isValid = false;
         return false;
     } else {
+        m_operationQueueHandler.stopOperationsProcessing();
         return iface.callWithCallback(operation,
                                       arguments,
                                       this,
