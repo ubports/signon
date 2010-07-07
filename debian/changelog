@@ -1,3 +1,9 @@
+signon (1.5) unstable; urgency=low
+
+  * Fixes: NB#178425 - Identity::queryInfo infinite loop
+
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Thu, 01 Jul 2010 13:15:00 +0300
+
 signon (1.4) unstable; urgency=low
 
   * Fixes: NB#173282 - Signond depends on CellularQt
