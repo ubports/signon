@@ -90,7 +90,8 @@ namespace SignOn {
 
     DBusOperationQueueHandler::DBusOperationQueueHandler(QObject *clientObject)
         : m_clientObject(clientObject),
-          m_maxNumberOfOperationParameters(6)
+          m_maxNumberOfOperationParameters(6),
+          m_operationsStopped(false)
     {
     }
 
@@ -111,7 +112,9 @@ namespace SignOn {
 
     void DBusOperationQueueHandler::execQueuedOperations()
     {
-        while (!m_operationsQueue.empty()) {
+        m_operationsStopped = false;
+
+        while (m_operationsStopped == false && !m_operationsQueue.empty()) {
             Operation *op = m_operationsQueue.dequeue();
 
             if (op->m_args.size() > m_maxNumberOfOperationParameters) {

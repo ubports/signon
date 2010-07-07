@@ -815,7 +815,10 @@ namespace SignOn {
         if (!m_DBusInterface
             || !m_DBusInterface->isValid()
             || m_DBusInterface->lastError().isValid())
+        {
             updateState(NeedsRegistration);
+            m_operationQueueHandler.stopOperationsProcessing();
+        }
     }
 
     void IdentityImpl::registerReply(const QDBusObjectPath &objectPath)
