@@ -173,9 +173,8 @@ namespace SignOn {
 
     void DBusOperationQueueHandler::removeOperation(const char *name, bool removeAll)
     {
-        Operation op(name);
         foreach (Operation *operation, m_operationsQueue) {
-            if (*operation == op) {
+            if (operation != NULL && qstrcmp(operation->m_name, name) == 0) {
                 m_operationsQueue.removeOne(operation);
                 if (!removeAll)
                     break;
@@ -185,9 +184,8 @@ namespace SignOn {
 
     bool DBusOperationQueueHandler::queueContainsOperation(const char *name)
     {
-        Operation op(name);
         foreach (Operation *operation, m_operationsQueue)
-            if (*operation == op)
+            if (operation != NULL && qstrcmp(operation->m_name, name) == 0)
                 return true;
 
         return false;
