@@ -174,6 +174,13 @@ public:
      */
     SIGNON_SESSION_DECLARE_PROPERTY(int, UiPolicy)
 
+    /*!
+     * Declare property NetworkTimeout setter and getter
+     * Sets the timeout for network related operations in miliseconds.
+     * To be used when a remote service does not reply in a reasonable amount of time.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
+
 protected:
     QVariantMap m_data;
 };
