@@ -288,7 +288,17 @@ namespace SignonDaemonNS {
                 info = infoVa.toMap();
 
                 if (!isResultObtained) {
-                    if (m_uiPolicy == NoUserInteractionPolicy) {
+                    bool allowed = true;
+
+                    if (m_uiPolicy == NoUserInteractionPolicy)
+                        allowed = false;
+
+                    if (m_uiPolicy == ValidationPolicy &&
+                        !info.contains(SSOUI_KEY_CAPTCHAIMG) &&
+                        !info.contains(SSOUI_KEY_CAPTCHAURL))
+                        allowed = false;
+
+                    if (!allowed) {
                         //set error and return;
                         TRACE() << "ui policy prevented ui launch";
                         info.insert(SSOUI_KEY_ERROR, QUERY_ERROR_FORBIDDEN);

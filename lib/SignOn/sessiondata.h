@@ -66,7 +66,10 @@ namespace SignOn {
 enum SignonUiPolicy {
     DefaultPolicy = 0,          /**< Plugin can decide when to show ui. */
     RequestPasswordPolicy,      /**< Force user to enter password. */
-    NoUserInteractionPolicy     /**< No ui elements are shown to user. */
+    NoUserInteractionPolicy,    /**< No ui elements are shown to user. */
+    ValidationPolicy,           /**< UI elements can be shown to the user only
+                                  when captcha-like security measures are
+                                  required */
 };
 
 /*!
