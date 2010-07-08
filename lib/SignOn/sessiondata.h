@@ -66,7 +66,10 @@ namespace SignOn {
 enum SignonUiPolicy {
     DefaultPolicy = 0,          /**< Plugin can decide when to show ui. */
     RequestPasswordPolicy,      /**< Force user to enter password. */
-    NoUserInteractionPolicy     /**< No ui elements are shown to user. */
+    NoUserInteractionPolicy,    /**< No ui elements are shown to user. */
+    ValidationPolicy,           /**< UI elements can be shown to the user only
+                                  when captcha-like security measures are
+                                  required */
 };
 
 /*!
@@ -173,6 +176,13 @@ public:
      * @see SignonUiPolicy
      */
     SIGNON_SESSION_DECLARE_PROPERTY(int, UiPolicy)
+
+    /*!
+     * Declare property NetworkTimeout setter and getter
+     * Sets the timeout for network related operations in miliseconds.
+     * To be used when a remote service does not reply in a reasonable amount of time.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
 
 protected:
     QVariantMap m_data;
