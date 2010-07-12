@@ -44,15 +44,15 @@ case "$1" in
        # 3. create user if not existing
        if ! getent passwd | grep -q "^$SERVER_USER:"; then
          echo -n "Adding system user $SERVER_USER.."
-         useradd --system \
-	     $SERVER_USER 2>/dev/null || true
+#         useradd --system \
+#	     $SERVER_USER 2>/dev/null || true
          echo "..done"
        fi
        # 4. adjust passwd entry
-       usermod -c "$SERVER_NAME" \
-               -d $SERVER_HOME   \
-               -g $SERVER_GROUP  \
-                  $SERVER_USER
+#       usermod -c "$SERVER_NAME" \
+#               -d $SERVER_HOME   \
+#               -g $SERVER_GROUP  \
+#                  $SERVER_USER
        # 5. adjust file and directory permissions
        #if ! dpkg-statoverride --list $SERVER_HOME >/dev/null
        #then
