@@ -26,7 +26,7 @@ case "$1" in
         if USERID=`getent passwd $CREATEDUSER | cut -f 3 -d ':'`; then
             if [ -n "$USERID" ]; then
 		echo -n "Removing $CREATEDUSER system user.."
-		userdel $CREATEDUSER || true
+#		userdel $CREATEDUSER || true
 		echo "..done"
             fi
        fi
@@ -35,7 +35,7 @@ case "$1" in
        if GROUPGID=`getent group $CREATEDGROUP | cut -f 3 -d ':'`; then
            if [ -n "$GROUPGID" ]; then
                echo -n "Removing $CREATEDGROUP group.."
-               groupdel $CREATEDGROUP || true
+#              groupdel $CREATEDGROUP || true
                echo "..done"
            fi
        fi
