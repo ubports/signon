@@ -7,9 +7,6 @@
   </account>
   <request>
     <credential name="UID::signon" />
-    <for path="/usr/bin/signonpluginprocess" />
-  </request>
-  <request>
     <credential name="GID::signon" />
     <for path="/usr/bin/signonpluginprocess" />
   </request>
