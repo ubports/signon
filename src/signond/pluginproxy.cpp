@@ -116,13 +116,13 @@ namespace SignonDaemonNS {
 
         QByteArray tmp;
 
-        if (!pp->waitForStarted(2*1000)) {
+        if (!pp->waitForStarted(5 * 1000)) {
             TRACE() << "The process cannot be started";
             delete pp;
             return NULL;
         }
 
-        if (!pp->readOnReady(tmp, 2*1000)) {
+        if (!pp->readOnReady(tmp, 5 * 1000)) {
             TRACE() << "The process cannot load plugin";
             delete pp;
             return NULL;
@@ -447,7 +447,7 @@ namespace SignonDaemonNS {
             m_process->start(REMOTEPLUGIN_BIN_PATH, QStringList(m_type));
 
             QByteArray tmp;
-            if (!waitForStarted(2*1000) || !readOnReady(tmp, 2*1000))
+            if (!waitForStarted(5*1000) || !readOnReady(tmp, 5*1000))
                 return false;
         }
         return true;
