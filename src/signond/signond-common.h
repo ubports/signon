@@ -44,7 +44,7 @@
     #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
 
     #define SIGNOND_TRACE_FILE QLatin1String("signon_trace_file")
-    #define SIGNOND_TRACE_FILE_MAX_SIZE 10240 // 10 * 1024 bytes
+    #define SIGNOND_TRACE_FILE_MAX_SIZE 102400 // 100 * 1024 bytes
 
     #define SIGNOND_INITIALIZE_TRACE(_file_name_, _maxFileSize_) \
         initializeTrace(_file_name_, _maxFileSize_);
