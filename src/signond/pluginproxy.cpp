@@ -39,10 +39,12 @@
  */
 #include "SignOn/authpluginif.h"
 
+
 using namespace SignOn;
 
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
+#define PLUGINPROCESS_TIMEOUT 5000
 
 namespace SignonDaemonNS {
 
@@ -116,13 +118,13 @@ namespace SignonDaemonNS {
 
         QByteArray tmp;
 
-        if (!pp->waitForStarted(2*1000)) {
+        if (!pp->waitForStarted(PLUGINPROCESS_TIMEOUT)) {
             TRACE() << "The process cannot be started";
             delete pp;
             return NULL;
         }
 
-        if (!pp->readOnReady(tmp, 2*1000)) {
+        if (!pp->readOnReady(tmp, PLUGINPROCESS_TIMEOUT)) {
             TRACE() << "The process cannot load plugin";
             delete pp;
             return NULL;
@@ -390,7 +392,7 @@ namespace SignonDaemonNS {
         QByteArray typeBa, buffer;
         bool result;
 
-        if ((result = readOnReady(buffer, 5 * 1000))) {
+        if ((result = readOnReady(buffer, PLUGINPROCESS_TIMEOUT))) {
             QDataStream out(buffer);
             out >> typeBa;
         } else
@@ -413,7 +415,7 @@ namespace SignonDaemonNS {
         QStringList strList;
         bool result;
 
-        if ((result = readOnReady(buffer, 5 * 1000))) {
+        if ((result = readOnReady(buffer, PLUGINPROCESS_TIMEOUT))) {
             QVariant mechanismsVar;
             QDataStream out(buffer);
 
@@ -447,7 +449,7 @@ namespace SignonDaemonNS {
             m_process->start(REMOTEPLUGIN_BIN_PATH, QStringList(m_type));
 
             QByteArray tmp;
-            if (!waitForStarted(2*1000) || !readOnReady(tmp, 2*1000))
+            if (!waitForStarted(PLUGINPROCESS_TIMEOUT) || !readOnReady(tmp, PLUGINPROCESS_TIMEOUT))
                 return false;
         }
         return true;

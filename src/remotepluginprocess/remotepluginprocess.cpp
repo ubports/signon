@@ -85,6 +85,8 @@ namespace RemotePluginProcessNS {
             return false;
         }
 
+        TRACE() << "library loaded";
+
         typedef AuthPluginInterface* (*SsoAuthPluginInstanceF)();
         SsoAuthPluginInstanceF instance = (SsoAuthPluginInstanceF)lib.resolve("auth_plugin_instance");
         if (!instance) {
@@ -92,6 +94,8 @@ namespace RemotePluginProcessNS {
                 .arg(getPluginName(type)).arg(lib.errorString());
             return false;
         }
+
+        TRACE() << "constructor resolved";
 
         m_plugin = qobject_cast<AuthPluginInterface *>(instance());
 
@@ -103,6 +107,8 @@ namespace RemotePluginProcessNS {
 
         if (!cancelThread)
             cancelThread = new CancelEventThread(m_plugin);
+
+        TRACE() << "cancel thread started";
 
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
@@ -124,6 +130,8 @@ namespace RemotePluginProcessNS {
                   this, SLOT(statusChanged(const AuthPluginState, const QString&)));
 
         m_plugin->setParent(this);
+
+        TRACE() << "plugin is fully initialized";
         return true;
     }
 
