@@ -102,7 +102,7 @@ namespace SignOn {
     };
 
     static void initializeTrace(const QString &fileName, const quint32 maxFileSize) {
-        SignonTrace<>::initialize(QString(QLatin1String("/var/log/%1")).arg(fileName), maxFileSize);
+        SignonTrace<>::initialize(QString(QLatin1String("%1/%2")).arg(SIGNOND_TRACE_DIR).arg(fileName), maxFileSize);
     }
 
 template <typename T>
