@@ -88,8 +88,7 @@ namespace SignOn {
             if (!m_pInstance->m_outputFile.isOpen())
                 m_pInstance->m_outputFile.open(QIODevice::Append);
 
-            m_pInstance->m_writeStream << QString(QLatin1String("%1 %2: %3\n"))
-                . arg(QDateTime::currentDateTime().toString())
+            m_pInstance->m_writeStream << QString(QLatin1String("%1: %2\n"))
                 . arg(QLatin1String(msgType))
                 . arg(QLatin1String(msg));
             m_pInstance->m_outputFile.close();
