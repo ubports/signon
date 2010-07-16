@@ -75,32 +75,32 @@ namespace RemotePluginProcessNS {
 
     bool RemotePluginProcess::loadPlugin(QString &type)
     {
-        TRACE() << type;
+        TRACE() << __TIME__ << " loading auth library for " << type;
 
         QLibrary lib(getPluginName(type));
 
         if (!lib.load()) {
-            qCritical() << QString("Failed to load %1 (reason: %2)")
+            qCritical() << __TIME__ << QString("Failed to load %1 (reason: %2)")
                 .arg(getPluginName(type)).arg(lib.errorString());
             return false;
         }
 
-        TRACE() << "library loaded";
+        TRACE() << __TIME__ <<  "library loaded";
 
         typedef AuthPluginInterface* (*SsoAuthPluginInstanceF)();
         SsoAuthPluginInstanceF instance = (SsoAuthPluginInstanceF)lib.resolve("auth_plugin_instance");
         if (!instance) {
-            qCritical() << QString("Failed to resolve init function in %1 (reason: %2)")
+            qCritical() << __TIME__ << QString("Failed to resolve init function in %1 (reason: %2)")
                 .arg(getPluginName(type)).arg(lib.errorString());
             return false;
         }
 
-        TRACE() << "constructor resolved";
+        TRACE() << __TIME__ << "constructor resolved";
 
         m_plugin = qobject_cast<AuthPluginInterface *>(instance());
 
         if (!m_plugin) {
-            qCritical() << QString("Failed to cast object for %1 type")
+            qCritical() << __TIME__ << QString("Failed to cast object for %1 type")
                 .arg(type);
             return false;
         }
@@ -108,7 +108,7 @@ namespace RemotePluginProcessNS {
         if (!cancelThread)
             cancelThread = new CancelEventThread(m_plugin);
 
-        TRACE() << "cancel thread started";
+        TRACE() << __TIME__ <<  "cancel thread started";
 
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
@@ -131,7 +131,7 @@ namespace RemotePluginProcessNS {
 
         m_plugin->setParent(this);
 
-        TRACE() << "plugin is fully initialized";
+        TRACE() << __TIME__ << "plugin is fully initialized";
         return true;
     }
 
