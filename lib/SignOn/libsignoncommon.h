@@ -39,8 +39,8 @@
 #ifdef LIBSIGNON_TRACE
     #include <QDebug>
 
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define TRACE() qDebug() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define BLAME() qCritical() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
 #else
     #define TRACE() if(1) ; else qDebug()
     #define BLAME() if(1) ; else qDebug()
