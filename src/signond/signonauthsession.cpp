@@ -35,7 +35,7 @@ SignonAuthSession::SignonAuthSession(quint32 id,
     TRACE();
 
     static quint32 incr = 0;
-    QString objectName = QLatin1String("/com/nokia/singlesignon/AuthSession_") + QString::number(incr++, 16);
+    QString objectName = SIGNOND_DAEMON_OBJECTPATH + QLatin1String("/AuthSession_") + QString::number(incr++, 16);
     TRACE() << objectName;
 
     setObjectName(objectName);

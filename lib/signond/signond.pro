@@ -15,11 +15,11 @@ INCLUDEPATH += . \
 DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
 
 OTHER_FILES = \
-    com.nokia.singlesignon.SignonAuthSession.xml \
-    com.nokia.singlesignon.SignonDaemon.xml \
-    com.nokia.singlesignon.SignonIdentity.xml
+    com.nokia.SingleSignOn.AuthService.xml \
+    com.nokia.SingleSignOn.AuthSession.xml \
+    com.nokia.SingleSignOn.Identity.xml
 
-headers.files = $$public_headers 
+headers.files = $$public_headers
 headers.path = $${INSTALL_PREFIX}/include/signond
 
 dbus_files.files = $$OTHER_FILES

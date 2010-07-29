@@ -75,9 +75,9 @@ namespace SignonDaemonNS {
         QDBusConnection sessionConnection = QDBusConnection::sessionBus();
 
         sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH
-                                           + QLatin1String("/backup"));
+                                           + QLatin1String("/Backup"));
         sessionConnection.unregisterService(SIGNOND_SERVICE
-                                            + QLatin1String(".backup"));
+                                            + QLatin1String(".Backup"));
 
         if (m_backup == false)
         {
@@ -107,12 +107,12 @@ namespace SignonDaemonNS {
         (void)new BackupIfAdaptor(this);
 
         if (!sessionConnection.registerObject(SIGNOND_DAEMON_OBJECTPATH
-                                              + QLatin1String("/backup"), this, registerSessionOptions)) {
+                                              + QLatin1String("/Backup"), this, registerSessionOptions)) {
             TRACE() << "Object cannot be registered";
             return false;
         }
 
-        if (!sessionConnection.registerService(SIGNOND_SERVICE+QLatin1String(".backup"))) {
+        if (!sessionConnection.registerService(SIGNOND_SERVICE+QLatin1String(".Backup"))) {
             QDBusError err = sessionConnection.lastError();
             TRACE() << "Service cannot be registered: " << err.errorString(err.type());
             return false;

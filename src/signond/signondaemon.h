@@ -82,7 +82,7 @@ namespace SignonDaemonNS {
     class SignonDaemon: public QObject, protected QDBusContext
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.singlesignon.SignonDaemon")
+        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthService")
 
         friend class SignonIdentity;
         friend class SignonSessionCore;

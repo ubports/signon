@@ -33,7 +33,7 @@ namespace SignonDaemonNS {
     class SignonAuthSessionAdaptor: public QDBusAbstractAdaptor
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.singlesignon.SignonAuthSession")
+        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthSession")
 
     public:
             SignonAuthSessionAdaptor(SignonAuthSession *parent);

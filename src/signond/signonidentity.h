@@ -47,7 +47,7 @@ namespace SignonDaemonNS {
     class SignonIdentity: public SignonDisposable, protected QDBusContext
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.singlesignon.SignonIdentity")
+        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.Identity")
 
         friend class SignonIdentityAdaptor;
 
