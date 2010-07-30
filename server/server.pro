@@ -6,8 +6,8 @@ include( ../common-installs-config.pri )
 TEMPLATE = subdirs
 
 service.path = $${INSTALL_PREFIX}/share/dbus-1/services
-service.files = com.nokia.singlesignon.service
-service.files += com.nokia.singlesignon.backup.service
+service.files = com.nokia.SingleSignOn.service
+service.files += com.nokia.SingleSignOn.Backup.service
 INSTALLS += service
 
 backuprestore.path = $${INSTALL_PREFIX}/share/backup-framework/applications

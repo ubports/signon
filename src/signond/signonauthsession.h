@@ -44,7 +44,7 @@ namespace SignonDaemonNS {
     class SignonAuthSession: public QObject, protected QDBusContext
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.singlesignon.SignonAuthSession")
+        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthSession")
 
     public:
         inline SignonSessionCore *parent() const

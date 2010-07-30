@@ -207,7 +207,8 @@ bool AuthSessionImpl::initInterface()
 
     QDBusInterface iface(SIGNOND_SERVICE,
                          SIGNOND_DAEMON_OBJECTPATH,
-                         SIGNOND_DAEMON_INTERFACE);
+                         SIGNOND_DAEMON_INTERFACE,
+                         SIGNOND_BUS);
 
     if (iface.lastError().isValid()) {
         qCritical() << "cannot initialize interface: " << iface.lastError();
@@ -452,7 +453,8 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
     if (QString() != path) {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              path,
-                                             QString());
+                                             QString(),
+                                             SIGNOND_BUS);
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
 

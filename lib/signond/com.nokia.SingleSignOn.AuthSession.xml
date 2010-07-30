@@ -1,6 +1,6 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="com.nokia.singlesignon.SignonAuthSession">
+  <interface name="com.nokia.SingleSignOn.AuthSession">
     <signal name="stateChanged">
       <arg name="state" type="i" direction="out"/>
       <arg name="message" type="s" direction="out"/>

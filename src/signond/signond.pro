@@ -11,7 +11,7 @@ QT -= gui
 
 #generate adaptor for backup
 system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
-    ../../lib/signond/com.nokia.singlesignon.backup.xml)
+    ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
 
 HEADERS += accesscodehandler.h \
     accesscontrolmanager.h \

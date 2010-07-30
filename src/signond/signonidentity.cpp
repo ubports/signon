@@ -59,7 +59,7 @@ namespace SignonDaemonNS {
          * creation of unique name for the given identity
          * */
         static quint32 incr = 0;
-        QString objectName = QLatin1String("/com/nokia/singlesignon/SignonIdentity_")
+        QString objectName = SIGNOND_DAEMON_OBJECTPATH + QLatin1String("/Identity_")
                              + QString::number(incr++, 16);
         setObjectName(objectName);
 

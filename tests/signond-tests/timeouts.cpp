@@ -122,7 +122,7 @@ bool TimeoutsTest::identityAlive(const QString &path)
 {
     QDBusConnection conn = SIGNOND_BUS;
 
-    QString interface = QLatin1String("com.nokia.singlesignon.SignonIdentity");
+    QString interface = QLatin1String("com.nokia.SingleSignOn.Identity");
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       path,
                                                       interface,
