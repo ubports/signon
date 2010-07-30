@@ -1,15 +1,21 @@
+signon (2.0) unstable; urgency=low
+
+  * Renamed dbus interfaces
+    
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 30 Jul 2010 14:32:42 +0300
+
 signon (1.9) unstable; urgency=low
 
   * Fixes: NB#180517  -  Not able to configure any accounts - Signond crashes frequently
     
- -- Alexander Akimov <ext-alexander.akimov@nokiacom>  Fri, 16 Jul 2010 15:32:42 +0300
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Fri, 16 Jul 2010 15:32:42 +0300
 
 signon (1.8) unstable; urgency=low
 
   * Fixes: NB#179506  -  Signond is filling /tmp with traces
   * Fixes: NB#178432  -  YouTube: Sometimes 'Transfer failed due to service error SSO error !! code = %1, message = %2 is shown due to Authorization failed with code  3  and message  "Cannot create remote AuthSession object: check the signon daemon and authentication plugin."
     
- -- Alexander Akimov <ext-alexander.akimov@nokiacom>  Thu, 15 Jul 2010 15:32:42 +0300
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Thu, 15 Jul 2010 15:32:42 +0300
 
 signon (1.7) unstable; urgency=low
 

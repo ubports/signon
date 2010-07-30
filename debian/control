@@ -55,6 +55,7 @@ Architecture: any
 Priority: optional
 Depends: libcreds2, libqt4-sql-sqlite, libcryptsetup0 (>= 1.0.7), ${shlibs:Depends}, ${misc:Depends}
 Recommends: signon-ui, signon-plugins, libsignon-qt0
+Conflicts: libsignon-glib1 (<= 0.10), libsignon-qt0 (<= 1.9)
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
