@@ -191,7 +191,7 @@ namespace SignonDaemonNS {
             CAMConfiguration config;
 
             //Leaving encryption disabled for the moment.
-            config.m_useEncryption = true;
+            config.m_useEncryption = false;
             config.m_encryptionPassphrase = lockCode;
 
             if (!m_pCAMManager->init(config)) {
