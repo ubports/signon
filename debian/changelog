@@ -1,3 +1,9 @@
+signon (2.1-1) unstable; urgency=low
+
+  * Update for the device lock code related DBUS API.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Fri, 13 Aug 2010 15:30:42 +0300
+
 signon (2.0-1) unstable; urgency=low
 
   * Missing file added
