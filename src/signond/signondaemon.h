@@ -123,15 +123,12 @@ namespace SignonDaemonNS {
 
         /* Delayed reply calls */
 
-        // Interface method to set initialize the secure storage
-        bool initSecureStorage(const QByteArray &lockCode);
-
         // Interface method to set the device lock code
         bool setDeviceLockCode(const QByteArray &newLockCode,
                                const QByteArray &oldLockCode);
 
-        // Interface method to remote lock the database
-        bool remoteLock(const QByteArray &lockCode);
+        // Interface method to drop the database
+        bool dropStorage(const QByteArray &lockCode);
 
     public Q_SLOTS: // backup METHODS
         uchar backupStarts();
@@ -142,8 +139,9 @@ namespace SignonDaemonNS {
     private Q_SLOTS:
         void displayRequestsCount();
 
-
     private:
+        bool initSecureStorage(const QByteArray &lockCode);
+
         void unregisterIdentity(SignonIdentity *identity);
         void identityStored(SignonIdentity *identity);
         void listDBusInterfaces();
