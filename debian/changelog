@@ -1,4 +1,4 @@
-signon (2.2-1) unstable; urgency=low
+signon (2.1-2) unstable; urgency=low
 
   * Update for the device lock code related DBUS API.
 
