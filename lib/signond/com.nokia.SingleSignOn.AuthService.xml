@@ -6,8 +6,13 @@
     </method>
     <method name="registerStoredIdentity">
       <arg name="id" type="u" direction="in"/>
-      <arg type="o" direction="out"/>
+      <arg name="objectPath" type="o" direction="out"/>
       <arg name="identityData" type="av" direction="out"/>
+    </method>
+    <method name="getAuthSessionObjectPath">
+      <arg type="s" direction="out"/>
+      <arg name="id" type="u" direction="in"/>
+      <arg name="type" type="s" direction="in"/>
     </method>
     <method name="queryMethods">
       <arg type="as" direction="out"/>
@@ -24,20 +29,10 @@
     <method name="clear">
       <arg type="b" direction="out"/>
     </method>
-    <method name="getAuthSessionObjectPath">
-      <arg type="s" direction="out"/>
-      <arg name="id" type="u" direction="in"/>
-      <arg name="type" type="s" direction="in"/>
-    </method>
     <method name="setDeviceLockCode">
       <arg type="b" direction="out"/>
+      <arg name="lockCode" type="ay" direction="in"/>
       <arg name="oldLockCode" type="ay" direction="in"/>
-      <arg name="newLockCode" type="ay" direction="in"/>
-    </method>
-    <method name="setSim">
-      <arg type="b" direction="out"/>
-      <arg name="simData" type="ay" direction="in"/>
-      <arg name="checkData" type="ay" direction="in"/>
     </method>
     <method name="remoteLock">
       <arg type="b" direction="out"/>
