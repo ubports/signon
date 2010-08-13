@@ -184,20 +184,15 @@ namespace SignonDaemonNS {
     bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
     {
         m_pCAMManager = CredentialsAccessManager::instance();
-        CAMConfiguration config;
 
-        //Leaving encryption disabled for the moment.
-        config.m_useEncryption = false;
-        config.m_encryptionPassphrase = lockCode;
-
-        /* If auto start fails(SIM not present or has invalid data)
-           and this is called by DBUS retry init of secure storage.
-        */
         if (!m_pCAMManager->credentialsSystemOpened()) {
-            if (calledFromDBus()) {
-                TRACE() << "Initialize secure storage called from DBUS...";
-                m_pCAMManager->finalize();
-            }
+            m_pCAMManager->finalize();
+
+            CAMConfiguration config;
+
+            //Leaving encryption disabled for the moment.
+            config.m_useEncryption = true;
+            config.m_encryptionPassphrase = lockCode;
 
             if (!m_pCAMManager->init(config)) {
                 qCritical("Signond: Cannot set proper configuration of CAM");
@@ -431,38 +426,48 @@ namespace SignonDaemonNS {
         return SignonAuthSession::getAuthSessionObjectPath(id, type, this);
     }
 
-    bool SignonDaemon::setDeviceLockCode(const QByteArray &newLockCode,
+    bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
                                          const QByteArray &oldLockCode)
     {
         TRACE() << "SignonDaemon::setDeviceLockCode()";
-        if (m_pCAMManager == NULL) {
-            /*
-             * Initialized CAM if it is not already so.
-             * If the old lock code is not provided, assume this is a 1st time call and
-             * attempt the formatting of the CAM secure storage with the new lock code.
-             * If the secure storage has already been formatted the initSecureStorage call
-             * will fail!
-             */
-            QByteArray lockCode = oldLockCode;
-            if (oldLockCode.isEmpty())
-                lockCode = newLockCode;
+        bool ret = true;
 
-            if (!initSecureStorage(lockCode))
-                return false;
-        }
+        if (oldLockCode.isEmpty()) {
+            /* --- Current lock code is being communicated to the Signond ---
+               Formatting of LUKS partition or regular SIMless start, if
+               partition is already formatted.
+            */
+            if (!initSecureStorage(lockCode)) {
+                TRACE() << "Could not initialize secure storage.";
+                ret = false;
+            }
+        } else {
+            /* --- New lock code is communicated to the Signond ---
+               Set new master key to the LUKS partition.
+            */
 
-        if (!m_pCAMManager->setDeviceLockCodeKey(newLockCode, oldLockCode)) {
-            TRACE() << "Failed to set new device lock code.";
-            return false;
+            // Attempt to initialize secure storage. If already initialized, this will fail.
+            if (!initSecureStorage(oldLockCode))
+                TRACE() << "Could not initialize secure storage.";
+
+            // If CAM is valid, attempt to set the lock code.
+            if (m_pCAMManager != NULL) {
+                if (!m_pCAMManager->setDeviceLockCodeKey(lockCode, oldLockCode)) {
+                    ret = false;
+                    TRACE() << "Failed to set device lock code.";
+                } else {
+                    TRACE() << "Device lock code successfully set.";
+                }
+            }
         }
-        return true;
+        return ret;
     }
 
     bool SignonDaemon::remoteLock(const QByteArray &lockCode)
     {
         Q_UNUSED(lockCode)
         // TODO - implement this, research how to.
-        TRACE() << "remoteLock:   lockCode = " << lockCode;
+        TRACE() << "remoteDrop:   lockCode = " << lockCode;
         return false;
     }
 

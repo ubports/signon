@@ -65,23 +65,16 @@ void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
     }
 }
 
-void setDeviceLockCode(const QByteArray &oldLockCode, const QByteArray &newLockCode)
+void setDeviceLockCode(const QByteArray &newLockCode, const QByteArray &oldLockCode)
 {
-    QList<QVariant> args = QList<QVariant>() << oldLockCode << newLockCode;
+    QList<QVariant> args = QList<QVariant>() << newLockCode << oldLockCode;
     dbusCall(QLatin1String("setDeviceLockCode"), args);
-}
-
-void initSecureStorage(const QByteArray &unlockData)
-{
-    qDebug() << "initSecureStorage" << unlockData;
-    QList<QVariant> args = QList<QVariant>() << unlockData;
-    dbusCall(QLatin1String("initSecureStorage"), args);
 }
 
 void remoteLock(const QByteArray &lockCode)
 {
     QList<QVariant> args = QList<QVariant>() << lockCode;
-    dbusCall(QLatin1String("remoteLock"), args);
+    dbusCall(QLatin1String("remoteDrop"), args);
 }
 
 void showHelp()
@@ -90,8 +83,7 @@ void showHelp()
     fputs("Option           Params                       Meaning\n", stderr);
     fputs("----------------------------------------------------------------------\n", stderr);
     fputs("--lock-code      newLockCode, oldLockCode     Device lock code change.\n", stderr);
-    fputs("--init-storage   unlockCode                   Initialize secure storage.\n", stderr);
-    fputs("--remote-lock    lockCode                     Remote database lock.\n", stderr);
+    fputs("--remote-drop    lockCode                     Remote database drop.\n", stderr);
     fputs("--help           none                         Shows this message.\n\n", stderr);
 }
 
@@ -134,26 +126,20 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if (app.arguments().count() < 2 ||
-        app.arguments().at(1) == QLatin1String("--help")) {
-        showHelp();
-        return 0;
-    }
-
     QStringList args = app.arguments();
     for (int idx = 0; idx < args.count(); idx++) {
         if (args[idx] == QLatin1String("--lock-code")) {
-            if (expectedArgsOk(args, idx, 2))
-                setDeviceLockCode( args[idx+1].toUtf8(), args[idx+2].toUtf8());
-            else
-                showError("--lock-code");
-        }
-
-        if (args[idx] == QLatin1String("--init-storage")) {
-            if (expectedArgsOk(args, idx, 1))
-                initSecureStorage(args[idx+1].toUtf8());
-            else
-                showError("--init-storage");
+            if (args.count() == 3) {
+                if (expectedArgsOk(args, idx, 1))
+                    setDeviceLockCode( args[idx+1].toUtf8(), QByteArray());
+                else
+                    showError("--lock-code");
+            } else if(args.count() == 4) {
+                if (expectedArgsOk(args, idx, 2))
+                    setDeviceLockCode( args[idx+1].toUtf8(), args[idx+2].toUtf8());
+                else
+                    showError("--lock-code");
+            }
         }
 
         if (args[idx] == QLatin1String("--remote-lock")) {

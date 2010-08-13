@@ -37,11 +37,6 @@ namespace SignonDaemonNS {
     SignonDaemonAdaptor::~SignonDaemonAdaptor()
     {}
 
-    bool SignonDaemonAdaptor::initSecureStorage(const QByteArray &lockCode)
-    {
-        return m_parent->initSecureStorage(lockCode);
-    }
-
     void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
     {
         SignonDisposable::destroyUnused();
@@ -127,12 +122,12 @@ namespace SignonDaemonNS {
         return m_parent->clear();
     }
 
-    bool SignonDaemonAdaptor::setDeviceLockCode(const QByteArray &oldLockCode,
-                                                const QByteArray &newLockCode)
+    bool SignonDaemonAdaptor::setDeviceLockCode(const QByteArray &lockCode,
+                                                const QByteArray &oldLockCode)
     {
         /* TODO - this should be access controlled, too. Have to identify the
                   caller process/es. */
-        return m_parent->setDeviceLockCode(oldLockCode, newLockCode);
+        return m_parent->setDeviceLockCode(lockCode, oldLockCode);
     }
 
     bool SignonDaemonAdaptor::remoteLock(const QByteArray &lockCode)
