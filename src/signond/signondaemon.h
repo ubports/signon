@@ -124,11 +124,11 @@ namespace SignonDaemonNS {
         /* Delayed reply calls */
 
         // Interface method to set the device lock code
-        bool setDeviceLockCode(const QByteArray &newLockCode,
+        bool setDeviceLockCode(const QByteArray &lockCode,
                                const QByteArray &oldLockCode);
 
         // Interface method to drop the database
-        bool dropStorage(const QByteArray &lockCode);
+        bool remoteLock(const QByteArray &lockCode);
 
     public Q_SLOTS: // backup METHODS
         uchar backupStarts();

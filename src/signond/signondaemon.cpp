@@ -426,7 +426,7 @@ namespace SignonDaemonNS {
         return SignonAuthSession::getAuthSessionObjectPath(id, type, this);
     }
 
-    bool SignonDaemon::setDeviceLockCode(const QByteArray &newLockCode,
+    bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
                                          const QByteArray &oldLockCode)
     {
         TRACE() << "SignonDaemon::setDeviceLockCode()";
@@ -437,7 +437,7 @@ namespace SignonDaemonNS {
                Formatting of LUKS partition or regular SIMless start, if
                partition is already formatted.
             */
-            if (!initSecureStorage(newLockCode)) {
+            if (!initSecureStorage(lockCode)) {
                 TRACE() << "Could not initialize secure storage.";
                 ret = false;
             }
@@ -452,7 +452,7 @@ namespace SignonDaemonNS {
 
             // If CAM is valid, attempt to set the lock code.
             if (m_pCAMManager != NULL) {
-                if (!m_pCAMManager->setDeviceLockCodeKey(newLockCode, oldLockCode)) {
+                if (!m_pCAMManager->setDeviceLockCodeKey(lockCode, oldLockCode)) {
                     ret = false;
                     TRACE() << "Failed to set device lock code.";
                 } else {
@@ -463,7 +463,7 @@ namespace SignonDaemonNS {
         return ret;
     }
 
-    bool SignonDaemon::dropStorage(const QByteArray &lockCode)
+    bool SignonDaemon::remoteLock(const QByteArray &lockCode)
     {
         Q_UNUSED(lockCode)
         // TODO - implement this, research how to.

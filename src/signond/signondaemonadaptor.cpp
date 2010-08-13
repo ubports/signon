@@ -122,19 +122,19 @@ namespace SignonDaemonNS {
         return m_parent->clear();
     }
 
-    bool SignonDaemonAdaptor::setDeviceLockCode(const QByteArray &oldLockCode,
-                                                const QByteArray &newLockCode)
+    bool SignonDaemonAdaptor::setDeviceLockCode(const QByteArray &lockCode,
+                                                const QByteArray &oldLockCode)
     {
         /* TODO - this should be access controlled, too. Have to identify the
                   caller process/es. */
-        return m_parent->setDeviceLockCode(oldLockCode, newLockCode);
+        return m_parent->setDeviceLockCode(lockCode, oldLockCode);
     }
 
-    bool SignonDaemonAdaptor::dropStorage(const QByteArray &lockCode)
+    bool SignonDaemonAdaptor::remoteLock(const QByteArray &lockCode)
     {
         /* TODO - this should be access controlled, too. Have to identify the
                   caller process/es. */
-        return m_parent->dropStorage(lockCode);
+        return m_parent->remoteLock(lockCode);
     }
 
 } //namespace SignonDaemonNS
