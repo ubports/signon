@@ -343,65 +343,14 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
     QString errName;
     QString errMessage;
 
-    //TODO - deprecated switch - remove if clause 1 moth after release of new error management
+    //TODO this is needed for old error codes
     if(err < Error::AuthSessionErr) {
-        switch (err) {
-            case PLUGIN_ERROR_INVALID_STATE:
-                errMessage = SIGNOND_WRONG_STATE_ERR_STR;
-                errName = SIGNOND_WRONG_STATE_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NOT_AUTHORIZED:
-                errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
-                errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_PERMISSION_DENIED:
-                errMessage = SIGNOND_PERMISSION_DENIED_ERR_STR;
-                errName = SIGNOND_PERMISSION_DENIED_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NO_CONNECTION:
-                errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
-                errName = SIGNOND_NO_CONNECTION_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NETWORK_ERROR:
-                errMessage = SIGNOND_NETWORK_ERR_STR;
-                errName = SIGNOND_NETWORK_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_SSL_ERROR:
-                errMessage = SIGNOND_SSL_ERR_STR;
-                errName = SIGNOND_SSL_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_OPERATION_FAILED:
-                errMessage = SIGNOND_OPERATION_FAILED_ERR_NAME;
-                errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
-                break;
-             case PLUGIN_ERROR_MISSING_DATA:
-                errMessage = SIGNOND_MISSING_DATA_ERR_STR;
-                errName = SIGNOND_MISSING_DATA_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED:
-                errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
-                errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_RUNTIME:
-                errMessage = SIGNOND_RUNTIME_ERR_STR;
-                errName = SIGNOND_RUNTIME_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_USER_INTERACTION:
-                errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
-                errName = SIGNOND_USER_INTERACTION_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_CANCELED:
-                errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
-                errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
-                break;
-            default:
-                if (message.isEmpty())
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
-                else
-                    errMessage = message;
-                errName = SIGNOND_UNKNOWN_ERR_NAME;
-                break;
-        };
+        BLAME() << "Deprecated error code: " << err;
+            if (message.isEmpty())
+                errMessage = SIGNOND_UNKNOWN_ERR_STR;
+            else
+                errMessage = message;
+            errName = SIGNOND_UNKNOWN_ERR_NAME;
     }
 
     if (Error::AuthSessionErr < err && err < Error::UserErr) {
@@ -532,6 +481,27 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
 
     m_canceled = QString();
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+}
+
+void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap &data)
+{
+    Q_UNUSED(cancelKey);
+    TRACE();
+
+    keepInUse();
+    QVariantMap data2 = filterVariantMap(data);
+
+    //store data into db
+    if (m_id != SIGNOND_NEW_IDENTITY) {
+        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        if (db != NULL) {
+            if(!db->storeData(m_id, m_method, data2)) {
+                BLAME() << "Error occured while storing data.";
+            }
+        } else {
+            BLAME() << "Error occured while storing data. Null database handler object.";
+        }
+    }
 }
 
 void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVariantMap &data)

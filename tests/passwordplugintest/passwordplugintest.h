@@ -35,7 +35,7 @@ class PasswordPluginTest : public QObject
 
 public slots:
     void result(const SignOn::SessionData& data);
-    void pluginError(AuthPluginError error, const QString &errorMessage = QString());
+    void pluginError(const SignOn::Error &err);
     void uiRequest(const SignOn::UiSessionData& data);
 
 private slots:
@@ -56,7 +56,7 @@ private slots:
 
 private:
     PasswordPlugin* m_testPlugin;
-    AuthPluginError m_error;
+    int m_error;
     SignOn::SessionData m_response;
     SignOn::UiSessionData m_uiResponse;
     QEventLoop m_loop;

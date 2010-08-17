@@ -141,8 +141,6 @@ class RemotePluginProcess : public QObject
 
     private Q_SLOTS:
         void result(const SignOn::SessionData &data);
-        //TODO - the below slot is deprecated, see the definition's comment
-        void error(const AuthPluginError error, const QString &errorMessage);
         void error(const SignOn::Error &err);
         void userActionRequired(const SignOn::UiSessionData &data);
         void refreshed(const SignOn::UiSessionData &data);

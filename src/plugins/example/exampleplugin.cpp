@@ -24,6 +24,8 @@
 #include "exampledata.h"
 #include "SignOn/signonplugincommon.h"
 
+using namespace SignOn;
+
 namespace ExamplePluginNS {
 
     ExamplePlugin::ExamplePlugin(QObject *parent)
@@ -81,7 +83,7 @@ namespace ExamplePluginNS {
         }
 
         if ( inData.UserName() == QLatin1String("error" ) ) {
-            emit error(PLUGIN_ERROR_NOT_AUTHORIZED);
+            emit error(Error::NotAuthorized);
         }
 
         if ( inData.UserName() == QLatin1String("url" ) ) {
@@ -101,6 +103,7 @@ namespace ExamplePluginNS {
 
     void ExamplePlugin::userActionFinished(const SignOn::UiSessionData &data)
     {
+        Q_UNUSED(data);
         ExampleData response;
         TRACE();
         response.setExample(QLatin1String("url shown"));

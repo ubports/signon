@@ -38,7 +38,6 @@ void TestPluginProxy::initTestCase()
 #endif
 
     qRegisterMetaType<QVariantMap>("QVariantMap");
-    qRegisterMetaType<AuthPluginError>("AuthPluginError");
 }
 
 void TestPluginProxy::cleanupTestCase()
@@ -166,13 +165,13 @@ void TestPluginProxy::processUi_for_dummy()
     QCOMPARE(spyError.count(), 1);
 
     QString key = spyError.at(0).at(0).toString();
-    AuthPluginError err = (AuthPluginError)spyError.at(0).at(1).toInt();
+    int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
     TRACE() << err;
     TRACE() << errMsg;
 
-    QVERIFY(err == PLUGIN_ERROR_NOT_AUTHORIZED);
+    QVERIFY(err == Error::NotAuthorized);
 
     inDataV["UiPolicy"] = 0;
     res = m_proxy->process(cancelKey, inDataV, "mech2");
@@ -223,14 +222,14 @@ void TestPluginProxy::process_and_cancel_for_dummy()
     QCOMPARE(spyError.count(), 1);
 
     QString key = spyError.at(0).at(0).toString();
-    AuthPluginError err = (AuthPluginError)spyError.at(0).at(1).toInt();
+    int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
     TRACE() << err;
     TRACE() << errMsg;
 
     QVERIFY(key == cancelKey);
-    QVERIFY(err == PLUGIN_ERROR_OPERATION_FAILED);
+    QVERIFY(err == Error::SessionCanceled);
     QVERIFY(errMsg == QString("The operation is canceled"));
 }
 
@@ -271,13 +270,13 @@ void TestPluginProxy::process_wrong_mech_for_dummy()
     QCOMPARE(spyError.count(), 1);
 
     QString key = spyError.at(0).at(0).toString();
-    AuthPluginError err = (AuthPluginError)spyError.at(0).at(1).toInt();
+    int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
     TRACE() << err << " " << errMsg;
 
     QVERIFY(key == cancelKey);
-    QVERIFY(err == PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
+    QVERIFY(err == Error::MechanismNotAvailable);
     QVERIFY(errMsg == QString("The given mechanism is unavailable"));
 }
 

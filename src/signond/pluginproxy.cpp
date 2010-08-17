@@ -247,7 +247,7 @@ namespace SignonDaemonNS {
         if (!m_process->bytesAvailable()) {
             qCritical() << "No information available on process";
             m_isProcessing = false;
-            emit processError(m_cancelKey, PLUGIN_ERROR_GENERAL, QString());
+            emit processError(m_cancelKey, Error::InternalServer, QString());
             return;
         }
 
@@ -255,7 +255,6 @@ namespace SignonDaemonNS {
 
         while (m_process->bytesAvailable())
             buffer += m_process->readAllStandardOutput();
-
 
         /*
          * we need to analyze the whole buffer
@@ -365,7 +364,7 @@ namespace SignonDaemonNS {
 
         if (m_isProcessing || exitStatus == QProcess::CrashExit) {
             qCritical() << "Challenge produces CRASH!";
-            emit processError(m_cancelKey, PLUGIN_ERROR_GENERAL, QLatin1String("plugin processed crashed"));
+            emit processError(m_cancelKey, Error::InternalServer, QLatin1String("plugin processed crashed"));
         }
         if (exitCode == 2) {
             TRACE() << "plugin process terminated because cannot change user";
