@@ -235,7 +235,14 @@ namespace SignonDaemonNS {
                     "CREATE TABLE CORRESPONDENCES"
                     "(identity_id INTEGER,"
                     "method VARCHAR(25),"
-                    "mechanisms TEXT)");
+                    "mechanisms TEXT)")
+            <<  QString::fromLatin1(
+                    "CREATE TABLE STORE"
+                    "(identity_id INTEGER,"
+                    "method TEXT,"
+                    "key TEXT,"
+                    "value TEXT,"
+                    "PRIMARY KEY (identity_id,method,key))");
 
        foreach (QString createTable, createTableQuery) {
             QSqlQuery query = exec(createTable);
@@ -589,6 +596,74 @@ namespace SignonDaemonNS {
             return false;
 
         return true;
+    }
+
+    QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
+    {
+        TRACE();
+
+        QString query_str = QString::fromLatin1(
+                "SELECT key, value "
+                "FROM STORE WHERE identity_id = %1 AND method = %2").arg(id).arg(method);
+
+        QSqlQuery query = exec(query_str);
+        if (!query.first()) {
+            TRACE() << "No result or invalid query.";
+            return QVariantMap();
+        }
+
+        QVariantMap data;
+        do {
+            data.insert(
+                    query.value(0).toString(),
+                    query.value(1));
+        } while (query.next());
+
+        return data;
+    }
+
+    bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
+    {
+        TRACE();
+
+        if (!startTransaction()) {
+            TRACE() << "Could not start transaction. Error inserting data.";
+            return 0;
+        }
+
+        /* Data insert */
+        bool allOk = true;
+        QString queryStr;
+        /* Methods and correspndences inserts */
+        if (!(data.keys().empty())) {
+            QMapIterator<QString, QVariant> it(data);
+            while (it.hasNext()) {
+                it.next();
+                /* Key/value insert/replace/delete */
+                if (it.value().isValid()) {
+                    queryStr = QString::fromLatin1(
+                        "INSERT OR REPLACE INTO STORE (identity_id, method, key, value) "
+                        "VALUES('%1', '%2', '%3', '%4')")
+                        .arg(id).arg(method).arg(it.key()).arg(it.value().toString());
+                } else {
+                    queryStr = QString::fromLatin1(
+                        "DELETE FROM STORE WHERE identity_id = '%1' AND method = '%2' AND key = '%3'")
+                        .arg(id).arg(method).arg(it.key());
+                }
+                exec(queryStr);
+                if (errorOccurred()) {
+                    allOk = false;
+                    break;
+                }
+            }
+        }
+
+        if (allOk && commit()) {
+            return true;
+        }
+        rollback();
+        TRACE() << "Data insertion failed.";
+        return false;
     }
 
     QStringList CredentialsDB::accessControlList(const quint32 identityId)

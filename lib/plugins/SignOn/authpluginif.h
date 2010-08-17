@@ -143,8 +143,15 @@ Q_SIGNALS:
     void result(const SignOn::SessionData &data);
 
     /*!
+     * Emitted when authentication process want to store session data parameters
+     * for later use. Stored parameters are added into SessionData in a process call.
+     * This is useful when authentication is using permanent tokens.
      *
+     * @note This is shared within same identity using same method only.
+     *
+     * @param data resulting SessionData, need to be returned to client.
      */
+    void store(const SignOn::SessionData &data);
 
     /*!
      * Emitted when authentication process has been completed for given data

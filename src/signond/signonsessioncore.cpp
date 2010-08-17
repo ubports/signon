@@ -156,6 +156,12 @@ bool SignonSessionCore::setupPlugin()
             Qt::DirectConnection);
 
     connect(m_plugin,
+            SIGNAL(processStore(const QString&, const QVariantMap&)),
+            this,
+            SLOT(processStore(const QString&, const QVariantMap&)),
+            Qt::DirectConnection);
+
+    connect(m_plugin,
             SIGNAL(processUiRequest(const QString&, const QVariantMap&)),
             this,
             SLOT(processUiRequest(const QString&, const QVariantMap&)),
@@ -321,6 +327,9 @@ void SignonSessionCore::startProcess()
                 BLAME() << "Error occurred while getting data from credentials database.";
                 //credentials not available, so authentication probably fails
             }
+            QVariantMap storedParams = db->loadData(m_id, m_method);
+            //TODO unite might generate multiple entries
+            parameters.unite(storedParams);
         } else {
             BLAME() << "Null database handler object.";
         }
@@ -447,12 +456,10 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         QVariantMap data2 = filterVariantMap(data);
 
         //update database entry
-        if (m_id != SIGNOND_NEW_IDENTITY) {
+        if (m_id != SIGNOND_NEW_IDENTITY && data2.contains(SSO_KEY_PASSWORD)) {
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
-
-                info.m_userName = data2[SSO_KEY_USERNAME].toString();
                 info.m_password = data2[SSO_KEY_PASSWORD].toString();
 
                 if (!(db->updateCredentials(info)))

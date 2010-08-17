@@ -141,6 +141,7 @@ class RemotePluginProcess : public QObject
 
     private Q_SLOTS:
         void result(const SignOn::SessionData &data);
+        void store(const SignOn::SessionData &data);
         void error(const SignOn::Error &err);
         void userActionRequired(const SignOn::UiSessionData &data);
         void refreshed(const SignOn::UiSessionData &data);

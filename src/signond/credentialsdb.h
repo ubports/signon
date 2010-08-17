@@ -189,6 +189,8 @@ namespace SignonDaemonNS {
         QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
         QStringList methods(const quint32 id);
         bool clear();
+        QVariantMap loadData(const quint32 id, const QString &method);
+        bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
 
         QStringList accessControlList(const quint32 identityId);
         QString credentialsOwnerSecurityToken(const quint32 identityId);

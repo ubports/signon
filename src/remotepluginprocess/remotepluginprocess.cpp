@@ -112,9 +112,11 @@ namespace RemotePluginProcessNS {
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
 
+        connect(m_plugin, SIGNAL(store(const SignOn::SessionData&)),
+                  this, SLOT(store(const SignOn::SessionData&)));
 
         connect(m_plugin, SIGNAL(error(const SignOn::Error &)),
-                this, SLOT(error(const SignOn::Error &)));
+                  this, SLOT(error(const SignOn::Error &)));
 
         connect(m_plugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
                   this, SLOT(userActionRequired(const SignOn::UiSessionData&)));
@@ -225,12 +227,21 @@ namespace RemotePluginProcessNS {
         TRACE() << resultDataMap;
     }
 
+    void RemotePluginProcess::store(const SignOn::SessionData &data)
     {
+        TRACE();
 
         QDataStream out(&m_outfile);
+        QVariantMap storeDataMap;
 
+        foreach(QString key, data.propertyNames())
+            storeDataMap[key] = data.getProperty(key);
+
+        out << (quint32)PLUGIN_RESPONSE_STORE;
+        out << QVariant(storeDataMap);
         m_outfile.flush();
 
+        TRACE() << storeDataMap;
     }
 
     void RemotePluginProcess::error(const SignOn::Error &err)

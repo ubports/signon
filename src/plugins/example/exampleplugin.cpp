@@ -96,6 +96,8 @@ namespace ExamplePluginNS {
         }
         response.setExample(QLatin1String("authenticated"));
         TRACE() << "Emitting results";
+
+        emit store(response);
         emit result(response);
         return;
     }

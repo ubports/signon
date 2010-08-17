@@ -283,6 +283,16 @@ namespace SignonDaemonNS {
                     BLAME() << "Unexpected plugin response: " << info;
 
                 isResultObtained = true;
+            } else if (opres == PLUGIN_RESPONSE_STORE) {
+                TRACE() << "PLUGIN_RESPONSE_STORE";
+                out >> infoVa; //SessionData in QVariant
+                info = infoVa.toMap();
+
+                if (!isResultObtained)
+                    emit processStore(m_cancelKey, info);
+                else
+                    BLAME() << "Unexpected plugin store: " << info;
+
             } else if (opres == PLUGIN_RESPONSE_UI) {
                 TRACE() << "PLUGIN_RESPONSE_UI";
                 out >> infoVa; //UiSessionData in QVariant
