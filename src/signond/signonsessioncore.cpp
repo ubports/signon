@@ -63,7 +63,7 @@ static QVariantMap filterVariantMap(const QVariantMap &other)
 
 static QString sessionName(const quint32 id, const QString &method)
 {
-   return QString(id) + QLatin1String("+") + method;
+   return QString::number(id) + QLatin1String("+") + method;
 }
 
 SignonSessionCore::SignonSessionCore(quint32 id,
