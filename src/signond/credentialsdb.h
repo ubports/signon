@@ -189,7 +189,7 @@ namespace SignonDaemonNS {
         bool checkPassword(const quint32 id, const QString &username, const QString &password);
         SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
         QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
-        QStringList methods(const quint32 id);
+        QStringList methods(const quint32 id, const QString &securityToken = QString());
         bool clear();
 
         QStringList accessControlList(const quint32 identityId);

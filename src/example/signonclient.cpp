@@ -106,21 +106,28 @@ void SignonClient::on_store_clicked()
     if ( m_identity ) delete m_identity;
     QMap<MethodName,MechanismsList> methods;
 
-    QStringList mechs = QStringList() << QString::fromLatin1("ClientLogin") << QString::fromLatin1("Example") ;
+    QStringList mechs = QStringList() << QString::fromLatin1("ClientLogin")
+                        << QString::fromLatin1("Example") ;
     methods.insert(QLatin1String("google"), mechs);
 
     //example method to be able to use example plugin
     methods.insert(QLatin1String("example"), QStringList());
 
     int randomNumber = qrand() % 100;
-    m_info = new IdentityInfo(QLatin1String("test_caption") + QString().number(randomNumber),
-                              QLatin1String("test_username") + QString().number(randomNumber), methods);
+    m_info = new IdentityInfo(QLatin1String("test_caption")
+                              + QString().number(randomNumber),
+                              QLatin1String("test_username")
+                              + QString().number(randomNumber), methods);
     m_info->setSecret(QLatin1String("test_secret"));
 
-    QStringList realms = QStringList() << QString::fromLatin1("google.com") << QString::fromLatin1("example.com") << QString::fromLatin1("example2.com");
+    QStringList realms = QStringList() << QString::fromLatin1("google.com")
+                         << QString::fromLatin1("example.com")
+                         << QString::fromLatin1("example2.com");
     m_info->setRealms(realms);
 
-    QStringList acl = QStringList() << QString::fromLatin1("AID::12345678") << QString::fromLatin1("AID::87654321") << QString::fromLatin1("signon::example");
+    QStringList acl = QStringList() << QString::fromLatin1("AID::12345678")
+                      << QString::fromLatin1("AID::87654321")
+                      << QString::fromLatin1("signon::example");
     m_info->setAccessControlList(acl);
 
     int randomType = qrand() % 4;

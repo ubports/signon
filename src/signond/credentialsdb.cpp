@@ -238,13 +238,15 @@ namespace SignonDaemonNS {
                     "mechanism TEXT)")
             <<  QString::fromLatin1(
                     "CREATE TABLE ACL"
-                    "(identity_id INTEGER,"
+                    "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "identity_id INTEGER,"
                     "method_id INTEGER,"
                     "mechanism_id INTEGER,"
                     "token TEXT)")
             <<  QString::fromLatin1(
                     "CREATE TABLE REALMS"
-                    "(identity_id INTEGER,"
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "identity_id INTEGER,"
                     "realm TEXT)");
 
        foreach (QString createTable, createTableQuery) {
@@ -267,8 +269,10 @@ namespace SignonDaemonNS {
         m_pSqlDatabase->disconnect();
     }
 
-    QStringList CredentialsDB::methods(const quint32 id)
+    QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
     {
+        Q_UNUSED(securityToken);
+
         QStringList list = queryList(
                 QString::fromLatin1("SELECT method FROM METHODS WHERE identity_id = %1").arg(id));
         list.removeDuplicates();
