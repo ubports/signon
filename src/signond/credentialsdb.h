@@ -37,6 +37,7 @@
 #include "signonidentityinfo.h"
 
 #define SSO_DELIMITER  QLatin1String("#/&")
+class TestDatabase;
 
 namespace SignonDaemonNS {
 
@@ -175,6 +176,7 @@ namespace SignonDaemonNS {
         Q_DISABLE_COPY(CredentialsDB)
 
         friend class CredentialsAccessManager;
+        friend class ::TestDatabase;
 
         CredentialsDB(const QString &dbName);
         ~CredentialsDB();
@@ -184,7 +186,7 @@ namespace SignonDaemonNS {
         bool updateCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
         bool removeCredentials(const quint32 id);
 
-        bool checkPassword(const QString &username, const QString &password);
+        bool checkPassword(const quint32 id, const QString &username, const QString &password);
         SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
         QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
         QStringList methods(const quint32 id);
@@ -196,8 +198,6 @@ namespace SignonDaemonNS {
         CredentialsDBError error(bool queryError = true, bool clearError = true) const;
         bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
 
-        void listDBContents();
-
     private:
         QSqlQuery exec(const QString &query);
         bool transactionalExec(const QStringList &queryList);
@@ -208,6 +208,13 @@ namespace SignonDaemonNS {
         QMap<QString, QString> sqlDBConfiguration() const;
         bool hasTableStructure() const;
         bool createTableStructure();
+
+        bool insertMethods(const quint32 id, QMap<QString, QStringList> methods);
+        bool removeMethods(const quint32 id);
+
+        bool insertList(const QStringList &list, const QString &query_str, const quint32 id);
+        bool removeList(const QString &query_str);
+        QStringList queryList(const QString &query_str);
 
         bool connect();
         void disconnect();

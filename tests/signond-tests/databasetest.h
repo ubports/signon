@@ -1,0 +1,74 @@
+/*
+ * This file is part of signon
+ *
+ * Copyright (C) 2009-2010 Nokia Corporation.
+ *
+ * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA
+ */
+
+#ifndef DATABASETEST_H_
+#define DATABASETEST_H_
+
+#include <QtTest/QtTest>
+#include <QtCore>
+
+#include "signond/signoncommon.h"
+#include "credentialsdb.h"
+#include "signonidentityinfo.h"
+
+using namespace SignOn;
+using namespace SignonDaemonNS;
+
+class TestDatabase: public QObject
+{
+    Q_OBJECT
+
+public Q_SLOTS:
+#if defined(SSO_CI_TESTMANAGEMENT)
+     void runAllTests();
+#endif
+
+private Q_SLOTS:
+    void initTestCase();
+    void cleanupTestCase();
+    void init();
+    void cleanup();
+
+    void sqlDBConfigurationTest();
+    void createTableStructureTest();
+    void insertMethodsTest();
+    void removeMethodsTest();
+    void insertListTest();
+    void removeListTest();
+    void queryListTest();
+
+    void insertCredentialsTest();
+    void updateCredentialsTest();
+    void removeCredentialsTest();
+    void checkPasswordTest();
+    void credentialsTest();
+    void methodsTest();
+    void clearTest();
+    void accessControlListTest();
+    void credentialsOwnerSecurityTokenTest();
+
+private:
+    CredentialsDB *m_db;
+};
+
+
+#endif //DATABASETEST_H_

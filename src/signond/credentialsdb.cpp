@@ -22,7 +22,6 @@
  * 02110-1301 USA
  */
 
-
 #include "credentialsdb.h"
 #include "signond-common.h"
 
@@ -164,9 +163,7 @@ namespace SignonDaemonNS {
          QSqlDatabase::removeDatabase(connectionName);
     }
 
-
     /*    -------   CredentialsDB  implementation   -------    */
-
 
     CredentialsDB::CredentialsDB(const QString &dbName)
         : m_pSqlDatabase(new SqlDatabase(dbName))
@@ -225,22 +222,35 @@ namespace SignonDaemonNS {
             <<  QString::fromLatin1(
                     "CREATE TABLE CREDENTIALS"
                     "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "username VARCHAR(25),"
-                    "password VARCHAR(25),"
+                    "username TEXT,"
+                    "password TEXT,"
                     "caption TEXT,"
-                    "realms TEXT,"
-                    "security_tokens TEXT,"
                     "type INTEGER)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE CORRESPONDENCES"
+                    "CREATE TABLE METHODS"
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "identity_id INTEGER,"
+                    "method TEXT)")
+            <<  QString::fromLatin1(
+                    "CREATE TABLE MECHANISMS"
+                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    "method_id INTEGER,"
+                    "mechanism TEXT)")
+            <<  QString::fromLatin1(
+                    "CREATE TABLE ACL"
                     "(identity_id INTEGER,"
-                    "method VARCHAR(25),"
-                    "mechanisms TEXT)");
+                    "method_id INTEGER,"
+                    "mechanism_id INTEGER,"
+                    "token TEXT)")
+            <<  QString::fromLatin1(
+                    "CREATE TABLE REALMS"
+                    "(identity_id INTEGER,"
+                    "realm TEXT)");
 
        foreach (QString createTable, createTableQuery) {
             QSqlQuery query = exec(createTable);
             if (error().type() != QSqlError::NoError) {
-                TRACE() << "Error occurred while creating the CREDENTIALS SQL Table structure.";
+                TRACE() << "Error occurred while creating the database.";
                 return false;
             }
         }
@@ -259,33 +269,23 @@ namespace SignonDaemonNS {
 
     QStringList CredentialsDB::methods(const quint32 id)
     {
-        QSqlQuery query = exec(
-                QString::fromLatin1("SELECT method FROM correspondences WHERE identity_id = %1").arg(id));
-
-        if (errorOccurred()) {
-            TRACE() << "Error occurred while fetching available methods for Identity";
-            return QStringList();
-        }
-
-        QStringList result;
-        while (query.next())
-            result << query.value(0).toString();
-
-        return result;
+        QStringList list = queryList(
+                QString::fromLatin1("SELECT method FROM METHODS WHERE identity_id = %1").arg(id));
+        list.removeDuplicates();
+        return list;
     }
 
-    bool CredentialsDB::checkPassword(const QString &username, const QString &password)
+    bool CredentialsDB::checkPassword(const quint32 id, const QString &username, const QString &password)
     {
         QSqlQuery query = exec(
-                QString::fromLatin1("SELECT id FROM credentials "
-                                    "WHERE username = '%1' AND password = '%2'")
-                    .arg(username).arg(password));
+                QString::fromLatin1("SELECT id FROM CREDENTIALS "
+                                    "WHERE id = '%1' AND username = '%2' AND password = '%3'")
+                    .arg(id).arg(username).arg(password));
 
         if (errorOccurred()) {
-            TRACE() << "Error occurred while fetching available methods for Identity";
+            TRACE() << "Error occurred while checking password";
             return false;
         }
-
         if (query.first())
             return true;
 
@@ -310,7 +310,6 @@ namespace SignonDaemonNS {
             return result;
         }
 
-        // TODO - avoid making this loop and get all the needed data with maximum 2 queries.
         while (query.next()) {
             SignonIdentityInfo info = credentials(query.value(0).toUInt(), false);
             if (errorOccurred())
@@ -321,29 +320,60 @@ namespace SignonDaemonNS {
         return result;
     }
 
+    bool CredentialsDB::insertList(const QStringList &list, const QString &query_str, const quint32 id)
+    {
+        if (list.isEmpty()) return false;
+        bool allOk = true;
+        QStringListIterator it(list);
+        while (it.hasNext()) {
+            QString queryStr2 = query_str + QString::fromLatin1("VALUES('%1', '%2')").
+                                   arg(id).arg(it.next());
+            exec(queryStr2);
+            if (errorOccurred()) {
+                allOk = false;
+                break;
+            }
+        }
+    return allOk;
+    }
+
+    bool CredentialsDB::removeList(const QString &query_str)
+    {
+        TRACE() << query_str;
+        bool allOk = true;
+        exec(query_str);
+        if (errorOccurred()) {
+            allOk = false;
+        }
+    return allOk;
+    }
+
+    QStringList CredentialsDB::queryList(const QString &query_str)
+    {
+        TRACE();
+        QStringList list;
+        QSqlQuery query = exec(query_str);
+        if (errorOccurred())
+            return list;
+        while (query.next()) {
+            list.append(query.value(0).toString());
+        }
+        return list;
+    }
+
     SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
     {
-        /*
-           NOTE - Sqlite does not support RIGHT and FULL OUTER JOINS, and the Query Language
-           does not allow the creation of stored procedures (accessing sqlite through Qt API only),
-           so this method is going to execute 2 queries for now.
-           Bottom line - could not solve the case of querying identities without stored auth. methods
-                         in a single join query.
-         */
-
-        // TODO - add support for getting the ACL with this query, too.
-
         QString query_str;
 
         if (queryPassword)
             query_str = QString::fromLatin1(
-                                    "SELECT username, caption, realms, security_tokens, type, password "
+                                    "SELECT username, caption, type, password "
                                     "FROM credentials WHERE id = %1").arg(id);
         else
             query_str = QString::fromLatin1(
-                                    "SELECT username, caption, realms, security_tokens, type "
+                                    "SELECT username, caption, type "
                                     "FROM credentials WHERE id = %1").arg(id);
-        // Query #1
+
         QSqlQuery query = exec(query_str);
 
         if (!query.first()) {
@@ -353,35 +383,143 @@ namespace SignonDaemonNS {
 
         QString username = query.value(0).toString();
         QString caption = query.value(1).toString();
-        QStringList realms = query.value(2).toString().split(
-                                SSO_DELIMITER, QString::SkipEmptyParts);
-
-        QStringList security_tokens = query.value(3).toString().split(
-                                SSO_DELIMITER, QString::SkipEmptyParts);
-
-        int type = query.value(4).toInt();
-
+        int type = query.value(2).toInt();
         QString password;
         if (queryPassword)
-            password = query.value(5).toString();
+            password = query.value(3).toString();
 
-        query_str = QString::fromLatin1("SELECT method, mechanisms FROM correspondences "
-                                        "WHERE identity_id = %1").arg(id);
-        // Query #2
-        query = exec(query_str);
+        QStringList realms = queryList(QString::fromLatin1("SELECT realm FROM REALMS "
+                                        "WHERE identity_id = %1").arg(id));
+
+        QStringList security_tokens = queryList(QString::fromLatin1("SELECT token FROM ACL "
+                                        "WHERE identity_id = %1").arg(id));
+
         QMap<QString, QVariant> methods;
+        query_str = QString::fromLatin1("SELECT id, method FROM METHODS "
+                                        "WHERE identity_id = %1").arg(id);
+
+        query = exec(query_str);
         if (!query.first()) {
             TRACE() << "Credentials have no authentication method stored.";
         } else {
             do {
-                methods.insert(
-                        query.value(0).toString(),
-                        QVariant(query.value(1).toString().split(
-                            SSO_DELIMITER, QString::SkipEmptyParts)));
+                QStringList mechanisms = queryList(
+                            QString::fromLatin1("SELECT mechanism FROM MECHANISMS "
+                                        "WHERE method_id = %1").arg(query.value(0).toInt()));
+                methods.insert(query.value(1).toString(), mechanisms);
             } while (query.next());
         }
 
-        return SignonIdentityInfo(id, username, password, methods, caption, realms, security_tokens, type);
+        return SignonIdentityInfo(id, username, password, methods,
+                                  caption, realms, security_tokens, type);
+    }
+
+    bool CredentialsDB::insertMethods(const quint32 id, QMap<QString, QStringList> methods)
+    {
+        QString queryStr;
+        bool allOk = true;
+
+        /* Methods inserts */
+        if (!(methods.keys().empty())) {
+            QMapIterator<QString, QStringList> it(methods);
+            while (it.hasNext()) {
+                it.next();
+                /* Correspondences insert */
+                queryStr = QString::fromLatin1(
+                                    "INSERT INTO METHODS(identity_id, method) "
+                                    "VALUES(%1, '%2')").
+                                    arg(id).arg(it.key());
+
+                exec(queryStr);
+                if (errorOccurred()) {
+                    allOk = false;
+                    break;
+                }
+                        /* Fetch id of the inserted method */
+                QSqlQuery insertQuery = exec(queryStr);
+                QVariant idVariant = insertQuery.lastInsertId();
+                if (!idVariant.isValid()) {
+                    rollback();
+                    TRACE() << "Error occurred while inserting crendentials";
+                    return 0;
+                }
+                quint32 id2 = idVariant.toUInt();
+
+                /* Mechanisms insert */
+
+                QStringList mechs = it.value();
+                if (!mechs.isEmpty()) {
+                    QStringListIterator it(mechs);
+                    while (it.hasNext()) {
+                        /* Mechanisms insert */
+                        queryStr = QString::fromLatin1(
+                                    "INSERT INTO MECHANISMS(method_id, mechanism) "
+                                    "VALUES(%1, '%2')").
+                                    arg(id2).arg(it.next());
+                        exec(queryStr);
+                        if (errorOccurred()) {
+                            allOk = false;
+                            break;
+                        }
+                        /* Fetch id of the inserted method */
+                        QVariant idVariant = insertQuery.lastInsertId();
+                        if (!idVariant.isValid()) {
+                            rollback();
+                            TRACE() << "Error occurred while inserting crendentials";
+                            return 0;
+                        }
+
+/* TODO uncomment this to set mechanism level acl
+                        quint32 id3 = idVariant.toUInt();
+                        QStringList tokens = info.m_accessControlList;
+                        if (!tokens.isEmpty()) {
+                            QStringListIterator it2(tokens);
+                            while (it2.hasNext()) {
+                                queryStr = QString::fromLatin1(
+                                       "INSERT INTO ACL(identity_id, method_id, mechanism_id, token) "
+                                       "VALUES('%1', '%2', '%3', '%4')").
+                                       arg(id).arg(id2).arg(id3).arg(it2.next());
+                                exec(queryStr);
+                                if (errorOccurred()) {
+                                    allOk = false;
+                                    break;
+                                }
+                            }
+                        }
+*/
+                    }
+                }
+            }
+        }
+
+        return allOk;
+    }
+
+    bool CredentialsDB::removeMethods(const quint32 id)
+    {
+        QString queryStr;
+        bool allOk = true;
+
+        /* query methods */
+        queryStr = QString::fromLatin1(
+                "SELECT id FROM METHODS WHERE identity_id = %1").arg(id);
+        QSqlQuery query = exec(queryStr);
+        if (errorOccurred()) {
+            rollback();
+            return false;
+        }
+
+        /* remove mechanisms */
+        while (query.next()) {
+            exec(QString::fromLatin1(
+                    "DELETE FROM MECHANISMS WHERE method_id = %1")
+                    .arg(query.value(0).toInt()));
+        }
+
+        /* remove methods */
+        exec(QString::fromLatin1(
+                "DELETE FROM METHODS WHERE identity_id = %1").arg(id));
+        return allOk;
     }
 
     quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
@@ -392,19 +530,15 @@ namespace SignonDaemonNS {
         }
 
         /* Credentials insert */
-
         QString password;
         if (storeSecret)
             password = info.m_password;
 
         QString queryStr;
         queryStr = QString::fromLatin1(
-            "INSERT INTO CREDENTIALS (username, password, caption, "
-            "realms, security_tokens, type) "
-            "VALUES('%1', '%2', '%3', '%4', '%5', '%6')")
+            "INSERT INTO CREDENTIALS (username, password, caption, type) "
+            "VALUES('%1', '%2', '%3', '%4')")
             .arg(info.m_userName).arg(password).arg(info.m_caption)
-            .arg(info.m_realms.join(SSO_DELIMITER))
-            .arg(info.m_accessControlList.join(SSO_DELIMITER))
             .arg(info.m_type);
 
         QSqlQuery insertQuery = exec(queryStr);
@@ -424,23 +558,16 @@ namespace SignonDaemonNS {
         quint32 id = idVariant.toUInt();
 
         bool allOk = true;
-        /* Methods and correspndences inserts */
-        QMap<QString, QStringList> methods = info.m_methods;
-        if (!(methods.keys().empty())) {
-            QMapIterator<QString, QStringList> it(methods);
-            while (it.hasNext()) {
-                it.next();
-                /* Correspondences insert */
-                queryStr = QString::fromLatin1("INSERT INTO CORRESPONDENCES(identity_id, method, mechanisms) "
-                                   "VALUES(%1, '%2', '%3')").
-                                   arg(id).arg(it.key()).arg(it.value().join(SSO_DELIMITER));
-                exec(queryStr);
-                if (errorOccurred()) {
-                    allOk = false;
-                    break;
-                }
-            }
-        }
+        /* Methods inserts */
+        insertMethods(id,  info.m_methods);
+
+        /* ACL insert, this will do identity level ACL */
+        insertList(info.m_accessControlList, QString::fromLatin1(
+                "INSERT INTO ACL(identity_id, token) "), id);
+
+        /* Realms insert */
+        insertList(info.m_realms, QString::fromLatin1(
+                "INSERT INTO REALMS(identity_id, realm) "), id);
 
         if (allOk && commit()) {
             return id;
@@ -455,8 +582,6 @@ namespace SignonDaemonNS {
     {
         TRACE() << "UPDATING CREDENTIALS...";
 
-        this->listDBContents();
-
         if (!startTransaction()) {
             TRACE() << "Could not start transaction. Error updating credentials.";
             return false;
@@ -468,89 +593,51 @@ namespace SignonDaemonNS {
             password = info.m_password;
 
         QString queryStr;
-        queryStr = QString::fromLatin1("UPDATE credentials SET username = '%1', password = '%2', caption = '%3', realms = '%4', "
-                           "security_tokens = '%5', type = '%6' WHERE id = %7").
-                            arg(info.m_userName).arg(password).arg(info.m_caption).
-                            arg(info.m_realms.join(SSO_DELIMITER)).
-                            arg(info.m_accessControlList.join(SSO_DELIMITER)).
-                            arg(info.m_type).
-                            arg(info.m_id);
-        exec(queryStr);
+        queryStr = QString::fromLatin1(
+            "UPDATE CREDENTIALS SET username = '%1', password = '%2', "
+            "caption = '%3', type = '%4' WHERE id = '%5'")
+            .arg(info.m_userName).arg(password).arg(info.m_caption)
+            .arg(info.m_type).arg(info.m_id);
+
+        QSqlQuery insertQuery = exec(queryStr);
         if (errorOccurred()) {
             rollback();
             TRACE() << "Error occurred while updating crendentials";
-            return false;
+            return 0;
         }
 
-        /*
-            Methods and correspndences update based on the specified methods list
-                - remove outdated records
-                - update existing ones
-                - insert new ones
-        */
-
-        /* Remove outdated ones */
-        queryStr = QString::fromLatin1("SELECT co.method FROM correspondences co WHERE co.identity_id = %1").arg(info.m_id);
-        QSqlQuery query = exec(queryStr);
-        if (errorOccurred()) {
-            rollback();
-            TRACE() << "Error occurred while updating crendentials";
-            return false;
-        }
-
-        QStringList currentlySupportedMethods;
-        while (query.next()) {
-            QString method = query.value(0).toString();
-            if (!info.m_methods.contains(method)) {
-                queryStr = QString::fromLatin1("DELETE FROM correspondences "
-                                   "WHERE (identity_id = %1 AND method = '%2')").arg(info.m_id).arg(method);
-                exec(queryStr);
-                if (errorOccurred()) {
-                    rollback();
-                    TRACE() << "Error occurred while updating crendentials";
-                    return false;
-                }
-            } else {
-                currentlySupportedMethods << method;
-            }
-        }
         bool allOk = true;
+        /* update other tables by removing old values and inserting new ones */
 
-        /* Update existing ones and insert new ones */
-        if (!(info.m_methods.keys().empty())) {
-            TRACE() << "METHODS ANALISYS";
+        /* Methods remove */
+        removeMethods(info.m_id);
+        /* Methods inserts */
+        insertMethods(info.m_id,  info.m_methods);
 
-            QMapIterator<QString, QStringList> it(info.m_methods);
-            while (it.hasNext()) {
-                it.next();
+        /* ACL remove */
+        removeList(QString::fromLatin1(
+                "DELETE FROM ACL WHERE identity_id = %1")
+                   .arg(info.m_id));
+        /* ACL insert */
+        insertList(info.m_accessControlList, QString::fromLatin1(
+                "INSERT INTO ACL(identity_id, token) "), info.m_id);
 
-                if (currentlySupportedMethods.contains(it.key())) {
-                    queryStr = QString::fromLatin1("UPDATE correspondences SET mechanisms = '%1' "
-                                       "WHERE identity_id = %2 AND method = '%3'").
-                                       arg(it.value().join(SSO_DELIMITER)).arg(info.m_id).arg(it.key());
-
-                } else {
-                   queryStr = QString::fromLatin1("INSERT INTO correspondences(identity_id, method, mechanisms) "
-                                   "VALUES(%1, '%2', '%3')").
-                                   arg(info.m_id).arg(it.key()).arg(it.value().join(SSO_DELIMITER));
-                }
-                exec(queryStr);
-                if (errorOccurred()) {
-                    allOk = false;
-                    break;
-                }
-            }
-        }
+        /* Realms remove */
+        removeList(QString::fromLatin1(
+                "DELETE FROM REALMS WHERE identity_id = %1").arg( info.m_id));
+        /* Realms insert */
+        insertList(info.m_realms, QString::fromLatin1(
+                "INSERT INTO REALMS(identity_id, realm) "), info.m_id);
 
         if (allOk && commit()) {
-            TRACE() << "Credentials successfully updated.";
-            this->listDBContents();
             return true;
         } else {
             rollback();
             TRACE() << "Credentials update failed.";
-            return false;
+            return 0;
         }
+
+        return 0;
     }
 
     bool CredentialsDB::removeCredentials(const quint32 id)
@@ -560,13 +647,37 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        exec(QString::fromLatin1("DELETE FROM credentials WHERE id = %1").arg(id));
+        exec(QString::fromLatin1(
+                "DELETE FROM CREDENTIALS WHERE id = %1").arg(id));
         if (errorOccurred()) {
             rollback();
             return false;
         }
 
-        exec(QString::fromLatin1("DELETE FROM correspondences WHERE identity_id = %1").arg(id));
+        exec(QString::fromLatin1(
+                "DELETE FROM MECHANISMS WHERE method_id IN "
+                "(SELECT id FROM METHODS WHERE identity_id = %1)").arg(id));
+        if (errorOccurred()) {
+            rollback();
+            return false;
+        }
+
+        exec(QString::fromLatin1(
+                "DELETE FROM METHODS WHERE identity_id = %1").arg(id));
+        if (errorOccurred()) {
+            rollback();
+            return false;
+        }
+
+        exec(QString::fromLatin1(
+                "DELETE FROM ACL WHERE identity_id = %1").arg(id));
+        if (errorOccurred()) {
+            rollback();
+            return false;
+        }
+
+        exec(QString::fromLatin1(
+                "DELETE FROM REALMS WHERE identity_id = %1").arg(id));
         if (errorOccurred()) {
             rollback();
             return false;
@@ -580,11 +691,23 @@ namespace SignonDaemonNS {
 
     bool CredentialsDB::clear()
     {
-        exec(QLatin1String("DELETE FROM credentials"));
+        exec(QLatin1String("DELETE FROM CREDENTIALS"));
         if (errorOccurred())
             return false;
 
-        exec(QLatin1String("DELETE FROM correspondences"));
+        exec(QLatin1String("DELETE FROM METHODS"));
+        if (errorOccurred())
+            return false;
+
+        exec(QLatin1String("DELETE FROM MECHANISMS"));
+        if (errorOccurred())
+            return false;
+
+        exec(QLatin1String("DELETE FROM ACL"));
+        if (errorOccurred())
+            return false;
+
+        exec(QLatin1String("DELETE FROM REALMS"));
         if (errorOccurred())
             return false;
 
@@ -593,30 +716,16 @@ namespace SignonDaemonNS {
 
     QStringList CredentialsDB::accessControlList(const quint32 identityId)
     {
-        QString queryStr = QString::fromLatin1("SELECT security_tokens FROM credentials WHERE id = %1").
-                                  arg(identityId);
-        QSqlQuery query = exec(queryStr);
-
-        if (errorOccurred()) {
-            TRACE() << QString::fromLatin1("Error occurred while querying the access control list for id = %1.").
-                              arg(identityId);
-            return QStringList();
-        }
-
-        if (query.first()) {
-            QString tokensStr = query.value(0).toString();
-            if (tokensStr.length() > 0)
-                return tokensStr.split(SSO_DELIMITER);
-        }
-
-        return QStringList();
+        return queryList(QString::fromLatin1(
+                "SELECT token FROM ACL WHERE identity_id = %1")
+                         .arg(identityId));
     }
 
     QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
     {
         QStringList acl = accessControlList(identityId);
         int index = -1;
-        QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::*"));
+        QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::.*"));
         if ((index = acl.indexOf(aegisIdTokenPrefixRegExp)) != -1)
             return acl.at(index);
         return QString();
@@ -636,33 +745,6 @@ namespace SignonDaemonNS {
     {
         if (!m_pSqlDatabase->m_database.rollback())
             TRACE() << "Rollback failed, db data integrity could be compromised.";
-    }
-
-    void CredentialsDB::listDBContents()
-    {
-#define DB_TRACE
-
-#ifdef DB_TRACE
-        TRACE() << "\n\nCREDENTIALS\n";
-        QSqlQuery query = exec(QLatin1String("SELECT * FROM credentials"));
-        while (query.next()) {
-            TRACE() << query.value(0).toInt()    << " "
-                    << query.value(1).toString() << " "
-                    << query.value(2).toString() << " "
-                    << query.value(3).toString() << " "
-                    << query.value(4).toString() << " "
-                    << query.value(5).toString() << "."
-                    << query.value(6).toInt();
-        }
-
-        TRACE() << "\n\nCORRESPONDENCES\n";
-        query = exec(QLatin1String("SELECT * FROM correspondences"));
-        while (query.next()) {
-            TRACE() << query.value(0).toInt()    << " "
-                    << query.value(1).toString() << " "
-                    << query.value(2).toString();
-        }
-#endif
     }
 
 } //namespace SignonDaemonNS

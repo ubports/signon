@@ -126,5 +126,16 @@ namespace SignonDaemonNS {
         return serialized;
     }
 
+    bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
+    {
+        return (m_id == other.m_id)
+                && (m_userName == other.m_userName)
+                && (m_password == other.m_password)
+                && (m_caption == other.m_caption)
+                && (m_realms == other.m_realms)
+                && (m_accessControlList == other.m_accessControlList)
+                && (m_methods ==other.m_methods)
+                && (m_type == other.m_type);
+    }
 
 } //namespace SignonDaemonNS
