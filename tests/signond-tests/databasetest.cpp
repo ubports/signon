@@ -55,7 +55,7 @@ void TestDatabase::sqlDBConfigurationTest()
 {
     QMap<QString, QString> conf = m_db->sqlDBConfiguration();
     qDebug() << conf;
-    QVERIFY(conf.value(QLatin1String("Database Name")) == QLatin1String("/tmp/signon_test.db"));
+    QVERIFY(conf.value(QLatin1String("Database Name")) == dbFile);
 }
 
 void TestDatabase::createTableStructureTest()
@@ -65,69 +65,6 @@ void TestDatabase::createTableStructureTest()
     QMap<QString, QString> conf = m_db->sqlDBConfiguration();
     QVERIFY(!conf.value(QLatin1String("Tables")).isEmpty());
     QVERIFY(m_db->hasTableStructure());
-}
-
-void TestDatabase::insertMethodsTest()
-{
-    QMap<QString, QStringList> methods;
-    m_db->insertMethods(10, methods);
-    QStringList methodsList = m_db->methods(10);
-    QVERIFY(methodsList.count() == 0);
-    QStringList mechs = QStringList() << QLatin1String("M1")<< QLatin1String("M2");
-    methods.insert(QLatin1String("Test"), mechs);
-    methods.insert(QLatin1String("Test2"), mechs);
-    m_db->insertMethods(11, methods);
-    methodsList = m_db->methods(11);
-    QVERIFY(methodsList.count() == 2);
-    QVERIFY(methodsList.contains(QLatin1String("Test")));
-}
-
-void TestDatabase::removeMethodsTest()
-{
-    QStringList methodsList = m_db->methods(10);
-    QVERIFY(methodsList.count() == 0);
-    m_db->removeMethods(10);
-    methodsList = m_db->methods(10);
-    QVERIFY(methodsList.count() == 0);
-
-    methodsList = m_db->methods(11);
-    QVERIFY(methodsList.count() == 2);
-    m_db->removeMethods(11);
-    methodsList = m_db->methods(11);
-    QVERIFY(methodsList.count() == 0);
-}
-
-void TestDatabase::insertListTest()
-{
-    QStringList list;
-    m_db->startTransaction();
-    m_db->insertList(list,QString::fromLatin1("INSERT INTO REALMS(identity_id, realm) "
-                                   ), 67);
-    m_db->commit();
-    QStringList listRes = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 67"));
-    QVERIFY(list == listRes);
-    list.append(QLatin1String("Test"));
-    list.append(QLatin1String("Test2"));
-
-    m_db->startTransaction();
-    m_db->insertList(list,QString::fromLatin1("INSERT INTO REALMS(identity_id, realm) "
-                                   ), 68);
-    m_db->commit();
-    listRes = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 68"));
-    QVERIFY(list == listRes);
-}
-
-void TestDatabase::removeListTest()
-{
-    QStringList listRes = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 68"));
-    QVERIFY(listRes.count() == 2);
-    m_db->removeList(QString::fromLatin1("DELETE FROM REALMS WHERE identity_id = %1"  ).arg(68));
-    listRes = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 68"));
-    QVERIFY(listRes.count() == 0);
 }
 
 void TestDatabase::queryListTest()
@@ -148,6 +85,154 @@ void TestDatabase::queryListTest()
     QVERIFY(list.contains(QLatin1String("a")));
     QVERIFY(list.contains(QLatin1String("b")));
     QVERIFY(list.count() == 2);
+
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT realm FROM REALMS WHERE identity_id = 81"));
+    QVERIFY(list.count() == 0);
+}
+
+void TestDatabase::insertMethodsTest()
+{
+    //test empty list
+    QMap<QString, QStringList> methods;
+    m_db->insertMethods(methods);
+    QStringList list = m_db->queryList(QString::fromLatin1(
+            "SELECT method FROM METHODS"));
+    QVERIFY(list.count() == 0);
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT mechanism FROM MECHANISMS"));
+    QVERIFY(list.count() == 0);
+
+    //test real list
+    QStringList mechs = QStringList() << QLatin1String("M1")<< QLatin1String("M2");
+    methods.insert(QLatin1String("Test"), mechs);
+    methods.insert(QLatin1String("Test2"), mechs);
+    m_db->insertMethods(methods);
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT method FROM METHODS"));
+    qDebug() << list;
+    QVERIFY(list.contains(QLatin1String("Test")));
+    QVERIFY(list.contains(QLatin1String("Test2")));
+    QVERIFY(list.count() == 2);
+
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT mechanism FROM MECHANISMS"));
+    qDebug() << list;
+    QVERIFY(list.contains(QLatin1String("M1")));
+    QVERIFY(list.contains(QLatin1String("M2")));
+    QVERIFY(list.count() == 2);
+}
+
+void TestDatabase::cleanUpTablesTest()
+{
+    QMap<QString, QStringList> methods;
+    m_db->cleanUpTables();
+    QStringList mechs = QStringList() << QLatin1String("M1")<< QLatin1String("M2");
+    methods.insert(QLatin1String("Test"), mechs);
+
+    QString queryStr = QString::fromLatin1(
+                        "INSERT INTO TOKENS (token) "
+                        "SELECT '%1' WHERE NOT EXISTS "
+                        "(SELECT id FROM TOKENS WHERE token = '%1')")
+                        .arg(QLatin1String("token"));
+    m_db->exec(queryStr);
+
+    m_db->cleanUpTables();
+    QStringList list = m_db->queryList(QString::fromLatin1(
+            "SELECT method FROM METHODS"));
+    QVERIFY(list.count() == 0);
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT mechanism FROM MECHANISMS"));
+    QVERIFY(list.count() == 0);
+    list = m_db->queryList(QString::fromLatin1(
+            "SELECT token FROM TOKENS"));
+    QVERIFY(list.count() == 0);
+}
+
+void TestDatabase::methodsTest()
+{
+    SignonIdentityInfo info;
+    quint32 id;
+
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods;
+    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+
+    id = m_db->insertCredentials(info, true);
+
+    QStringList meths = m_db->methods(id);
+    QVERIFY(meths.contains(QLatin1String("Method1")));
+    QVERIFY(meths.contains(QLatin1String("Method2")));
+    QVERIFY(meths.contains(QLatin1String("Method3")));
+    QVERIFY(meths.count() == 3);
+}
+
+void TestDatabase::checkPasswordTest()
+{
+    SignonIdentityInfo info;
+    quint32 id;
+
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods;
+    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+
+    id = m_db->insertCredentials(info, true);
+
+    QVERIFY(m_db->checkPassword(id, info.m_userName, info.m_password));
+    QVERIFY(!m_db->checkPassword(id, info.m_userName, QLatin1String("PassWd")));
+    QVERIFY(!m_db->checkPassword(id, QLatin1String("User2"), info.m_password));
+}
+
+void TestDatabase::credentialsTest()
+{
+    m_db->clear();
+    QMap<QString, QString> filter;
+    QList<SignonIdentityInfo> creds = m_db->credentials(filter);
+    QVERIFY(creds.count() == 0);
+    SignonIdentityInfo info;
+    quint32 id;
+
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods;
+    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+
+    id = m_db->insertCredentials(info, true);
+    creds = m_db->credentials(filter);
+    QVERIFY(creds.count() == 1);
+    id = m_db->insertCredentials(info, true);
+    creds = m_db->credentials(filter);
+    QVERIFY(creds.count() == 2);
+    foreach(SignonIdentityInfo info, creds) {
+        qDebug() << info.m_id << info.m_caption;
+    }
+    //TODO check filtering when implemented
 }
 
 void TestDatabase::insertCredentialsTest()
@@ -183,6 +268,10 @@ void TestDatabase::insertCredentialsTest()
     info.m_id = id;
     QVERIFY(info.m_password != retInfo.m_password);
     retInfo.m_password = info.m_password;
+
+qDebug() << info.m_methods;
+qDebug() << retInfo.m_methods;
+QVERIFY (info.m_methods == retInfo.m_methods);
 
     QVERIFY(retInfo == info);
 
@@ -231,7 +320,7 @@ void TestDatabase::updateCredentialsTest()
     umethods.insert(QLatin1String("UMethod2"), umechs);
     umethods.insert(QLatin1String("Method3"), QStringList());
     updateInfo.m_methods = umethods;
-    updateInfo.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+    updateInfo.m_accessControlList = QStringList() << QLatin1String("UID::12345678") << QLatin1String("UID::87654321") << QLatin1String("test::property") ;
     updateInfo.m_id = id;
     updateInfo.m_type = 2;
 
@@ -243,14 +332,9 @@ QVERIFY (updateInfo.m_id == retInfo.m_id);
 QVERIFY (updateInfo.m_userName == retInfo.m_userName);
 QVERIFY (updateInfo.m_password == retInfo.m_password);
 QVERIFY (updateInfo.m_caption == retInfo.m_caption);
-QVERIFY (updateInfo.m_realms == retInfo.m_realms);
-QVERIFY (updateInfo.m_accessControlList == retInfo.m_accessControlList);
-QVERIFY (updateInfo.m_type == retInfo.m_type);
-QVERIFY (updateInfo.m_methods == retInfo.m_methods);
 
     QVERIFY(!(retInfo == info));
-    QVERIFY((retInfo ==updateInfo));
-
+    QVERIFY((retInfo == updateInfo));
 }
 
 void TestDatabase::removeCredentialsTest()
@@ -285,67 +369,11 @@ void TestDatabase::removeCredentialsTest()
     QVERIFY(retInfo.m_id == 0);
 }
 
-void TestDatabase::checkPasswordTest()
-{
-    SignonIdentityInfo info;
-    quint32 id;
-
-    //insert complete
-    info.m_caption = QLatin1String("Caption");
-    info.m_userName = QLatin1String("User");
-    info.m_password = QLatin1String("Pass");
-    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
-    QMap<MethodName,MechanismsList> methods;
-    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
-    methods.insert(QLatin1String("Method1"), mechs);
-    methods.insert(QLatin1String("Method2"), mechs);
-    methods.insert(QLatin1String("Method3"), QStringList());
-    info.m_methods = methods;
-    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
-
-    id = m_db->insertCredentials(info, true);
-
-    QVERIFY(m_db->checkPassword(id, info.m_userName, info.m_password));
-    QVERIFY(!m_db->checkPassword(id, info.m_userName, QLatin1String("PassWd")));
-    QVERIFY(!m_db->checkPassword(id, QLatin1String("User2"), info.m_password));
-}
-
-void TestDatabase::credentialsTest()
-{
-}
-
-void TestDatabase::methodsTest()
-{
-    SignonIdentityInfo info;
-    quint32 id;
-
-    //insert complete
-    info.m_caption = QLatin1String("Caption");
-    info.m_userName = QLatin1String("User");
-    info.m_password = QLatin1String("Pass");
-    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
-    QMap<MethodName,MechanismsList> methods;
-    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
-    methods.insert(QLatin1String("Method1"), mechs);
-    methods.insert(QLatin1String("Method2"), mechs);
-    methods.insert(QLatin1String("Method3"), QStringList());
-    info.m_methods = methods;
-    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
-
-    id = m_db->insertCredentials(info, true);
-
-    QStringList meths = m_db->methods(id);
-    QVERIFY(meths.contains(QLatin1String("Method1")));
-    QVERIFY(meths.contains(QLatin1String("Method2")));
-    QVERIFY(meths.contains(QLatin1String("Method3")));
-    QVERIFY(meths.count() == 3);
-}
-
 void TestDatabase::clearTest()
 {
     m_db->clear();
     QSqlQuery query = m_db->exec(QLatin1String("SELECT * FROM credentials"));
-    QVERIFY(!query.next());
+    QVERIFY(!query.first());
 }
 
 void TestDatabase::accessControlListTest()
@@ -411,23 +439,27 @@ void TestDatabase::runAllTests()
     cleanup();
 
     init();
+    queryListTest();
+    cleanup();
+
+    init();
     insertMethodsTest();
     cleanup();
 
     init();
-    removeMethodsTest();
+    cleanUpTablesTest();
     cleanup();
 
     init();
-    insertListTest();
+    methodsTest();
     cleanup();
 
     init();
-    removeListTest();
+    checkPasswordTest();
     cleanup();
 
     init();
-    queryListTest();
+    credentialsTest();
     cleanup();
 
     init();
@@ -440,18 +472,6 @@ void TestDatabase::runAllTests()
 
     init();
     removeCredentialsTest();
-    cleanup();
-
-    init();
-    checkPasswordTest();
-    cleanup();
-
-    init();
-    credentialsTest();
-    cleanup();
-
-    init();
-    methodsTest();
     cleanup();
 
     init();

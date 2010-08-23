@@ -50,18 +50,16 @@ private Q_SLOTS:
 
     void sqlDBConfigurationTest();
     void createTableStructureTest();
-    void insertMethodsTest();
-    void removeMethodsTest();
-    void insertListTest();
-    void removeListTest();
     void queryListTest();
+    void insertMethodsTest();
+    void cleanUpTablesTest();
 
+    void methodsTest();
+    void checkPasswordTest();
+    void credentialsTest();
     void insertCredentialsTest();
     void updateCredentialsTest();
     void removeCredentialsTest();
-    void checkPasswordTest();
-    void credentialsTest();
-    void methodsTest();
     void clearTest();
     void accessControlListTest();
     void credentialsOwnerSecurityTokenTest();
