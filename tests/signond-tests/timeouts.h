@@ -48,6 +48,7 @@ private Q_SLOTS:
     void init();
 
     void identityTimeout();
+    void identityRegisterTwice();
 
 
 signals:
