@@ -90,8 +90,42 @@ void TimeoutsTest::identityTimeout()
     identity->storeCredentials();
 
     loop.exec();
+    QVERIFY(identity->id() != SSO_NEW_IDENTITY);
 
-    QVERIFY(completed);
+    QDBusConnection conn = SIGNOND_BUS;
+
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
+                                                      "registerStoredIdentity");
+    QList<QVariant> args;
+    args << identity->id();
+    msg.setArguments(args);
+
+    QDBusMessage reply = conn.call(msg);
+    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+
+    QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
+    QString path = objectPath.path();
+    qDebug() << "Got path" << path;
+    QVERIFY(!path.isEmpty());
+
+    bool success;
+
+    QTest::qSleep(100);
+    success = triggerDisposableCleanup();
+    QVERIFY(success);
+
+    /* The identity object must exist now */
+    QVERIFY(identityAlive(path));
+
+    QTest::qSleep(6 * 1000);
+    success = triggerDisposableCleanup();
+    QVERIFY(success);
+
+    /* After SSO_IDENTITY_TIMEOUT seconds, the identity must have been
+     * destroyed */
+    QVERIFY(!identityAlive(path));
 }
 
 void TimeoutsTest::identityError(Identity::IdentityError code,
@@ -134,45 +168,6 @@ bool TimeoutsTest::identityAlive(const QString &path)
 void TimeoutsTest::credentialsStored(const quint32 id)
 {
     QVERIFY(id != 0);
-
-    QDBusConnection conn = SIGNOND_BUS;
-
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
-                                                      SIGNOND_DAEMON_OBJECTPATH,
-                                                      SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
-    QList<QVariant> args;
-    args << id;
-    msg.setArguments(args);
-
-    QDBusMessage reply = conn.call(msg);
-    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
-
-    QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
-    QString path = objectPath.path();
-    qDebug() << "Got path" << path;
-    QVERIFY(!path.isEmpty());
-
-    bool success;
-
-    QTest::qSleep(100);
-    success = triggerDisposableCleanup();
-    QVERIFY(success);
-
-    /* The identity object must exist now */
-    QVERIFY(identityAlive(path));
-
-    QTest::qSleep(6 * 1000);
-    success = triggerDisposableCleanup();
-    QVERIFY(success);
-
-    /* After SSO_IDENTITY_TIMEOUT seconds, the identity must have been
-     * destroyed */
-    //TODO: fix the unit tests later
-    //as I do not see any valuable timeout here
-//    QVERIFY(!identityAlive(path));
-
-    completed = true;
     emit finished();
 }
 
