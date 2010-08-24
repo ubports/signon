@@ -376,6 +376,63 @@ void TestDatabase::clearTest()
     QVERIFY(!query.first());
 }
 
+void TestDatabase::dataTest()
+{
+    SignonIdentityInfo info;
+    quint32 id;
+    QString method = QLatin1String("Method1");
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods;
+    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+
+    id = m_db->insertCredentials(info, true);
+
+    bool ret = m_db->storeData(id, method, QVariantMap());
+    QVERIFY(ret);
+    QVariantMap result = m_db->loadData(id, method);
+    QVERIFY(result.isEmpty());
+    QVariantMap data;
+    data.insert(QLatin1String("token"), QLatin1String("tokenval"));
+    ret = m_db->storeData(id, method, data);
+    QVERIFY(ret);
+    result = m_db->loadData(id, method);
+    QVERIFY(result == data);
+
+    data.insert(QLatin1String("token"), QLatin1String("tokenvalupdated"));
+    data.insert(QLatin1String("token2"), QLatin1String("tokenval2"));
+    ret = m_db->storeData(id, method, data);
+    QVERIFY(ret);
+    result = m_db->loadData(id, method);
+    QVERIFY(result == data);
+
+    data.insert(QLatin1String("token"), QVariant());
+    data.insert(QLatin1String("token2"), QVariant());
+    ret = m_db->storeData(id, method, data);
+    QVERIFY(ret);
+    result = m_db->loadData(id, method);
+    qDebug() << data;
+    QVERIFY(result.isEmpty());
+
+    data.clear();
+    for ( int i = 1000; i <1000+( SSO_MAX_STORAGE/10) +1 ; i++) {
+        data.insert(QString::fromLatin1("t%1").arg(i), QLatin1String("12345"));
+    }
+    ret = m_db->storeData(id, method, data);
+    QVERIFY(!ret);
+    result = m_db->loadData(id, method);
+    QVERIFY(result != data);
+
+}
+
 void TestDatabase::accessControlListTest()
 {
     SignonIdentityInfo info;
@@ -476,6 +533,10 @@ void TestDatabase::runAllTests()
 
     init();
     clearTest();
+    cleanup();
+
+    init();
+    dataTest();
     cleanup();
 
     init();

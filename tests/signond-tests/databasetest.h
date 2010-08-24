@@ -61,6 +61,9 @@ private Q_SLOTS:
     void updateCredentialsTest();
     void removeCredentialsTest();
     void clearTest();
+
+    void dataTest();
+
     void accessControlListTest();
     void credentialsOwnerSecurityTokenTest();
 

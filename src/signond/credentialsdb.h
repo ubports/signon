@@ -36,7 +36,8 @@
 
 #include "signonidentityinfo.h"
 
-#define SSO_DELIMITER  QLatin1String("#/&")
+#define SSO_MAX_STORAGE (2*1024) // 2 kB for token store/identity/method
+
 class TestDatabase;
 
 namespace SignonDaemonNS {
@@ -214,6 +215,9 @@ namespace SignonDaemonNS {
 
         QStringList accessControlList(const quint32 identityId);
         QString credentialsOwnerSecurityToken(const quint32 identityId);
+
+        QVariantMap loadData(const quint32 id, const QString &method);
+        bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
 
     private:
         SqlDatabase *m_pSqlDatabase;

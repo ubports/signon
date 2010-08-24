@@ -43,7 +43,6 @@ namespace SsoTestPluginNS {
         m_mechanisms += QLatin1String("mech3");
 
         qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
-        qRegisterMetaType<AuthPluginError>("AuthPluginError");
     }
 
     SsoTestPlugin::~SsoTestPlugin()
@@ -65,7 +64,7 @@ namespace SsoTestPluginNS {
         if (!mechanisms().contains(mechanism)) {
             QString message = QLatin1String("The given mechanism is unavailable");
             TRACE() << message;
-            emit error(PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED, message);
+            emit error(Error(Error::MechanismNotAvailable, message));
             return;
         }
 
@@ -92,7 +91,7 @@ namespace SsoTestPluginNS {
             TRACE() << "Operation is canceled";
             QMutexLocker locker(&mutex);
             is_canceled = false;
-            emit error(PLUGIN_ERROR_OPERATION_FAILED, QLatin1String("The operation is canceled"));
+            emit error(Error(Error::SessionCanceled, QLatin1String("The operation is canceled")));
             return;
         }
 
@@ -122,12 +121,12 @@ namespace SsoTestPluginNS {
         }
 
         if (data.QueryErrorCode() == QUERY_ERROR_FORBIDDEN)
-            emit error(PLUGIN_ERROR_NOT_AUTHORIZED,
-                       QLatin1String("userActionFinished forbidden "));
+            emit error(Error(Error::NotAuthorized,
+                       QLatin1String("userActionFinished forbidden ")));
         else
-            emit error(PLUGIN_ERROR_USER_INTERACTION,
+            emit error(Error(Error::UserInteraction,
                        QLatin1String("userActionFinished error: ")
-                       + QString::number(data.QueryErrorCode()));
+                       + QString::number(data.QueryErrorCode())));
 
         return;
     }

@@ -40,7 +40,6 @@ void PasswordPluginTest::initTestCase()
     TEST_START
     qRegisterMetaType<SignOn::SessionData>();
     qRegisterMetaType<SignOn::UiSessionData>();
-    qRegisterMetaType<AuthPluginError>();
 
     TEST_DONE
 }
@@ -74,10 +73,10 @@ void PasswordPluginTest::result(const SignOn::SessionData& data)
 }
 
 //slot for receiving error
-void PasswordPluginTest::pluginError(AuthPluginError error, const QString &errorMessage)
+void PasswordPluginTest::pluginError(const SignOn::Error &err)
 {
-    qDebug() << "got error" << error << ": " << errorMessage;
-    m_error = error;
+    qDebug() << "got error" << err.type() << ": " << err.message();
+    m_error = err.type();
     m_loop.exit();
 }
 
@@ -139,8 +138,8 @@ void PasswordPluginTest::testPluginProcess()
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError,const QString & )),
-                  this,  SLOT(pluginError(AuthPluginError,const QString & )),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QObject::connect(m_testPlugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
                   this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
@@ -186,8 +185,8 @@ void PasswordPluginTest::testPluginUserActionFinished()
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError,const QString & )),
-                  this,  SLOT(pluginError(AuthPluginError,const QString & )),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QObject::connect(m_testPlugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
                   this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
@@ -211,13 +210,13 @@ void PasswordPluginTest::testPluginUserActionFinished()
     info.setQueryErrorCode(QUERY_ERROR_CANCELED);
     m_testPlugin->userActionFinished(info);
     m_loop.exec();
-    QVERIFY(m_error == PLUGIN_ERROR_CANCELED);
+    QVERIFY(m_error == Error::SessionCanceled);
 
     //error in ui request
     info.setQueryErrorCode(QUERY_ERROR_GENERAL);
     m_testPlugin->userActionFinished(info);
     m_loop.exec();
-    QVERIFY(m_error == PLUGIN_ERROR_USER_INTERACTION);
+    QVERIFY(m_error == Error::UserInteraction);
 
     TEST_DONE
 }
@@ -227,8 +226,8 @@ void PasswordPluginTest::testPluginRefresh()
     TEST_START
     SignOn::UiSessionData info;
 
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError,const QString & )),
-                  this,  SLOT(pluginError(AuthPluginError,const QString & )),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QObject::connect(m_testPlugin, SIGNAL(refreshed(const SignOn::UiSessionData&)),
                   this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
