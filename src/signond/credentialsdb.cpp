@@ -601,31 +601,66 @@ namespace SignonDaemonNS {
         QMapIterator<QString, QStringList> it(info.m_methods);
         while (it.hasNext()) {
             it.next();
-            foreach (QString token, info.m_accessControlList) {
+            if (!info.m_accessControlList.isEmpty()) {
+                foreach (QString token, info.m_accessControlList) {
+                    foreach (QString mech, it.value()) {
+                        queryStr = QString::fromLatin1(
+                            "INSERT INTO ACL "
+                            "(identity_id, method_id, mechanism_id, token_id) "
+                            "VALUES ( '%1', "
+                            "( SELECT id FROM METHODS WHERE method = '%2' ),"
+                            "( SELECT id FROM MECHANISMS WHERE mechanism= '%3' ), "
+                            "( SELECT id FROM TOKENS WHERE token = '%4' ))")
+                            .arg(id).arg(it.key()).arg(mech).arg(token);
+                        insertQuery = exec(queryStr);
+                    }
+                    //insert entires for empty mechs list
+                    if (it.value().isEmpty()) {
+                        queryStr = QString::fromLatin1(
+                            "INSERT INTO ACL (identity_id, method_id, token_id) "
+                            "VALUES ( '%1', "
+                            "( SELECT id FROM METHODS WHERE method = '%2' ),"
+                            "( SELECT id FROM TOKENS WHERE token = '%3' ))")
+                            .arg(id).arg(it.key()).arg(token);
+                        insertQuery = exec(queryStr);
+                    }
+                }
+            } else {
                 foreach (QString mech, it.value()) {
                     queryStr = QString::fromLatin1(
                         "INSERT INTO ACL "
-                        "(identity_id, method_id, mechanism_id, token_id) "
+                        "(identity_id, method_id, mechanism_id) "
                         "VALUES ( '%1', "
                         "( SELECT id FROM METHODS WHERE method = '%2' ),"
-                        "( SELECT id FROM MECHANISMS WHERE mechanism= '%3' ), "
-                        "( SELECT id FROM TOKENS WHERE token = '%4' ))")
-                        .arg(id).arg(it.key()).arg(mech).arg(token);
+                        "( SELECT id FROM MECHANISMS WHERE mechanism= '%3' )"
+                        ")")
+                        .arg(id).arg(it.key()).arg(mech);
                     insertQuery = exec(queryStr);
                 }
                 //insert entires for empty mechs list
                 if (it.value().isEmpty()) {
                     queryStr = QString::fromLatin1(
-                        "INSERT INTO ACL (identity_id, method_id, token_id) "
+                        "INSERT INTO ACL (identity_id, method_id) "
                         "VALUES ( '%1', "
-                        "( SELECT id FROM METHODS WHERE method = '%2' ),"
-                        "( SELECT id FROM TOKENS WHERE token = '%3' ))")
-                        .arg(id).arg(it.key()).arg(token);
+                        "( SELECT id FROM METHODS WHERE method = '%2' )"
+                        ")")
+                        .arg(id).arg(it.key());
                     insertQuery = exec(queryStr);
                 }
             }
         }
-
+        //insert acl in case where methods are missing
+        if (info.m_methods.isEmpty()) {
+            foreach (QString token, info.m_accessControlList) {
+                    queryStr = QString::fromLatin1(
+                        "INSERT INTO ACL "
+                        "(identity_id, token_id) "
+                        "VALUES ( '%1', "
+                        "( SELECT id FROM TOKENS WHERE token = '%2' ))")
+                        .arg(id).arg(token);
+                    insertQuery = exec(queryStr);
+            }
+        }
         cleanUpTables();
 
         if (commit()) {

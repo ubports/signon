@@ -238,7 +238,8 @@ void TestDatabase::credentialsTest()
 void TestDatabase::insertCredentialsTest()
 {
     SignonIdentityInfo info;
-    SignonIdentityInfo retInfo;
+    SignonIdentityInfo info2;
+   SignonIdentityInfo retInfo;
     quint32 id;
 
     //insert empty
@@ -248,13 +249,46 @@ void TestDatabase::insertCredentialsTest()
     info.m_id = id;
     QVERIFY(retInfo == info);
 
-    //insert complete
+    //insert with empty acl
     info.m_caption = QLatin1String("Caption");
     info.m_userName = QLatin1String("User");
     info.m_password = QLatin1String("Pass");
     info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
     QMap<MethodName,MechanismsList> methods;
     QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+
+    id = m_db->insertCredentials(info, false);
+    retInfo = m_db->credentials(id, false);
+    QVERIFY(id != info.m_id);
+    info.m_id = id;
+    retInfo.m_password = info.m_password;
+    QVERIFY(retInfo == info);
+
+    //insert with empty methods
+    info2.m_caption = QLatin1String("Caption");
+    info2.m_userName = QLatin1String("User");
+    info2.m_password = QLatin1String("Pass");
+    info2.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods2;
+    info2.m_methods = methods2;
+
+    id = m_db->insertCredentials(info2, false);
+    retInfo = m_db->credentials(id, false);
+    QVERIFY(id != info2.m_id);
+    info2.m_id = id;
+    retInfo.m_password = info2.m_password;
+    QVERIFY(retInfo == info2);
+
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
     methods.insert(QLatin1String("Method1"), mechs);
     methods.insert(QLatin1String("Method2"), mechs);
     methods.insert(QLatin1String("Method3"), QStringList());
