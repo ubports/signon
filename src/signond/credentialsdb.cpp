@@ -315,18 +315,16 @@ namespace SignonDaemonNS {
         while (it.hasNext()) {
             it.next();
             queryStr = QString::fromLatin1(
-                        "INSERT INTO METHODS (method) "
-                        "SELECT '%1' WHERE NOT EXISTS "
-                        "(SELECT id FROM METHODS WHERE method = '%1')")
+                        "INSERT OR IGNORE INTO METHODS (method) "
+                        "VALUES( '%1' )")
                         .arg(it.key());
             insertQuery = exec(queryStr);
             if (errorOccurred()) allOk = false;
             //insert (unique) mechanism names
             foreach (QString mech, it.value()) {
                 queryStr = QString::fromLatin1(
-                            "INSERT INTO MECHANISMS (mechanism) "
-                            "SELECT '%1' WHERE NOT EXISTS "
-                            "(SELECT id FROM MECHANISMS WHERE mechanism = '%1')")
+                            "INSERT OR IGNORE INTO MECHANISMS (mechanism) "
+                            "VALUES( '%1' )")
                             .arg(mech);
                 insertQuery = exec(queryStr);
                 if (errorOccurred()) allOk = false;
@@ -581,9 +579,8 @@ namespace SignonDaemonNS {
         /* Security tokens insert */
         foreach (QString token, info.m_accessControlList) {
             queryStr = QString::fromLatin1(
-                        "INSERT INTO TOKENS (token) "
-                        "SELECT '%1' WHERE NOT EXISTS "
-                        "(SELECT id FROM TOKENS WHERE token = '%1')")
+                        "INSERT OR IGNORE INTO TOKENS (token) "
+                        "VALUES ( '%1' )")
                         .arg(token);
             insertQuery = exec(queryStr);
         }
