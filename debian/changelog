@@ -1,3 +1,11 @@
+signon (2.4-1) unstable; urgency=low
+
+  * Fixes: NB#182914 - Two indentical DBUS responses to
+    registerStoredIdentity (identities could be destroyed just after having
+    been returned to the client).
+
+ -- Alberto Mardegan <alberto.mardegan@nokia.com>  Wed, 25 Aug 2010 10:07:52 +0300
+
 signon (2.1-2) unstable; urgency=low
 
   * Update for the device lock code related DBUS API.
