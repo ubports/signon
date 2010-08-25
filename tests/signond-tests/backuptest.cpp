@@ -109,7 +109,7 @@ void TestBackup::restoreTest()
     reply = conn.call(msg, QDBus::Block, 10*1000);
 
     QVERIFY(QFile::exists("/home/user/.signon/signondb.bin") == false);
-    QVERIFY(QFile::exists("/home/user/signon.db"));
+    QVERIFY(QFile::exists("/home/user/.signon/signon.db"));
 
     QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
 
