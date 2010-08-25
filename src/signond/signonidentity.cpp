@@ -239,7 +239,7 @@ namespace SignonDaemonNS {
         }
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        bool ret = db->checkPassword(m_pInfo->m_userName, secret);
+        bool ret = db->checkPassword(m_pInfo->m_id, m_pInfo->m_userName, secret);
 
         keepInUse();
         return ret;

@@ -502,7 +502,8 @@ namespace SignonDaemonNS {
         if (config.m_useEncryption)
             source = config.m_dbFileSystemPath;
         else
-            source = QDir::homePath() + QDir::separator() + config.m_dbName;
+            source = QDir::homePath() + QDir::separator() + QLatin1String(".signon")
+                 + QDir::separator() + config.m_dbName;
 
         QDir target;
         if (!target.mkpath(QLatin1String("/home/user/.signon/")))
@@ -579,7 +580,8 @@ namespace SignonDaemonNS {
         if (config.m_useEncryption)
             target = config.m_dbFileSystemPath;
         else
-            target = QDir::homePath() + QDir::separator() + config.m_dbName;
+            target = QDir::homePath() + QDir::separator()
+                     + QLatin1String(".signon")+ QDir::separator() + config.m_dbName;
 
         if (!QFile::remove(target+QLatin1String(".bak")))
         {

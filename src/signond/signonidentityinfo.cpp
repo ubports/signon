@@ -126,5 +126,32 @@ namespace SignonDaemonNS {
         return serialized;
     }
 
+    bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
+    {
+        //do not care about list element order
+        SignonIdentityInfo me = *this;
+        SignonIdentityInfo you = other;
+        me.m_realms.sort();
+        you.m_realms.sort();
+        me.m_accessControlList.sort();
+        you.m_accessControlList.sort();
+        QMapIterator<QString, QStringList> it(me.m_methods);
+        while (it.hasNext()) {
+            it.next();
+            QStringList list1 = it.value();
+            QStringList list2 = you.m_methods.value(it.key());
+            list1.sort();
+            list2.sort();
+            if (list1 != list2) return false;
+        }
+
+        return (m_id == other.m_id)
+                && (m_userName == other.m_userName)
+                && (m_password == other.m_password)
+                && (m_caption == other.m_caption)
+                && (me.m_realms ==you.m_realms)
+                && (me.m_accessControlList == you.m_accessControlList)
+                && (m_type == other.m_type);
+    }
 
 } //namespace SignonDaemonNS

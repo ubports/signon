@@ -21,14 +21,17 @@ HEADERS += \
     timeouts.h \
     $$TOP_SRC_DIR/src/signond/pluginproxy.h \
     $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.h \
-    backuptest.h
-
+    backuptest.h \
+    databasetest.h\
+           $$TOP_SRC_DIR/src/signond/credentialsdb.h
 SOURCES = \
     signond-tests.cpp \
     timeouts.cpp \
     $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.cpp \
     $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp \
-    backuptest.cpp
+    backuptest.cpp \
+    databasetest.cpp \
+           $$TOP_SRC_DIR/src/signond/credentialsdb.cpp
 
 contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
  HEADERS *=$$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.h \
