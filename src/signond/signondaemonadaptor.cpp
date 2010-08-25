@@ -39,9 +39,9 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
     {
-        SignonDisposable::destroyUnused();
-
         m_parent->registerNewIdentity(objectPath);
+
+        SignonDisposable::destroyUnused();
     }
 
     void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
@@ -61,8 +61,6 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
-        SignonDisposable::destroyUnused();
-
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), id)) {
             securityErrorReply(__func__);
@@ -70,6 +68,8 @@ namespace SignonDaemonNS {
         }
 
         m_parent->registerStoredIdentity(id, objectPath, identityData);
+
+        SignonDisposable::destroyUnused();
     }
 
     QStringList SignonDaemonAdaptor::queryMethods()

@@ -305,6 +305,7 @@ namespace SignonDaemonNS {
 
         //cache the identity as stored
         m_storedIdentities.insert(identity->id(), identity);
+        identity->keepInUse();
 
         identityData = info.toVariantList();
 

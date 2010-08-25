@@ -39,6 +39,9 @@ using namespace SignOn;
 
 void TimeoutsTest::initTestCase()
 {
+    /* Kill any running instances of signond */
+    QProcess::execute("pkill -9 signond");
+
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QLatin1String("SSO_IDENTITY_TIMEOUT"), QLatin1String("5"));
     daemonProcess = new QProcess();
@@ -90,8 +93,116 @@ void TimeoutsTest::identityTimeout()
     identity->storeCredentials();
 
     loop.exec();
+    QVERIFY(identity->id() != SSO_NEW_IDENTITY);
 
-    QVERIFY(completed);
+    QDBusConnection conn = SIGNOND_BUS;
+
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
+                                                      "registerStoredIdentity");
+    QList<QVariant> args;
+    args << identity->id();
+    msg.setArguments(args);
+
+    QDBusMessage reply = conn.call(msg);
+    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+
+    QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
+    QString path = objectPath.path();
+    qDebug() << "Got path" << path;
+    QVERIFY(!path.isEmpty());
+
+    bool success;
+
+    QTest::qSleep(100);
+    success = triggerDisposableCleanup();
+    QVERIFY(success);
+
+    /* The identity object must exist now */
+    QVERIFY(identityAlive(path));
+
+    QTest::qSleep(6 * 1000);
+    success = triggerDisposableCleanup();
+    QVERIFY(success);
+
+    /* After SSO_IDENTITY_TIMEOUT seconds, the identity must have been
+     * destroyed */
+    QVERIFY(!identityAlive(path));
+}
+
+void TimeoutsTest::identityRegisterTwice()
+{
+    QEventLoop loop;
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    QObject::connect(this, SIGNAL(finished()), &loop, SLOT(quit()));
+
+    QMap<MethodName,MechanismsList> methods;
+    methods.insert("dummy", QStringList() << "mech1" << "mech2");
+    IdentityInfo info = IdentityInfo(QLatin1String("timeout test"),
+                                     QLatin1String("timeout@test"),
+                                     methods);
+    Identity *identity = Identity::newIdentity(info);
+    QVERIFY(identity != NULL);
+
+    QObject::connect(identity,
+                     SIGNAL(credentialsStored(const quint32)),
+                     this,
+                     SLOT(credentialsStored(const quint32)));
+    QObject::connect(identity,
+                     SIGNAL(error(Identity::IdentityError,const QString&)),
+                     this,
+                     SLOT(identityError(Identity::IdentityError,const QString&)));
+
+    identity->storeCredentials();
+
+    loop.exec();
+    QVERIFY(identity->id() != SSO_NEW_IDENTITY);
+
+    QDBusConnection conn = SIGNOND_BUS;
+
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
+                                                      "registerStoredIdentity");
+    QList<QVariant> args;
+    args << identity->id();
+    msg.setArguments(args);
+
+    QDBusMessage reply = conn.call(msg);
+    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+
+    QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
+    QString path = objectPath.path();
+    qDebug() << "Got path" << path;
+    QVERIFY(!path.isEmpty());
+
+    bool success;
+
+    QTest::qSleep(100);
+    success = triggerDisposableCleanup();
+    QVERIFY(success);
+
+    /* The identity object must exist now */
+    QVERIFY(identityAlive(path));
+
+    QTest::qSleep(6 * 1000);
+    /* now we register the same identity again. The expected behavior is that
+     * the registration succeeds, possibly returning the same object path as
+     * before.
+     * This is to test a regression (NB#182914) which was happening because
+     * signond was deleting the expired Identity immediately after returning
+     * its object path to the client.
+     */
+    reply = conn.call(msg);
+    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+
+    objectPath = reply.arguments()[0].value<QDBusObjectPath>();
+    path = objectPath.path();
+    qDebug() << "Got path" << path;
+    QVERIFY(!path.isEmpty());
+
+    QVERIFY(identityAlive(path));
 }
 
 void TimeoutsTest::identityError(Identity::IdentityError code,
@@ -134,45 +245,6 @@ bool TimeoutsTest::identityAlive(const QString &path)
 void TimeoutsTest::credentialsStored(const quint32 id)
 {
     QVERIFY(id != 0);
-
-    QDBusConnection conn = SIGNOND_BUS;
-
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
-                                                      SIGNOND_DAEMON_OBJECTPATH,
-                                                      SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
-    QList<QVariant> args;
-    args << id;
-    msg.setArguments(args);
-
-    QDBusMessage reply = conn.call(msg);
-    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
-
-    QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
-    QString path = objectPath.path();
-    qDebug() << "Got path" << path;
-    QVERIFY(!path.isEmpty());
-
-    bool success;
-
-    QTest::qSleep(100);
-    success = triggerDisposableCleanup();
-    QVERIFY(success);
-
-    /* The identity object must exist now */
-    QVERIFY(identityAlive(path));
-
-    QTest::qSleep(6 * 1000);
-    success = triggerDisposableCleanup();
-    QVERIFY(success);
-
-    /* After SSO_IDENTITY_TIMEOUT seconds, the identity must have been
-     * destroyed */
-    //TODO: fix the unit tests later
-    //as I do not see any valuable timeout here
-//    QVERIFY(!identityAlive(path));
-
-    completed = true;
     emit finished();
 }
 
@@ -182,6 +254,7 @@ void TimeoutsTest::runAllTests()
 
     init();
     identityTimeout();
+    identityRegisterTwice();
 
     cleanupTestCase();
 }
