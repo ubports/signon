@@ -39,6 +39,9 @@ using namespace SignOn;
 
 void TimeoutsTest::initTestCase()
 {
+    /* Kill any running instances of signond */
+    QProcess::execute("pkill -9 signond");
+
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(QLatin1String("SSO_IDENTITY_TIMEOUT"), QLatin1String("5"));
     daemonProcess = new QProcess();
