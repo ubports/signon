@@ -102,7 +102,13 @@ namespace SignOn {
     };
 
     static void initializeTrace(const QString &fileName, const quint32 maxFileSize) {
-        SignonTrace<>::initialize(QString(QLatin1String("%1/%2")).arg(SIGNOND_TRACE_DIR).arg(fileName), maxFileSize);
+        QDir dir;
+        QString homeDir = QLatin1String(qgetenv("HOME"));
+        if (homeDir.isEmpty())
+            homeDir = QLatin1String("/tmp");
+        QString path = homeDir + QDir::separator () + SIGNOND_TRACE_DIR;
+        dir.mkpath(path);
+        SignonTrace<>::initialize((path + QDir::separator () + fileName), maxFileSize);
     }
 
 template <typename T>
