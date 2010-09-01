@@ -36,7 +36,7 @@
 
 #include "signonidentityinfo.h"
 
-#define SSO_MAX_STORAGE (2*1024) // 2 kB for token store/identity/method
+#define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
 
 class TestDatabase;
 

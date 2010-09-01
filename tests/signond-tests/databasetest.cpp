@@ -439,6 +439,7 @@ void TestDatabase::dataTest()
     ret = m_db->storeData(id, method, data);
     QVERIFY(ret);
     result = m_db->loadData(id, method);
+    qDebug() << result;
     QVERIFY(result == data);
 
     data.insert(QLatin1String("token"), QLatin1String("tokenvalupdated"));
@@ -456,8 +457,14 @@ void TestDatabase::dataTest()
     qDebug() << data;
     QVERIFY(result.isEmpty());
 
+    ret = m_db->storeData(id, method, QVariantMap());
+    QVERIFY(ret);
+    result = m_db->loadData(id, method);
+    qDebug() << data;
+    QVERIFY(result.isEmpty());
+
     data.clear();
-    for ( int i = 1000; i <1000+( SSO_MAX_STORAGE/10) +1 ; i++) {
+    for ( int i = 1000; i <1000+(SSO_MAX_TOKEN_STORAGE/10) +1 ; i++) {
         data.insert(QString::fromLatin1("t%1").arg(i), QLatin1String("12345"));
     }
     ret = m_db->storeData(id, method, data);

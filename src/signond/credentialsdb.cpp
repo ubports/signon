@@ -278,7 +278,7 @@ namespace SignonDaemonNS {
                     "(identity_id INTEGER,"
                     "method_id INTEGER,"
                     "key TEXT,"
-                    "value TEXT,"
+                    "value BLOB,"
                     "PRIMARY KEY (identity_id, method_id, key))");
 
        foreach (QString createTable, createTableQuery) {
@@ -761,19 +761,17 @@ namespace SignonDaemonNS {
         if (errorOccurred())
             return QVariantMap();
 
-        if (!query.first()) {
-            TRACE() << "No result or invalid query.";
-            return QVariantMap();
+        QVariantMap result;
+        while (query.next()) {
+            QByteArray array;
+            array = query.value(1).toByteArray();
+            QDataStream stream(array);
+            QVariant data;
+            stream >> data;
+            result.insert(query.value(0).toString(), data);
+            TRACE() << "insert" << query.value(0).toString() << ", " << data ;
         }
-
-        QVariantMap data;
-        do {
-            data.insert(
-                    query.value(0).toString(),
-                    query.value(1));
-        } while (query.next());
-
-        return data;
+        return result;
     }
 
     bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
@@ -793,22 +791,29 @@ namespace SignonDaemonNS {
             QMapIterator<QString, QVariant> it(data);
             while (it.hasNext()) {
                 it.next();
-                dataCounter += it.key().size() + it.value().toString().size();
-                if (dataCounter >= SSO_MAX_STORAGE) {
-                    //maximum storage size exceeded
+
+                QByteArray array;
+                QDataStream stream(&array, QIODevice::WriteOnly);
+                stream << it.value();
+
+                dataCounter += it.key().size() +array.size();
+                if (dataCounter >= SSO_MAX_TOKEN_STORAGE) {
                     BLAME() << "storing data max size exceeded";
                     allOk = false;
                     break;
                 }
                 /* Key/value insert/replace/delete */
-                if (it.value().isValid()) {
-                    queryStr = QString::fromLatin1(
+                if (it.value().isValid() && !it.value().isNull()) {
+                    QSqlQuery query(QString(), m_pSqlDatabase->m_database);
+                    query.prepare(QString::fromLatin1(
                         "INSERT OR REPLACE INTO STORE "
                         "(identity_id, method_id, key, value) "
                         "VALUES('%1', "
                         "(SELECT id FROM METHODS WHERE method = '%2'), "
-                        "'%3', '%4')")
-                        .arg(id).arg(method).arg(it.key()).arg(it.value().toString());
+                        "'%3', :blob)")
+                        .arg(id).arg(method).arg(it.key()));
+                    query.bindValue(QLatin1String(":blob"), array);
+                    if (query.exec()) allOk = false;
                 } else {
                     queryStr = QString::fromLatin1(
                         "DELETE FROM STORE WHERE identity_id = '%1' AND "
@@ -816,8 +821,8 @@ namespace SignonDaemonNS {
                         "(SELECT id FROM METHODS WHERE method = '%2') "
                         "AND key = '%3'")
                         .arg(id).arg(method).arg(it.key());
+                    exec(queryStr);
                 }
-                exec(queryStr);
                 if (errorOccurred()) {
                     allOk = false;
                     break;
