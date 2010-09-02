@@ -508,6 +508,8 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
         } else {
             BLAME() << "Error occured while storing data. Null database handler object.";
         }
+    } else {
+        TRACE() << "Not stored for new identity";
     }
 }
 

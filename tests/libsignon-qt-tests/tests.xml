@@ -11,7 +11,7 @@
 	<description>Identity-Tests</description>
 	<step>/usr/bin/libsignon-qt-tests runIdentityTests</step>
       </case>
-      <case name="libsignon-qt-tests-AuthSessionTests" type="Functional" level="Component" timeout="180">
+      <case name="libsignon-qt-tests-AuthSessionTests" type="Functional" level="Component" timeout="600">
 	<description>Authentication-Session-Tests</description>
 	<step>/usr/bin/libsignon-qt-tests runAuthSessionTests</step>
       </case>
@@ -29,7 +29,7 @@
 	<description>Identity-Tests</description>
 	<step>/usr/bin/libsignon-qt-untrusted-tests runIdentityTests</step>
       </case>
-      <case name="libsignon-qt-untrusted-tests-AuthSessionTests" type="Security" level="Component" timeout = "180">
+      <case name="libsignon-qt-untrusted-tests-AuthSessionTests" type="Security" level="Component" timeout = "600">
 	<description>Authentication-Session-Tests</description>
 	<step>/usr/bin/libsignon-qt-untrusted-tests runAuthSessionTests</step>
       </case>
