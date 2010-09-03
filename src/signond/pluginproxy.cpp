@@ -305,8 +305,8 @@ namespace SignonDaemonNS {
                         allowed = false;
 
                     if (m_uiPolicy == ValidationPolicy &&
-                        !info.contains(SSOUI_KEY_CAPTCHAIMG) &&
-                        !info.contains(SSOUI_KEY_CAPTCHAURL))
+                        (info.contains(SSOUI_KEY_QUERYUSERNAME)
+                        || info.contains(SSOUI_KEY_QUERYPASSWORD)))
                         allowed = false;
 
                     if (!allowed) {
