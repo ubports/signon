@@ -73,7 +73,8 @@ namespace ExamplePluginNS {
             return;
             */
         }
-       TRACE() << "User: " << inData.UserName() ;
+        TRACE() << "User: " << inData.UserName() ;
+        TRACE() << "Example" << input.Example();
 
         if ( inData.UserName() == QLatin1String("Example" ) ) {
             qDebug() << inData.UserName();
@@ -84,6 +85,12 @@ namespace ExamplePluginNS {
 
         if ( inData.UserName() == QLatin1String("error" ) ) {
             emit error(Error::NotAuthorized);
+        }
+
+        if ( inData.UserName() == QLatin1String("store" ) ) {
+            ExampleData storeData;
+            storeData.setExample(QLatin1String("store:")+input.Example());
+            emit store(storeData);
         }
 
         if ( inData.UserName() == QLatin1String("url" ) ) {

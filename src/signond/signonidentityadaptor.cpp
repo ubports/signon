@@ -141,7 +141,8 @@ namespace SignonDaemonNS {
                                                     const QString &caption,
                                                     const QStringList &realms,
                                                     const QStringList &accessControlList,
-                                                    const int type)
+                                                    const int type,
+                                                    const int refCount)
     {
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
@@ -168,7 +169,8 @@ namespace SignonDaemonNS {
                                           caption,
                                           realms,
                                           accessControlList,
-                                          type);
+                                          type,
+                                          refCount);
     }
 
 } //namespace SignonDaemonNS

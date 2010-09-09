@@ -65,6 +65,7 @@ bool TestIdentityResult::compareIdentityInfos(
         return false;
     }
 
+
     if(info1.methods() != info2.methods())
     {
         qDebug() << "Methods:" << info1.methods() << " " << info2.methods();
@@ -89,15 +90,18 @@ bool TestIdentityResult::compareIdentityInfos(
         return false;
     }
 
-    foreach(QString method, info1.methods())
-        if(info1.mechanisms(method) != info2.mechanisms(method))
+    foreach(QString method, info1.methods()) {
+        MechanismsList mechs1 = info1.mechanisms(method);
+        MechanismsList mechs2 =  info2.mechanisms(method);
+        mechs1.sort();
+        mechs2.sort();
+        if(mechs1 != mechs2)
         {
-
             qDebug() << QString("Mechanisms for method %1:").arg(method)
                     << info1.mechanisms(method) << " " << info2.mechanisms(method);
             return false;
         }
-
+    }
 
     return true;
 }

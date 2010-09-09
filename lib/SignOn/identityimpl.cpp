@@ -273,7 +273,8 @@ namespace SignOn {
              << info.caption()
              << info.realms()
              << QVariant(info.accessControlList())
-             << info.type();
+             << info.type()
+             << info.refCount();
 
         TRACE() << args;
 
@@ -805,6 +806,10 @@ namespace SignOn {
 
         if (!infoData.isEmpty())
             m_identityInfo->setType((IdentityInfo::CredentialsType)(infoData.takeFirst().toInt()));
+
+        if (!infoData.isEmpty())
+            m_identityInfo->setRefCount((infoData.takeFirst().toInt()));
+
     }
 
     void IdentityImpl::checkConnection()

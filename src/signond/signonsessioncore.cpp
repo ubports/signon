@@ -334,7 +334,7 @@ void SignonSessionCore::startProcess()
             BLAME() << "Null database handler object.";
         }
     }
-
+    TRACE() << "all params: " << parameters;
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
                                                             SIGNOND_RUNTIME_ERR_STR);
@@ -460,6 +460,7 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
+                info.m_userName = data2[SSO_KEY_USERNAME].toString();
                 info.m_password = data2[SSO_KEY_PASSWORD].toString();
 
                 if (!(db->updateCredentials(info)))
@@ -496,21 +497,28 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
     TRACE();
 
     keepInUse();
-    QVariantMap data2 = filterVariantMap(data);
+    qint32 id = m_id;
+    if (id == SIGNOND_NEW_IDENTITY) {
+        BLAME() << "Cannot store without identity";
+        return;
+    }
+    QVariantMap data2 = data;
+    //do not store username or password
+    if (data2.contains(SSO_KEY_PASSWORD))
+        data2.remove(SSO_KEY_PASSWORD);
+    if (data2.contains(SSO_KEY_USERNAME))
+        data2.remove(SSO_KEY_USERNAME);
 
     //store data into db
-    if (m_id != SIGNOND_NEW_IDENTITY) {
-        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        if (db != NULL) {
-            if(!db->storeData(m_id, m_method, data2)) {
-                BLAME() << "Error occured while storing data.";
-            }
-        } else {
-            BLAME() << "Error occured while storing data. Null database handler object.";
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    if (db != NULL) {
+        if(!db->storeData(id, m_method, data2)) {
+            BLAME() << "Error occured while storing data.";
         }
     } else {
-        TRACE() << "Not stored for new identity";
+        BLAME() << "Error occured while storing data. Null database handler object.";
     }
+    return;
 }
 
 void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVariantMap &data)

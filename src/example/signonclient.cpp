@@ -175,10 +175,8 @@ void SignonClient::on_challenge_clicked()
     data.setSecret("test");
 
     data.setSecret("secret");
-    data.setUserName("url");
+//    data.setUserName("url");
     data.setExample("http://www.flickr.com/");
-    //TODO remove this
-    data.setNetworkProxy(QLatin1String("http://nokes.nokia.com:8080"));
 
     if (!m_session) {
         m_session=m_identity->createSession(QLatin1String("example"));

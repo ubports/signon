@@ -242,6 +242,22 @@ namespace SignOn {
          */
         MechanismsList mechanisms(const MethodName &method) const;
 
+        /*!
+         * Set refcount into identity info.
+         * The type is used to generically identify where this identity is being used.
+         *
+         * @note Server can restrict changes to differ +-1 from previous.
+         *
+         * @param refCount set refcount
+         */
+        void setRefCount(qint32 refCount);
+
+        /*!
+         * Retrieve refcount from identity info.
+         * @returns the refcount for this IdentityInfo.
+         */
+        qint32 refCount() const;
+
     private:
         void setId(const quint32 id);
         const QString secret() const;

@@ -43,7 +43,7 @@ namespace SignonDaemonNS {
 
     SqlDatabase::~SqlDatabase()
     {
-        //TODO - sync with driver commit
+        m_database.commit();
         m_database.close();
     }
 
@@ -77,6 +77,20 @@ namespace SignonDaemonNS {
 
         return query;
     }
+
+    QSqlQuery SqlDatabase::exec(QSqlQuery &query)
+    {
+
+        if (!query.exec()) {
+            TRACE() << "Query exec error: " << query.lastQuery();
+            m_lastError = query.lastError();
+            TRACE() << errorInfo(m_lastError);
+        } else
+            m_lastError.setType(QSqlError::NoError);
+
+        return query;
+    }
+
 
     bool SqlDatabase::transactionalExec(const QStringList &queryList)
     {
@@ -189,6 +203,17 @@ namespace SignonDaemonNS {
         return m_pSqlDatabase->exec(query);
     }
 
+    QSqlQuery CredentialsDB::exec(QSqlQuery &query)
+    {
+        if (!m_pSqlDatabase->connected()) {
+            if (!m_pSqlDatabase->connect()) {
+                TRACE() << "Could not establish database connection.";
+                return QSqlQuery();
+            }
+        }
+        return m_pSqlDatabase->exec(query);
+    }
+
     bool CredentialsDB::transactionalExec(const QStringList &queryList)
     {
         if (!m_pSqlDatabase->connected()) {
@@ -246,7 +271,8 @@ namespace SignonDaemonNS {
                     "caption TEXT,"
                     "username TEXT,"
                     "password TEXT,"
-                    "savepassword BOOLEAN,"
+                    "flags INTEGER,"
+                    "refcount INTEGER,"
                     "type INTEGER)")
             <<  QString::fromLatin1(
                     "CREATE TABLE METHODS"
@@ -287,6 +313,8 @@ namespace SignonDaemonNS {
                 TRACE() << "Error occurred while creating the database.";
                 return false;
             }
+            query.clear();
+            commit();
         }
         return true;
     }
@@ -300,6 +328,7 @@ namespace SignonDaemonNS {
         while (query.next()) {
             list.append(query.value(0).toString());
         }
+        query.clear();
         return list;
     }
 
@@ -319,6 +348,7 @@ namespace SignonDaemonNS {
                         "VALUES( '%1' )")
                         .arg(it.key());
             insertQuery = exec(queryStr);
+            insertQuery.clear();
             if (errorOccurred()) allOk = false;
             //insert (unique) mechanism names
             foreach (QString mech, it.value()) {
@@ -328,6 +358,7 @@ namespace SignonDaemonNS {
                             .arg(mech);
                 insertQuery = exec(queryStr);
                 if (errorOccurred()) allOk = false;
+                insertQuery.clear();
             }
         }
         return allOk;
@@ -340,21 +371,25 @@ namespace SignonDaemonNS {
                         "DELETE FROM METHODS WHERE id NOT "
                         "in (SELECT method_id FROM ACL) ");
         QSqlQuery cleanQuery = exec(queryStr);
+        cleanQuery.clear();
         if (errorOccurred()) return false;
         queryStr = QString::fromLatin1(
                         "DELETE FROM MECHANISMS WHERE id NOT "
                         "in (SELECT mechanism_id FROM ACL) ");
         cleanQuery = exec(queryStr);
+        cleanQuery.clear();
         if (errorOccurred()) return false;
         queryStr = QString::fromLatin1(
                         "DELETE FROM TOKENS WHERE id NOT "
                         "in (SELECT token_id FROM ACL) ");
         cleanQuery = exec(queryStr);
+        cleanQuery.clear();
         if (errorOccurred()) return false;
         queryStr = QString::fromLatin1(
                         "DELETE FROM STORE WHERE identity_id NOT "
                         "in (SELECT id FROM CREDENTIALS) ");
         cleanQuery = exec(queryStr);
+        cleanQuery.clear();
         if (errorOccurred()) return false;
        return true;
     }
@@ -399,10 +434,11 @@ namespace SignonDaemonNS {
             TRACE() << "Error occurred while checking password";
             return false;
         }
-        if (query.first())
-            return true;
+        bool valid = false;
+        valid = query.first();
+        query.clear();
 
-        return false;
+        return valid;
     }
 
     SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
@@ -410,7 +446,7 @@ namespace SignonDaemonNS {
         QString query_str;
 
         query_str = QString::fromLatin1(
-                "SELECT username, caption, type, savepassword, password "
+                "SELECT caption, username, flags, refcount, type, password "
                 "FROM credentials WHERE id = %1").arg(id);
         QSqlQuery query = exec(query_str);
 
@@ -419,14 +455,18 @@ namespace SignonDaemonNS {
             return SignonIdentityInfo();
         }
 
-        QString username = query.value(0).toString();
-        QString caption = query.value(1).toString();
-        int type = query.value(2).toInt();
-        bool savepassword = query.value(3).toBool();
+        QString caption = query.value(0).toString();
+        QString username = query.value(1).toString();
+        int flags = query.value(2).toInt();
+        bool savePassword = flags & RememberPassword;
+        bool validated =  flags & Validated;
+        int refCount = query.value(3).toInt();
+        int type = query.value(4).toInt();
         QString password;
-        if (savepassword && queryPassword)
-            password = query.value(4).toString();
+        if (savePassword && queryPassword)
+            password = query.value(5).toString();
 
+        query.clear();
         QStringList realms = queryList(
                 QString::fromLatin1("SELECT realm FROM REALMS "
                         "WHERE identity_id = %1").arg(id));
@@ -440,7 +480,7 @@ namespace SignonDaemonNS {
         while (query.next()) {
             security_tokens.append(query.value(0).toString());
         }
-
+        query.clear();
         QMap<QString, QVariant> methods;
         query_str = QString::fromLatin1(
                 "SELECT DISTINCT ACL.method_id, METHODS.method FROM "
@@ -457,11 +497,11 @@ namespace SignonDaemonNS {
                             .arg(query.value(0).toInt()).arg(id));
                 TRACE() << mechanisms; //TODO HERE
                 methods.insert(query.value(1).toString(), mechanisms);
-            }
-
+        }
+        query.clear();
 
         return SignonIdentityInfo(id, username, password, methods,
-                                  caption, realms, security_tokens, type);
+                                  caption, realms, security_tokens, type, refCount, validated);
     }
 
     QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
@@ -489,6 +529,7 @@ namespace SignonDaemonNS {
             result << info;
         }
 
+        query.clear();
         return result;
     }
 
@@ -514,16 +555,23 @@ namespace SignonDaemonNS {
             password = info.m_password;
 
         QString queryStr;
+        int flags = 0;
+        if (info.m_validated) flags |= Validated;
+        if (storeSecret) flags |= RememberPassword;
+
         if (info.m_id != SIGNOND_NEW_IDENTITY) {
             TRACE() << "UPDATE:" << info.m_id ;
              id = info.m_id ;
             queryStr = QString::fromLatin1(
-                "UPDATE CREDENTIALS SET username = '%1', password = '%2', "
-                "caption = '%3', type = '%4', savepassword = '%5' WHERE id = '%6'")
-                .arg(info.m_userName).arg(password).arg(info.m_caption)
-                .arg(info.m_type).arg(storeSecret).arg(info.m_id);
+                "UPDATE CREDENTIALS SET caption = '%1', username = '%2', "
+                "password = '%3', flags = '%4', refcount = '%5', "
+                "type = '%6' WHERE id = '%7'")
+                .arg(info.m_caption).arg(info.m_userName).arg(password)
+                .arg(flags).arg(info.m_refCount).arg(info.m_type)
+                .arg(info.m_id);
 
             insertQuery = exec(queryStr);
+            insertQuery.clear();
             if (errorOccurred()) {
                 rollback();
                 TRACE() << "Error occurred while updating crendentials";
@@ -534,10 +582,10 @@ namespace SignonDaemonNS {
             TRACE() << "INSERT:" << info.m_id;
             queryStr = QString::fromLatin1(
                 "INSERT INTO CREDENTIALS "
-                "(username, password, caption, type, savepassword) "
-                "VALUES('%1', '%2', '%3', '%4', '%5')")
-                .arg(info.m_userName).arg(password).arg(info.m_caption)
-                .arg(info.m_type).arg(storeSecret);
+                "(caption, username, password, flags, refcount, type) "
+                "VALUES('%1', '%2', '%3', '%4', '%5', '%6')")
+                .arg(info.m_caption).arg(info.m_userName).arg(password)
+                .arg(flags).arg(info.m_refCount).arg(info.m_type);
 
             insertQuery = exec(queryStr);
             if (errorOccurred()) {
@@ -555,6 +603,7 @@ namespace SignonDaemonNS {
             }
             id = idVariant.toUInt();
         }
+        insertQuery.clear();
 
         /* Methods inserts */
         insertMethods(info.m_methods);
@@ -567,7 +616,8 @@ namespace SignonDaemonNS {
                         .arg(info.m_id);
             insertQuery = exec(queryStr);
         }
-        /* Realms insert */
+        insertQuery.clear();
+         /* Realms insert */
         foreach (QString realm, info.m_realms) {
             queryStr = QString::fromLatin1(
                         "INSERT INTO REALMS (identity_id, realm) "
@@ -575,6 +625,7 @@ namespace SignonDaemonNS {
                         .arg(id).arg(realm);
             insertQuery = exec(queryStr);
         }
+        insertQuery.clear();
 
         /* Security tokens insert */
         foreach (QString token, info.m_accessControlList) {
@@ -584,6 +635,7 @@ namespace SignonDaemonNS {
                         .arg(token);
             insertQuery = exec(queryStr);
         }
+        insertQuery.clear();
 
         if (info.m_id != SIGNOND_NEW_IDENTITY) {
             //remove acl
@@ -593,6 +645,7 @@ namespace SignonDaemonNS {
                         .arg(info.m_id);
             insertQuery = exec(queryStr);
         }
+        insertQuery.clear();
 
         /* ACL insert, this will do basically identity level ACL */
         QMapIterator<QString, QStringList> it(info.m_methods);
@@ -610,6 +663,7 @@ namespace SignonDaemonNS {
                             "( SELECT id FROM TOKENS WHERE token = '%4' ))")
                             .arg(id).arg(it.key()).arg(mech).arg(token);
                         insertQuery = exec(queryStr);
+                        insertQuery.clear();
                     }
                     //insert entires for empty mechs list
                     if (it.value().isEmpty()) {
@@ -620,6 +674,7 @@ namespace SignonDaemonNS {
                             "( SELECT id FROM TOKENS WHERE token = '%3' ))")
                             .arg(id).arg(it.key()).arg(token);
                         insertQuery = exec(queryStr);
+                        insertQuery.clear();
                     }
                 }
             } else {
@@ -633,6 +688,7 @@ namespace SignonDaemonNS {
                         ")")
                         .arg(id).arg(it.key()).arg(mech);
                     insertQuery = exec(queryStr);
+                    insertQuery.clear();
                 }
                 //insert entires for empty mechs list
                 if (it.value().isEmpty()) {
@@ -643,19 +699,21 @@ namespace SignonDaemonNS {
                         ")")
                         .arg(id).arg(it.key());
                     insertQuery = exec(queryStr);
+                    insertQuery.clear();
                 }
             }
         }
         //insert acl in case where methods are missing
         if (info.m_methods.isEmpty()) {
             foreach (QString token, info.m_accessControlList) {
-                    queryStr = QString::fromLatin1(
+                queryStr = QString::fromLatin1(
                         "INSERT INTO ACL "
                         "(identity_id, token_id) "
                         "VALUES ( '%1', "
                         "( SELECT id FROM TOKENS WHERE token = '%2' ))")
                         .arg(id).arg(token);
-                    insertQuery = exec(queryStr);
+                insertQuery = exec(queryStr);
+                insertQuery.clear();
             }
         }
         cleanUpTables();
@@ -771,6 +829,7 @@ namespace SignonDaemonNS {
             result.insert(query.value(0).toString(), data);
             TRACE() << "insert" << query.value(0).toString() << ", " << data ;
         }
+        query.clear();
         return result;
     }
 
@@ -783,10 +842,12 @@ namespace SignonDaemonNS {
             return 0;
         }
 
+        TRACE() << "Storing:" << id << ", " << method << ", " << data;
         /* Data insert */
         bool allOk = true;
         qint32 dataCounter = 0;
         QString queryStr;
+        QSqlQuery query;
         if (!(data.keys().empty())) {
             QMapIterator<QString, QVariant> it(data);
             while (it.hasNext()) {
@@ -804,7 +865,8 @@ namespace SignonDaemonNS {
                 }
                 /* Key/value insert/replace/delete */
                 if (it.value().isValid() && !it.value().isNull()) {
-                    QSqlQuery query(QString(), m_pSqlDatabase->m_database);
+                    TRACE() << "insert";
+                    query = QSqlQuery(QString(), m_pSqlDatabase->m_database);
                     query.prepare(QString::fromLatin1(
                         "INSERT OR REPLACE INTO STORE "
                         "(identity_id, method_id, key, value) "
@@ -813,16 +875,23 @@ namespace SignonDaemonNS {
                         "'%3', :blob)")
                         .arg(id).arg(method).arg(it.key()));
                     query.bindValue(QLatin1String(":blob"), array);
-                    if (query.exec()) allOk = false;
+                    exec(query);
+                    if (errorOccurred()) {
+                        allOk = false;
+                        TRACE() << m_pSqlDatabase->errorInfo(query.lastError());
+                    }
                 } else {
+                    TRACE() << "remove";
                     queryStr = QString::fromLatin1(
                         "DELETE FROM STORE WHERE identity_id = '%1' AND "
                         "method_id = "
                         "(SELECT id FROM METHODS WHERE method = '%2') "
                         "AND key = '%3'")
                         .arg(id).arg(method).arg(it.key());
-                    exec(queryStr);
+                    query = exec(queryStr);
+
                 }
+                query.clear();
                 if (errorOccurred()) {
                     allOk = false;
                     break;
@@ -831,6 +900,7 @@ namespace SignonDaemonNS {
         }
 
         if (allOk && commit()) {
+            TRACE() << "Data insertion ok.";
             return true;
         }
         rollback();

@@ -52,6 +52,8 @@ namespace SignOn {
         void removeMethod(const MethodName &method);
         void setType(IdentityInfo::CredentialsType type);
         IdentityInfo::CredentialsType type() const;
+        void setRefCount(qint32 refCount);
+        qint32 refCount() const;
 
         bool isEmpty() const;
         bool hasMethod(const MethodName &method) const;
@@ -76,6 +78,7 @@ namespace SignOn {
         QStringList m_accessControlList;
         IdentityInfo::CredentialsType m_type;
         bool m_isEmpty;
+        qint32 m_refCount;
     };
 
 } //namespace SignOn

@@ -43,6 +43,15 @@ class TestDatabase;
 namespace SignonDaemonNS {
 
     /*!
+     * @enum IdentityFlags
+     * Flags to be stored into database
+     */
+    enum IdentityFlags {
+        Validated = 0x0001,
+        RememberPassword = 0x0002
+    };
+
+    /*!
         @class SqlDatabase
         Will be used manage the SQL database interaction.
         @ingroup Accounts_and_SSO_Framework
@@ -116,6 +125,14 @@ namespace SignonDaemonNS {
         */
         QSqlQuery exec(const QString &query);
 
+        /*!
+            Executes a specific database query.
+            If an error occurres the lastError() method can be used for handling decissions.
+            @param query, the query.
+            @returns the resulting sql query, which can be process in the case of a 'SELECT' statement.
+        */
+        QSqlQuery exec(QSqlQuery &query);
+
          /*!
             Executes a specific database set of queryes (INSERTs, UPDATEs, DELETEs) in a transaction
             context (No nested transactions supported - sqlite reasons).
@@ -184,6 +201,7 @@ namespace SignonDaemonNS {
 
     private:
         QSqlQuery exec(const QString &query);
+        QSqlQuery exec(QSqlQuery &query);
         bool transactionalExec(const QStringList &queryList);
         bool startTransaction();
         bool commit();

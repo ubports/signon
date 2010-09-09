@@ -35,14 +35,17 @@ namespace SignonDaemonNS {
           m_caption(QString()),
           m_realms(QStringList()),
           m_accessControlList(QStringList()),
-          m_type(0)
+          m_type(0),
+          m_refCount(0),
+          m_validated(false)
     {
     }
 
     SignonIdentityInfo::SignonIdentityInfo(const quint32 id, const QString &userName,
                 const QString &password, const QMap<QString, QVariant> &methods,
                 const QString &caption, const QStringList &realms,
-                const QStringList &accessControlList, const int type)
+                const QStringList &accessControlList,
+                int type, int refCount, bool validated)
         : m_id(id),
           m_userName(userName),
           m_password(password),
@@ -50,7 +53,9 @@ namespace SignonDaemonNS {
           m_realms(realms),
           m_methods(mapVariantToMapList(methods)),
           m_accessControlList(accessControlList),
-          m_type(type)
+          m_type(type),
+          m_refCount(refCount),
+          m_validated(validated)
     {
     }
 
@@ -64,7 +69,9 @@ namespace SignonDaemonNS {
              << m_realms
              << QVariant(mapListToMapVariant(m_methods))
              << m_accessControlList
-             << m_type;
+             << m_type
+             << m_refCount
+             << m_validated;
 
         return list;
     }
@@ -115,6 +122,8 @@ namespace SignonDaemonNS {
         stream << QString::fromLatin1("realms = %1, \n").arg(m_realms.join(QLatin1String(" ")));
         stream << QString::fromLatin1("acl = %1, \n").arg(m_accessControlList.join(QLatin1String(" ")));
         stream << QString::fromLatin1("type = %1, \n").arg(m_type);
+        stream << QString::fromLatin1("refcount = %1, \n").arg(m_refCount);
+        stream << QString::fromLatin1("validated = %1, \n").arg(m_validated);
 
         stream << "methods (";
         for (QMap<QString, QStringList>::iterator it = m_methods.begin();
@@ -151,7 +160,9 @@ namespace SignonDaemonNS {
                 && (m_caption == other.m_caption)
                 && (me.m_realms ==you.m_realms)
                 && (me.m_accessControlList == you.m_accessControlList)
-                && (m_type == other.m_type);
+                && (m_type == other.m_type)
+                && (m_refCount == other.m_refCount)
+                && (m_validated == other.m_validated);
     }
 
 } //namespace SignonDaemonNS

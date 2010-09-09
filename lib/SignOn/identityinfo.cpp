@@ -191,4 +191,14 @@ namespace SignOn {
         return impl->m_authMethods.value(method, QVariant(QStringList())).toStringList();
     }
 
+    void IdentityInfo::setRefCount(qint32 refCount)
+    {
+        impl->setRefCount(refCount);
+    }
+
+    qint32 IdentityInfo::refCount() const
+    {
+        return impl->refCount();
+    }
+
 } //namespace SignOn

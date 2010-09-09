@@ -39,7 +39,8 @@ namespace SignOn {
           m_authMethods(QMap<MethodName, QVariant>()),
           m_accessControlList(QStringList()),
           m_type(IdentityInfo::Other),
-          m_isEmpty(true)
+          m_isEmpty(true),
+          m_refCount(0)
     {
     }
 
@@ -78,6 +79,16 @@ namespace SignOn {
         return m_type;
     }
 
+    void IdentityInfoImpl::setRefCount(qint32 refCount)
+    {
+        m_refCount = refCount;
+    }
+
+    qint32 IdentityInfoImpl::refCount() const
+    {
+        return m_refCount;
+    }
+
     bool IdentityInfoImpl::isEmpty() const
     {
         return m_isEmpty;
@@ -95,6 +106,7 @@ namespace SignOn {
         m_accessControlList = other.m_accessControlList;
         m_type = other.m_type;
         m_isEmpty = other.m_isEmpty;
+        m_refCount = other.m_refCount;
     }
 
     void IdentityInfoImpl::clear()
@@ -109,6 +121,7 @@ namespace SignOn {
         m_accessControlList.clear();
         m_type = IdentityInfo::Other;
         m_isEmpty = true;
+        m_refCount = 0;
     }
 
 } //namespace SignOn

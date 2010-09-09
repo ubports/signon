@@ -40,10 +40,12 @@ namespace SignonDaemonNS {
     struct SignonIdentityInfo
     {
         SignonIdentityInfo();
-        SignonIdentityInfo(const quint32 id, const QString &userName, const QString &password,
+        SignonIdentityInfo(const quint32 id,
+                           const QString &userName, const QString &password,
                            const QMap<QString, QVariant> &methods,
                            const QString &caption, const QStringList &realms = QStringList(),
-                           const QStringList &accessControlList = QStringList(), const int type = 0);
+                           const QStringList &accessControlList = QStringList(),
+                           int type = 0, int refCount = 0, bool validated = false);
 
         const QList<QVariant> toVariantList();
         static const QList<QVariant> listToVariantList(const QList<SignonIdentityInfo> &list);
@@ -61,6 +63,8 @@ namespace SignonDaemonNS {
         QMap<MethodName, MechanismsList> m_methods;
         QStringList m_accessControlList;
         int m_type;
+        int m_refCount;
+        bool m_validated;
     }; //struct SignonIdentityInfo
 
 } //namespace SignonDaemonNS

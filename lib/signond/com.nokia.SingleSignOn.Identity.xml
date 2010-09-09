@@ -38,6 +38,7 @@
       <arg name="realms" type="as" direction="in"/>
       <arg name="accessControlList" type="as" direction="in"/>
       <arg name="type" type="i" direction="in"/>
+      <arg name="refCount" type="i" direction="in"/>
     </method>
   </interface>
 </node>

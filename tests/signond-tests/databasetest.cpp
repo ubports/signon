@@ -222,6 +222,8 @@ void TestDatabase::credentialsTest()
     methods.insert(QLatin1String("Method3"), QStringList());
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+    info.m_validated = true;
+    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     creds = m_db->credentials(filter);
@@ -260,6 +262,8 @@ void TestDatabase::insertCredentialsTest()
     methods.insert(QLatin1String("Method2"), mechs);
     methods.insert(QLatin1String("Method3"), QStringList());
     info.m_methods = methods;
+    info.m_validated = true;
+    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, false);
     retInfo = m_db->credentials(id, false);
@@ -295,6 +299,8 @@ void TestDatabase::insertCredentialsTest()
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
     info.m_type = 3;
+    info.m_validated = true;
+    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, false);
@@ -336,6 +342,8 @@ void TestDatabase::updateCredentialsTest()
     methods.insert(QLatin1String("Method3"), QStringList());
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+    info.m_validated = true;
+    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, true);
@@ -357,6 +365,8 @@ void TestDatabase::updateCredentialsTest()
     updateInfo.m_accessControlList = QStringList() << QLatin1String("UID::12345678") << QLatin1String("UID::87654321") << QLatin1String("test::property") ;
     updateInfo.m_id = id;
     updateInfo.m_type = 2;
+    updateInfo.m_validated = false;
+    updateInfo.m_refCount = 4;
 
     QVERIFY(m_db->updateCredentials(updateInfo, true));
 
@@ -389,6 +399,8 @@ void TestDatabase::removeCredentialsTest()
     methods.insert(QLatin1String("Method3"), QStringList());
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+    info.m_validated = true;
+    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, true);
@@ -449,6 +461,7 @@ void TestDatabase::dataTest()
     result = m_db->loadData(id, method);
     QVERIFY(result == data);
 
+
     data.insert(QLatin1String("token"), QVariant());
     data.insert(QLatin1String("token2"), QVariant());
     ret = m_db->storeData(id, method, data);
@@ -457,11 +470,13 @@ void TestDatabase::dataTest()
     qDebug() << data;
     QVERIFY(result.isEmpty());
 
+
     ret = m_db->storeData(id, method, QVariantMap());
     QVERIFY(ret);
     result = m_db->loadData(id, method);
     qDebug() << data;
     QVERIFY(result.isEmpty());
+
 
     data.clear();
     for ( int i = 1000; i <1000+(SSO_MAX_TOKEN_STORAGE/10) +1 ; i++) {
@@ -471,6 +486,17 @@ void TestDatabase::dataTest()
     QVERIFY(!ret);
     result = m_db->loadData(id, method);
     QVERIFY(result != data);
+
+
+    data.clear();
+    QVariantMap map;
+    map.insert("key1",QLatin1String("string"));
+    map.insert("key2",qint32(12));
+    data.insert("key", map);
+    ret = m_db->storeData(0, method, data);
+    QVERIFY(ret);
+    result = m_db->loadData(0, method);
+    QVERIFY(result == data);
 
 }
 
