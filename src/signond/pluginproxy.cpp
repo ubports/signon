@@ -304,10 +304,18 @@ namespace SignonDaemonNS {
                     if (m_uiPolicy == NoUserInteractionPolicy)
                         allowed = false;
 
-                    if (m_uiPolicy == ValidationPolicy &&
-                        (info.contains(SSOUI_KEY_QUERYUSERNAME)
-                        || info.contains(SSOUI_KEY_QUERYPASSWORD)))
-                        allowed = false;
+                    if (m_uiPolicy == ValidationPolicy) {
+                        bool credentialsQueried =
+                            (info.contains(SSOUI_KEY_QUERYUSERNAME)
+                            || info.contains(SSOUI_KEY_QUERYPASSWORD));
+
+                        bool captchaQueried  =
+                            (info.contains(SSOUI_KEY_CAPTCHAIMG)
+                             || info.contains(SSOUI_KEY_CAPTCHAURL));
+
+                        if (credentialsQueried && !captchaQueried)
+                            allowed = false;
+                    }
 
                     if (!allowed) {
                         //set error and return;
