@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Conta Alberto Mardegan <alberto.mardegan@nokia.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -133,12 +133,11 @@ void SignonAuthSession::setId(quint32 id)
 
 void SignonAuthSession::objectUnref()
 {
+    //TODO - remove the `objectUnref` functionality from the DBus API
     TRACE();
     cancel();
 
-    if (m_registered)
-    {
-        emit unregistered();
+    if (m_registered) {
         QDBusConnection connection(SIGNOND_BUS);
         connection.unregisterObject(objectName());
         m_registered = false;
