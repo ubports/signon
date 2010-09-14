@@ -56,8 +56,7 @@ SOURCES += accesscodehandler.cpp \
     backupifadaptor.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
-CONFIG += thread \
-    build_all \
+CONFIG += build_all \
     link_pkgconfig
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti

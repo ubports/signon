@@ -99,11 +99,11 @@ namespace PasswordPluginNS {
         }
 
         if (data.QueryErrorCode() == QUERY_ERROR_CANCELED)
-            emit error(PLUGIN_ERROR_CANCELED);
+            emit error(Error::SessionCanceled);
         else
-            emit error(PLUGIN_ERROR_USER_INTERACTION,
+            emit error(Error(Error::UserInteraction,
                        QLatin1String("userActionFinished error: ")
-                       + QString::number(data.QueryErrorCode()));
+                       + QString::number(data.QueryErrorCode())));
 
         return;
     }

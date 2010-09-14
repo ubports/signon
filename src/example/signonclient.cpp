@@ -81,16 +81,16 @@ void SignonClient::response(const SessionData &sessionData)
     qDebug("response");
 }
 
-void SignonClient::error(SignOn::Identity::IdentityError code, const QString &message)
+void SignonClient::error(const SignOn::Error &error)
 {
-    qDebug("identity Err: %d", code);
-    qDebug() << message;
+    qDebug("identity Err: %d", error.type());
+    qDebug() << error.message();
 }
 
-void SignonClient::sessionError(AuthSession::AuthSessionError code, const QString &message)
+void SignonClient::sessionError(const SignOn::Error &error)
 {
-    qDebug("session Err: %d", code);
-    qDebug() << message;
+    qDebug("session Err: %d", error.type());
+    qDebug() << error.message();
 }
 
 void SignonClient::credentialsStored(const quint32 id)
@@ -106,15 +106,29 @@ void SignonClient::on_store_clicked()
     if ( m_identity ) delete m_identity;
     QMap<MethodName,MechanismsList> methods;
 
-    methods.insert(QLatin1String("google"), QStringList());
+    QStringList mechs = QStringList() << QString::fromLatin1("ClientLogin")
+                        << QString::fromLatin1("Example") ;
+    methods.insert(QLatin1String("google"), mechs);
 
     //example method to be able to use example plugin
     methods.insert(QLatin1String("example"), QStringList());
 
     int randomNumber = qrand() % 100;
-    m_info = new IdentityInfo(QLatin1String("test_caption") + QString().number(randomNumber),
-                              QLatin1String("test_username") + QString().number(randomNumber), methods);
+    m_info = new IdentityInfo(QLatin1String("test_caption")
+                              + QString().number(randomNumber),
+                              QLatin1String("test_username")
+                              + QString().number(randomNumber), methods);
     m_info->setSecret(QLatin1String("test_secret"));
+
+    QStringList realms = QStringList() << QString::fromLatin1("google.com")
+                         << QString::fromLatin1("example.com")
+                         << QString::fromLatin1("example2.com");
+    m_info->setRealms(realms);
+
+    QStringList acl = QStringList() << QString::fromLatin1("AID::12345678")
+                      << QString::fromLatin1("AID::87654321")
+                      << QString::fromLatin1("signon::example");
+    m_info->setAccessControlList(acl);
 
     int randomType = qrand() % 4;
     switch (randomType) {
@@ -137,8 +151,8 @@ void SignonClient::on_store_clicked()
     connect(m_identity, SIGNAL(credentialsStored(const quint32)),
             this, SLOT(credentialsStored(const quint32)));
 
-    connect(m_identity, SIGNAL(error(Identity::IdentityError , const QString& )),
-            this, SLOT(error(Identity::IdentityError, const QString& )));
+    connect(m_identity, SIGNAL(error(const SignOn::Error &)),
+            this, SLOT(error(const SignOn::Error &)));
 
     m_identity->storeCredentials();
 }
@@ -154,26 +168,24 @@ void SignonClient::on_challenge_clicked()
 {
     qDebug("on_challenge_clicked");
     if (!m_identity) {
-        error(SignOn::Identity::CanceledError,QLatin1String("Identity not created"));
+        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
         return;
     }
     ExampleData data;
     data.setSecret("test");
 
     data.setSecret("secret");
-    data.setUserName("url");
+//    data.setUserName("url");
     data.setExample("http://www.flickr.com/");
-    //TODO remove this
-    data.setNetworkProxy(QLatin1String("http://nokes.nokia.com:8080"));
 
     if (!m_session) {
         m_session=m_identity->createSession(QLatin1String("example"));
 
-    connect(m_session, SIGNAL(response(const SessionData&)),
-            this, SLOT(response(const SessionData&)));
+    connect(m_session, SIGNAL(response(const SignOn::SessionData&)),
+            this, SLOT(response(const SignOn::SessionData&)));
 
-    connect(m_session, SIGNAL(error(AuthSession::AuthSessionError , const QString& )),
-            this, SLOT(sessionError(AuthSession::AuthSessionError , const QString& )));
+    connect(m_session, SIGNAL(error(const SignOn::Error &)),
+            this, SLOT(sessionError(const SignOn::Error &)));
     }
 
     m_session->process(data, QLatin1String("example"));
@@ -184,7 +196,7 @@ void SignonClient::on_google_clicked()
 {
     qDebug("on_google_clicked");
     if (!m_identity) {
-        error(SignOn::Identity::CanceledError,QLatin1String("Identity not created"));
+        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
         return;
     }
     SignOn::SessionData data;
@@ -198,8 +210,8 @@ void SignonClient::on_google_clicked()
         connect(m_session, SIGNAL(response(const SignOn::SessionData&)),
             this, SLOT(response(const SignOn::SessionData&)));
 
-        connect(m_session, SIGNAL(error(AuthSession::AuthSessionError , const QString& )),
-            this, SLOT(sessionError(AuthSession::AuthSessionError , const QString& )));
+        connect(m_session, SIGNAL(error(const SignOn::Error &)),
+            this, SLOT(sessionError(const SignOn::Error &)));
     }
 
     m_session->process(data , QLatin1String("ClientLogin"));

@@ -217,8 +217,12 @@ bool CredentialsAccessManager::openCredentialsSystemPriv()
          *   TODO - change this so that openDB takes only the CAM configuration db name
          *          after the LUKS system is enabled; practically remove this 'else' branch
          */
+        dbPath = QDir::homePath() + QDir::separator()
+                 + QLatin1String(".signon");
 
-        dbPath = QDir::homePath() + QDir::separator() + m_CAMConfiguration.m_dbName;
+        QDir dir;
+        if (!dir.mkpath(dbPath)) return false;
+        dbPath += QDir::separator() + m_CAMConfiguration.m_dbName;
     }
 
     TRACE() << "Database name: [" << dbPath << "]";

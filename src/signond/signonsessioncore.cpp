@@ -36,6 +36,8 @@
  * */
 #define IDLE_WATCHDOG_TIMEOUT SIGNOND_MAX_IDLE_TIME * 500
 
+#define SSO_KEY_USERNAME QLatin1String("UserName")
+#define SSO_KEY_PASSWORD QLatin1String("Secret")
 using namespace SignonDaemonNS;
 
 /*
@@ -43,7 +45,7 @@ using namespace SignonDaemonNS;
  * */
 QMap<QString, SignonSessionCore *> sessionsOfStoredCredentials;
 /*
- * List of "zero" autsessions, needed for global signout
+ * List of "zero" authsessions, needed for global signout
  * */
 QList<SignonSessionCore *> sessionsOfNonStoredCredentials;
 
@@ -51,8 +53,7 @@ static QVariantMap filterVariantMap(const QVariantMap &other)
 {
     QVariantMap result;
 
-    foreach(QString key, other.keys())
-    {
+    foreach(QString key, other.keys()) {
         if (!other.value(key).isNull() && other.value(key).isValid())
             result.insert(key, other.value(key));
     }
@@ -62,7 +63,7 @@ static QVariantMap filterVariantMap(const QVariantMap &other)
 
 static QString sessionName(const quint32 id, const QString &method)
 {
-   return QString(id) + QLatin1String("+") + method;
+   return QString::number(id) + QLatin1String("+") + method;
 }
 
 SignonSessionCore::SignonSessionCore(quint32 id,
@@ -152,6 +153,12 @@ bool SignonSessionCore::setupPlugin()
             SIGNAL(processResultReply(const QString&, const QVariantMap&)),
             this,
             SLOT(processResultReply(const QString&, const QVariantMap&)),
+            Qt::DirectConnection);
+
+    connect(m_plugin,
+            SIGNAL(processStore(const QString&, const QVariantMap&)),
+            this,
+            SLOT(processStore(const QString&, const QVariantMap&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
@@ -283,16 +290,12 @@ void SignonSessionCore::setId(quint32 id)
 
     QString key;
 
-    if (id == 0)
-    {
+    if (id == 0) {
         key = sessionName(m_id, m_method);
         sessionsOfNonStoredCredentials.append(sessionsOfStoredCredentials.take(key));
-    }
-    else
-    {
+    } else {
         key = sessionName(id, m_method);
-        if (sessionsOfStoredCredentials.contains(key))
-        {
+        if (sessionsOfStoredCredentials.contains(key)) {
             qCritical() << "attempt to assign existing id";
             return;
         }
@@ -317,22 +320,21 @@ void SignonSessionCore::startProcess()
         if (db != NULL) {
             SignonIdentityInfo info = db->credentials(m_id);
             if (info.m_id != SIGNOND_NEW_IDENTITY) {
-                /*
-                 * TODO: reconsider this code: maybe some more data is required
-                 * */
-                parameters[QLatin1String("Secret")] = info.m_password;
-                parameters[QLatin1String("UserName")] = info.m_userName;
+                /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
+                parameters[SSO_KEY_PASSWORD] = info.m_password;
+                parameters[SSO_KEY_USERNAME] = info.m_userName;
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
-                /*
-                 * TODO: actual behavior should be clarified for this case
-                 * */
+                //credentials not available, so authentication probably fails
             }
+            QVariantMap storedParams = db->loadData(m_id, m_method);
+            //TODO unite might generate multiple entries
+            parameters.unite(storedParams);
         } else {
             BLAME() << "Null database handler object.";
         }
     }
-
+    TRACE() << "all params: " << parameters;
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
                                                             SIGNOND_RUNTIME_ERR_STR);
@@ -350,65 +352,14 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
     QString errName;
     QString errMessage;
 
-    //TODO - deprecated switch - remove if clause 1 moth after release of new error management
+    //TODO this is needed for old error codes
     if(err < Error::AuthSessionErr) {
-        switch (err) {
-            case PLUGIN_ERROR_INVALID_STATE:
-                errMessage = SIGNOND_WRONG_STATE_ERR_STR;
-                errName = SIGNOND_WRONG_STATE_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NOT_AUTHORIZED:
-                errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
-                errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_PERMISSION_DENIED:
-                errMessage = SIGNOND_PERMISSION_DENIED_ERR_STR;
-                errName = SIGNOND_PERMISSION_DENIED_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NO_CONNECTION:
-                errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
-                errName = SIGNOND_NO_CONNECTION_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_NETWORK_ERROR:
-                errMessage = SIGNOND_NETWORK_ERR_STR;
-                errName = SIGNOND_NETWORK_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_SSL_ERROR:
-                errMessage = SIGNOND_SSL_ERR_STR;
-                errName = SIGNOND_SSL_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_OPERATION_FAILED:
-                errMessage = SIGNOND_OPERATION_FAILED_ERR_NAME;
-                errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
-                break;
-             case PLUGIN_ERROR_MISSING_DATA:
-                errMessage = SIGNOND_MISSING_DATA_ERR_STR;
-                errName = SIGNOND_MISSING_DATA_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED:
-                errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
-                errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_RUNTIME:
-                errMessage = SIGNOND_RUNTIME_ERR_STR;
-                errName = SIGNOND_RUNTIME_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_USER_INTERACTION:
-                errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
-                errName = SIGNOND_USER_INTERACTION_ERR_NAME;
-                break;
-            case PLUGIN_ERROR_CANCELED:
-                errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
-                errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
-                break;
-            default:
-                if (message.isEmpty())
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
-                else
-                    errMessage = message;
-                errName = SIGNOND_UNKNOWN_ERR_NAME;
-                break;
-        };
+        BLAME() << "Deprecated error code: " << err;
+            if (message.isEmpty())
+                errMessage = SIGNOND_UNKNOWN_ERR_STR;
+            else
+                errMessage = message;
+            errName = SIGNOND_UNKNOWN_ERR_NAME;
     }
 
     if (Error::AuthSessionErr < err && err < Error::UserErr) {
@@ -504,8 +455,24 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         QVariantList arguments;
         QVariantMap data2 = filterVariantMap(data);
 
-        if (m_method != QLatin1String("password") && data2.contains(QLatin1String("Secret")))
-            data2.remove(QLatin1String("Secret"));
+        //update database entry
+        if (m_id != SIGNOND_NEW_IDENTITY && data2.contains(SSO_KEY_PASSWORD)) {
+            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+            if (db != NULL) {
+                SignonIdentityInfo info = db->credentials(m_id);
+                info.m_userName = data2[SSO_KEY_USERNAME].toString();
+                info.m_password = data2[SSO_KEY_PASSWORD].toString();
+
+                if (!(db->updateCredentials(info)))
+                    BLAME() << "Error occured while updating credentials.";
+            } else {
+                BLAME() << "Error occured while updating credentials. Null database handler object.";
+            }
+        }
+
+        //remove secret field from output
+        if (m_method != QLatin1String("password") && data2.contains(SSO_KEY_PASSWORD))
+            data2.remove(SSO_KEY_PASSWORD);
 
         arguments << data2;
 
@@ -522,6 +489,36 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
 
     m_canceled = QString();
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+}
+
+void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap &data)
+{
+    Q_UNUSED(cancelKey);
+    TRACE();
+
+    keepInUse();
+    qint32 id = m_id;
+    if (id == SIGNOND_NEW_IDENTITY) {
+        BLAME() << "Cannot store without identity";
+        return;
+    }
+    QVariantMap data2 = data;
+    //do not store username or password
+    if (data2.contains(SSO_KEY_PASSWORD))
+        data2.remove(SSO_KEY_PASSWORD);
+    if (data2.contains(SSO_KEY_USERNAME))
+        data2.remove(SSO_KEY_USERNAME);
+
+    //store data into db
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    if (db != NULL) {
+        if(!db->storeData(id, m_method, data2)) {
+            BLAME() << "Error occured while storing data.";
+        }
+    } else {
+        BLAME() << "Error occured while storing data. Null database handler object.";
+    }
+    return;
 }
 
 void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVariantMap &data)
@@ -639,22 +636,6 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             resultParameters.remove(SSOUI_KEY_REFRESH);
         }
 
-        if (m_id != SIGNOND_NEW_IDENTITY) {
-            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-            if (db != NULL) {
-                SignonIdentityInfo info = db->credentials(m_id);
-
-                info.m_userName = resultParameters[SSOUI_KEY_USERNAME].toString();
-                info.m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
-
-                if (!(db->updateCredentials(info)))
-                    TRACE() << "Error occured while updating credentials.";
-            }
-
-        } else {
-                BLAME() << "Error occured while updating credentials. Null database handler object.";
-        }
-
         m_listOfRequests.head().m_params = resultParameters;
     } else {
         m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR, (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
@@ -708,8 +689,7 @@ void SignonSessionCore::startNewRequest()
 void SignonSessionCore::destroy()
 {
     if (m_plugin->isProcessing() ||
-        m_watcher != NULL)
-    {
+        m_watcher != NULL) {
         keepInUse();
         return;
     }

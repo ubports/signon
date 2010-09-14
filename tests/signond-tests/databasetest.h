@@ -1,4 +1,3 @@
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file is part of signon
  *
@@ -21,46 +20,56 @@
  * 02110-1301 USA
  */
 
-#ifndef PASSWORD_PLUGIN_TEST
-#define PASSWORD_PLUGIN_TEST
+#ifndef DATABASETEST_H_
+#define DATABASETEST_H_
 
-#include <QString>
-#include "passwordplugin.h"
+#include <QtTest/QtTest>
+#include <QtCore>
 
-using namespace PasswordPluginNS;
+#include "signond/signoncommon.h"
+#include "credentialsdb.h"
+#include "signonidentityinfo.h"
 
-class PasswordPluginTest : public QObject
+using namespace SignOn;
+using namespace SignonDaemonNS;
+
+class TestDatabase: public QObject
 {
     Q_OBJECT
 
-public slots:
-    void result(const SignOn::SessionData& data);
-    void pluginError(const SignOn::Error &err);
-    void uiRequest(const SignOn::UiSessionData& data);
+public Q_SLOTS:
+#if defined(SSO_CI_TESTMANAGEMENT)
+     void runAllTests();
+#endif
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void init();
     void cleanup();
 
-    //test cases
-    void testPlugin();
-    void testPluginType();
-    void testPluginMechanisms();
-    void testPluginCancel();
-    void testPluginProcess();
-    void testPluginUserActionFinished();
-    void testPluginRefresh();
-    //end test cases
+    void sqlDBConfigurationTest();
+    void createTableStructureTest();
+    void queryListTest();
+    void insertMethodsTest();
+    void cleanUpTablesTest();
+
+    void methodsTest();
+    void checkPasswordTest();
+    void credentialsTest();
+    void insertCredentialsTest();
+    void updateCredentialsTest();
+    void removeCredentialsTest();
+    void clearTest();
+
+    void dataTest();
+
+    void accessControlListTest();
+    void credentialsOwnerSecurityTokenTest();
 
 private:
-    PasswordPlugin* m_testPlugin;
-    int m_error;
-    SignOn::SessionData m_response;
-    SignOn::UiSessionData m_uiResponse;
-    QEventLoop m_loop;
+    CredentialsDB *m_db;
 };
 
 
-#endif //PASSWORD_PLUGIN_TEST
+#endif //DATABASETEST_H_

@@ -31,6 +31,8 @@
 #include "SignOn/uisessiondata.h"
 #include "SignOn/uisessiondata_priv.h"
 
+using namespace SignOn;
+
 namespace SsoTest2PluginNS {
 
     static QMutex mutex;
@@ -49,7 +51,6 @@ namespace SsoTest2PluginNS {
         m_mechanisms += QLatin1String("mech3");
 
         qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
-        qRegisterMetaType<AuthPluginError>("AuthPluginError");
     }
 
     SsoTest2Plugin::~SsoTest2Plugin()
@@ -69,7 +70,7 @@ namespace SsoTest2PluginNS {
     void SsoTest2Plugin::process(const SignOn::SessionData &inData, const QString &mechanism)
     {
         if (! mechanisms().contains(mechanism) ) {
-            emit error(PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED);
+            emit error(Error::MechanismNotAvailable);
             return;
         }
 
@@ -139,7 +140,7 @@ namespace SsoTest2PluginNS {
     void SsoTest2Plugin::execProcess(const SignOn::SessionData &inData, const QString &mechanism)
     {
         Q_UNUSED(mechanism);
-        AuthPluginError err;
+        int err;
         SsoTest2Data testData = inData.data<SsoTest2Data>();
         QStringList chainOfResults;
 
@@ -187,13 +188,13 @@ namespace SsoTest2PluginNS {
             TRACE() << "Operation is canceled";
             QMutexLocker locker(&mutex);
             is_canceled = false;
-            emit error(PLUGIN_ERROR_OPERATION_FAILED);
+            emit error(Error::SessionCanceled);
             return;
         }
 
         if (!testData.ChainOfStates().length() ||
            testData.CurrentState() >= (quint32)testData.ChainOfStates().length()) {
-            err = PLUGIN_ERROR_NONE;
+            err = 0;
         }
 
         testData.setSecret("testSecret_after_test");

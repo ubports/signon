@@ -43,7 +43,6 @@ void SaslPluginTest::initTestCase()
 {
     TEST_START
     qRegisterMetaType<SignOn::SessionData>();
-    qRegisterMetaType<AuthPluginError>();
     TEST_DONE
 }
 
@@ -163,8 +162,8 @@ void SaslPluginTest::testPluginChallengePlain()
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError)),
-                  this,  SLOT(pluginError(AuthPluginError)),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     info.setUserName(QString("idmtestuser"));
@@ -203,8 +202,8 @@ void SaslPluginTest::testPluginChallengeDigestMd5()
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError)),
-                  this,  SLOT(pluginError(AuthPluginError)),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     info.setUserName(QString("idmtestuser"));
@@ -244,8 +243,8 @@ void SaslPluginTest::testPluginChallengeCramMd5()
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
                   this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(error(AuthPluginError)),
-                  this,  SLOT(pluginError(AuthPluginError)),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
+                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     info.setUserName(QString("idmtestuser"));

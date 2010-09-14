@@ -1303,8 +1303,8 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     QMap<MethodName, MechanismsList> methods;
     if (addMethods) {
         methods.insert("dummy1", QStringList() << "mech11" << "mech12" << "mech13");
-        methods.insert("dummy2", QStringList() << "mech1_updated" << "mech2" << "mech1_updated");
-        methods.insert("dummy3", QStringList() << "mech1_updated" << "mech2" << "mech1_updated");
+        methods.insert("dummy2", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
+        methods.insert("dummy3", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
     }
 
     IdentityInfo updateInfo("TEST_CAPTION", "TEST_USERNAME_UPDATED", methods);

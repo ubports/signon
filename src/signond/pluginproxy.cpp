@@ -247,7 +247,7 @@ namespace SignonDaemonNS {
         if (!m_process->bytesAvailable()) {
             qCritical() << "No information available on process";
             m_isProcessing = false;
-            emit processError(m_cancelKey, PLUGIN_ERROR_GENERAL, QString());
+            emit processError(m_cancelKey, Error::InternalServer, QString());
             return;
         }
 
@@ -255,7 +255,6 @@ namespace SignonDaemonNS {
 
         while (m_process->bytesAvailable())
             buffer += m_process->readAllStandardOutput();
-
 
         /*
          * we need to analyze the whole buffer
@@ -284,6 +283,16 @@ namespace SignonDaemonNS {
                     BLAME() << "Unexpected plugin response: " << info;
 
                 isResultObtained = true;
+            } else if (opres == PLUGIN_RESPONSE_STORE) {
+                TRACE() << "PLUGIN_RESPONSE_STORE";
+                out >> infoVa; //SessionData in QVariant
+                info = infoVa.toMap();
+
+                if (!isResultObtained)
+                    emit processStore(m_cancelKey, info);
+                else
+                    BLAME() << "Unexpected plugin store: " << info;
+
             } else if (opres == PLUGIN_RESPONSE_UI) {
                 TRACE() << "PLUGIN_RESPONSE_UI";
                 out >> infoVa; //UiSessionData in QVariant
@@ -295,10 +304,18 @@ namespace SignonDaemonNS {
                     if (m_uiPolicy == NoUserInteractionPolicy)
                         allowed = false;
 
-                    if (m_uiPolicy == ValidationPolicy &&
-                        !info.contains(SSOUI_KEY_CAPTCHAIMG) &&
-                        !info.contains(SSOUI_KEY_CAPTCHAURL))
-                        allowed = false;
+                    if (m_uiPolicy == ValidationPolicy) {
+                        bool credentialsQueried =
+                            (info.contains(SSOUI_KEY_QUERYUSERNAME)
+                            || info.contains(SSOUI_KEY_QUERYPASSWORD));
+
+                        bool captchaQueried  =
+                            (info.contains(SSOUI_KEY_CAPTCHAIMG)
+                             || info.contains(SSOUI_KEY_CAPTCHAURL));
+
+                        if (credentialsQueried && !captchaQueried)
+                            allowed = false;
+                    }
 
                     if (!allowed) {
                         //set error and return;
@@ -365,7 +382,7 @@ namespace SignonDaemonNS {
 
         if (m_isProcessing || exitStatus == QProcess::CrashExit) {
             qCritical() << "Challenge produces CRASH!";
-            emit processError(m_cancelKey, PLUGIN_ERROR_GENERAL, QLatin1String("plugin processed crashed"));
+            emit processError(m_cancelKey, Error::InternalServer, QLatin1String("plugin processed crashed"));
         }
         if (exitCode == 2) {
             TRACE() << "plugin process terminated because cannot change user";

@@ -37,9 +37,9 @@ public:
     SignonClient(QWidget *parent = 0);
 
 public slots:
-    void response(const SessionData &sessionData);
-    void error(Identity::IdentityError code, const QString &message);
-    void sessionError(AuthSession::AuthSessionError code, const QString &message);
+    void response(const SignOn::SessionData &sessionData);
+    void error(const SignOn::Error &error);
+    void sessionError(const SignOn::Error &error);
     void credentialsStored(const quint32 id);
 
 private slots:

@@ -39,32 +39,6 @@ class QVariant;
 QT_END_NAMESPACE
 
 /*!
- * Codes for errors that may be reported by authentication plugins.
- * @deprecated this enum is deprecated.
- * @see SignOn::Error::ErrorType
- */
-enum AuthPluginError {
-    PLUGIN_ERROR_NONE = 0,                  /**< No errors. */
-    PLUGIN_ERROR_GENERAL = 1,               /**< Generic error during execution. */
-    PLUGIN_ERROR_PERMISSION_DENIED = 4,     /**< Permission denied. Client access token was denied.*/
-    PLUGIN_ERROR_MECHANISM_NOT_SUPPORTED,   /**< Given mechanism is not supported. */
-    PLUGIN_ERROR_MISSING_DATA,              /**< SessionData did not contain required data for authentication. */
-    PLUGIN_ERROR_NOT_AUTHORIZED,            /**< Authorization failed. */
-    PLUGIN_ERROR_INVALID_STATE,             /**< Multistage plugin got called with wrong state. */
-    PLUGIN_ERROR_OPERATION_FAILED,          /**< Temporary failure in authentication. */
-    PLUGIN_ERROR_NO_CONNECTION,             /**< Network connection was not available. */
-    PLUGIN_ERROR_NETWORK_ERROR,             /**< Network error. */
-    PLUGIN_ERROR_SSL_ERROR,                 /**< SSL related error. */
-    PLUGIN_ERROR_RUNTIME,                   /**< Casting SessionData into subclass failed. */
-    PLUGIN_ERROR_USER_INTERACTION,          /**< Problems during user interaction */
-    PLUGIN_ERROR_CANCELED,                  /**< User canceled ui operation */
-    PLUGIN_ERROR_QUERY_LOGIN,               /**< @deprecated */
-    PLUGIN_ERROR_QUERY_CAPTCHA,             /**< @deprecated */
-    PLUGIN_ERROR_OPEN_URL,                  /**< @deprecated */
-    PLUGIN_ERROR_LAST
-};
-
-/*!
  * Predefined states to be used for progress reporting.
  */
 enum AuthPluginState {
@@ -169,18 +143,16 @@ Q_SIGNALS:
     void result(const SignOn::SessionData &data);
 
     /*!
-     * Emitted when authentication process has been completed for given data
-     * and resulting an error.
+     * Emitted when authentication process want to store session data parameters
+     * for later use. Stored parameters are added into SessionData in following process calls.
+     * This is useful when authentication is using permanent tokens.
      *
-     * @param error resulting error code.
-     * @param errorMessage resulting error message.
-     * @deprecated This is deprecated, use error(const Error &err) instead.
-     * @see SignOn::Error
-     * @warning Do no use both this deprecated and the error(const Error &err) signal.
-     *          After switching to error(const Error &err), remove this deprecated
-     *          signal emition.
+     * @note This is shared within same identity using same method only.
+     * @note There can be storage size limitation for data that can be stored.
+     *
+     * @param data resulting SessionData, need to be returned to client.
      */
-    void error(const AuthPluginError error, const QString &errorMessage = QString());
+    void store(const SignOn::SessionData &data);
 
     /*!
      * Emitted when authentication process has been completed for given data
@@ -259,7 +231,6 @@ public Q_SLOTS:
 
 QT_BEGIN_NAMESPACE
  Q_DECLARE_INTERFACE(AuthPluginInterface,
-                     "com.nokia.Signon.PluginInterface/1.2")
+                     "com.nokia.SingleSignOn.PluginInterface/1.3")
 QT_END_NAMESPACE
-Q_DECLARE_METATYPE(AuthPluginError)
 #endif // AUTHPLUGINIF_H

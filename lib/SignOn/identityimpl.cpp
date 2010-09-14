@@ -162,8 +162,6 @@ namespace SignOn {
                 updateContents();
                 break;
             case Removed:
-                emit m_parent->error(Identity::NotFoundError,
-                                     QLatin1String("Removed from database."));
                 emit m_parent->error(Error(Error::IdentityNotFound,
                                      QLatin1String("Removed from database.")));
                 return;
@@ -194,8 +192,6 @@ namespace SignOn {
             case NeedsUpdate:
                 break;
             case Removed:
-                emit m_parent->error(Identity::NotFoundError,
-                                     QLatin1String("Removed from database."));
                 emit m_parent->error(
                         Error(Error::IdentityNotFound,
                               QLatin1String("Removed from database.")));
@@ -212,8 +208,6 @@ namespace SignOn {
                                   SLOT(storeCredentialsReply(const quint32)));
         if (!result) {
             TRACE() << "Error occurred.";
-            emit m_parent->error(Identity::UnknownError,
-                                 QLatin1String("DBUS Communication error occurred."));
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -273,7 +267,8 @@ namespace SignOn {
              << info.caption()
              << info.realms()
              << QVariant(info.accessControlList())
-             << info.type();
+             << info.type()
+             << info.refCount();
 
         TRACE() << args;
 
@@ -281,8 +276,6 @@ namespace SignOn {
                                   SLOT(storeCredentialsReply(const quint32)));
         if (!result) {
             TRACE() << "Error occurred.";
-            emit m_parent->error(Identity::UnknownError,
-                                 QLatin1String("DBUS Communication error occurred."));
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -310,8 +303,6 @@ namespace SignOn {
                     m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_REMOVE_METHOD);
                     return;
                 case Removed:
-                    emit m_parent->error(Identity::NotFoundError,
-                                         QLatin1String("Already removed from database."));
                     emit m_parent->error(
                             Error(Error::IdentityNotFound,
                                   QLatin1String("Already removed from database.")));
@@ -328,15 +319,11 @@ namespace SignOn {
                                       SLOT(removeReply()));
             if (!result) {
                 TRACE() << "Error occurred.";
-                emit m_parent->error(Identity::UnknownError,
-                                     QLatin1String("DBUS Communication error occurred."));
                 emit m_parent->error(
                         Error(Error::InternalCommunication,
                               SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
             }
         } else {
-            emit m_parent->error(Identity::UnknownError,
-                                 QLatin1String("Remove request failed. The identity is not stored"));
             emit m_parent->error(
                     Error(Error::Unknown,
                           QLatin1String("Remove request failed. The identity is not stored")));
@@ -357,8 +344,6 @@ namespace SignOn {
                 m_operationQueueHandler.enqueueOperation(SIGNOND_IDENTITY_QUERY_INFO_METHOD);
                 return;
             case Removed:
-                emit m_parent->error(Identity::NotFoundError,
-                                     QLatin1String("Removed from database."));
                 emit m_parent->error(
                         Error(Error::IdentityNotFound,
                               QLatin1String("Removed from database.")));
@@ -393,8 +378,6 @@ namespace SignOn {
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
                 return;
             case Removed:
-                emit m_parent->error(Identity::NotFoundError,
-                                 QLatin1String("Removed from database."));
                 emit m_parent->error(
                         Error(Error::IdentityNotFound,
                               QLatin1String("Removed from database.")));
@@ -411,8 +394,6 @@ namespace SignOn {
                                   SLOT(verifyUserReply(const bool)));
         if (!result) {
             TRACE() << "Error occurred.";
-            emit m_parent->error(Identity::UnknownError,
-                                 QLatin1String("DBUS Communication error occurred."));
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -437,8 +418,6 @@ namespace SignOn {
                                         QList<QGenericArgument *>() << (new Q_ARG(QString, secret)));
                 return;
             case Removed:
-                emit m_parent->error(Identity::NotFoundError,
-                                 QLatin1String("Removed from database."));
                 emit m_parent->error(
                         Error(Error::IdentityNotFound,
                               QLatin1String("Removed from database.")));
@@ -455,8 +434,6 @@ namespace SignOn {
                                   SLOT(verifySecretReply(const bool)));
         if (!result) {
             TRACE() << "Error occurred.";
-            emit m_parent->error(Identity::UnknownError,
-                                 QLatin1String("DBUS Communication error occurred."));
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -495,8 +472,6 @@ namespace SignOn {
                                       SLOT(signOutReply()));
             if (!result) {
                 TRACE() << "Error occurred.";
-                emit m_parent->error(Identity::UnknownError,
-                                     QLatin1String("DBUS Communication error occurred."));
                 emit m_parent->error(
                         Error(Error::InternalCommunication,
                               SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -634,31 +609,24 @@ namespace SignOn {
 
         /* Signon specific errors */
         if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
-            emit m_parent->error(Identity::UnknownError, err.message());
             emit m_parent->error(Error(Error::Unknown, err.message()));
             return;
         } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
-            emit m_parent->error(Identity::InternalServerError, err.message());
             emit m_parent->error(Error(Error::InternalServer, err.message()));
             return;
         } else if (err.name() == SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME) {
-            emit m_parent->error(Identity::NotFoundError, err.message());
             emit m_parent->error(Error(Error::IdentityNotFound, err.message()));
             return;
         } else if (err.name() == SIGNOND_METHOD_NOT_AVAILABLE_ERR_NAME) {
-            emit m_parent->error(Identity::MethodNotAvailableError, err.message());
             emit m_parent->error(Error(Error::MethodNotAvailable, err.message()));
             return;
         } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(Identity::PermissionDeniedError, err.message());
             emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
         } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(Identity::PermissionDeniedError, err.message());
             emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
         } else if (err.name() == SIGNOND_STORE_FAILED_ERR_NAME) {
-            emit m_parent->error(Identity::StoreFailedError, err.message());
             emit m_parent->error(Error(Error::StoreFailed, err.message()));
             if (m_tmpIdentityInfo) {
                 delete m_tmpIdentityInfo;
@@ -666,19 +634,15 @@ namespace SignOn {
             }
             return;
         } else if (err.name() == SIGNOND_REMOVE_FAILED_ERR_NAME) {
-            emit m_parent->error(Identity::RemoveFailedError, err.message());
             emit m_parent->error(Error(Error::RemoveFailed, err.message()));
             return;
         } else if (err.name() == SIGNOND_SIGNOUT_FAILED_ERR_NAME) {
-            emit m_parent->error(Identity::SignOutFailedError, err.message());
             emit m_parent->error(Error(Error::SignOutFailed, err.message()));
             return;
         } else if (err.name() == SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME) {
-            emit m_parent->error(Identity::CanceledError, err.message());
             emit m_parent->error(Error(Error::IdentityOperationCanceled, err.message()));
             return;
         } else if (err.name() == SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
-            emit m_parent->error(Identity::CredentialsNotAvailableError, err.message());
             emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
         }
@@ -691,12 +655,10 @@ namespace SignOn {
 
         /* Qt DBUS specific errors */
         if (err.type() != QDBusError::NoError) {
-            emit m_parent->error(Identity::UnknownError, err.message());
             emit m_parent->error(Error(Error::InternalCommunication, err.message()));
             return;
         }
 
-        emit m_parent->error(Identity::UnknownError, err.message());
         emit m_parent->error(Error(Error::Unknown, err.message()));
     }
 
@@ -707,8 +669,6 @@ namespace SignOn {
 
         if (!result) {
             TRACE() << "Error occurred.";
-            emit m_parent->error(Identity::UnknownError,
-                                 SIGNOND_UNKNOWN_ERR_STR);
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -805,6 +765,10 @@ namespace SignOn {
 
         if (!infoData.isEmpty())
             m_identityInfo->setType((IdentityInfo::CredentialsType)(infoData.takeFirst().toInt()));
+
+        if (!infoData.isEmpty())
+            m_identityInfo->setRefCount((infoData.takeFirst().toInt()));
+
     }
 
     void IdentityImpl::checkConnection()
@@ -842,9 +806,6 @@ namespace SignOn {
 
             int count = m_operationQueueHandler.queuedOperationsCount();
             for (int i = 0; i < count; ++i) {
-                emit m_parent->error(Identity::UnknownError,
-                                     QLatin1String("Could not establish valid "
-                                                   "connection to remote object."));
                 emit m_parent->error(
                         Error(Error::Unknown,
                               QLatin1String("Could not establish valid "

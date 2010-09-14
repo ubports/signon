@@ -75,6 +75,7 @@ namespace SignonDaemonNS {
 
     Q_SIGNALS:
         void processResultReply(const QString &cancelKey, const QVariantMap &data);
+        void processStore(const QString &cancelKey, const QVariantMap &data);
         void processUiRequest(const QString &cancelKey, const QVariantMap &data);
         void processRefreshRequest(const QString &cancelKey, const QVariantMap &data);
         void processError(const QString &cancelKey, int error, const QString &message);

@@ -39,7 +39,6 @@ namespace RemotePluginProcessNS {
         m_errnotifier = NULL;
 
         qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
-        qRegisterMetaType<AuthPluginError>("AuthPluginError");
         qRegisterMetaType<QString>("QString");
     }
 
@@ -113,12 +112,11 @@ namespace RemotePluginProcessNS {
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
 
-        //TODO - this connect is deprecated, remove 1 month after the OO error handling release
-        connect(m_plugin, SIGNAL(error(const AuthPluginError, const QString&)),
-                  this, SLOT(error(const AuthPluginError, const QString&)));
+        connect(m_plugin, SIGNAL(store(const SignOn::SessionData&)),
+                  this, SLOT(store(const SignOn::SessionData&)));
 
         connect(m_plugin, SIGNAL(error(const SignOn::Error &)),
-                this, SLOT(error(const SignOn::Error &)));
+                  this, SLOT(error(const SignOn::Error &)));
 
         connect(m_plugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
                   this, SLOT(userActionRequired(const SignOn::UiSessionData&)));
@@ -229,19 +227,21 @@ namespace RemotePluginProcessNS {
         TRACE() << resultDataMap;
     }
 
-    //TODO - this slot is deprecated, remove 1 month after the OO error handling release
-    void RemotePluginProcess::error(const AuthPluginError error, const QString &errorMessage)
+    void RemotePluginProcess::store(const SignOn::SessionData &data)
     {
-        disableCancelThread();
+        TRACE();
 
         QDataStream out(&m_outfile);
+        QVariantMap storeDataMap;
 
-        out << (quint32)PLUGIN_RESPONSE_ERROR;
-        out << (quint32)error;
-        out << errorMessage;
+        foreach(QString key, data.propertyNames())
+            storeDataMap[key] = data.getProperty(key);
+
+        out << (quint32)PLUGIN_RESPONSE_STORE;
+        out << QVariant(storeDataMap);
         m_outfile.flush();
 
-        TRACE() << "error is sent" << error << " " << errorMessage;
+        TRACE() << storeDataMap;
     }
 
     void RemotePluginProcess::error(const SignOn::Error &err)

@@ -36,9 +36,20 @@
 
 #include "signonidentityinfo.h"
 
-#define SSO_DELIMITER  QLatin1String("#/&")
+#define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
+
+class TestDatabase;
 
 namespace SignonDaemonNS {
+
+    /*!
+     * @enum IdentityFlags
+     * Flags to be stored into database
+     */
+    enum IdentityFlags {
+        Validated = 0x0001,
+        RememberPassword = 0x0002
+    };
 
     /*!
         @class SqlDatabase
@@ -114,6 +125,14 @@ namespace SignonDaemonNS {
         */
         QSqlQuery exec(const QString &query);
 
+        /*!
+            Executes a specific database query.
+            If an error occurres the lastError() method can be used for handling decissions.
+            @param query, the query.
+            @returns the resulting sql query, which can be process in the case of a 'SELECT' statement.
+        */
+        QSqlQuery exec(QSqlQuery &query);
+
          /*!
             Executes a specific database set of queryes (INSERTs, UPDATEs, DELETEs) in a transaction
             context (No nested transactions supported - sqlite reasons).
@@ -175,42 +194,48 @@ namespace SignonDaemonNS {
         Q_DISABLE_COPY(CredentialsDB)
 
         friend class CredentialsAccessManager;
+        friend class ::TestDatabase;
 
         CredentialsDB(const QString &dbName);
         ~CredentialsDB();
 
-    public:
-        quint32 insertCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
-        bool updateCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
-        bool removeCredentials(const quint32 id);
+    private:
+        QSqlQuery exec(const QString &query);
+        QSqlQuery exec(QSqlQuery &query);
+        bool transactionalExec(const QStringList &queryList);
+        bool startTransaction();
+        bool commit();
+        void rollback();
+        bool connect();
+        void disconnect();
+        QMap<QString, QString> sqlDBConfiguration() const;
+        bool hasTableStructure() const;
+        bool createTableStructure();
+//helpers
+        QStringList queryList(const QString &query_str);
+        bool insertMethods(QMap<QString, QStringList> methods);
+        bool cleanUpTables();
 
-        bool checkPassword(const QString &username, const QString &password);
+    public:
+        CredentialsDBError error(bool queryError = true, bool clearError = true) const;
+        bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
+
+        QStringList methods(const quint32 id, const QString &securityToken = QString());
+        bool checkPassword(const quint32 id, const QString &username, const QString &password);
         SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
         QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
-        QStringList methods(const quint32 id);
+
+        quint32 insertCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
+        quint32 updateCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
+        bool removeCredentials(const quint32 id);
+
         bool clear();
 
         QStringList accessControlList(const quint32 identityId);
         QString credentialsOwnerSecurityToken(const quint32 identityId);
 
-        CredentialsDBError error(bool queryError = true, bool clearError = true) const;
-        bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
-
-        void listDBContents();
-
-    private:
-        QSqlQuery exec(const QString &query);
-        bool transactionalExec(const QStringList &queryList);
-        void rollback();
-        bool commit();
-        bool startTransaction();
-
-        QMap<QString, QString> sqlDBConfiguration() const;
-        bool hasTableStructure() const;
-        bool createTableStructure();
-
-        bool connect();
-        void disconnect();
+        QVariantMap loadData(const quint32 id, const QString &method);
+        bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
 
     private:
         SqlDatabase *m_pSqlDatabase;

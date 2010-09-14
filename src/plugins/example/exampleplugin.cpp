@@ -24,6 +24,8 @@
 #include "exampledata.h"
 #include "SignOn/signonplugincommon.h"
 
+using namespace SignOn;
+
 namespace ExamplePluginNS {
 
     ExamplePlugin::ExamplePlugin(QObject *parent)
@@ -71,7 +73,8 @@ namespace ExamplePluginNS {
             return;
             */
         }
-       TRACE() << "User: " << inData.UserName() ;
+        TRACE() << "User: " << inData.UserName() ;
+        TRACE() << "Example" << input.Example();
 
         if ( inData.UserName() == QLatin1String("Example" ) ) {
             qDebug() << inData.UserName();
@@ -81,7 +84,13 @@ namespace ExamplePluginNS {
         }
 
         if ( inData.UserName() == QLatin1String("error" ) ) {
-            emit error(PLUGIN_ERROR_NOT_AUTHORIZED);
+            emit error(Error::NotAuthorized);
+        }
+
+        if ( inData.UserName() == QLatin1String("store" ) ) {
+            ExampleData storeData;
+            storeData.setExample(QLatin1String("store:")+input.Example());
+            emit store(storeData);
         }
 
         if ( inData.UserName() == QLatin1String("url" ) ) {
@@ -94,6 +103,8 @@ namespace ExamplePluginNS {
         }
         response.setExample(QLatin1String("authenticated"));
         TRACE() << "Emitting results";
+
+        emit store(response);
         emit result(response);
         return;
     }
@@ -101,6 +112,7 @@ namespace ExamplePluginNS {
 
     void ExamplePlugin::userActionFinished(const SignOn::UiSessionData &data)
     {
+        Q_UNUSED(data);
         ExampleData response;
         TRACE();
         response.setExample(QLatin1String("url shown"));
