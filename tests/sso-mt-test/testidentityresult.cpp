@@ -106,17 +106,6 @@ bool TestIdentityResult::compareIdentityInfos(
     return true;
 }
 
-void TestIdentityResult::error(Identity::IdentityError code, const QString& message)
-{
-    IT_IS_HAPPENING
-    m_responseReceived = ErrorResp;
-    m_err = code;
-    m_errMsg = message;
-
-    qDebug() << "Error:" << m_err << ", Message:" << m_errMsg;
-
-    emit testCompleted();
-}
 
 void TestIdentityResult::error(const Error& error)
 {

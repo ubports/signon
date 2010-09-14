@@ -88,7 +88,7 @@ void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QSt
     emit testCompleted();
 }
 
-void TestAuthServiceResult::identities(const QList<IdentityInfo> &identityList)
+void TestAuthServiceResult::identities(const QList<SignOn::IdentityInfo> &identityList)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = NormalResp;

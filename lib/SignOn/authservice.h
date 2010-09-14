@@ -219,7 +219,7 @@ namespace SignOn {
          *
          * @param identityList list of identities information
          */
-        void identities(const QList<IdentityInfo> &identityList);
+        void identities(const QList<SignOn::IdentityInfo> &identityList);
 
         /*!
          * Database was cleared and resetted to initial state.
