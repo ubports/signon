@@ -110,6 +110,16 @@ public:
     }
 
     /*!
+     * Addition operator
+     * @param other SessionData object to be added to this instance.
+     * @returns reference to this object
+     */
+    SessionData &operator+=(const SessionData &other) {
+        m_data.unite(other.m_data);
+        return *this;
+    }
+
+    /*!
      * Access the list of runtime existing properties of the SessionData
      * @returns a string list containing the property names.
      */
