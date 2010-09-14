@@ -87,9 +87,6 @@ AuthSessionImpl::~AuthSessionImpl()
 void AuthSessionImpl::send2interface(const QString &operation, const char *slot, const QVariantList &arguments)
 {
     if (!m_DBusInterface || !m_DBusInterface->isValid()) {
-        emit m_parent->error(AuthSession::UnknownError,
-                             QLatin1String("General error in AuthSession: "
-                                           "cannot register interface"));
         emit m_parent->error(
                 Error(Error::InternalCommunication,
                       SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -126,7 +123,6 @@ void AuthSessionImpl::send2interface(const QString &operation, const char *slot,
     }
 
     if (!res) {
-        emit m_parent->error(AuthSession::UnknownError, m_DBusInterface->lastError().message());
         emit m_parent->error(
                 Error(Error::InternalCommunication,
                       m_DBusInterface->lastError().message()));
@@ -140,11 +136,6 @@ void AuthSessionImpl::send2interface(const QString &operation, const char *slot,
 void AuthSessionImpl::setId(quint32 id)
 {
     if (!m_isValid) {
-        emit m_parent->error(
-                AuthSession::UnknownError,
-                QString(QLatin1String("AuthSession(%1) cannot perform operation"))
-                    .arg(m_methodName));
-
         emit m_parent->error(
                 Error(Error::InternalCommunication,
                       QString(QLatin1String("AuthSession(%1) cannot perform operation."))
@@ -233,9 +224,6 @@ void AuthSessionImpl::queryAvailableMechanisms(const QStringList &wantedMechanis
 {
     if (!checkConnection()) {
         qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
-        emit m_parent->error(AuthSession::InternalCommunicationError,
-                             SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
-
         emit m_parent->error(
                 Error(Error::InternalCommunication,
                       SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
@@ -259,8 +247,6 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
 {
     if (!checkConnection()) {
         qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
-        emit m_parent->error(AuthSession::InternalCommunicationError, SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
-
         emit m_parent->error(
                 Error(Error::InternalCommunication,
                       SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
@@ -269,9 +255,6 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
 
     if (m_isBusy) {
         qCritical() << "AuthSession: client is busy";
-        emit m_parent->error(AuthSession::UnknownError,
-            QString(QLatin1String("AuthSession(%1) is busy"))
-            .arg(m_methodName));
 
         emit m_parent->error(
                 Error(Error::Unknown,
@@ -309,7 +292,6 @@ void AuthSessionImpl::cancel()
 {
     if (!checkConnection()) {
         qCritical() << SIGNOND_AUTHSESSION_CONNECTION_PROBLEM;
-        emit m_parent->error(AuthSession::InternalCommunicationError, SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
 
         emit m_parent->error(
                 Error(Error::InternalCommunication,
@@ -324,8 +306,6 @@ void AuthSessionImpl::cancel()
 
     if (!m_DBusInterface) {
         m_operationQueueHandler.removeOperation(SIGNOND_SESSION_PROCESS_METHOD);
-        emit m_parent->error(AuthSession::CanceledError,
-                             QLatin1String("Process is canceled."));
 
         emit m_parent->error(
                 Error(Error::SessionCanceled,
@@ -356,9 +336,6 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
 
         int numberOfErrorReplies = m_operationQueueHandler.queuedOperationsCount();
         for (int i = 0; i < numberOfErrorReplies; i++) {
-            emit m_parent->error(
-                    AuthSession::InternalCommunicationError,
-                    SIGNOND_AUTHSESSION_CONNECTION_PROBLEM);
 
             emit m_parent->error(
                     Error(Error::InternalCommunication,
@@ -443,7 +420,6 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
     if (errMessage.isEmpty())
         errMessage = err.message();
 
-    emit m_parent->error(errCodeDeprecated, err.message());
     emit m_parent->error(Error(errCode, errMessage));
 
 }
@@ -466,8 +442,6 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
     } else {
         int numberOfErrorReplies = m_operationQueueHandler.queuedOperationsCount();
         for (int i = 0; i < numberOfErrorReplies; i++) {
-            emit m_parent->error(AuthSession::UnknownError,
-                                 QLatin1String("The given session cannot be accessed"));
 
             emit m_parent->error(
                     Error(Error::Unknown,

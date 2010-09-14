@@ -206,13 +206,6 @@ namespace SignOn {
         }
 
     Q_SIGNALS:
-        /*!
-         * Emitted when an error occurs while performing an operation.
-         * @param code the error code
-         * @param message a description string for troubleshooting purposes
-         * @deprecated This method is deprecated. Use error(const Error &err), instead.
-         */
-        void error(AuthSession::AuthSessionError code, const QString &message);
 
         /*!
          * Emitted when an error occurs while performing an operation.
@@ -220,7 +213,7 @@ namespace SignOn {
          *
          * @param err The error object.
          */
-        void error(const Error &err);
+        void error(const SignOn::Error &err);
 
         /*!
          * Emitted when the list of available mechanisms have been obtained
@@ -242,7 +235,7 @@ namespace SignOn {
          *
          * @param sessionData parameters with the authentication token.
          */
-        void response(const SessionData &sessionData);
+        void response(const SignOn::SessionData &sessionData);
 
         /*!
          * Provides information about the state of the authentication

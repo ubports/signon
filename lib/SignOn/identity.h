@@ -225,13 +225,6 @@ namespace SignOn {
         void signOut();
 
     Q_SIGNALS:
-        /*!
-         * Emitted when an error occurs while performing an operation.
-         * @param code the error code
-         * @param message a description string for troubleshooting purposes
-         * @deprecated This method is deprecated. Use error(const Error &err), instead.
-         */
-        void error(Identity::IdentityError code, const QString &message);
 
         /*!
          * Emitted when an error occurs while performing an operation.
@@ -239,7 +232,7 @@ namespace SignOn {
          *
          * @param err The error object.
          */
-        void error(const Error &err);
+        void error(const SignOn::Error &err);
 
         /*!
          * Emitted when the list of available mechanisms has been obtained
@@ -260,7 +253,7 @@ namespace SignOn {
          * Emitted when credentials passed by queryInfo() method
          * @param info the credentials as have been stored on the service
          */
-        void info(const IdentityInfo &info);
+        void info(const SignOn::IdentityInfo &info);
 
         /*!
          * Emitted when user verification is completed.
