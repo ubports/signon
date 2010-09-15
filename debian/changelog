@@ -1,3 +1,15 @@
+signon (3.0-1) unstable; urgency=low
+
+  * Fixes: NB#188345 - CUD script is not executable
+  * Fixes: NB#189052 - Facebook:SignON UI lauching while uploading images to facebook .
+  * Fixes: NB#191532 - Improper signature in some signals.
+  * Fixes: NB#185401 - 'Unknown error' is shown while signing in to youtube account using the Gmail account which is not added to youtube service
+  * Fixes: NB#183922 - Facebook:"Unknown error" note shown when wrong credentials are entered
+  * Added store() signal to signon plugin API
+  * Database structure rewritten
+    
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 15 Sep 2010 13:32:42 +0300
+
 signon (2.5-1) unstable; urgency=low
 
   * Fixes: NB#179506 -  Signond is filling /tmp with traces
