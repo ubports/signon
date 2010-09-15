@@ -42,8 +42,8 @@ SignonClient::SignonClient(QWidget *parent)
             this, SLOT(methodsAvailable(const QStringList&)));
     connect(m_service, SIGNAL(mechanismsAvailable(const QString &, const QStringList&)),
             this, SLOT( mechanismsAvailable(const QString &,  const QStringList&)));
-    connect(m_service, SIGNAL(identities(const QList<IdentityInfo>& )),
-            this, SLOT(identities(const QList<IdentityInfo>& )));
+    connect(m_service, SIGNAL(identities(const QList<SignOn::IdentityInfo>& )),
+            this, SLOT(identities(const QList<SignOn::IdentityInfo>& )));
 
     qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
     qRegisterMetaType<AuthSession::AuthSessionError>("AuthSession::AuthSessionError");
@@ -67,7 +67,7 @@ void SignonClient::mechanismsAvailable(const QString &method, const QStringList 
     }
 }
 
-void SignonClient::identities(const QList<IdentityInfo> &identityList)
+void SignonClient::identities(const QList<SignOn::IdentityInfo> &identityList)
 {
     qDebug("identities");
      for (int i = 0; i < identityList.size(); ++i) {
