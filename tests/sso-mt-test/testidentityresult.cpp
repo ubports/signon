@@ -107,7 +107,7 @@ bool TestIdentityResult::compareIdentityInfos(
 }
 
 
-void TestIdentityResult::error(const Error& error)
+void TestIdentityResult::error(const SignOn::Error& error)
 {
     m_responseReceived = ErrorResp;
     m_error = (Error::ErrorType)error.type();

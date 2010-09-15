@@ -44,19 +44,7 @@ void TestAuthServiceResult::reset()
     m_cleared = false;
 }
 
-void TestAuthServiceResult::error(AuthService::ServiceError code, const QString& message)
-{
-    SIGNOND_TEST_REPLY_RECEIVED
-    m_responseReceived = ErrorResp;
-    m_err = code;
-    m_errMsg = message;
-
-    qDebug() << "Error:" << m_err << ", Message:" << m_errMsg;
-
-    emit testCompleted();
-}
-
-void TestAuthServiceResult::error(const Error& error)
+void TestAuthServiceResult::error(const SignOn::Error& error)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = ErrorResp;
