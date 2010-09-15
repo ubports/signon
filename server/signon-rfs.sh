@@ -24,5 +24,5 @@
 #
 # ============================================================================
 
-dbus-send --session --type=method_call --dest="com.nokia.SingleSignOn" --print-reply "/com/nokia/SingleSignOn"  com.nokia.SingleSignOn.AuthService.clear
+#do nothing
 
