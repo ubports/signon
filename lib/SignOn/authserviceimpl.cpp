@@ -95,10 +95,6 @@ namespace SignOn {
                                                 SLOT(errorReply(const QDBusError &)));
         if (!result) {
             emit m_parent->error(
-                    AuthService::InternalCommunicationError,
-                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
-
-            emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
@@ -120,10 +116,6 @@ namespace SignOn {
                                                 SLOT(queryMechanismsReply(const QStringList &)),
                                                 SLOT(errorReply(const QDBusError &)));
         if (!result) {
-            emit m_parent->error(
-                    AuthService::InternalCommunicationError,
-                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
-
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -176,10 +168,6 @@ namespace SignOn {
                                                 SLOT(errorReply(const QDBusError &)));
         if (!result) {
             emit m_parent->error(
-                    AuthService::InternalCommunicationError,
-                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
-
-            emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
         }
@@ -198,10 +186,6 @@ namespace SignOn {
                                                 SLOT(clearReply()),
                                                 SLOT(errorReply(const QDBusError &)));
         if (!result) {
-            emit m_parent->error(
-                    AuthService::InternalCommunicationError,
-                    SIGNOND_INTERNAL_COMMUNICATION_ERR_STR);
-
             emit m_parent->error(
                     Error(Error::InternalCommunication,
                           SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
@@ -294,35 +278,28 @@ namespace SignOn {
 
         /* Signon specific errors */
         if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
-            emit m_parent->error(AuthService::UnknownError, err.message());
             emit m_parent->error(Error(Error::Unknown, err.message()));
             return;
         } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
-            emit m_parent->error(AuthService::InternalServerError, err.message());
             emit m_parent->error(Error(Error::InternalServer, err.message()));
             return;
         } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {
-            emit m_parent->error(AuthService::MethodNotKnownError, err.message());
             emit m_parent->error(Error(Error::MethodNotKnown, err.message()));
             return;
         } else if (err.name() == SIGNOND_INVALID_QUERY_ERR_NAME) {
-            emit m_parent->error(AuthService::InvalidQueryError, err.message());
             emit m_parent->error(Error(Error::InvalidQuery, err.message()));
             return;
         } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(AuthService::PermissionDeniedError, err.message());
             emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
         }
 
         /* Qt DBUS specific errors */
         if (err.type() != QDBusError::NoError) {
-            emit m_parent->error(AuthService::UnknownError, err.message());
             emit m_parent->error(Error(Error::InternalCommunication, err.message()));
             return;
         }
 
-        emit m_parent->error(AuthService::UnknownError, err.message());
         emit m_parent->error(Error(Error::Unknown, err.message()));
     }
 

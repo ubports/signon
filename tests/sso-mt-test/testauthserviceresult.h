@@ -60,7 +60,6 @@ public:
     void reset();
 
 public Q_SLOTS:
-    void error(AuthService::ServiceError code, const QString& message);//deprecated
     void error(const SignOn::Error &err);
     void methodsAvailable(const QStringList &methods);
     void mechanismsAvailable(const QString &method, const QStringList &mechanisms);
