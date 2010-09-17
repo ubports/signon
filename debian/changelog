@@ -1,3 +1,10 @@
+signon (3.1-1) unstable; urgency=low
+
+  * Added named references into Identity API
+  * Fixes: NB#192158 - signon: add pkg-config to build-deps
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 17 Sep 2010 10:32:42 +0300
+
 signon (3.0-2) unstable; urgency=low
 
   * Removed deprecated signals from API
