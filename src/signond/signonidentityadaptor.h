@@ -60,8 +60,7 @@ namespace SignonDaemonNS {
                                  const QString &caption,
                                  const QStringList &realms,
                                  const QStringList &accessControlList,
-                                 const int type,
-                                 const int refCount);
+                                 const int type);
     Q_SIGNALS:
         void unregistered();
         void infoUpdated(int);

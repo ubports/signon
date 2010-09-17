@@ -272,7 +272,6 @@ namespace SignonDaemonNS {
                     "username TEXT,"
                     "password TEXT,"
                     "flags INTEGER,"
-                    "refcount INTEGER,"
                     "type INTEGER)")
             <<  QString::fromLatin1(
                     "CREATE TABLE METHODS"
@@ -299,6 +298,12 @@ namespace SignonDaemonNS {
                     "method_id INTEGER,"
                     "mechanism_id INTEGER,"
                     "token_id INTEGER)")
+            <<  QString::fromLatin1(
+                    "CREATE TABLE REFERENCES"
+                    "(identity_id INTEGER,"
+                    "token_id INTEGER,"
+                    "reference TEXT,"
+                    "PRIMARY KEY (identity_id, token_id, reference))")
             <<  QString::fromLatin1(
                     "CREATE TABLE STORE"
                     "(identity_id INTEGER,"
@@ -446,7 +451,7 @@ namespace SignonDaemonNS {
         QString query_str;
 
         query_str = QString::fromLatin1(
-                "SELECT caption, username, flags, refcount, type, password "
+                "SELECT caption, username, flags, type, password "
                 "FROM credentials WHERE id = %1").arg(id);
         QSqlQuery query = exec(query_str);
 
@@ -460,11 +465,10 @@ namespace SignonDaemonNS {
         int flags = query.value(2).toInt();
         bool savePassword = flags & RememberPassword;
         bool validated =  flags & Validated;
-        int refCount = query.value(3).toInt();
-        int type = query.value(4).toInt();
+        int type = query.value(3).toInt();
         QString password;
         if (savePassword && queryPassword)
-            password = query.value(5).toString();
+            password = query.value(4).toString();
 
         query.clear();
         QStringList realms = queryList(
@@ -499,6 +503,9 @@ namespace SignonDaemonNS {
                 methods.insert(query.value(1).toString(), mechanisms);
         }
         query.clear();
+
+        int refCount = 0;
+        //TODO query for refcount
 
         return SignonIdentityInfo(id, username, password, methods,
                                   caption, realms, security_tokens, type, refCount, validated);
@@ -564,10 +571,10 @@ namespace SignonDaemonNS {
              id = info.m_id ;
             queryStr = QString::fromLatin1(
                 "UPDATE CREDENTIALS SET caption = '%1', username = '%2', "
-                "password = '%3', flags = '%4', refcount = '%5', "
-                "type = '%6' WHERE id = '%7'")
+                "password = '%3', flags = '%4', "
+                "type = '%5' WHERE id = '%6'")
                 .arg(info.m_caption).arg(info.m_userName).arg(password)
-                .arg(flags).arg(info.m_refCount).arg(info.m_type)
+                .arg(flags).arg(info.m_type)
                 .arg(info.m_id);
 
             insertQuery = exec(queryStr);
@@ -582,10 +589,10 @@ namespace SignonDaemonNS {
             TRACE() << "INSERT:" << info.m_id;
             queryStr = QString::fromLatin1(
                 "INSERT INTO CREDENTIALS "
-                "(caption, username, password, flags, refcount, type) "
-                "VALUES('%1', '%2', '%3', '%4', '%5', '%6')")
+                "(caption, username, password, flags, type) "
+                "VALUES('%1', '%2', '%3', '%4', '%5')")
                 .arg(info.m_caption).arg(info.m_userName).arg(password)
-                .arg(flags).arg(info.m_refCount).arg(info.m_type);
+                .arg(flags).arg(info.m_type);
 
             insertQuery = exec(queryStr);
             if (errorOccurred()) {

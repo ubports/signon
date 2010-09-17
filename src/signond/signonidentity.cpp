@@ -291,8 +291,7 @@ namespace SignonDaemonNS {
                                              const QString &caption,
                                              const QStringList &realms,
                                              const QStringList &accessControlList,
-                                             const int type,
-                                             const int refCount)
+                                             const int type)
     {
         RequestCounter::instance()->addIdentityResquest();
 
@@ -305,7 +304,7 @@ namespace SignonDaemonNS {
             accessControlListLocal.prepend(aegisIdToken);
 
         SignonIdentityInfo info(id, userName, secret, methods, caption,
-                                realms, accessControlListLocal, type, refCount);
+                                realms, accessControlListLocal, type);
 
         TRACE() << info.serialize();
         storeCredentials(info, storeSecret);
