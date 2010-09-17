@@ -76,6 +76,8 @@ namespace SignOn {
         void errorReply(const QDBusError &err);
         void storeCredentialsReply(const quint32 id);
         void removeReply();
+        void addReferenceReply(const quint32 count);
+        void removeReferenceReply(const quint32 count);
         void queryInfoReply(const QList<QVariant> &infoData);
         void verifyUserReply(const bool valid);
         void verifySecretReply(const bool valid);
@@ -88,6 +90,8 @@ namespace SignOn {
         void requestCredentialsUpdate(const QString &message = QString());
         void storeCredentials(const IdentityInfo &info);
         void remove();
+        void addReference(const QString &reference = QString());
+        void removeReference(const QString &reference = QString());
         void queryInfo();
         void verifyUser(const QString &message = QString());
         void verifySecret(const QString &secret);

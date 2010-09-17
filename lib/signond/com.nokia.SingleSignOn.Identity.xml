@@ -38,7 +38,14 @@
       <arg name="realms" type="as" direction="in"/>
       <arg name="accessControlList" type="as" direction="in"/>
       <arg name="type" type="i" direction="in"/>
-      <arg name="refCount" type="i" direction="in"/>
+    </method>
+    <method name="addReference">
+      <arg type="i" direction="out"/>
+      <arg name="reference" type="s" direction="in"/>
+    </method>
+    <method name="removeReference">
+      <arg type="i" direction="out"/>
+      <arg name="reference" type="s" direction="in"/>
     </method>
   </interface>
 </node>
