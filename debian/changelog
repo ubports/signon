@@ -1,3 +1,9 @@
+signon (3.2-1) unstable; urgency=low
+
+  * Fixes: NB#193855 - Account configuration fails with info 'qtn_acc_storing_err_undefined'
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Thu, 23 Sep 2010 10:52:42 +0300
+
 signon (3.1-2) unstable; urgency=low
 
   * Merge master
