@@ -299,11 +299,10 @@ namespace SignonDaemonNS {
                     "mechanism_id INTEGER,"
                     "token_id INTEGER)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE REFERENCES"
+                    "CREATE TABLE REFS"
                     "(identity_id INTEGER,"
                     "token_id INTEGER,"
-                    "reference TEXT,"
-                    "PRIMARY KEY (identity_id, token_id, reference))")
+                    "ref TEXT)")
             <<  QString::fromLatin1(
                     "CREATE TABLE STORE"
                     "(identity_id INTEGER,"
@@ -723,7 +722,9 @@ namespace SignonDaemonNS {
                 insertQuery.clear();
             }
         }
-        cleanUpTables();
+        //clean tables if identity is updated
+        if (info.m_id != SIGNOND_NEW_IDENTITY)
+            cleanUpTables();
 
         if (commit()) {
             return id;
