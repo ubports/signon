@@ -2,7 +2,7 @@ Source: signon
 Section: devel
 Priority: optional
 Maintainer: Alberto Mardegan <alberto.mardegan@nokia.com>
-Build-Depends: debhelper (>= 5), doxygen, pkg-config, libqt4-dev (>= 4.6), libcreds2-dev, aegis-builder (>= 1.4), libsasl2-dev, libcryptsetup0-dev (>= 1.0.7-8), libcellular-qt-dev (>= 0.7.1)
+Build-Depends: debhelper (>= 5), cdbs, doxygen, pkg-config, libqt4-dev (>= 4.6), libcreds2-dev, aegis-builder (>= 1.4), libsasl2-dev, libcryptsetup0-dev (>= 1.0.7-8), libcellular-qt-dev (>= 0.7.1)
 Standards-Version: 3.7.2
 
 Package: signon-doc
@@ -50,12 +50,14 @@ Priority: optional
 Description: Documentation for libsignon-qt
  Doxygen-generated HTML documentation for the libsignon-qt.
 
-Package: signond0
+Package: signond
 Architecture: any
 Priority: optional
 Depends: libcreds2, libqt4-sql-sqlite, libcryptsetup0 (>= 1.0.7), ${shlibs:Depends}, ${misc:Depends}
+Provides: signond0
+Replaces: signond0
 Recommends: signon-ui, signon-plugins, libsignon-qt0
-Conflicts: libsignon-glib1 (< 0.15), libsignon-qt0 (<= 2.9), signon-flickrplugin (< 0.2.35.2), signon-attplugin (< 0.7), signon-skypeplugin (< 0.4), signon-oauth2plugin (< 0.2), signon-facebookplugin (< 0.2.4), signon-googleplugin (< 0.2.7), signon-digestplugin (< 0.2.1)
+Conflicts: libsignon-glib1 (< 0.15), libsignon-qt0 (<= 2.9)
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
