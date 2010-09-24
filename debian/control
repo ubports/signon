@@ -2,7 +2,7 @@ Source: signon
 Section: devel
 Priority: optional
 Maintainer: Alberto Mardegan <alberto.mardegan@nokia.com>
-Build-Depends: debhelper (>= 5), cdbs, doxygen, pkg-config, libqt4-dev (>= 4.6), libcreds2-dev, aegis-builder (>= 1.4), libsasl2-dev, libcryptsetup0-dev (>= 1.0.7-8), libcellular-qt-dev (>= 0.7.1)
+Build-Depends: debhelper (>= 5), cdbs, doxygen, pkg-config, libqt4-dev (>= 4.6), libcreds2-dev, aegis-builder (>= 1.4), libsasl2-dev, libcryptsetup0-dev (>= 1.0.7-8), libcellular-qt-dev (>= 0.7.1), libgq-gconf-dev
 Standards-Version: 3.7.2
 
 Package: signon-doc
