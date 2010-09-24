@@ -20,6 +20,8 @@ CONFIG += \
     build_all \
     link_pkgconfig
 
+PKGCONFIG += gq-gconf
+
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti
 

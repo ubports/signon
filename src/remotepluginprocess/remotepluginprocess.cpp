@@ -23,6 +23,7 @@
 #include <QProcess>
 #include <QUrl>
 #include <QTimer>
+#include <gq/GConfItem>
 
 #include "remotepluginprocess.h"
 using namespace SignOn;
@@ -166,8 +167,18 @@ namespace RemotePluginProcessNS {
         TRACE();
         //set application default proxy
         QNetworkProxy networkProxy = QNetworkProxy::applicationProxy();
+
         //get proxy settings from GConf
-        //TODO
+        GConfItem *hostItem = new GConfItem("/system/http_proxy/host");
+        if (hostItem->value().canConvert(QVariant::String)) {
+            QString host = hostItem->value().toString();
+            GConfItem *portItem = new GConfItem("/system/http_proxy/port");
+            uint port = portItem->value().toUInt();
+            networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
+                                        host, port);
+            delete portItem;
+        }
+        delete hostItem;
 
         //get system env for proxy
         QString proxy = qgetenv("http_proxy");
@@ -181,7 +192,8 @@ namespace RemotePluginProcessNS {
                                         proxyUrl.password());
             }
         }
-        //TODO add other proxy types
+
+        //add other proxy types here
 
         TRACE() << networkProxy.hostName() << ":" << networkProxy.port();
         QNetworkProxy::setApplicationProxy(networkProxy);
