@@ -53,6 +53,9 @@ namespace RemotePluginProcessNS {
             cancelThread->wait();
             delete cancelThread;
         }
+
+        ::close(signalFd[0]);
+        ::close(signalFd[1]);
     }
 
     RemotePluginProcess* RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
@@ -458,6 +461,9 @@ namespace RemotePluginProcessNS {
                 break;
             case PLUGIN_OP_REFRESH:
                 refresh();
+                break;
+            case PLUGIN_OP_STOP:
+                is_stopped = true;
                 break;
             default:
             {
