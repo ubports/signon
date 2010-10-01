@@ -43,7 +43,6 @@ public :
     };
 
 public:
-    AuthService::ServiceError m_err;
     Error::ErrorType m_error;
     QString m_errMsg;
 
