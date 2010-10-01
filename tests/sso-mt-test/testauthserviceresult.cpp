@@ -34,7 +34,7 @@ TestAuthServiceResult::TestAuthServiceResult()
 void TestAuthServiceResult::reset()
 {
     m_responseReceived = InexistentResp;
-    m_err = AuthService::UnknownError;
+    m_error = Error::Unknown;
     m_errMsg = QString();
 
     m_identities.clear();
@@ -44,7 +44,7 @@ void TestAuthServiceResult::reset()
     m_cleared = false;
 }
 
-void TestAuthServiceResult::error(const SignOn::Error& error)
+void TestAuthServiceResult::error(const SignOn::Error &error)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = ErrorResp;

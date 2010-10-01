@@ -35,8 +35,8 @@ TestIdentityResult::TestIdentityResult()
 void TestIdentityResult::reset()
 {
     m_responseReceived = InexistentResp;
-    m_err = Identity::UnknownError;
-    m_errMsg = "";
+    m_error = Error::Unknown;
+    m_errMsg = QString();
 
     m_methods.clear();
     m_id = 0;

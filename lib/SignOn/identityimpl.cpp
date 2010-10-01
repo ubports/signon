@@ -498,7 +498,6 @@ namespace SignOn {
         }
 
         clearAuthSessionsCache();
-        TRACE() << "SIGN OUT REQUESTER" << QString().sprintf("%08X", (int)this);
     }
 
     void IdentityImpl::clearAuthSessionsCache()
@@ -596,7 +595,6 @@ namespace SignOn {
 
     void IdentityImpl::signOutReply()
     {
-        TRACE() << "SIGN OUT REQUESTER REPLY" << QString().sprintf("%08X", (int)this);
         emit m_parent->signedOut();
     }
 
@@ -617,8 +615,6 @@ namespace SignOn {
             /* A remote client identity signed out,
                thus server informed this object to do the same */
             case IdentitySignedOut:
-                TRACE() << "SIGN OUT SIGNAL RECEIVED" << QString().sprintf("%08X", (int)this);
-
                 //if this is not the identity that requested the signing out
                 if (!m_signOutRequestedByThisIdentity) {
                     clearAuthSessionsCache();
@@ -823,7 +819,7 @@ namespace SignOn {
     {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              objectPath.path(),
-                                             QString(),
+                                             QLatin1String(SIGNOND_IDENTITY_INTERFACE),
                                              SIGNOND_BUS,
                                              this);
         if (!m_DBusInterface->isValid()) {
