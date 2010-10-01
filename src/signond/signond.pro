@@ -85,5 +85,3 @@ include( ../../common-installs-config.pri )
 # Disabling access control if platform is not arm
 BUILD_ARCH = $$QMAKE_HOST.arch
 contains(BUILD_ARCH, i686):DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
-else:# TODO get rid of the 'else' branch after security fixes.
-DEFINES += SIGNON_DISABLE_ACCESS_CONTROL

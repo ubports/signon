@@ -103,7 +103,8 @@ namespace SignonDaemonNS {
 
     PluginProxy::~PluginProxy()
     {
-        m_process->close();
+        stop();
+        m_process->kill();
         m_process->waitForFinished();
     }
 
