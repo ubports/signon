@@ -54,10 +54,6 @@ namespace SignonDaemonNS {
 
     PluginProcess::~PluginProcess()
     {
-        if (state() != QProcess::NotRunning)
-            terminate();
-
-        waitForFinished();
     }
 
     void PluginProcess::setupChildProcess()
@@ -107,6 +103,9 @@ namespace SignonDaemonNS {
 
     PluginProxy::~PluginProxy()
     {
+        stop();
+        m_process->kill();
+        m_process->waitForFinished();
     }
 
     PluginProxy* PluginProxy::createNewPluginProxy(const QString &type)

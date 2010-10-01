@@ -45,8 +45,6 @@ public :
 
 public:
     Error::ErrorType m_error;
-    Identity::IdentityError m_err; //deprecated
-
     QString m_errMsg;
 
     ResponseType m_responseReceived;
