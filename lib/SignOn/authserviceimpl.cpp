@@ -57,10 +57,6 @@ namespace SignOn {
 
     /* ----------------------- AuthServiceImpl ----------------------- */
 
-    /*
-         !!! TODO remove deprecated error signals emition when the time is right. !!!
-         *** One month after release of new error management
-    */
     AuthServiceImpl::AuthServiceImpl(AuthService *parent)
         : m_parent(parent)
     {

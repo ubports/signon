@@ -58,10 +58,6 @@ static QVariantMap sessionData2VariantMap(const SessionData &data)
     return result;
 }
 
-/*
-     !!! TODO remove deprecated error signals emition when the time is right. !!!
-     *** One month after release of new error management
-*/
 AuthSessionImpl::AuthSessionImpl(AuthSession *parent, quint32 id, const QString &methodName)
     : QObject(parent),
       m_parent(parent),
@@ -429,7 +425,7 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
     if (QString() != path) {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              path,
-                                             QString(),
+                                             QLatin1String(SIGNOND_AUTH_SESSION_INTERFACE),
                                              SIGNOND_BUS);
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
