@@ -1,3 +1,9 @@
+signon (3.4-1) unstable; urgency=low
+
+  * Fixes: NB#196033 - Sometimes uploads to online services fails with SSO Error %1 %2 
+    
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Wed, 06 Oct 2010 14:52:42 +0300
+
 signon (3.3-2) unstable; urgency=low
 
   * Fixes: NB#193956 - accounts-ui does not the proxy settings to facebook-signon plugin 
