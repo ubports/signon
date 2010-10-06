@@ -242,8 +242,6 @@ void SignonSessionCore::cancel(const QString &cancelKey)
 {
     TRACE();
 
-    keepInUse();
-
     int requestIndex;
     for (requestIndex = 0; requestIndex < m_listOfRequests.size(); requestIndex++) {
         if (m_listOfRequests.at(requestIndex).m_cancelKey == cancelKey)
@@ -616,9 +614,10 @@ void SignonSessionCore::stateChangedSlot(const QString &cancelKey, int state, co
 
 void SignonSessionCore::childEvent(QChildEvent *ce)
 {
-    TRACE();
     if (ce->added())
         keepInUse();
+    else if (ce->removed())
+        SignonDisposable::destroyUnused();
 }
 
 void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
