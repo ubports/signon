@@ -188,6 +188,16 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(int, UiPolicy)
 
     /*!
+     * Declare property Caption setter and getter.
+     * Caption is to tell user which application/credentials/provider is
+     * requesting signon-ui.
+     *
+     * @note Caption is taken from database if not defined by application
+     * or authentication plugin.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
+
+    /*!
      * Declare property NetworkTimeout setter and getter
      * Sets the timeout for network related operations in miliseconds.
      * To be used when a remote service does not reply in a reasonable amount of time.
