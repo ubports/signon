@@ -15,7 +15,7 @@ Description: Documentation for signon
 Package: libsignon-qt0
 Architecture: any
 Priority: optional
-Depends: signond0, ${shlibs:Depends}, ${misc:Depends}
+Depends: signond, ${shlibs:Depends}, ${misc:Depends}
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
@@ -65,22 +65,22 @@ Package: signond-dev
 Architecture: any
 Priority: extra
 Section: libdevel
-Recommends: signond0 (= ${binary:Version}), libqt4-dev (>= 4.5)
+Recommends: signond (= ${binary:Version}), libqt4-dev (>= 4.5)
 Description: Development files for Signon client library development
  Common headers and DBUS interfaces definition files for the Signon Framework. 
 
 Package: signond-dbg
 Architecture: any
 Priority: extra
-Depends: signond0 (= ${binary:Version})
+Depends: signond (= ${binary:Version})
 Description: Debug symbols for signond
  Debug symbols for signond.
 
 Package: signond-tests
 Architecture: any
 Priority: extra
-Depends: ci-testing, signond0, signon-plugins, signon-test-plugins
-XB-Maemo-CI-Packages: signond0, libcryptsetup0, libdevicemapper0
+Depends: ci-testing, signond, signon-plugins, signon-test-plugins
+XB-Maemo-CI-Packages: signond, libcryptsetup0, libdevicemapper0
 XB-Maemo-CI-Stage: fast, staging, acceptance, validation
 Description: CI tests for signond
  CI tests for signond.
@@ -110,7 +110,7 @@ Description: Development files for Single Sign On plugins
 Package: signon-plugins-tests
 Architecture: any
 Priority: extra
-Depends: ci-testing, signond0, signon-plugins
+Depends: ci-testing, signond, signon-plugins
 XB-Maemo-CI-Packages: signon-plugins
 XB-Maemo-CI-Stage: staging, acceptance, validation
 Description: CI tests for signon-plugins
@@ -126,7 +126,7 @@ Description: Single Sign On test plugins
 Package: signon-saslplugin
 Architecture: any
 Priority: optional
-Depends: ${shlibs:Depends}, ${misc:Depends}, signond0, libsasl2-2, libsasl2-modules
+Depends: ${shlibs:Depends}, ${misc:Depends}, signond, libsasl2-2, libsasl2-modules
 Description: SASL authentication plugin for Single Sign On
  SASL authentication plugin for Single Sign On.
 
@@ -150,7 +150,7 @@ Description: CI tests for SASL authentication plugin
 Package: signon-passwordplugin
 Architecture: any
 Priority: optional
-Depends: ${shlibs:Depends}, ${misc:Depends}, signond0
+Depends: ${shlibs:Depends}, ${misc:Depends}, signond
 Description: Plain Password plugin for Single Sign On
  Password plugin for Single Sign On.
 
