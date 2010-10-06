@@ -30,7 +30,6 @@ using namespace SignOn;
 
 namespace RemotePluginProcessNS {
 
-    static int signalFd[2];
     static CancelEventThread *cancelThread = NULL;
 
     RemotePluginProcess::RemotePluginProcess(QObject *parent) : QObject(parent)
@@ -55,8 +54,6 @@ namespace RemotePluginProcessNS {
             delete cancelThread;
         }
 
-        ::close(signalFd[0]);
-        ::close(signalFd[1]);
     }
 
     RemotePluginProcess* RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
@@ -68,7 +65,6 @@ namespace RemotePluginProcessNS {
 
         if (!rpp->loadPlugin(type) ||
            !rpp->setupDataStreams() ||
-           !rpp->setupSignalHandlers() ||
            rpp->m_plugin->type() != type) {
             delete rpp;
             return NULL;
@@ -153,18 +149,6 @@ namespace RemotePluginProcessNS {
         return true;
     }
 
-    bool RemotePluginProcess::setupSignalHandlers()
-    {
-        TRACE();
-         if (::socketpair(AF_UNIX, SOCK_STREAM, 0, signalFd))
-            return false;
-
-         sn = new QSocketNotifier(signalFd[1], QSocketNotifier::Read, this);
-         connect(sn, SIGNAL(activated(int)), this, SLOT(handleSignal()));
-
-         return true;
-    }
-
     bool RemotePluginProcess::setupProxySettings()
     {
         TRACE();
@@ -201,27 +185,6 @@ namespace RemotePluginProcessNS {
         TRACE() << networkProxy.hostName() << ":" << networkProxy.port();
         QNetworkProxy::setApplicationProxy(networkProxy);
         return true;
-    }
-
-    void RemotePluginProcess::handleSignal()
-    {
-         TRACE();
-         sn->setEnabled(false);
-         int signal;
-         ::read(signalFd[1], &signal, sizeof(int));
-
-         switch (signal) {
-             case SIGINT: { emit processStopped(); break; }
-             case SIGHUP: break;
-             case SIGTERM: { emit processStopped(); break; }
-             default: break;
-         };
-    }
-
-    void RemotePluginProcess::signalHandler(int signal)
-    {
-        TRACE();
-        ::write(signalFd[0], &signal, sizeof(int));
     }
 
     void RemotePluginProcess::result(const SignOn::SessionData &data)
@@ -493,7 +456,10 @@ namespace RemotePluginProcessNS {
         }
 
         if (is_stopped)
+        {
+            m_plugin->abort();
             emit processStopped();
+        }
     }
 
     CancelEventThread::CancelEventThread(AuthPluginInterface *plugin)
