@@ -118,8 +118,11 @@ namespace SignonDaemonNS {
 
                 if (!m_process->waitForFinished(PLUGINPROCESS_STOP_TIMEOUT))
                 {
-                    qCritical() << "The signon plugin seems to ignore SIGKILL, killing it again";
-                    m_process->kill();
+                    if (m_process->pid()) {
+                        qCritical() << "The signon plugin seems to ignore kill(), killing it from command line";
+                        QString killProcessCommand(QString::fromLatin1("kill -9 %1").arg(m_process->pid()));
+                        QProcess::execute(killProcessCommand);
+                    }
                 }
             }
         }
