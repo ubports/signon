@@ -44,7 +44,8 @@ using namespace SignOn;
 
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
-#define PLUGINPROCESS_TIMEOUT 5000
+#define PLUGINPROCESS_START_TIMEOUT 5000
+#define PLUGINPROCESS_STOP_TIMEOUT 1000
 
 namespace SignonDaemonNS {
 
@@ -103,9 +104,28 @@ namespace SignonDaemonNS {
 
     PluginProxy::~PluginProxy()
     {
-        stop();
-        m_process->kill();
-        m_process->waitForFinished();
+        if (m_process != NULL &&
+            m_process->state() != QProcess::NotRunning)
+        {
+            if (m_isProcessing)
+                cancel();
+
+            stop();
+
+            if (!m_process->waitForFinished(PLUGINPROCESS_STOP_TIMEOUT)) {
+                qCritical() << "The signon plugin does not react on demand to stop: need to kill it!!!";
+                m_process->kill();
+
+                if (!m_process->waitForFinished(PLUGINPROCESS_STOP_TIMEOUT))
+                {
+                    if (m_process->pid()) {
+                        qCritical() << "The signon plugin seems to ignore kill(), killing it from command line";
+                        QString killProcessCommand(QString::fromLatin1("kill -9 %1").arg(m_process->pid()));
+                        QProcess::execute(killProcessCommand);
+                    }
+                }
+            }
+        }
     }
 
     PluginProxy* PluginProxy::createNewPluginProxy(const QString &type)
@@ -117,13 +137,13 @@ namespace SignonDaemonNS {
 
         QByteArray tmp;
 
-        if (!pp->waitForStarted(PLUGINPROCESS_TIMEOUT)) {
+        if (!pp->waitForStarted(PLUGINPROCESS_START_TIMEOUT)) {
             TRACE() << "The process cannot be started";
             delete pp;
             return NULL;
         }
 
-        if (!pp->readOnReady(tmp, PLUGINPROCESS_TIMEOUT)) {
+        if (!pp->readOnReady(tmp, PLUGINPROCESS_START_TIMEOUT)) {
             TRACE() << "The process cannot load plugin";
             delete pp;
             return NULL;
@@ -408,7 +428,7 @@ namespace SignonDaemonNS {
         QByteArray typeBa, buffer;
         bool result;
 
-        if ((result = readOnReady(buffer, PLUGINPROCESS_TIMEOUT))) {
+        if ((result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT))) {
             QDataStream out(buffer);
             out >> typeBa;
         } else
@@ -431,7 +451,7 @@ namespace SignonDaemonNS {
         QStringList strList;
         bool result;
 
-        if ((result = readOnReady(buffer, PLUGINPROCESS_TIMEOUT))) {
+        if ((result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT))) {
             QVariant mechanismsVar;
             QDataStream out(buffer);
 
@@ -465,7 +485,7 @@ namespace SignonDaemonNS {
             m_process->start(REMOTEPLUGIN_BIN_PATH, QStringList(m_type));
 
             QByteArray tmp;
-            if (!waitForStarted(PLUGINPROCESS_TIMEOUT) || !readOnReady(tmp, PLUGINPROCESS_TIMEOUT))
+            if (!waitForStarted(PLUGINPROCESS_START_TIMEOUT) || !readOnReady(tmp, PLUGINPROCESS_START_TIMEOUT))
                 return false;
         }
         return true;

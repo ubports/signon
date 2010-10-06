@@ -22,6 +22,7 @@
 #ifndef UISESSIONDATA_PRIV_H
 #define UISESSIONDATA_PRIV_H
 
+#define SSOUI_KEY_CAPTION         QLatin1String("Caption")
 #define SSOUI_KEY_MESSAGEID       QLatin1String("QueryMessageId")
 #define SSOUI_KEY_QUERYUSERNAME   QLatin1String("QueryUserName")
 #define SSOUI_KEY_USERNAME        QLatin1String("UserName")

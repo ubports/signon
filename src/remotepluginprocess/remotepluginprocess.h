@@ -97,20 +97,14 @@ class RemotePluginProcess : public QObject
 
         static RemotePluginProcess* createRemotePluginProcess(QString &type, QObject *parent);
 
-        // Unix signal handler.
-        static void signalHandler(int signal);
-
         bool loadPlugin(QString &type);
         bool setupDataStreams();
-        bool setupSignalHandlers();
         bool setupProxySettings();
 
         void challenge(QDataStream &in, QDataStream &out);
 
     public Q_SLOTS:
-
         void startTask();
-        void handleSignal();
 
     private:
         AuthPluginInterface *m_plugin;
