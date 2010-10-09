@@ -321,7 +321,9 @@ void SignonSessionCore::startProcess()
             SignonIdentityInfo info = db->credentials(m_id);
             if (info.m_id != SIGNOND_NEW_IDENTITY) {
                 /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
-                parameters[SSO_KEY_PASSWORD] = info.m_password;
+                if (!parameters.contains(SSO_KEY_PASSWORD))
+                    parameters[SSO_KEY_PASSWORD] = info.m_password;
+                //database overrules over sessiondata for username, so that username cannot be faked
                 parameters[SSO_KEY_USERNAME] = info.m_userName;
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
