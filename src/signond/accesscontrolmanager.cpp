@@ -120,7 +120,15 @@ namespace SignonDaemonNS {
             if (peerTokens.contains(token))
                 return true;
 
-        TRACE() << "given peer does not have needed permissions";
+        BLAME() << "given peer does not have needed permissions";
+
+
+        /*
+         * TODO: remove this later, as soon as NB#196033 will be resolved
+         * */
+        if (1)
+            return true;
+
         return false;
     }
 
@@ -178,6 +186,12 @@ namespace SignonDaemonNS {
 
         TRACE() << "Process ACCESS:" << (hasAccess ? "TRUE" : "FALSE");
         creds_free(ccreds);
+
+        /*
+         * TODO: remove this later, as soon as NB#196033 will be resolved
+         * */
+        if (1)
+            return true;
 
         return hasAccess;
     }
