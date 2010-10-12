@@ -54,11 +54,11 @@ void TestAuthSession::queryMechanisms_existing_method()
     QStringList wantedMechs;
 
     QSignalSpy spy(as, SIGNAL(mechanismsAvailable(const QStringList&)));
-    QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+    QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
     QEventLoop loop;
 
     QObject::connect(as, SIGNAL(mechanismsAvailable(const QStringList&)), &loop, SLOT(quit()));
-    QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+    QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
     as->queryAvailableMechanisms(wantedMechs);
@@ -125,11 +125,11 @@ void TestAuthSession::queryMechanisms_existing_method()
 
      QStringList wantedMechs;
 
-     QSignalSpy spy(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spy(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
      QObject::connect(as, SIGNAL(mechanismsAvailable(const QStringList&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      as->queryAvailableMechanisms(wantedMechs);
@@ -144,15 +144,15 @@ void TestAuthSession::queryMechanisms_existing_method()
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
      g_processReplyRealmsList.clear();
-     connect(as, SIGNAL(response(const SessionData &)), this, SLOT(response(const SessionData &)));
+     connect(as, SIGNAL(response(const SignOn::SessionData &)), this, SLOT(response(const SignOn::SessionData &)));
 
-     QSignalSpy spy(as, SIGNAL(response(const SessionData &)));
-     QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spy(as, SIGNAL(response(const SignOn::SessionData &)));
+     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
      QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(response(const SessionData &)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData &)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -193,10 +193,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      errorCounter.clear();
 
      QCOMPARE(spy.count(), 4);
+
      QVERIFY(g_processReplyRealmsList.at(0) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(1) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(2) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(3) == "testRealm_after_test");
+
  }
 
  void TestAuthSession::process_with_existing_identity()
@@ -205,15 +207,15 @@ void TestAuthSession::queryMechanisms_existing_method()
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
      g_processReplyRealmsList.clear();
-     connect(as, SIGNAL(response(const SessionData &)), this, SLOT(response(const SessionData &)));
+     connect(as, SIGNAL(response(const SignOn::SessionData &)), this, SLOT(response(const SignOn::SessionData &)));
 
-     QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
      QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
-     QSignalSpy spy(as, SIGNAL(response(const SessionData&)));
+     QSignalSpy spy(as, SIGNAL(response(const SignOn::SessionData&)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(response(const SessionData&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -250,10 +252,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      errorCounter.clear();
 
      QCOMPARE(spy.count(), 4);
+
      QVERIFY(g_processReplyRealmsList.at(0) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(1) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(2) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(3) == "testRealm_after_test");
+
  }
 
  void TestAuthSession::process_with_nonexisting_type()
@@ -261,12 +265,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "nonexisting");
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData &)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData &)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -297,12 +301,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData&)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()),  Qt::QueuedConnection);
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -333,12 +337,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData&)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(response(const SessionData&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)), &loop, SLOT(quit()));
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -386,11 +390,11 @@ void TestAuthSession::queryMechanisms_existing_method()
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData&)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(response(const SessionData&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)), &loop, SLOT(quit()));
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -414,12 +418,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData&)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()),  Qt::QueuedConnection);
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -462,12 +466,12 @@ void TestAuthSession::queryMechanisms_existing_method()
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
      g_currentSession = as;
 
-     QSignalSpy spyResponse(as, SIGNAL(response(const SessionData&)));
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()),  Qt::DirectConnection);
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::DirectConnection);
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      SessionData inData;
@@ -510,10 +514,10 @@ void TestAuthSession::queryMechanisms_existing_method()
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
      g_currentSession = as;
 
-     QSignalSpy spyError(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()),  Qt::QueuedConnection);
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
      QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
      QTimer::singleShot(1*1000, &loop, SLOT(quit()));
@@ -555,11 +559,11 @@ void TestAuthSession::queryMechanisms_existing_method()
      g_currentSession = as;
 
      QSignalSpy spy(as, SIGNAL(mechanismsAvailable(const QStringList&)));
-     QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
      QEventLoop loop;
 
      QObject::connect(as, SIGNAL(mechanismsAvailable(const QStringList&)), &loop, SLOT(quit()));
-     QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+     QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
 
      /*
       * 5 minutes + 10 seconds
@@ -589,7 +593,7 @@ void TestAuthSession::queryMechanisms_existing_method()
      g_currentSession->cancel();
  }
 
- void TestAuthSession::response(const SessionData &data)
+ void TestAuthSession::response(const SignOn::SessionData &data)
  {
      g_processReplyRealmsList << data.Realm();
  }

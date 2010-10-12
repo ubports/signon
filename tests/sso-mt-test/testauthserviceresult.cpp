@@ -34,7 +34,7 @@ TestAuthServiceResult::TestAuthServiceResult()
 void TestAuthServiceResult::reset()
 {
     m_responseReceived = InexistentResp;
-    m_err = AuthService::UnknownError;
+    m_error = Error::Unknown;
     m_errMsg = QString();
 
     m_identities.clear();
@@ -44,19 +44,7 @@ void TestAuthServiceResult::reset()
     m_cleared = false;
 }
 
-void TestAuthServiceResult::error(AuthService::ServiceError code, const QString& message)
-{
-    SIGNOND_TEST_REPLY_RECEIVED
-    m_responseReceived = ErrorResp;
-    m_err = code;
-    m_errMsg = message;
-
-    qDebug() << "Error:" << m_err << ", Message:" << m_errMsg;
-
-    emit testCompleted();
-}
-
-void TestAuthServiceResult::error(const Error& error)
+void TestAuthServiceResult::error(const SignOn::Error &error)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = ErrorResp;
@@ -88,7 +76,7 @@ void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QSt
     emit testCompleted();
 }
 
-void TestAuthServiceResult::identities(const QList<IdentityInfo> &identityList)
+void TestAuthServiceResult::identities(const QList<SignOn::IdentityInfo> &identityList)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = NormalResp;

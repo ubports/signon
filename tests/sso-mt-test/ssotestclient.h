@@ -124,7 +124,7 @@ private:
     //deprecated
     static QString idErrCodeAsStr(const Identity::IdentityError);
     static QString errCodeAsStr(const Error::ErrorType);
-    bool storeCredentialsPrivate(const IdentityInfo &info);
+    bool storeCredentialsPrivate(const SignOn::IdentityInfo &info);
 
 public Q_SLOTS:
     void runAllTests();

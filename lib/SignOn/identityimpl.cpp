@@ -46,6 +46,10 @@
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("remove()")
 #define SIGNOND_IDENTITY_QUERY_INFO_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("queryInfo()")
+#define SIGNOND_IDENTITY_ADD_REFERENCE_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("addReference()")
+#define SIGNOND_IDENTITY_REMOVE_REFERENCE_METHOD \
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("removeReference()")
 #define SIGNOND_IDENTITY_VERIFY_USER_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QString &)")
 #define SIGNOND_IDENTITY_VERIFY_SECRET_METHOD \
@@ -56,10 +60,6 @@
 
 namespace SignOn {
 
-    /*
-         !!! TODO remove deprecated error signals emition when the time is right. !!!
-         *** One month after release of new error management
-    */
     IdentityImpl::IdentityImpl(Identity *parent, const quint32 id)
         : QObject(parent),
           m_parent(parent),
@@ -267,8 +267,7 @@ namespace SignOn {
              << info.caption()
              << info.realms()
              << QVariant(info.accessControlList())
-             << info.type()
-             << info.refCount();
+             << info.type();
 
         TRACE() << args;
 
@@ -328,6 +327,24 @@ namespace SignOn {
                     Error(Error::Unknown,
                           QLatin1String("Remove request failed. The identity is not stored")));
         }
+    }
+
+    void IdentityImpl::addReference(const QString &reference)
+    {
+        Q_UNUSED(reference);
+        TRACE() << "Adding reference to identity";
+        checkConnection();
+
+        //TODO implement
+    }
+
+    void IdentityImpl::removeReference(const QString &reference)
+    {
+        Q_UNUSED(reference);
+        TRACE() << "Removing reference from identity";
+        checkConnection();
+
+        //TODO implement
     }
 
     void IdentityImpl::queryInfo()
@@ -481,7 +498,6 @@ namespace SignOn {
         }
 
         clearAuthSessionsCache();
-        TRACE() << "SIGN OUT REQUESTER" << QString().sprintf("%08X", (int)this);
     }
 
     void IdentityImpl::clearAuthSessionsCache()
@@ -542,6 +558,18 @@ namespace SignOn {
         emit m_parent->removed();
     }
 
+    void IdentityImpl::addReferenceReply(const quint32 count)
+    {
+        Q_UNUSED(count);
+        emit m_parent->referenceAdded();
+    }
+
+    void IdentityImpl::removeReferenceReply(const quint32 count)
+    {
+        Q_UNUSED(count);
+        emit m_parent->referenceRemoved();
+    }
+
     void IdentityImpl::queryInfoReply(const QList<QVariant> &infoData)
     {
         updateCachedData(infoData);
@@ -567,7 +595,6 @@ namespace SignOn {
 
     void IdentityImpl::signOutReply()
     {
-        TRACE() << "SIGN OUT REQUESTER REPLY" << QString().sprintf("%08X", (int)this);
         emit m_parent->signedOut();
     }
 
@@ -588,8 +615,6 @@ namespace SignOn {
             /* A remote client identity signed out,
                thus server informed this object to do the same */
             case IdentitySignedOut:
-                TRACE() << "SIGN OUT SIGNAL RECEIVED" << QString().sprintf("%08X", (int)this);
-
                 //if this is not the identity that requested the signing out
                 if (!m_signOutRequestedByThisIdentity) {
                     clearAuthSessionsCache();
@@ -794,7 +819,7 @@ namespace SignOn {
     {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              objectPath.path(),
-                                             QString(),
+                                             QLatin1String(SIGNOND_IDENTITY_INTERFACE),
                                              SIGNOND_BUS,
                                              this);
         if (!m_DBusInterface->isValid()) {

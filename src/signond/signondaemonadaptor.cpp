@@ -80,7 +80,6 @@ namespace SignonDaemonNS {
     QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id, const QString &type)
     {
         SignonDisposable::destroyUnused();
-        TRACE();
 
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {

@@ -14,12 +14,12 @@ PROJECT_NAME = signon
 # Project version
 # remember to update debian/* files if you changes this
 #-----------------------------------------------------------------------------
-PROJECT_VERSION = 2.5
+PROJECT_VERSION = 3.6
 
 #-----------------------------------------------------------------------------
 # Library version
 #-----------------------------------------------------------------------------
-LIBRARY_VERSION = 0.3
+LIBRARY_VERSION = 0.4
 
 # End of File
 

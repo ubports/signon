@@ -77,7 +77,8 @@ namespace SignOn {
             SignOutFailed,             /**< SignOut failed. */
             IdentityOperationCanceled, /**< Identity operation was canceled by user. */
             CredentialsNotAvailable,   /**< Query fails. */
-            AuthSessionErr = 300,           /* Placeholder to rearrange enumeration
+            ReferenceNotFound,         /**< Trying to remove nonexistent reference. */
+            AuthSessionErr = 300,      /* Placeholder to rearrange enumeration
                                              - AuthSession/AuthPluginInterface specific */
             MechanismNotAvailable,     /**< The requested mechanism is not available. */
             MissingData,               /**< The SessionData object does not contain

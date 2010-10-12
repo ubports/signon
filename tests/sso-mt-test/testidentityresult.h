@@ -45,8 +45,6 @@ public :
 
 public:
     Error::ErrorType m_error;
-    Identity::IdentityError m_err; //deprecated
-
     QString m_errMsg;
 
     ResponseType m_responseReceived;
@@ -68,11 +66,10 @@ public:
                                      bool checlACL = false);
 
 public Q_SLOTS:
-    void error(Identity::IdentityError code, const QString &message);//deprecated
-    void error(const Error &err);
+    void error(const SignOn::Error &err);
     void methodsAvailable(const QStringList &methods);
     void credentialsStored(const quint32 id);
-    void info(const IdentityInfo& info);
+    void info(const SignOn::IdentityInfo& info);
     void userVerified(const bool valid);
     void secretVerified(const bool valid);
     void removed();

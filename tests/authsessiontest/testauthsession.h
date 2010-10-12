@@ -113,7 +113,7 @@ class TestAuthSession: public QObject
 #endif
     private Q_SLOTS:
         void cancel();
-        void response(const SessionData &data);
+        void response(const SignOn::SessionData &data);
  };
 
 #endif

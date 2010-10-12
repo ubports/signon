@@ -36,20 +36,6 @@ using namespace RemotePluginProcessNS;
 
 RemotePluginProcess *process = NULL;
 
-void installSigHandlers()
-{
-    struct sigaction act;
-
-    act.sa_handler = RemotePluginProcess::signalHandler;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    act.sa_flags |= SA_RESTART;
-
-    sigaction(SIGHUP, &act, 0);
-    sigaction(SIGTERM, &act, 0);
-    sigaction(SIGINT, &act, 0);
-}
-
 int main(int argc, char *argv[])
 {
     TRACE();
@@ -62,7 +48,6 @@ int main(int argc, char *argv[])
 #endif
 
     QCoreApplication app(argc, argv);
-    installSigHandlers();
 
     if (argc < 2) {
         TRACE() << "Type of plugin is not specified";

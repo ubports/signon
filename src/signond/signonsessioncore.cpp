@@ -38,6 +38,8 @@
 
 #define SSO_KEY_USERNAME QLatin1String("UserName")
 #define SSO_KEY_PASSWORD QLatin1String("Secret")
+#define SSO_KEY_CAPTION QLatin1String("Caption")
+
 using namespace SignonDaemonNS;
 
 /*
@@ -224,9 +226,9 @@ QStringList SignonSessionCore::queryAvailableMechanisms(const QStringList &wante
 
 void SignonSessionCore::process(const QDBusConnection &connection,
                                  const QDBusMessage &message,
-                                 const QVariantMap& sessionDataVa,
-                                 const QString& mechanism,
-                                 const QString& cancelKey)
+                                 const QVariantMap &sessionDataVa,
+                                 const QString &mechanism,
+                                 const QString &cancelKey)
 {
     TRACE();
 
@@ -241,8 +243,6 @@ void SignonSessionCore::process(const QDBusConnection &connection,
 void SignonSessionCore::cancel(const QString &cancelKey)
 {
     TRACE();
-
-    keepInUse();
 
     int requestIndex;
     for (requestIndex = 0; requestIndex < m_listOfRequests.size(); requestIndex++) {
@@ -321,7 +321,9 @@ void SignonSessionCore::startProcess()
             SignonIdentityInfo info = db->credentials(m_id);
             if (info.m_id != SIGNOND_NEW_IDENTITY) {
                 /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
-                parameters[SSO_KEY_PASSWORD] = info.m_password;
+                if (!parameters.contains(SSO_KEY_PASSWORD))
+                    parameters[SSO_KEY_PASSWORD] = info.m_password;
+                //database overrules over sessiondata for username, so that username cannot be faked
                 parameters[SSO_KEY_USERNAME] = info.m_userName;
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
@@ -460,7 +462,8 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
-                info.m_userName = data2[SSO_KEY_USERNAME].toString();
+                if (data2.contains(SSO_KEY_USERNAME))
+                    info.m_userName = data2[SSO_KEY_USERNAME].toString();
                 info.m_password = data2[SSO_KEY_PASSWORD].toString();
 
                 if (!(db->updateCredentials(info)))
@@ -546,6 +549,19 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
         else
             m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
 
+        //check that we have caption
+        if (!data.contains(SSO_KEY_CAPTION)) {
+            TRACE() << "Caption missing";
+            if (m_id != SIGNOND_NEW_IDENTITY) {
+                CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+                if (db != NULL) {
+                    SignonIdentityInfo info = db->credentials(m_id);
+                    m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.m_caption);
+                    TRACE() << "Got caption: " << info.m_caption;
+                }
+            }
+        }
+
         //TODO: figure out how we going to synchronize
         //different login dialogs in order not to show
         //multiple login dialogs for the same credentials
@@ -616,9 +632,10 @@ void SignonSessionCore::stateChangedSlot(const QString &cancelKey, int state, co
 
 void SignonSessionCore::childEvent(QChildEvent *ce)
 {
-    TRACE();
     if (ce->added())
         keepInUse();
+    else if (ce->removed())
+        SignonDisposable::destroyUnused();
 }
 
 void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)

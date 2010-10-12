@@ -22,8 +22,7 @@
  */
 
 #ifndef SSO_TESTS_RUNNING_AS_UNTRUSTED
-//TODO - remove this after security fwk team integrates their functionality with integration team
-    //#define SSO_TESTS_RUNNING_AS_UNTRUSTED
+    #define SSO_TESTS_RUNNING_AS_UNTRUSTED
 #endif
 
 #include "../sso-mt-test/ssotestclient.cpp"

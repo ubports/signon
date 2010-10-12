@@ -178,15 +178,6 @@ namespace SignOn {
         void clear();
 
     Q_SIGNALS:
-        /*!
-         * Emitted when an error occurs while using the AuthService connection.
-         * @see AuthService::ServiceError
-         *
-         * @param code error code
-         * @param message error description
-         * @deprecated This method is deprecated. Use error(const Error &err), instead.
-         */
-        void error(const AuthService::ServiceError code, const QString &message);
 
         /*!
          * Emitted when an error occurs while using the AuthService connection.
@@ -194,7 +185,7 @@ namespace SignOn {
          *
          * @param err The error object
          */
-        void error(const Error &err);
+        void error(const SignOn::Error &err);
 
         /*!
          * Emitted when the list of available authentication methods have been obtained
@@ -219,7 +210,7 @@ namespace SignOn {
          *
          * @param identityList list of identities information
          */
-        void identities(const QList<IdentityInfo> &identityList);
+        void identities(const QList<SignOn::IdentityInfo> &identityList);
 
         /*!
          * Database was cleared and resetted to initial state.

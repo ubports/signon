@@ -220,6 +220,8 @@ namespace SignonDaemonNS {
 
     void SignonDaemon::displayRequestsCount()
     {
+        SignonDisposable::destroyUnused();
+
         TRACE() << "\n\n\nUnstored identities:" << m_unstoredIdentities.count()
                 << "\nStored identities:" << m_storedIdentities.count()
                 << "\nService requests:" << RequestCounter::instance()->serviceRequests()

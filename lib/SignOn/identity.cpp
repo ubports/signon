@@ -96,6 +96,16 @@ namespace SignOn {
         impl->remove();
     }
 
+    void Identity::addReference(const QString &reference)
+    {
+        impl->addReference(reference);
+    }
+
+    void Identity::removeReference(const QString &reference)
+    {
+        impl->removeReference(reference);
+    }
+
     void Identity::queryInfo()
     {
         impl->queryInfo();

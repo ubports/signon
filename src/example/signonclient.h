@@ -45,7 +45,7 @@ public slots:
 private slots:
     void methodsAvailable(const QStringList &mechs);
     void mechanismsAvailable(const QString &method, const QStringList &mechs);
-    void identities(const QList<IdentityInfo> &identityList);
+    void identities(const QList<SignOn::IdentityInfo> &identityList);
 
     void on_store_clicked();
     void on_query_clicked();

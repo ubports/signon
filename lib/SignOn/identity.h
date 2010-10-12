@@ -155,7 +155,7 @@ namespace SignOn {
          *
          * @param message message to be shown for the user
          */
-        void requestCredentialsUpdate(const QString &message = 0);
+        void requestCredentialsUpdate(const QString &message = QString());
 
         /*!
          * Store credential parameters for this authentication identity.
@@ -186,6 +186,26 @@ namespace SignOn {
         void remove();
 
         /*!
+         * Add named reference to identity into database.
+         * On success, a signal referenceAdded() is emitted
+         * If the operation fails, a signal error() is emitted.
+         *
+         * Untrusted clients may be blocked from performing this operation,
+         * subject to the security framework restrictions.
+         */
+        void addReference(const QString &reference = QString());
+
+        /*!
+         * Remove named reference to identity from database.
+         * On success, a signal referenceRemoved() is emitted
+         * If the operation fails, a signal error() is emitted.
+         *
+         * Untrusted clients may be blocked from performing this operation,
+         * subject to the security framework restrictions.
+         */
+        void removeReference(const QString &reference = QString());
+
+        /*!
          * Query stored credential parameters for this authentication identity.
          * On success, a signal info() is emitted with parameters
          * in the service.
@@ -203,7 +223,7 @@ namespace SignOn {
          *
          * @param message message to be shown for the user
          */
-        void verifyUser(const QString &message = 0);
+        void verifyUser(const QString &message = QString());
 
         /*!
          * Verify if given secret match stored secret.
@@ -248,6 +268,20 @@ namespace SignOn {
          * @param id identifier of the credentials that has been stored
          */
         void credentialsStored(const quint32 id);
+
+        /*!
+         * Emitted when references are added by addReference()
+         * method and change
+         * has been successfully stored on the service.
+         */
+        void referenceAdded();
+
+        /*!
+         * Emitted when references are removed by removeReference()
+         * method and change
+         * has been successfully stored on the service.
+         */
+        void referenceRemoved();
 
         /*!
          * Emitted when credentials passed by queryInfo() method

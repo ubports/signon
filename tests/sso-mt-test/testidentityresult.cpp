@@ -35,8 +35,8 @@ TestIdentityResult::TestIdentityResult()
 void TestIdentityResult::reset()
 {
     m_responseReceived = InexistentResp;
-    m_err = Identity::UnknownError;
-    m_errMsg = "";
+    m_error = Error::Unknown;
+    m_errMsg = QString();
 
     m_methods.clear();
     m_id = 0;
@@ -106,19 +106,8 @@ bool TestIdentityResult::compareIdentityInfos(
     return true;
 }
 
-void TestIdentityResult::error(Identity::IdentityError code, const QString& message)
-{
-    IT_IS_HAPPENING
-    m_responseReceived = ErrorResp;
-    m_err = code;
-    m_errMsg = message;
 
-    qDebug() << "Error:" << m_err << ", Message:" << m_errMsg;
-
-    emit testCompleted();
-}
-
-void TestIdentityResult::error(const Error& error)
+void TestIdentityResult::error(const SignOn::Error& error)
 {
     m_responseReceived = ErrorResp;
     m_error = (Error::ErrorType)error.type();
