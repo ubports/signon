@@ -124,6 +124,10 @@ binary-arch: build install
 	dh_md5sums
 	dh_builddeb
 
+#fix some permissions
+	chmod a+x debian/signond/etc/osso-cud-scripts/signon-cud.sh 
+	chmod u+s debian/signond/usr/bin/signond
+
 	aegis-deb-add -control debian/$(SIGNOND_PACKAGE)/DEBIAN/control .. debian/$(SIGNOND_PACKAGE).aegis=_aegis
 	aegis-deb-add -control debian/libsignon-qt-tests/DEBIAN/control .. debian/libsignon-qt-tests.aegis=_aegis
 
