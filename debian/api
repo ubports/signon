@@ -1,6 +1,7 @@
 interface: libsignon-qt
 type: library
 scope: Nokia MeeGo
-state: unstable
+state: stable
 libs-pkg: libsignon-qt0
 dev-pkg: libsignon-qt-dev
+headers: /usr/include/signon-qt/SignOn/*

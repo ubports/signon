@@ -1,3 +1,85 @@
+signon (3.6-1) unstable; urgency=low
+
+  * Full disabling of ACM
+    
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Mon 11 Oct 2010 12:02:42 +0300
+
+signon (3.5-1) unstable; urgency=low
+
+  * Fix verification without storing password
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Sat, 09 Oct 2010 23:02:42 +0300
+
+signon (3.4-2) unstable; urgency=low
+
+  * Fixes: NB#196049 - package signon API file includes *example* header in the interface declaration
+  * Fixes: NB#183242 - Authentication failure dialog/login dialog shows %1 instead of name of the Provider
+  * Removes extra signond0 dependencies
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 06 Oct 2010 14:52:42 +0300
+
+signon (3.4-1) unstable; urgency=low
+
+  * Partial fix for 196033 - Sometimes uploads to online services fails with SSO Error %1 %2 
+    
+ -- Alexander Akimov <ext-alexander.akimov@nokia.com>  Wed, 06 Oct 2010 14:52:42 +0300
+
+signon (3.3-2) unstable; urgency=low
+
+  * Fixes: NB#193956 - accounts-ui does not the proxy settings to facebook-signon plugin 
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 01 Oct 2010 14:52:42 +0300
+
+signon (3.3-1) unstable; urgency=low
+
+  * Enable Access Control.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Fri, 01 Oct 2010 13:22:42 +0300
+
+signon (3.2-2) unstable; urgency=low
+
+  * Fixes: NB#187015 - signon: add dependency to cdbs
+  * Fixes: NB#193833 - Annoying useless number suffix in package name for signond 
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 24 Sep 2010 10:52:42 +0300
+
+signon (3.2-1) unstable; urgency=low
+
+  * Fixes: NB#193855 - Account configuration fails with info 'qtn_acc_storing_err_undefined'
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Thu, 23 Sep 2010 10:52:42 +0300
+
+signon (3.1-2) unstable; urgency=low
+
+  * Merge master
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 17 Sep 2010 10:32:42 +0300
+
+signon (3.1-1) unstable; urgency=low
+
+  * Added named references into Identity API
+  * Fixes: NB#192158 - signon: add pkg-config to build-deps
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Fri, 17 Sep 2010 10:32:42 +0300
+
+signon (3.0-2) unstable; urgency=low
+
+  * Removed deprecated signals from API
+    
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 15 Sep 2010 15:32:42 +0300
+
+signon (3.0-1) unstable; urgency=low
+
+  * Fixes: NB#188345 - CUD script is not executable
+  * Fixes: NB#189052 - Facebook:SignON UI lauching while uploading images to facebook .
+  * Fixes: NB#191532 - Improper signature in some signals.
+  * Fixes: NB#185401 - 'Unknown error' is shown while signing in to youtube account using the Gmail account which is not added to youtube service
+  * Fixes: NB#183922 - Facebook:"Unknown error" note shown when wrong credentials are entered
+  * Added store() signal to signon plugin API
+  * Database structure rewritten
+    
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 15 Sep 2010 13:32:42 +0300
+
 signon (2.5-1) unstable; urgency=low
 
   * Fixes: NB#179506 -  Signond is filling /tmp with traces

@@ -13,7 +13,7 @@ space:= $(empty) $(empty)
 PROJECT_NAME:= signon
 BUILD_DIR:= builddir
 export BUILD_DIR
-SIGNOND_PACKAGE:= signond0
+SIGNOND_PACKAGE:= signond
 PACKAGE_TARGETS:= $(foreach pkg,$(DEB_ALL_PACKAGES),binary/$(pkg))
 
 # Uncomment this to turn on verbose mode.
