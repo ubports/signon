@@ -167,14 +167,10 @@ namespace SignonDaemonNS {
         m_cancelKey = cancelKey;
         QVariant value = inData.value(SSOUI_KEY_UIPOLICY);
         m_uiPolicy = value.toInt();
-        //TODO check if this part can be done in SignonSessionCore::startProcess()
-        QVariantMap inDataTmp = inData;
-        if (m_uiPolicy == RequestPasswordPolicy)
-            inDataTmp.remove(SSOUI_KEY_PASSWORD);
-        QDataStream in(m_process);
 
+        QDataStream in(m_process);
         in << (quint32)PLUGIN_OP_PROCESS;
-        in << QVariant(inDataTmp);
+        in << QVariant(inData);
         in << QVariant(mechanism);
 
         m_isProcessing = true;
