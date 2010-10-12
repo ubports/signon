@@ -151,6 +151,7 @@ namespace SignonDaemonNS {
 
         quint32 m_id;
         QString m_method;
+        QString m_passwordUpdate;
 
     Q_DISABLE_COPY(SignonSessionCore)
 }; //class SignonDaemon

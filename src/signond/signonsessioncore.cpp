@@ -74,7 +74,8 @@ SignonSessionCore::SignonSessionCore(quint32 id,
                                      SignonDaemon *parent) :
                                      SignonDisposable(timeout, parent),
                                      m_id(id),
-                                     m_method(method)
+                                     m_method(method),
+                                     m_passwordUpdate(QString())
 {
     TRACE();
     m_signonui = NULL;
@@ -323,8 +324,10 @@ void SignonSessionCore::startProcess()
                 /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
                 if (!parameters.contains(SSO_KEY_PASSWORD))
                     parameters[SSO_KEY_PASSWORD] = info.m_password;
-                //database overrules over sessiondata for username, so that username cannot be faked
-                parameters[SSO_KEY_USERNAME] = info.m_userName;
+                //database overrules over sessiondata for validated username,
+                //so that identity cannot be misused
+                if (info.m_validated)
+                    parameters[SSO_KEY_USERNAME] = info.m_userName;
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
                 //credentials not available, so authentication probably fails
@@ -335,6 +338,10 @@ void SignonSessionCore::startProcess()
         } else {
             BLAME() << "Null database handler object.";
         }
+    }
+    if (parameters.contains(SSOUI_KEY_UIPOLICY)
+        && parameters[SSOUI_KEY_UIPOLICY] == RequestPasswordPolicy) {
+        parameters.remove(SSO_KEY_PASSWORD);
     }
     TRACE() << "all params: " << parameters;
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
@@ -458,14 +465,18 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         QVariantMap data2 = filterVariantMap(data);
 
         //update database entry
-        if (m_id != SIGNOND_NEW_IDENTITY && data2.contains(SSO_KEY_PASSWORD)) {
+        if (m_id != SIGNOND_NEW_IDENTITY) {
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
-                if (data2.contains(SSO_KEY_USERNAME))
+                //allow update only for not validated username
+                if (data2.contains(SSO_KEY_USERNAME) && !info.m_validated)
                     info.m_userName = data2[SSO_KEY_USERNAME].toString();
-                info.m_password = data2[SSO_KEY_PASSWORD].toString();
-
+                if (!m_passwordUpdate.isEmpty())
+                    info.m_password = data2[SSO_KEY_PASSWORD].toString();
+                if (data2.contains(SSO_KEY_PASSWORD))
+                    info.m_password = data2[SSO_KEY_PASSWORD].toString();
+                info.m_validated = true;
                 if (!(db->updateCredentials(info)))
                     BLAME() << "Error occured while updating credentials.";
             } else {
@@ -501,6 +512,7 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
 
     keepInUse();
     qint32 id = m_id;
+    m_passwordUpdate = QString();
     if (id == SIGNOND_NEW_IDENTITY) {
         BLAME() << "Cannot store without identity";
         return;
@@ -668,6 +680,8 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             m_plugin->processRefresh(m_listOfRequests.head().m_cancelKey,
                                      m_listOfRequests.head().m_params);
         } else {
+            if (m_listOfRequests.head().m_params.contains(SSO_KEY_PASSWORD))
+                m_passwordUpdate = m_listOfRequests.head().m_params[SSO_KEY_PASSWORD].toString();
             m_plugin->processUi(m_listOfRequests.head().m_cancelKey,
                                 m_listOfRequests.head().m_params);
         }
