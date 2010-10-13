@@ -18,7 +18,7 @@ case "$1" in
     install|upgrade)
      
        # stop signond before upgrade
-       pkill signond
+       [ -x "/usr/bin/pkill" ] && /usr/bin/pkill signond
 
        # If the package has default file it could be sourced, so that
        # the local admin can overwrite the defaults
