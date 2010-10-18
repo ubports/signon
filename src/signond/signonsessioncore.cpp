@@ -326,7 +326,7 @@ void SignonSessionCore::startProcess()
                     parameters[SSO_KEY_PASSWORD] = info.m_password;
                 //database overrules over sessiondata for validated username,
                 //so that identity cannot be misused
-                if (info.m_validated)
+                if (info.m_validated || !parameters.contains(SSO_KEY_USERNAME))
                     parameters[SSO_KEY_USERNAME] = info.m_userName;
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
@@ -470,11 +470,14 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
                 //allow update only for not validated username
-                if (data2.contains(SSO_KEY_USERNAME) && !info.m_validated)
+                if (!info.m_validated
+                        && data2.contains(SSO_KEY_USERNAME)
+                        && !data2[SSO_KEY_USERNAME].toString().isEmpty())
                     info.m_userName = data2[SSO_KEY_USERNAME].toString();
                 if (!m_passwordUpdate.isEmpty())
-                    info.m_password = data2[SSO_KEY_PASSWORD].toString();
-                if (data2.contains(SSO_KEY_PASSWORD))
+                    info.m_password = m_passwordUpdate;
+                if (data2.contains(SSO_KEY_PASSWORD)
+                        && !data2[SSO_KEY_PASSWORD].toString().isEmpty())
                     info.m_password = data2[SSO_KEY_PASSWORD].toString();
                 info.m_validated = true;
                 if (!(db->updateCredentials(info)))
