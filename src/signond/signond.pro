@@ -13,7 +13,7 @@ QT -= gui
 system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
     ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
 
-HEADERS += accesscodehandler.h \
+HEADERS += simdatahandler.h \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
@@ -28,19 +28,18 @@ HEADERS += accesscodehandler.h \
     signondaemon.h \
     signondisposable.h \
     signontrace.h \
-    simdbusadaptor.h \
     pluginproxy.h \
     signonidentityinfo.h \
     signonui_interface.h \
     signonidentityadaptor.h \
-    backupifadaptor.h
-SOURCES += accesscodehandler.cpp \
+    backupifadaptor.h \
+    devicelockcodehandler.h
+SOURCES += simdatahandler.cpp \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
     cryptomanager.cpp \
     cryptohandlers.cpp \
-    simdbusadaptor.cpp \
     signonsessioncore.cpp \
     signonauthsessionadaptor.cpp \
     signonauthsession.cpp \
@@ -53,7 +52,8 @@ SOURCES += accesscodehandler.cpp \
     signondaemon.cpp \
     signonidentityinfo.cpp \
     signonidentityadaptor.cpp \
-    backupifadaptor.cpp
+    backupifadaptor.cpp \
+    devicelockcodehandler.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
 CONFIG += build_all \
@@ -85,3 +85,11 @@ include( ../../common-installs-config.pri )
 # Disabling access control if platform is not arm
 BUILD_ARCH = $$QMAKE_HOST.arch
 contains(BUILD_ARCH, i686):DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
+
+OTHER_FILES = signond.conf
+
+conf_file.files = $$OTHER_FILES
+conf_file.path = /etc/
+
+INSTALLS += conf_file
+

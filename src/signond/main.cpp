@@ -25,6 +25,7 @@ extern "C" {
     #include <unistd.h>
     #include <errno.h>
     #include <stdio.h>
+    #include <sys/types.h>
 }
 
 #include "signond-common.h"
@@ -87,6 +88,10 @@ int main(int argc, char *argv[])
     installSigHandlers();
 
     SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
+
+    if (setuid(0) != 0) {
+        BLAME() << "Failed to SUID root. Secure storage will not be available.";
+    }
 
     g_signonDaemon = new SignonDaemon(&app);
 
