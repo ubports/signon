@@ -53,7 +53,7 @@ Description: Documentation for libsignon-qt
 Package: signond
 Architecture: any
 Priority: optional
-Depends: libcreds2, libqt4-sql-sqlite, libcryptsetup0 (>= 1.0.7), ${shlibs:Depends}, ${misc:Depends}
+Depends: libcreds2, libqt4-sql-sqlite, libcryptsetup0 (>= 1.0.7), e2fsprogs, ${shlibs:Depends}, ${misc:Depends}
 Provides: signond0
 Replaces: signond0
 Recommends: signon-ui, signon-plugins, libsignon-qt0
