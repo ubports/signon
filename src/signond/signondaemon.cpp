@@ -21,9 +21,14 @@
  * 02110-1301 USA
  */
 
+extern "C" {
+    #include <sys/socket.h>
+}
+
 #include <QtDebug>
 #include <QDBusConnection>
 #include <QProcessEnvironment>
+#include <QSocketNotifier>
 
 #include "signondaemon.h"
 #include "signond-common.h"
@@ -46,8 +51,39 @@ using namespace SignOn;
 
 namespace SignonDaemonNS {
 
-    RequestCounter *RequestCounter::m_pInstance = NULL;
-    SignonDaemonConfiguration* SignonDaemonConfiguration::m_instance = NULL;
+    QScopedPointer<RequestCounter> requestCounter;
+
+    /* ---------------------- RequestCounter ---------------------- */
+    RequestCounter *RequestCounter::instance()
+    {
+        if (requestCounter.isNull())
+        {
+            QScopedPointer<RequestCounter> tmp(new RequestCounter());
+            requestCounter.swap(tmp);
+        }
+
+        return requestCounter.data();
+    }
+
+    void RequestCounter::addServiceResquest()
+    {
+        ++m_serviceRequests;
+    }
+
+    void RequestCounter::addIdentityResquest()
+    {
+        ++m_identityRequests;
+    }
+
+    int RequestCounter::serviceRequests() const
+    {
+        return m_serviceRequests;
+    }
+
+    int RequestCounter::identityRequests() const
+    {
+        return m_identityRequests;
+    }
 
     /* ---------------------- SignonDaemonConfiguration ---------------------- */
 
@@ -64,18 +100,7 @@ namespace SignonDaemonNS {
 
     SignonDaemonConfiguration::~SignonDaemonConfiguration()
     {
-        if (m_instance) {
-            delete m_instance;
-            m_instance = NULL;
-        }
-    }
-
-    SignonDaemonConfiguration *SignonDaemonConfiguration::instance()
-    {
-        if (m_instance == NULL)
-            m_instance = new SignonDaemonConfiguration;
-
-        return m_instance;
+        TRACE();
     }
 
     /*
@@ -163,14 +188,12 @@ namespace SignonDaemonNS {
             value = environment.value(
                 QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
 
-
             m_identityTimeout = (value > 0) && isOk ? value : m_identityTimeout;
         }
 
         if (environment.contains(QLatin1String("SSO_AUTHSESSION_TIMEOUT"))) {
             value = environment.value(
                 QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
-
             m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
         }
     }
@@ -180,15 +203,24 @@ namespace SignonDaemonNS {
     const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
     const QString internalServerErrStr = SIGNOND_INTERNAL_SERVER_ERR_STR;
 
+    static int sigFd[2];
+
+    SignonDaemon *SignonDaemon::m_instance = NULL;
+
     SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
-    {
-        m_backup = false;
-        m_pCAMManager = CredentialsAccessManager::instance();
-    }
+                                                , m_configuration(NULL)
+    {}
 
     SignonDaemon::~SignonDaemon()
     {
-        if (m_backup) exit(0);
+        TRACE() << "started";
+        ::close(sigFd[0]);
+        ::close(sigFd[1]);
+
+        if (m_backup) {
+            TRACE() << "completed";
+            exit(0);
+        }
 
         SignonAuthSession::stopAllAuthSessions();
         m_storedIdentities.clear();
@@ -196,7 +228,7 @@ namespace SignonDaemonNS {
 
         if (m_pCAMManager) {
             m_pCAMManager->closeCredentialsSystem();
-            m_pCAMManager->deleteLater();
+            delete m_pCAMManager;
         }
 
         QDBusConnection sessionConnection = QDBusConnection::sessionBus();
@@ -205,22 +237,111 @@ namespace SignonDaemonNS {
                                            + QLatin1String("/Backup"));
         sessionConnection.unregisterService(SIGNOND_SERVICE
                                             + QLatin1String(".Backup"));
-
         if (m_backup == false)
         {
             sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH);
             sessionConnection.unregisterService(SIGNOND_SERVICE);
         }
 
-        delete SignonDaemonConfiguration::instance();
-        delete RequestCounter::instance();
+        delete m_configuration;
+        TRACE() << "completed";
     }
 
-    bool SignonDaemon::init(bool backup)
+    void SignonDaemon::setupSignalHandlers()
     {
-        m_backup = backup;
+        if (::socketpair(AF_UNIX, SOCK_STREAM, 0, sigFd) != 0)
+            BLAME() << "Couldn't create HUP socketpair";
 
-        SignonDaemonConfiguration::instance()->load();
+        m_sigSn = new QSocketNotifier(sigFd[1], QSocketNotifier::Read, this);
+        connect(m_sigSn, SIGNAL(activated(int)),
+                this, SLOT(handleUnixSignal()));
+    }
+
+    void SignonDaemon::signalHandler(int signal)
+    {
+        TRACE() << "signal: " << signal;
+        ::write(sigFd[0], &signal, sizeof(signal));
+    }
+
+    void SignonDaemon::handleUnixSignal()
+    {
+        m_sigSn->setEnabled(false);
+
+        int signal;
+        ::read(sigFd[1], &signal, sizeof(signal));
+
+        TRACE() << "signal received: " << signal;
+
+        switch (signal) {
+            case SIGHUP: {
+                TRACE() << "\n\n SIGHUP \n\n";
+                //todo restart daemon
+                deleteLater();
+
+                // reset the m_instance
+                m_instance = NULL;
+                QMetaObject::invokeMethod(instance(),
+                                          "init",
+                                          Qt::QueuedConnection);
+                break;
+            }
+            case SIGTERM: {
+                TRACE() << "\n\n SIGTERM \n\n";
+                //gently stop daemon
+                deleteLater();
+                QMetaObject::invokeMethod(QCoreApplication::instance(),
+                                          "quit",
+                                          Qt::QueuedConnection);
+                break;
+            }
+            case SIGINT:  {
+                TRACE() << "\n\n SIGINT \n\n";
+                //gently stop daemon
+                deleteLater();
+                QMetaObject::invokeMethod(QCoreApplication::instance(),
+                                          "quit",
+                                          Qt::QueuedConnection);
+                break;
+            }
+            default: break;
+        }
+
+        m_sigSn->setEnabled(true);
+    }
+
+    SignonDaemon *SignonDaemon::instance()
+    {
+        TRACE();
+        if (m_instance != NULL)
+            return m_instance;
+
+        QCoreApplication *app = QCoreApplication::instance();
+
+        if (!app)
+            qFatal("SignonDaemon requires a QCoreApplication instance to be constructed first");
+
+        TRACE() << "New instance must be created";
+        m_instance = new SignonDaemon(app);
+        return m_instance;
+    }
+
+    void SignonDaemon::init()
+    {
+        TRACE();
+        QCoreApplication *app = QCoreApplication::instance();
+        TRACE();
+        if (!app)
+            qFatal("SignonDaemon requires a QCoreApplication instance to be constructed first");
+
+        setupSignalHandlers();
+        m_backup = app->arguments().contains(QLatin1String("-backup"));
+        m_pCAMManager = CredentialsAccessManager::instance();
+
+        TRACE();
+        if (!(m_configuration = new SignonDaemonConfiguration))
+            qFatal("SignonDaemon requires configuration object") ;
+
+        m_configuration->load();
 
         /* backup dbus interface */
         QDBusConnection sessionConnection = QDBusConnection::sessionBus();
@@ -229,7 +350,8 @@ namespace SignonDaemonNS {
             QDBusError err = sessionConnection.lastError();
             TRACE() << "Session connection cannot be established:" << err.errorString(err.type());
             TRACE() << err.message();
-            return false;
+
+            qFatal("SignonDaemon requires session bus to start working");
         }
 
         QDBusConnection::RegisterOptions registerSessionOptions = QDBusConnection::ExportAdaptors;
@@ -239,19 +361,21 @@ namespace SignonDaemonNS {
         if (!sessionConnection.registerObject(SIGNOND_DAEMON_OBJECTPATH
                                               + QLatin1String("/Backup"), this, registerSessionOptions)) {
             TRACE() << "Object cannot be registered";
-            return false;
+
+            qFatal("SignonDaemon requires to register backup object");
         }
 
         if (!sessionConnection.registerService(SIGNOND_SERVICE+QLatin1String(".Backup"))) {
             QDBusError err = sessionConnection.lastError();
             TRACE() << "Service cannot be registered: " << err.errorString(err.type());
-            return false;
+
+            qFatal("SignonDaemon requires to register backup service");
         }
 
         if (m_backup) {
             TRACE() << "Signond initialized in backup mode.";
             //skit rest of initialization in backup mode
-            return true;
+            return;
         }
 
         /* DBus Service init */
@@ -261,7 +385,8 @@ namespace SignonDaemonNS {
             QDBusError err = connection.lastError();
             TRACE() << "Connection cannot be established:" << err.errorString(err.type());
             TRACE() << err.message();
-            return false;
+
+            qFatal("SignonDaemon requires DBus to start working");
         }
 
         QDBusConnection::RegisterOptions registerOptions = QDBusConnection::ExportAllContents;
@@ -271,19 +396,19 @@ namespace SignonDaemonNS {
 
         if (!connection.registerObject(SIGNOND_DAEMON_OBJECTPATH, this, registerOptions)) {
             TRACE() << "Object cannot be registered";
-            return false;
+
+            qFatal("SignonDaemon requires to register daemon's object");
         }
 
         if (!connection.registerService(SIGNOND_SERVICE)) {
             QDBusError err = connection.lastError();
             TRACE() << "Service cannot be registered: " << err.errorString(err.type());
-            return false;
+
+            qFatal("SignonDaemon requires to register daemon's service");
         }
 
         if (!initSecureStorage(QByteArray()))
             qFatal("Signond: Cannot initialize credentials secure storage.");
-
-        TRACE() << "Signond SUCCESSFULLY initialized.";
 
         // TODO - remove this
         QTimer *requestCounterTimer = new QTimer(this);
@@ -293,9 +418,9 @@ namespace SignonDaemonNS {
                 this,
                 SLOT(displayRequestsCount()));
         requestCounterTimer->start();
-        //TODO - end
 
-        return true;
+        TRACE() << "Signond SUCCESSFULLY initialized.";
+        //TODO - end
     }
 
     bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
@@ -305,17 +430,14 @@ namespace SignonDaemonNS {
 
             CAMConfiguration config;
 
-            SignonDaemonConfiguration * daemonConfig =
-                SignonDaemonConfiguration::instance();
-
             //Use the Signon configuration file if it exists
-            if (daemonConfig->loadedFromFile()) {
-                config.m_useEncryption = daemonConfig->useSecureStorage();
-                config.m_fileSystemSize = daemonConfig->storageSize();
-                config.m_fileSystemType = daemonConfig->storageFileSystemType();
-                config.m_dbFileSystemPath = daemonConfig->storagePath()
+            if (m_configuration->loadedFromFile()) {
+                config.m_useEncryption = m_configuration->useSecureStorage();
+                config.m_fileSystemSize = m_configuration->storageSize();
+                config.m_fileSystemType = m_configuration->storageFileSystemType();
+                config.m_dbFileSystemPath = m_configuration->storagePath()
                                             + QDir::separator()
-                                            + daemonConfig->storageFileSystemName();
+                                            + m_configuration->storageFileSystemName();
             }
 
             config.m_encryptionPassphrase = lockCode;
@@ -388,6 +510,20 @@ namespace SignonDaemonNS {
         m_unstoredIdentities.insert(identity->objectName(), identity);
 
         objectPath = QDBusObjectPath(identity->objectName());
+    }
+
+    int SignonDaemon::identityTimeout() const
+    {
+        return (m_configuration == NULL ?
+                                         300 :
+                                         m_configuration->identityTimeout());
+    }
+
+    int SignonDaemon::authSessionTimeout() const
+    {
+        return (m_configuration == NULL ?
+                                         300 :
+                                         m_configuration->authSessionTimeout());
     }
 
     void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
@@ -575,7 +711,8 @@ namespace SignonDaemonNS {
                 if (m_pCAMManager->storeEncryptionKey(lockCode))
                     ret = true;
                 else
-                    TRACE() << "Could not store slave encryption key.";
+                    TRACE() << "Could not store slave encryption key."
+                            << "Key might be already stored.";
             }
         } else {
             /* --- New lock code is communicated to the Signond ---

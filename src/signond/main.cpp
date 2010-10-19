@@ -20,14 +20,6 @@
  * 02110-1301 USA
  */
 
-extern "C" {
-    #include <signal.h>
-    #include <unistd.h>
-    #include <errno.h>
-    #include <stdio.h>
-    #include <sys/types.h>
-}
-
 #include "signond-common.h"
 #include "signondaemon.h"
 #include "signontrace.h"
@@ -37,53 +29,21 @@ extern "C" {
 using namespace SignonDaemonNS;
 using namespace SignOn;
 
-static bool unix_signals_installed = false;
-static SignonDaemon *g_signonDaemon = NULL;
-static QCoreApplication *g_qApp = NULL;
-
-
-void signal_handler(int signal)
-{
-    //todo - update this so that no memory is allocated/deleted in the signals' handler scope
-    if (unix_signals_installed) {
-        if (signal == SIGHUP) {
-            if (g_signonDaemon) {
-                delete g_signonDaemon;
-                g_signonDaemon = NULL;
-            }
-            sleep(1);
-            g_signonDaemon = new SignonDaemon(g_qApp);
-            if (!g_signonDaemon->init(false)) {
-                fprintf(stderr, "Signon daemon could not restart on SIGHUP.\n");
-            }
-            return;
-        }
-
-        exit(0);
-    }
-}
-
 void installSigHandlers()
 {
-    unix_signals_installed = true;
+    struct sigaction act;
+    act.sa_handler = SignonDaemon::signalHandler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = SA_RESTART;
 
-    struct sigaction handler;
-
-    memset(&handler, 0, sizeof(handler));
-
-    handler.sa_handler = signal_handler;
-
-    sigaction(SIGTERM, &handler, NULL);
-    sigaction(SIGINT, &handler, NULL);
-    sigaction(SIGKILL, &handler, NULL);
-    sigaction(SIGSTOP, &handler, NULL);
-    sigaction(SIGHUP, &handler, NULL);
+    sigaction(SIGHUP, &act, 0);
+    sigaction(SIGTERM, &act, 0);
+    sigaction(SIGINT, &act, 0);
 }
 
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    g_qApp = QCoreApplication::instance();
 
     installSigHandlers();
 
@@ -93,13 +53,8 @@ int main(int argc, char *argv[])
         BLAME() << "Failed to SUID root. Secure storage will not be available.";
     }
 
-    g_signonDaemon = new SignonDaemon(&app);
-
-    bool startedForBackup = app.arguments().contains(QLatin1String("-backup"));
-    if (!g_signonDaemon->init(startedForBackup)) {
-        qFatal("Signon daemon could not start.");
-        return 0;
-    }
-    else
-        return app.exec();
+    QMetaObject::invokeMethod(SignonDaemon::instance(),
+                              "init",
+                              Qt::QueuedConnection);
+    return app.exec();
 }

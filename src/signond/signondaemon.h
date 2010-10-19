@@ -24,6 +24,14 @@
 #ifndef SIGNONDAEMON_H_
 #define SIGNONDAEMON_H_
 
+extern "C" {
+    #include <signal.h>
+    #include <unistd.h>
+    #include <errno.h>
+    #include <stdio.h>
+    #include <sys/types.h>
+}
+
 #include <QtCore>
 #include <QtDBus>
 
@@ -41,6 +49,8 @@
     #define SIGNOND_PLUGIN_SUFFIX QLatin1String("plugin.so")
 #endif
 
+class QSocketNotifier;
+
 namespace SignonDaemonNS {
 
     /*!
@@ -48,26 +58,21 @@ namespace SignonDaemonNS {
      */
     class RequestCounter
     {
-        RequestCounter() : m_serviceRequests(0), m_identityRequests(0)
+        RequestCounter() : m_serviceRequests(0),
+                           m_identityRequests(0)
         {}
 
     public:
-        static RequestCounter* instance()
-        {
-            if (m_pInstance == NULL)
-                m_pInstance = new RequestCounter();
+        virtual ~RequestCounter() {}
+        static RequestCounter *instance();
 
-            return m_pInstance;
-        }
+        void addServiceResquest();
+        void addIdentityResquest();
 
-        void addServiceResquest() { ++m_serviceRequests; }
-        void addIdentityResquest() { ++m_identityRequests; }
-
-        int serviceRequests() const { return m_serviceRequests; }
-        int identityRequests() const { return m_identityRequests; }
+        int serviceRequests() const;
+        int identityRequests() const;
 
     private:
-        static RequestCounter *m_pInstance;
         int m_serviceRequests;
         int m_identityRequests;
     };
@@ -79,16 +84,12 @@ namespace SignonDaemonNS {
      */
     class SignonDaemonConfiguration
     {
-        SignonDaemonConfiguration();
-        static SignonDaemonConfiguration* m_instance;
-
     public:
+        SignonDaemonConfiguration();
         ~SignonDaemonConfiguration();
 
         void load();
         bool loadedFromFile() const { return m_loadedFromFile; }
-        static SignonDaemonConfiguration *instance();
-
         bool useSecureStorage() const { return m_useSecureStorage; }
 
         uint storageSize() const { return m_storageSize; }
@@ -134,24 +135,17 @@ namespace SignonDaemonNS {
         friend class SignonDaemonAdaptor;
 
     public:
-        SignonDaemon(QObject *parent);
-        ~SignonDaemon();
+        static SignonDaemon *instance();
+        virtual ~SignonDaemon();
 
-        bool init(bool backup);
+        Q_INVOKABLE void init();
 
         /*!
          * Returns the number of seconds of inactivity after which identity
          * objects might be automatically deleted.
          */
-        int identityTimeout() const
-        {
-            return SignonDaemonConfiguration::instance()->identityTimeout();
-        }
-
-        int authSessionTimeout() const
-        {
-            return SignonDaemonConfiguration::instance()->authSessionTimeout();
-        }
+        int identityTimeout() const;
+        int authSessionTimeout() const;
 
     public Q_SLOTS:
         /* Immediate reply calls */
@@ -185,10 +179,12 @@ namespace SignonDaemonNS {
         void displayRequestsCount();
 
     private:
+        SignonDaemon(QObject *parent);
         bool initSecureStorage(const QByteArray &lockCode);
 
         void unregisterIdentity(SignonIdentity *identity);
         void identityStored(SignonIdentity *identity);
+        void setupSignalHandlers();
         void listDBusInterfaces();
 
     private:
@@ -197,6 +193,8 @@ namespace SignonDaemonNS {
          * */
         QMap<quint32, SignonIdentity *> m_storedIdentities;
         QMap<QString, SignonIdentity *> m_unstoredIdentities;
+
+        SignonDaemonConfiguration *m_configuration;
 
         /*
          * The instance of CAM
@@ -207,6 +205,19 @@ namespace SignonDaemonNS {
 
         int m_identityTimeout;
         int m_authSessionTimeout;
+
+        /*
+         * UNIX signals handling related
+         * */
+    public:
+        static void signalHandler(int signal);
+
+    public Q_SLOTS:
+        void handleUnixSignal();
+
+    private:
+        QSocketNotifier *m_sigSn;
+        static SignonDaemon *m_instance;
     }; //class SignonDaemon
 
 } //namespace SignonDaemonNS
