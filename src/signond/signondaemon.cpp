@@ -112,15 +112,20 @@ namespace SignonDaemonNS {
             QString useSecureStorage = settings.value(QLatin1String("UseSecureStorage")).toString();
 
             if (!useSecureStorage.isEmpty())
-                m_useSecureStorage = (useSecureStorage == QLatin1String("yes"));
+                m_useSecureStorage =
+                    (useSecureStorage == QLatin1String("yes")
+                    || useSecureStorage == QLatin1String("true"));
 
             if (m_useSecureStorage) {
                 settings.beginGroup(QLatin1String("SecureStorage"));
 
                 bool isOk = false;
                 m_storageSize = settings.value(QLatin1String("Size")).toUInt(&isOk);
-                if (!isOk || m_storageSize < 4)
-                    m_storageSize = 4;
+                if (!isOk || m_storageSize < signonMinumumDbSize) {
+                    m_storageSize = signonMinumumDbSize;
+                    TRACE() << "Less than minimum possible storage size configured."
+                            << "Setting to the minimum of:" << signonMinumumDbSize << "Mb";
+                }
 
                 m_storageFileSystemType = settings.value(
                     QLatin1String("FileSystemType")).toString();
@@ -137,11 +142,11 @@ namespace SignonDaemonNS {
             uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
 
             //Do not allow less than 1 minute timeout
-            if(isOk && aux >= 60)
+            if(isOk && aux >= signonMinimumObjectTimeout)
                 m_identityTimeout = aux;
 
             aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
-            if(isOk && aux >= 60)
+            if(isOk && aux >= signonMinimumObjectTimeout)
                 m_authSessionTimeout = aux;
 
             settings.endGroup();
@@ -566,8 +571,8 @@ namespace SignonDaemonNS {
                 ret = false;
             }
             //3
-            if (m_pCAMManager->slaveEncryptionKeyPendingAddition()) {
-                if (m_pCAMManager->storeSlaveEncryptionKey(lockCode))
+            if (m_pCAMManager->encryptionKeyPendingAddition()) {
+                if (m_pCAMManager->storeEncryptionKey(lockCode))
                     ret = true;
                 else
                     TRACE() << "Could not store slave encryption key.";

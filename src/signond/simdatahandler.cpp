@@ -78,7 +78,6 @@ SimDataHandler::SimDataHandler(QObject *parent)
       m_simIdentity(0),
       m_simStatus(new SIMStatus(this))
 {
-
     refreshSimIdentity();
 
     connect(m_simStatus,
@@ -111,7 +110,7 @@ void SimDataHandler::authComplete(QByteArray res,
     Q_UNUSED(eapCipheringKey);
     Q_UNUSED(eapIntegrityKey);
 
-    if(err == Cellular::SIM::NoError) {
+    if (err == Cellular::SIM::NoError) {
         TRACE() << "Successful SIM challenge...";
         m_dataBuffer += res;
         m_dataBuffer += cipheringKey;
@@ -126,7 +125,7 @@ void SimDataHandler::authComplete(QByteArray res,
             refreshSimIdentity();
         }
     } else {
-        BLAME() << "SIM chanllenge error occurred!...Error code:" << err;
+        BLAME() << "SIM chanllenge error occurred:" << err;
         m_simChallengeComplete = true;
         m_dataBuffer.clear();
         emit error();
@@ -177,7 +176,7 @@ void SimDataHandler::querySim()
 
 SimDataHandler::SimDataHandler(QObject *parent)
     : QObject(parent),
-      m_data (QByteArray())
+      m_dataBuffer(QByteArray())
 {
 }
 

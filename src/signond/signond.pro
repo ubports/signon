@@ -86,7 +86,9 @@ include( ../../common-installs-config.pri )
 BUILD_ARCH = $$QMAKE_HOST.arch
 contains(BUILD_ARCH, i686):DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
 
-OTHER_FILES = signond.conf
+OTHER_FILES += \
+    signond.conf \
+    setupstorage.sh
 
 conf_file.files = $$OTHER_FILES
 conf_file.path = /etc/

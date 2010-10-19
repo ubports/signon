@@ -121,7 +121,7 @@ namespace SignonDaemonNS {
 
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                    QLatin1String("dd"),
+                    QLatin1String("/bin/dd"),
                     QStringList() << QLatin1String("if=/dev/urandom")
                                   << QString::fromLatin1("of=%1").arg(fileName)
                                   << QLatin1String("bs=1M")
@@ -130,11 +130,11 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
     {
-        QString mkfsApp = QString::fromLatin1("mkfs.ext3");
+        QString mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3");
         switch (fileSystemType) {
-        case Ext2: mkfsApp = QString::fromLatin1("mkfs.ext2"); break;
-        case Ext3: mkfsApp = QString::fromLatin1("mkfs.ext3"); break;
-        case Ext4: mkfsApp = QString::fromLatin1("mkfs.ext4"); break;
+        case Ext2: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2"); break;
+        case Ext3: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3"); break;
+        case Ext4: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext4"); break;
         default: break;
         }
 
@@ -190,7 +190,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("losetup"),
+                            QLatin1String("/sbin/losetup"),
                             QStringList() << deviceName << blockDevice);
     }
 
@@ -215,7 +215,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("losetup"),
+                            QLatin1String("/sbin/losetup"),
                             QStringList() << QString::fromLatin1("-d") << deviceName);
     }
 
@@ -320,7 +320,14 @@ namespace SignonDaemonNS {
 
         options.key_file = NULL;
         options.timeout = 0;
-        options.tries = 3;
+        /*
+            Do not change this:
+            1) In case of failure to open, libcryptsetup code will
+            enter infinite loop - library BUG/FEATURE.
+            2) There is no need for multiple tries, option is intended for
+            command line use of the utility.
+        */
+        options.tries = 0;
         options.flags = 0;
 
         static struct interface_callbacks cmd_icb;
@@ -330,6 +337,8 @@ namespace SignonDaemonNS {
 
         TRACE() << "Device [" << options.device << "]";
         TRACE() << "Map name [" << options.name << "]";
+        TRACE() << "Key:" << key.constData();
+        TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksOpen(&options);
 
@@ -476,7 +485,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("modprobe"),
+                            QLatin1String("/sbin/modprobe"),
                             QStringList() << QString::fromLatin1("dm_mod"));
     }
 

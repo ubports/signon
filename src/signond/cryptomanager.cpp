@@ -32,7 +32,7 @@
 #include <QMetaEnum>
 #include <QSettings>
 
-#define DEVICE_MAPPER_DIR "/device/mapper/"
+#define DEVICE_MAPPER_DIR "/dev/mapper/"
 #define EXT2 "ext2"
 #define EXT3 "ext3"
 #define EXT4 "ext4"
@@ -53,6 +53,8 @@ namespace SignonDaemonNS {
               m_fileSystemSize(4)
     {
         updateMountState(Unmounted);
+        if (!CryptsetupHandler::loadDmMod())
+            BLAME() << "Could not load `dm_mod`!";
     }
 
     CryptoManager::CryptoManager(const QByteArray &encryptionKey,
@@ -66,6 +68,9 @@ namespace SignonDaemonNS {
     {
         setFileSystemPath(fileSystemPath);
         updateMountState(Unmounted);
+
+        if (!CryptsetupHandler::loadDmMod())
+            BLAME() << "Could not load `dm_mod`!";
     }
 
     CryptoManager::~CryptoManager()
@@ -122,6 +127,8 @@ namespace SignonDaemonNS {
             return false;
         }
 
+        clearFileSystemResources();
+
         m_loopDeviceName = LosetupHandler::findAvailableDevice();
         if (m_loopDeviceName.isNull()) {
             BLAME() << "No free loop device available!";
@@ -176,8 +183,6 @@ namespace SignonDaemonNS {
         }
 
         updateMountState(Mounted);
-        storeEncryptionKey(m_accessCode, QString::fromLatin1(MASTER_KEY_TAG));
-
         return true;
     }
 
@@ -188,6 +193,8 @@ namespace SignonDaemonNS {
             TRACE() << "Ecrypyted file system already mounted.";
             return false;
         }
+
+        clearFileSystemResources();
 
         if (!CryptsetupHandler::loadDmMod()) {
             BLAME() << "Could not load `dm_mod`!";
@@ -208,6 +215,7 @@ namespace SignonDaemonNS {
         updateMountState(LoopSet);
 
         //attempt luks close, in case of a leftover.
+        TRACE() << "%:"<< QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName;
         if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName))
             CryptsetupHandler::closeFile(m_fileSystemName);
 
@@ -227,6 +235,35 @@ namespace SignonDaemonNS {
         }
         updateMountState(Mounted);
         return true;
+    }
+
+    void CryptoManager::clearFileSystemResources()
+    {
+        /*
+            This method is a `just in case call` for the situations
+            when signond closes whithout handling the unmounting of
+            the secure storage.
+        */
+
+        TRACE() << "Clearing secure storage possibly used resources.";
+        if (!unmountMappedDevice())
+            TRACE() << "Unmounting mapped device failed.";
+
+        if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName)) {
+            if (!CryptsetupHandler::closeFile(m_fileSystemName))
+                TRACE() << "Failed to LUKS close.";
+        }
+
+        /*
+         TODO - find a way to check which loop device was previously used by
+                signond and close that specific one, until then this will be
+                skipped as it might close devices used by different processes.
+
+        if (!LosetupHandler::releaseDevice(m_loopDeviceName)) {
+            TRACE() << "Failed to release loop device.";
+        */
+
+        TRACE() << "Clearing secure storage possibly used resources DONE.";
     }
 
     bool CryptoManager::unmountFileSystem()
@@ -318,97 +355,53 @@ namespace SignonDaemonNS {
     }
 
     bool CryptoManager::addEncryptionKey(const QByteArray &key,
-                                         const QByteArray &existingKey,
-                                         const QString &keyTag)
+                                         const QByteArray &existingKey)
     {
         /*
          * TODO -- limit number of stored keys to the total available slots - 1.
          */
         if (m_mountState >= LoopLuksOpened) {
-            if (!CryptsetupHandler::addKeySlot(
-                    m_loopDeviceName, key, existingKey)) {
-                TRACE() << "FAILED to occupy key slot on the encrypted file system header.";
-                return false;
-            }
-
-            storeEncryptionKey(key, keyTag);
+            if (CryptsetupHandler::addKeySlot(
+                m_loopDeviceName, key, existingKey))
+                return true;
         }
-        return true;
-    }
-
-    bool CryptoManager::removeEncryptionKey(const QByteArray &key,
-                                            const QByteArray &remainingKey,
-                                            bool isMasterKey)
-    {
-        if (m_mountState >= LoopLuksOpened) {
-            if (!CryptsetupHandler::removeKeySlot(
-                    m_loopDeviceName, key, remainingKey)) {
-                TRACE() << "FAILED to release key slot from the encrypted file system header.";
-                return false;
-            }
-            if (!isMasterKey)
-                removeEncryptionKey(key);
-        }
-        return true;
-    }
-
-
-    void CryptoManager::storeEncryptionKey(const QByteArray &key, const QString &keyTag)
-    {
-        /* If it's worth it, optimize this to have only the actual keys which occupy key slots
-           - this is for the case when the SIMs in use outnumber the LUKS key slots
-         */
-        TRACE() << fileSystemMountPath() + QDir::separator() + keysStorageFileName;
-        QSettings usedEncryptionKeysFile(
-                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
-                QSettings::IniFormat);
-
-        if (keyTag.isEmpty()) {
-            int keysCount = usedEncryptionKeysFile.childKeys().count();
-            usedEncryptionKeysFile.setValue(
-                QString(QLatin1String("key%1")).arg(keysCount + 1), key);
-        } else {
-            usedEncryptionKeysFile.setValue(keyTag, key);
-        }
-    }
-
-    bool CryptoManager::encryptionKeyInUse(const QByteArray &key, bool isMasterKey)
-    {
-        if (!fileSystemMounted()) {
-            TRACE() << "Encrypted FS not mounted.";
-            return false;
-        }
-
-        //if a master key check is running ignore this optimization
-        if (!isMasterKey && m_accessCode == key)
-            return true;
-
-        QSettings usedEncryptionKeysFile(
-                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
-                QSettings::IniFormat);
-
-        if (isMasterKey) {
-            return (usedEncryptionKeysFile.value(
-                        QLatin1String(MASTER_KEY_TAG)).toByteArray() == key);
-        } else {
-            foreach (QString childKey, usedEncryptionKeysFile.childKeys())
-                if (usedEncryptionKeysFile.value(childKey).toByteArray() == key)
-                    return true;
-        }
+        TRACE() << "FAILED to occupy key slot on the encrypted file system header.";
         return false;
     }
 
-    void CryptoManager::removeEncryptionKey(const QByteArray &key)
+    bool CryptoManager::removeEncryptionKey(const QByteArray &key,
+                                            const QByteArray &remainingKey)
     {
-        QSettings usedEndryptionKeysFile(
-                fileSystemMountPath() + QDir::separator() + keysStorageFileName,
-                QSettings::IniFormat);
+        if (m_mountState >= LoopLuksOpened) {
+            if (CryptsetupHandler::removeKeySlot(
+                m_loopDeviceName, key, remainingKey))
+                return true;
+        }
+        TRACE() << "FAILED to release key slot from the encrypted file system header.";
+        return false;
+    }
 
-        foreach (QString keyStr, usedEndryptionKeysFile.childKeys())
-            if (usedEndryptionKeysFile.value(keyStr).toByteArray() == key) {
-                usedEndryptionKeysFile.remove(keyStr);
-                break;
-            }
+    bool CryptoManager::encryptionKeyInUse(const QByteArray &key)
+    {
+        if (fileSystemMounted() && (m_accessCode == key))
+            return true;
+
+        QString loopDeviceName;
+        bool loopDeviceSet = false;
+        if(!fileSystemMounted()) {
+           setEncryptionKey(key);
+           return mountFileSystem();
+        }
+
+        QByteArray dummyKey("dummy");
+        if (addEncryptionKey(dummyKey, key)) {
+            if (!removeEncryptionKey(dummyKey, key))
+                BLAME() << "Could not remove dummy auxiliary key "
+                           "from encrypted file system header.";
+            return true;
+        }
+
+        return false;
     }
 
     //TODO - remove this after stable version is achieved.

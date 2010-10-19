@@ -222,14 +222,14 @@ namespace SignonDaemonNS {
           the user for the master key.
           @return true if a slave encryption key is being buffered, false otherwise.
         */
-        bool slaveEncryptionKeyPendingAddition() const;
+        bool encryptionKeyPendingAddition() const;
 
         /*!
           Stores the buffered slave encryption key.
           @param masterKey The master key of the encrypted partition header.
           @returns true if the storing is successful, false otherwise.
         */
-        bool storeSlaveEncryptionKey(const QByteArray &masterKey);
+        bool storeEncryptionKey(const QByteArray &masterKey);
 
         /*!
           Locks the secure storage.
@@ -241,17 +241,18 @@ namespace SignonDaemonNS {
 
     private Q_SLOTS:
         void simDataFetched(const QByteArray &accessCode);
+        void simRemoved();
         void simError();
 
     private:
         // 1st time start - deploys the database.
         bool deployCredentialsSystem();
-        bool openCredentialsSystemPriv();
+        bool openCredentialsSystemPriv(bool mountFileSystem);
         bool fileSystemLoaded(bool checkForDatabase = false);
         bool fileSystemDeployed();
         bool fetchAccessCode(uint timeout = 30);
         bool openDB(const QString &databaseName);
-        bool closeDB();
+        void closeDB();
 
     private:
         static CredentialsAccessManager *m_pInstance;

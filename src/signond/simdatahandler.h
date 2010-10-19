@@ -42,7 +42,7 @@ namespace SignonDaemonNS {
 
     /*!
      * @class SimDataHandler
-     * SimDataHandler handles aqcuaring data from the device SIM card
+     * SimDataHandler handles acquaring data from the device SIM card
      * which is used by the CryptoManager as a key for the mounting of the encrypted file system.
      * @ingroup Accounts_and_SSO_Framework
      * SimDataHandler inherits QObject.
@@ -55,8 +55,7 @@ namespace SignonDaemonNS {
     public:
         /*!
           * Constructs a SimDataHandler object with the given parent.
-          * @param parent the parent object
-          * @sa SimDataHandler(const CodeType &type, QObject *parent = 0)
+          * @param parent The parent object.
           */
         SimDataHandler(QObject *parent = 0);
 
@@ -66,7 +65,7 @@ namespace SignonDaemonNS {
         virtual ~SimDataHandler();
 
         /*!
-          * @returns true uppon success. Error handling not supported yet.
+          * @returns true upon success. Error handling not supported yet.
           */
         bool isValid();
 
