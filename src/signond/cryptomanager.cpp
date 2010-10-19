@@ -32,7 +32,6 @@
 #include <QMetaEnum>
 #include <QSettings>
 
-#define MOUNT_DIR "/home/user/"
 #define DEVICE_MAPPER_DIR "/device/mapper/"
 #define EXT2 "ext2"
 #define EXT3 "ext3"
@@ -77,19 +76,12 @@ namespace SignonDaemonNS {
     void CryptoManager::setFileSystemPath(const QString &path)
     {
         m_fileSystemPath = path;
-        QString fileSystemNameBase;
 
-        //todo - improve this using QDir/QFile specific methods.
-        if (m_fileSystemPath.contains(QDir::separator()))
-            m_fileSystemName = m_fileSystemPath.section(QDir::separator(), -1);
-        else
-            m_fileSystemName = m_fileSystemPath;
+        QFileInfo fsFileInfo(path);
 
+        m_fileSystemName = fsFileInfo.fileName();
         m_fileSystemMapPath = QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName;
-        m_fileSystemName = m_fileSystemName;
-        m_fileSystemMountPath = QLatin1String(MOUNT_DIR)
-                                + m_fileSystemName
-                                + QLatin1String("-mnt");
+        m_fileSystemMountPath = path + QLatin1String("-mnt");
     }
 
     bool CryptoManager::setFileSystemSize(const quint32 size)
@@ -157,6 +149,10 @@ namespace SignonDaemonNS {
         }
         updateMountState(LoopLuksFormatted);
 
+        //attempt luks close, in case of a leftover.
+        if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName))
+            CryptsetupHandler::closeFile(m_fileSystemName);
+
         if (!CryptsetupHandler::openFile(m_accessCode,
                                          m_loopDeviceName,
                                          m_fileSystemName)) {
@@ -178,8 +174,9 @@ namespace SignonDaemonNS {
             unmountFileSystem();
             return false;
         }
+
         updateMountState(Mounted);
-        storeEncryptionKey(m_accessCode);
+        storeEncryptionKey(m_accessCode, QString::fromLatin1(MASTER_KEY_TAG));
 
         return true;
     }
@@ -209,6 +206,10 @@ namespace SignonDaemonNS {
             return false;
         }
         updateMountState(LoopSet);
+
+        //attempt luks close, in case of a leftover.
+        if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName))
+            CryptsetupHandler::closeFile(m_fileSystemName);
 
         if (!CryptsetupHandler::openFile(m_accessCode,
                                          m_loopDeviceName,
@@ -336,7 +337,8 @@ namespace SignonDaemonNS {
     }
 
     bool CryptoManager::removeEncryptionKey(const QByteArray &key,
-                                            const QByteArray &remainingKey)
+                                            const QByteArray &remainingKey,
+                                            bool isMasterKey)
     {
         if (m_mountState >= LoopLuksOpened) {
             if (!CryptsetupHandler::removeKeySlot(
@@ -344,7 +346,8 @@ namespace SignonDaemonNS {
                 TRACE() << "FAILED to release key slot from the encrypted file system header.";
                 return false;
             }
-            removeEncryptionKey(key);
+            if (!isMasterKey)
+                removeEncryptionKey(key);
         }
         return true;
     }
@@ -369,24 +372,29 @@ namespace SignonDaemonNS {
         }
     }
 
-    bool CryptoManager::encryptionKeyInUse(const QByteArray &key)
+    bool CryptoManager::encryptionKeyInUse(const QByteArray &key, bool isMasterKey)
     {
         if (!fileSystemMounted()) {
             TRACE() << "Encrypted FS not mounted.";
             return false;
         }
 
-        if (m_accessCode == key)
+        //if a master key check is running ignore this optimization
+        if (!isMasterKey && m_accessCode == key)
             return true;
 
         QSettings usedEncryptionKeysFile(
                 fileSystemMountPath() + QDir::separator() + keysStorageFileName,
                 QSettings::IniFormat);
 
-        foreach (QString childKey, usedEncryptionKeysFile.childKeys())
-            if (usedEncryptionKeysFile.value(childKey).toByteArray() == key)
-                return true;
-
+        if (isMasterKey) {
+            return (usedEncryptionKeysFile.value(
+                        QLatin1String(MASTER_KEY_TAG)).toByteArray() == key);
+        } else {
+            foreach (QString childKey, usedEncryptionKeysFile.childKeys())
+                if (usedEncryptionKeysFile.value(childKey).toByteArray() == key)
+                    return true;
+        }
         return false;
     }
 

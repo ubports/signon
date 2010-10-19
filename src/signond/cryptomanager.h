@@ -34,6 +34,7 @@
 #include <QObject>
 
 #define MINUMUM_ENCRYPTED_FILE_SYSTEM_SIZE 4
+#define MASTER_KEY_TAG "master"
 
 namespace SignonDaemonNS {
 
@@ -123,8 +124,8 @@ namespace SignonDaemonNS {
         quint32 fileSystemSize() const { return m_fileSystemSize; }
 
         /*!
-            Sets the file system's Path.
-            @param path The path of the file system's file/device.
+            Sets the file system's path.
+            @param path The path of the file system's file/source.
         */
         void setFileSystemPath(const QString &path);
 
@@ -182,7 +183,7 @@ namespace SignonDaemonNS {
             @attention if the file system is not mounted, this method will always return false.
             @returns whether the key `key` is occupying a keyslot in the encrypted file system.
         */
-        bool encryptionKeyInUse(const QByteArray &key);
+        bool encryptionKeyInUse(const QByteArray &key, bool isMasterKey = false);
 
         /*!
             Adds an encryption key to one of the available keyslots of the LUKS partition's header.
@@ -200,10 +201,13 @@ namespace SignonDaemonNS {
         /*!
             Releases an existing used keyslot in the LUKS partition's header.
             @param key The key to be removed.
-            @param remainingKey @todo Check if this is needed.
+            @param remainingKey Another valid key
+            @attention The system cannot remain keyless.
             @returns true, if succeeded, false otherwise.
         */
-        bool removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey);
+        bool removeEncryptionKey(const QByteArray &key,
+                                 const QByteArray &remainingKey,
+                                 bool isMasterKey = false);
 
     private:
         void storeEncryptionKey(const QByteArray &key, const QString &keyTag = QString());

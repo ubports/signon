@@ -130,15 +130,15 @@ namespace SignonDaemonNS {
             @param fileSystemType The type of the file system to be mounted.
             @returns true upon success, false otherwise.
         */
-        static bool mount(const QString &toMount,
-                          const QString &mountPath,
+        static bool mount(const QString &source,
+                          const QString &target,
                           const QString &fileSystemType = QLatin1String("ext3"));
         /*!
             Unmounts a block device from a specific location.
             @param mounthPath Path of the file system to be unmounted.
             @returns true upon success, false otherwise.
         */
-        static bool umount(const QString &mountPath);
+        static bool umount(const QString &target);
 
     private:
         /*!

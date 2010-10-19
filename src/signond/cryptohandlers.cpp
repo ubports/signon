@@ -32,6 +32,8 @@
 #include <QTextStream>
 #include <QProcess>
 #include <QLatin1Char>
+#include <QFileInfo>
+#include <QDir>
 
 #include "cryptohandlers.h"
 #include "signond-common.h"
@@ -108,6 +110,15 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::createPartitionFile(const QString &fileName, const quint32 fileSize)
     {
+        QFileInfo fileInfo(fileName);
+        QDir parentDir = fileInfo.dir();
+        if (!parentDir.exists()) {
+            if (!parentDir.mkpath(parentDir.path())) {
+                BLAME() << "Failed to create Signon storage directory.";
+                return false;
+            }
+        }
+
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
                     QLatin1String("dd"),
@@ -252,7 +263,7 @@ namespace SignonDaemonNS {
 
         char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
-        strcpy(localKey, key.constData());
+        memcpy(localKey, key.constData(), key.length());
 
         options.key_material = localKey;
         options.material_size = key.length();
@@ -303,7 +314,7 @@ namespace SignonDaemonNS {
 
         char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
-        strcpy(localKey, key.constData());
+        memcpy(localKey, key.constData(), key.length());
         options.key_material = localKey;
         options.material_size = key.length();
 
