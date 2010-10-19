@@ -137,7 +137,6 @@ void SimDataHandler::simStatusChanged(SIMStatus::Status status)
 {
     TRACE() << simStatusAsStr(status);
 
-    //Todo- if possible think of a more stable solution.
     if ((m_lastSimStatus != SIMStatus::Ok) && (status == SIMStatus::Ok)) {
         TRACE() << "SIM inserted.";
         querySim();

@@ -487,9 +487,6 @@ void CredentialsAccessManager::simDataFetched(const QByteArray &simData)
     m_pLockCodeHandler->queryLockCode();
 }
 
-/* TODO - related to this feature - remount using DLC when 1st request
-          comes up ( after umount caused by SIM removal )
-*/
 void CredentialsAccessManager::simRemoved()
 {
     TRACE() << "SIM removed, closing secure storage.";
