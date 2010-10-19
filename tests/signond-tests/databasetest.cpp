@@ -498,6 +498,16 @@ void TestDatabase::dataTest()
     result = m_db->loadData(0, method);
     QVERIFY(result == data);
 
+    data.insert(QLatin1String("token"), QLatin1String("tokenvalupdated"));
+    data.insert(QLatin1String("token2"), QLatin1String("tokenval2"));
+    ret = m_db->storeData(id, method, data);
+    QVERIFY(ret);
+    ret = m_db->removeData(id, method);
+    QVERIFY(ret);
+
+    result = m_db->loadData(id, method);
+    QVERIFY(result.isEmpty());
+
 }
 
 void TestDatabase::accessControlListTest()

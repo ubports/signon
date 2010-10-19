@@ -847,7 +847,7 @@ namespace SignonDaemonNS {
 
         if (!startTransaction()) {
             TRACE() << "Could not start transaction. Error inserting data.";
-            return 0;
+            return false;
         }
 
         TRACE() << "Storing:" << id << ", " << method << ", " << data;
@@ -913,6 +913,46 @@ namespace SignonDaemonNS {
         }
         rollback();
         TRACE() << "Data insertion failed.";
+        return false;
+    }
+
+    bool CredentialsDB::removeData(const quint32 id, const QString &method)
+    {
+        TRACE();
+
+        if (!startTransaction()) {
+            TRACE() << "Could not start transaction. Error removing data.";
+            return false;
+        }
+
+        TRACE() << "Removing:" << id << ", " << method;
+        /* Data remove */
+        bool allOk = true;
+        QString queryStr;
+        QSqlQuery query;
+        if (method.isEmpty()) {
+            queryStr = QString::fromLatin1(
+                        "DELETE FROM STORE WHERE identity_id = '%1' ")
+                        .arg(id);
+        } else {
+            queryStr = QString::fromLatin1(
+                        "DELETE FROM STORE WHERE identity_id = '%1' AND "
+                        "method_id = "
+                        "(SELECT id FROM METHODS WHERE method = '%2') ")
+                        .arg(id).arg(method);
+        }
+        query = exec(queryStr);
+        query.clear();
+        if (errorOccurred()) {
+            allOk = false;
+        }
+
+        if (allOk && commit()) {
+            TRACE() << "Data removal ok.";
+            return true;
+        }
+        rollback();
+        TRACE() << "Data removal failed.";
         return false;
     }
 
