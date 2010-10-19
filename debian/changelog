@@ -1,3 +1,11 @@
+signon (4.0-1) unstable; urgency=low
+
+  * Enabling SignOn secure storage.
+  * Improved UNIX signals handling
+  * Added signond configuration file.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Tue, 19 Oct 2010 14:50:00 +0300
+
 signon (3.9-1) unstable; urgency=low
 
   * Fixes: NB#195675 - Password entered in Login dialog are not updated in signon db
