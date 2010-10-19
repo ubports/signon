@@ -164,6 +164,8 @@ namespace SignonDaemonNS {
         RequestCounter::instance()->addIdentityResquest();
         Q_UNUSED(displayMessage);
 
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(0);
+
         QDBusMessage errReply = message().createErrorReply(
                                                 SIGNOND_UNKNOWN_ERR_NAME,
                                                 QLatin1String("Not implemented."));

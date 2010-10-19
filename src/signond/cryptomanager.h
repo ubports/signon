@@ -87,10 +87,15 @@ namespace SignonDaemonNS {
         ~CryptoManager();
 
         /*!
-            Sets the access code.
-            @param code, the encrypted file system key.
+            Sets the encryption key.
+            @param key, the encrypted file system key.
         */
         void setEncryptionKey(const QByteArray &key) { m_accessCode = key; }
+
+        /*!
+            @return The in use encryption key.
+        */
+        QByteArray encryptionKey() const { return m_accessCode; }
 
         /*!
             Sets the file system type.
@@ -123,8 +128,8 @@ namespace SignonDaemonNS {
         quint32 fileSystemSize() const { return m_fileSystemSize; }
 
         /*!
-            Sets the file system's Path.
-            @param path The path of the file system's file/device.
+            Sets the file system's path.
+            @param path The path of the file system's file/source.
         */
         void setFileSystemPath(const QString &path);
 
@@ -190,25 +195,23 @@ namespace SignonDaemonNS {
             @sa isEncryptionKey(const QByteArray &key)
             @param key The key to be added/set.
             @param existingKey An already existing key.
-            @param keyTag String to idenitify and keep track of the key `key` for future references.
             @returns true, if succeeded, false otherwise.
         */
         bool addEncryptionKey(const QByteArray &key,
-                              const QByteArray &existingKey,
-                              const QString &keyTag = QString());
+                              const QByteArray &existingKey);
 
         /*!
             Releases an existing used keyslot in the LUKS partition's header.
             @param key The key to be removed.
-            @param remainingKey @todo Check if this is needed.
+            @param remainingKey Another valid key
+            @attention The system cannot remain keyless.
             @returns true, if succeeded, false otherwise.
         */
-        bool removeEncryptionKey(const QByteArray &key, const QByteArray &remainingKey);
+        bool removeEncryptionKey(const QByteArray &key,
+                                 const QByteArray &remainingKey);
 
     private:
-        void storeEncryptionKey(const QByteArray &key, const QString &keyTag = QString());
-        void removeEncryptionKey(const QByteArray &key);
-
+        void clearFileSystemResources();
         bool mountMappedDevice();
         bool unmountMappedDevice();
         void updateMountState(const FileSystemMountState state);

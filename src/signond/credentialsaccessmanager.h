@@ -32,7 +32,6 @@
 #define CREDENTIALS_ACCESS_MANAGER_H
 
 #include "credentialsdb.h"
-#include "accesscodehandler.h"
 #include "cryptomanager.h"
 
 #include <QObject>
@@ -43,6 +42,9 @@
  * the Authentication Core module.
  */
 namespace SignonDaemonNS {
+
+    class SimDataHandler;
+    class DeviceLockCodeHandler;
 
     /*!
         @class CAMConfiguration
@@ -61,7 +63,6 @@ namespace SignonDaemonNS {
           @param device, must not be null.
         */
         void serialize(QIODevice *device);
-
 
         QString m_dbName;           /*!< The database file name. */
         bool m_useEncryption;       /*!< Flag for encryption use, enables/disables all of the bellow. */
@@ -212,8 +213,23 @@ namespace SignonDaemonNS {
           @param existingKey An already existing key.
           @returns true, if succeeded, false otherwise.
         */
-        bool setDeviceLockCodeKey(const QByteArray &newLockCode,
-                                  const QByteArray &existingLockCode);
+        bool setMasterEncryptionKey(const QByteArray &newKey,
+                                    const QByteArray &existingKey);
+
+        /*!
+          Checks if a slave encryption key is being buffered.
+          This usually happens while the Signon daemon is querying
+          the user for the master key.
+          @return true if a slave encryption key is being buffered, false otherwise.
+        */
+        bool encryptionKeyPendingAddition() const;
+
+        /*!
+          Stores the buffered slave encryption key.
+          @param masterKey The master key of the encrypted partition header.
+          @returns true if the storing is successful, false otherwise.
+        */
+        bool storeEncryptionKey(const QByteArray &masterKey);
 
         /*!
           Locks the secure storage.
@@ -224,17 +240,19 @@ namespace SignonDaemonNS {
         bool lockSecureStorage(const QByteArray &lockKey);
 
     private Q_SLOTS:
-        void accessCodeFetched(const QByteArray &accessCode);
+        void simDataFetched(const QByteArray &accessCode);
+        void simRemoved();
+        void simError();
 
     private:
         // 1st time start - deploys the database.
         bool deployCredentialsSystem();
-        bool openCredentialsSystemPriv();
+        bool openCredentialsSystemPriv(bool mountFileSystem);
         bool fileSystemLoaded(bool checkForDatabase = false);
         bool fileSystemDeployed();
         bool fetchAccessCode(uint timeout = 30);
         bool openDB(const QString &databaseName);
-        bool closeDB();
+        void closeDB();
 
     private:
         static CredentialsAccessManager *m_pInstance;
@@ -243,10 +261,12 @@ namespace SignonDaemonNS {
         bool m_accessCodeFetched;
         bool m_systemOpened;
         mutable CredentialsAccessError m_error;
+        QByteArray m_currentSimData;
 
         CredentialsDB *m_pCredentialsDB; // make this a QSharedPointer
         CryptoManager *m_pCryptoFileSystemManager;
-        AccessCodeHandler *m_pAccessCodeHandler;
+        SimDataHandler *m_pSimDataHandler;
+        DeviceLockCodeHandler *m_pLockCodeHandler;
         CAMConfiguration m_CAMConfiguration;
     };
 

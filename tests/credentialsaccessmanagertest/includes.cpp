@@ -25,7 +25,8 @@
 #define _EXTERNAL_INCLUDED_
 
 #include "credentialsaccessmanager.cpp"
-#include "accesscodehandler.cpp"
+#include "simdatahandler.cpp"
+#include "devicelockcodehandler.cpp"
 #include "credentialsdb.cpp"
 #include "cryptohandlers.cpp"
 #include "cryptomanager.cpp"

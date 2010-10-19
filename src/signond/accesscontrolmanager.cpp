@@ -53,6 +53,10 @@ namespace SignonDaemonNS {
         // TODO - improve this, the error handling and more precise behaviour
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        if (db == 0) {
+            TRACE() << "NULL db pointer, secure storage might be unavailable,";
+            return false;
+        }
         QStringList acl = db->accessControlList(identityId);
 
         TRACE() << QString(QLatin1String("Access control list of identity: "
@@ -77,6 +81,10 @@ namespace SignonDaemonNS {
         RETURN_IF_AC_DISABLED(ApplicationIsOwner);
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        if (db == 0) {
+            TRACE() << "NULL db pointer, secure storage might be unavailable,";
+            return ApplicationIsNotOwner;
+        }
         QString ownerToken = db->credentialsOwnerSecurityToken(identityId);
 
         if (db->errorOccurred())

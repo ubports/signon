@@ -32,6 +32,8 @@
 #include <QTextStream>
 #include <QProcess>
 #include <QLatin1Char>
+#include <QFileInfo>
+#include <QDir>
 
 #include "cryptohandlers.h"
 #include "signond-common.h"
@@ -63,8 +65,6 @@ namespace SignonDaemonNS {
                                                 const QStringList &args,
                                                 bool readOutput)
     {
-        //TODO - possibly improve handling
-
         QString trace;
         QTextStream stream(&trace);
         stream << appPath << QLatin1Char(' ') << args.join(QLatin1String(" "));
@@ -108,9 +108,18 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::createPartitionFile(const QString &fileName, const quint32 fileSize)
     {
+        QFileInfo fileInfo(fileName);
+        QDir parentDir = fileInfo.dir();
+        if (!parentDir.exists()) {
+            if (!parentDir.mkpath(parentDir.path())) {
+                BLAME() << "Failed to create Signon storage directory.";
+                return false;
+            }
+        }
+
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                    QLatin1String("dd"),
+                    QLatin1String("/bin/dd"),
                     QStringList() << QLatin1String("if=/dev/urandom")
                                   << QString::fromLatin1("of=%1").arg(fileName)
                                   << QLatin1String("bs=1M")
@@ -119,12 +128,12 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
     {
-        QString mkfsApp = QString::fromLatin1("mkfs.ext3");
+        QString mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2");
         switch (fileSystemType) {
-        case Ext2: mkfsApp = QString::fromLatin1("mkfs.ext2"); break;
-        case Ext3: mkfsApp = QString::fromLatin1("mkfs.ext3"); break;
-        case Ext4: mkfsApp = QString::fromLatin1("mkfs.ext4"); break;
-        default: break;
+            case Ext2: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2"); break;
+            case Ext3: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3"); break;
+            case Ext4: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext4"); break;
+            default: break;
         }
 
         SystemCommandLineCallHandler handler;
@@ -156,15 +165,15 @@ namespace SignonDaemonNS {
         TRACE() << ret;
 
         switch (errno) {
-        case EAGAIN: TRACE() << "EAGAIN"; break;
-        case EBUSY: TRACE() << "EBUSY"; break;
-        case EFAULT: TRACE() << "EFAULT"; break;
-        case EINVAL: TRACE() << "EINVAL"; break;
-        case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
-        case ENOENT: TRACE() << "ENOENT"; break;
-        case ENOMEM: TRACE() << "ENOMEM"; break;
-        case EPERM: TRACE() << "EPERM"; break;
-        default: TRACE() << "UNKNOWN ERROR!!";
+            case EAGAIN: TRACE() << "EAGAIN"; break;
+            case EBUSY: TRACE() << "EBUSY"; break;
+            case EFAULT: TRACE() << "EFAULT"; break;
+            case EINVAL: TRACE() << "EINVAL"; break;
+            case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
+            case ENOENT: TRACE() << "ENOENT"; break;
+            case ENOMEM: TRACE() << "ENOMEM"; break;
+            case EPERM: TRACE() << "EPERM"; break;
+            default: TRACE() << "UNKNOWN ERROR!!";
         }
 
         //TODO - Remove 1st, uncommend 2nd lines after the fix above.
@@ -179,7 +188,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("losetup"),
+                            QLatin1String("/sbin/losetup"),
                             QStringList() << deviceName << blockDevice);
     }
 
@@ -204,7 +213,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("losetup"),
+                            QLatin1String("/sbin/losetup"),
                             QStringList() << QString::fromLatin1("-d") << deviceName);
     }
 
@@ -222,15 +231,15 @@ namespace SignonDaemonNS {
     static void cmdLineLog(int type, char *msg)
     {
         switch (type) {
-        case CRYPT_LOG_NORMAL:
-            TRACE() << msg;
-            break;
-        case CRYPT_LOG_ERROR:
-            TRACE() << "Error: " << msg;
-            break;
-        default:
-            TRACE() << "Internal error on logging class for msg: " << msg;
-            break;
+            case CRYPT_LOG_NORMAL:
+                TRACE() << msg;
+                break;
+            case CRYPT_LOG_ERROR:
+                TRACE() << "Error: " << msg;
+                break;
+            default:
+                TRACE() << "Internal error on logging class for msg: " << msg;
+                break;
         }
     }
 
@@ -252,7 +261,7 @@ namespace SignonDaemonNS {
 
         char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
-        strcpy(localKey, key.constData());
+        memcpy(localKey, key.constData(), key.length());
 
         options.key_material = localKey;
         options.material_size = key.length();
@@ -303,13 +312,20 @@ namespace SignonDaemonNS {
 
         char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
-        strcpy(localKey, key.constData());
+        memcpy(localKey, key.constData(), key.length());
         options.key_material = localKey;
         options.material_size = key.length();
 
         options.key_file = NULL;
         options.timeout = 0;
-        options.tries = 3;
+        /*
+            Do not change this:
+            1) In case of failure to open, libcryptsetup code will
+            enter infinite loop - library BUG/FEATURE.
+            2) There is no need for multiple tries, option is intended for
+            command line use of the utility.
+        */
+        options.tries = 0;
         options.flags = 0;
 
         static struct interface_callbacks cmd_icb;
@@ -319,6 +335,8 @@ namespace SignonDaemonNS {
 
         TRACE() << "Device [" << options.device << "]";
         TRACE() << "Map name [" << options.name << "]";
+        TRACE() << "Key:" << key.constData();
+        TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksOpen(&options);
 
@@ -465,7 +483,7 @@ namespace SignonDaemonNS {
     {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
-                            QLatin1String("modprobe"),
+                            QLatin1String("/sbin/modprobe"),
                             QStringList() << QString::fromLatin1("dm_mod"));
     }
 

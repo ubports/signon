@@ -67,6 +67,13 @@
 #define SIGNON_UI_SERVICE           QLatin1String("com.nokia.singlesignonui")
 #define SIGNON_UI_DAEMON_OBJECTPATH QLatin1String("/SignonUi")
 
-
+/*
+ * Signon Daemon default configuration values
+ */
+const char signonDefaultDbName[] = "signon.db";
+const char signonDefaultDbFileSystemPath[] = "/home/user/.signon/signonfs";
+const char signonDefaultFileSystemType[] = "ext2";
+const bool signonDefaultUseEncryption = true;
+const uint signonMinumumDbSize = 4;
 
 #endif // SIGNOND_COMMON_H_
