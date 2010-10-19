@@ -1,4 +1,4 @@
-signon (4.0-1) unstable; urgency=low
+signon (4.0-2) unstable; urgency=low
 
   * Enabling SignOn secure storage.
   * Improved UNIX signals handling
