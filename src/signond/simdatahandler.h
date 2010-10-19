@@ -23,16 +23,14 @@
  */
 
 /*!
- * @file accesscodehandler.h
- * @brief Definition of the access code (sim, lock code) handler object.
+ * @file simdatahandler.h
+ * @brief Definition of the SIM data handler object.
  */
 
-#ifndef ACCESSCODEHANDLER_H
-#define ACCESSCODEHANDLER_H
+#ifndef SIMDATAHANDLER_H
+#define SIMDATAHANDLER_H
 
 #include <QObject>
-#include <QDBusError>
-
 
 #ifdef SIGNON_USES_CELLULAR_QT
     #include <SIM>
@@ -43,76 +41,80 @@
 namespace SignonDaemonNS {
 
     /*!
-     * @class AccessCodeHandler
-     * AccessCodeHandler handles getting the access code (SIM data only for the moment)
+     * @class SimDataHandler
+     * SimDataHandler handles aqcuaring data from the device SIM card
      * which is used by the CryptoManager as a key for the mounting of the encrypted file system.
      * @ingroup Accounts_and_SSO_Framework
-     * AccessCodeHandler inherits QObject.
+     * SimDataHandler inherits QObject.
      * @sa CryptoManager
-     * @todo Rename this object (SIM specific) if no connection to the device lock code will come up.
      */
-    class AccessCodeHandler : public QObject
+    class SimDataHandler : public QObject
     {
         Q_OBJECT
 
     public:
         /*!
-          * Constructs an AcessCodeHandler object with the given parent.
+          * Constructs a SimDataHandler object with the given parent.
           * @param parent the parent object
-          * @sa AccessCodeHandler(const CodeType &type, QObject *parent = 0)
+          * @sa SimDataHandler(const CodeType &type, QObject *parent = 0)
           */
-        AccessCodeHandler(QObject *parent = 0);
+        SimDataHandler(QObject *parent = 0);
 
         /*!
           * Destructor, releases allocated resources.
           */
-        virtual ~AccessCodeHandler();
+        virtual ~SimDataHandler();
 
         /*!
-          *
-          *
-          * @retval true uppon success. Error handling not supported yet.
+          * @returns true uppon success. Error handling not supported yet.
           */
         bool isValid();
 
         /*!
-          *
-          *
-          * @retval true uppon success. Error handling not supported yet.
+          * Queries the SIM for authentication info
+          * @sa simAvailable(const QByteArray &simData) is emitted if the query is successful.
+          * @sa error() is emitted otherwise.
           */
         void querySim();
 
-        /*!
-         * @retval true, if an access code is available for using, false otherwise.
-         */
-        bool codeAvailable();
-
-        /*!
-            @returns the currently available access code.
-        */
-        QByteArray currentCode() const;
-
     Q_SIGNALS:
         /*!
-            Is emitted when a the SIM data (icc-id) is available.
-            @param simData, the SIM's icc-id.
+            Is emitted when a the SIM data is available.
+            Can be triggered because of a successful explicit querySim call,
+            or automatically in the case the SIM has been changed.
+            @param simData, the SIM's data.
         */
         void simAvailable(const QByteArray &simData);
 
         /*!
-            Is emitted when the SIM is changed.
-            @param simData, the new SIM's icc-id.
-        */
-        void simChanged(const QByteArray &simData);
+            Emitted when SIM was removed.
+         */
+        void simRemoved();
+
+        /*!
+            Emitted when SIM challenge fails.
+         */
+        void error();
 
 #ifdef SIGNON_USES_CELLULAR_QT
     private Q_SLOTS:
-        void simIccidComplete(QString iccid, SIMError error);
+        void authComplete(
+            QByteArray res,
+            QByteArray cipheringKey,
+            QByteArray eapCipheringKey,
+            QByteArray eapIntegrityKey,
+            SIMError error);
+
         void simStatusChanged(SIMStatus::Status status);
+
+    private:
+        void refreshSimIdentity();
 #endif
 
     private:
-        QByteArray m_code;
+        QByteArray m_dataBuffer;
+        bool m_simChallengeComplete;
+
 #ifdef SIGNON_USES_CELLULAR_QT
         SIMStatus::Status m_lastSimStatus;
         SIMIdentity *m_simIdentity;
@@ -122,4 +124,4 @@ namespace SignonDaemonNS {
 
 } // namespace SignonDaemonNS
 
-#endif // ACCESSCODEHANDLER_H
+#endif // SIMDATAHANDLER_H
