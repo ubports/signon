@@ -1,3 +1,9 @@
+signon (3.9-1) unstable; urgency=low
+
+  * Fixes: NB#195675 - Password entered in Login dialog are not updated in signon db
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Tue, 19 Oct 2010 10:02:42 +0300
+
 signon (3.8-1) unstable; urgency=low
 
   * Fixes: NB#198254 -  Signond crashes during account configuration
