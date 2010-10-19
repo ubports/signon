@@ -23,6 +23,7 @@
 
 #include <QtDebug>
 #include <QDBusConnection>
+#include <QProcessEnvironment>
 
 #include "signondaemon.h"
 #include "signond-common.h"
@@ -30,9 +31,6 @@
 #include "signonidentity.h"
 #include "signonauthsession.h"
 #include "backupifadaptor.h"
-
-#define IDENTITY_MAX_IDLE_TIME (60 * 5) // five minutes
-#define AUTHSESSION_MAX_IDLE_TIME (60 * 5) // five minutes
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
@@ -49,6 +47,130 @@ using namespace SignOn;
 namespace SignonDaemonNS {
 
     RequestCounter *RequestCounter::m_pInstance = NULL;
+    SignonDaemonConfiguration* SignonDaemonConfiguration::m_instance = NULL;
+
+    /* ---------------------- SignonDaemonConfiguration ---------------------- */
+
+    SignonDaemonConfiguration::SignonDaemonConfiguration()
+        : m_loadedFromFile(false),
+          m_useSecureStorage(true),
+          m_storageSize(4),
+          m_storageFileSystemType(QLatin1String("ext2")),
+          m_storagePath(QLatin1String("/home/user/.signon")),
+          m_storageFileSystemName(QLatin1String("signonfs")),
+          m_identityTimeout(300),//secs
+          m_authSessionTimeout(300)//secs
+    {}
+
+    SignonDaemonConfiguration::~SignonDaemonConfiguration()
+    {
+        if (m_instance) {
+            delete m_instance;
+            m_instance = NULL;
+        }
+    }
+
+    SignonDaemonConfiguration *SignonDaemonConfiguration::instance()
+    {
+        if (m_instance == NULL)
+            m_instance = new SignonDaemonConfiguration;
+
+        return m_instance;
+    }
+
+    /*
+        --- Configuration file template ---
+
+        [General]
+        UseSecureStorage=yes
+        StoragePath=/home/user/.signon/
+
+        [SecureStorage]
+        FileSystemName=signonfs
+        Size=4
+        FileSystemType=ext2
+
+        [ObjectTimeouts]
+        IdentityTimeout=300
+        AuthSessionTimeout=300
+     */
+
+    void SignonDaemonConfiguration::load()
+    {
+        //Daemon configuration file
+
+        if (QFile::exists(QLatin1String("/etc/signond.conf"))) {
+            m_loadedFromFile = true;
+
+            QSettings settings(QLatin1String("/etc/signond.conf"),
+                               QSettings::NativeFormat);
+
+            //TODO - update this to support the `$HOME/.signon` naming
+            m_storagePath = settings.value(QLatin1String("StoragePath")).toString();
+
+            //Secure storage
+            QString useSecureStorage = settings.value(QLatin1String("UseSecureStorage")).toString();
+
+            if (!useSecureStorage.isEmpty())
+                m_useSecureStorage = (useSecureStorage == QLatin1String("yes"));
+
+            if (m_useSecureStorage) {
+                settings.beginGroup(QLatin1String("SecureStorage"));
+
+                bool isOk = false;
+                m_storageSize = settings.value(QLatin1String("Size")).toUInt(&isOk);
+                if (!isOk || m_storageSize < 4)
+                    m_storageSize = 4;
+
+                m_storageFileSystemType = settings.value(
+                    QLatin1String("FileSystemType")).toString();
+
+                m_storageFileSystemName = settings.value(QLatin1String("FileSystemName")).toString();
+
+                settings.endGroup();
+            }
+
+            //Timeouts
+            settings.beginGroup(QLatin1String("ObjectTimeouts"));
+
+            bool isOk = false;
+            uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
+
+            //Do not allow less than 1 minute timeout
+            if(isOk && aux >= 60)
+                m_identityTimeout = aux;
+
+            aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
+            if(isOk && aux >= 60)
+                m_authSessionTimeout = aux;
+
+            settings.endGroup();
+        } else {
+            TRACE() << "/etc/signond.conf not found. Using default daemon configuration.";
+        }
+
+        //Environment variables
+
+        QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+        int value = 0;
+        bool isOk = false;
+        if (environment.contains(QLatin1String("SSO_IDENTITY_TIMEOUT"))) {
+            value = environment.value(
+                QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
+
+
+            m_identityTimeout = (value > 0) && isOk ? value : m_identityTimeout;
+        }
+
+        if (environment.contains(QLatin1String("SSO_AUTHSESSION_TIMEOUT"))) {
+            value = environment.value(
+                QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
+
+            m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
+        }
+    }
+
+    /* ---------------------- SignonDaemon ---------------------- */
 
     const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
     const QString internalServerErrStr = SIGNOND_INTERNAL_SERVER_ERR_STR;
@@ -85,12 +207,15 @@ namespace SignonDaemonNS {
             sessionConnection.unregisterService(SIGNOND_SERVICE);
         }
 
+        delete SignonDaemonConfiguration::instance();
         delete RequestCounter::instance();
     }
 
     bool SignonDaemon::init(bool backup)
     {
         m_backup = backup;
+
+        SignonDaemonConfiguration::instance()->load();
 
         /* backup dbus interface */
         QDBusConnection sessionConnection = QDBusConnection::sessionBus();
@@ -134,14 +259,6 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        int envIdentityTimeout = qgetenv("SSO_IDENTITY_TIMEOUT").toInt();
-        m_identityTimeout = envIdentityTimeout > 0 ?
-            envIdentityTimeout : IDENTITY_MAX_IDLE_TIME;
-
-        int envAuthSessionTimeout = qgetenv("SSO_AUTHSESSION_TIMEOUT").toInt();
-        m_authSessionTimeout = envAuthSessionTimeout > 0 ?
-            envAuthSessionTimeout : AUTHSESSION_MAX_IDLE_TIME;
-
         QDBusConnection::RegisterOptions registerOptions = QDBusConnection::ExportAllContents;
 
         (void)new SignonDaemonAdaptor(this);
@@ -158,11 +275,6 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        /*
-            Secure storage init
-            TODO - make this callable only by external entity
-            (e.g. boot script or whichever process has the passphrase)
-        */
         if (!initSecureStorage(QByteArray()))
             qFatal("Signond: Cannot initialize credentials secure storage.");
 
@@ -183,30 +295,35 @@ namespace SignonDaemonNS {
 
     bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
     {
-        m_pCAMManager = CredentialsAccessManager::instance();
-
         if (!m_pCAMManager->credentialsSystemOpened()) {
             m_pCAMManager->finalize();
 
             CAMConfiguration config;
 
-            //Leaving encryption disabled for the moment.
-            config.m_useEncryption = false;
+            SignonDaemonConfiguration * daemonConfig =
+                SignonDaemonConfiguration::instance();
+
+            //Use the Signon configuration file if it exists
+            if (daemonConfig->loadedFromFile()) {
+                config.m_useEncryption = daemonConfig->useSecureStorage();
+                config.m_fileSystemSize = daemonConfig->storageSize();
+                config.m_fileSystemType = daemonConfig->storageFileSystemType();
+                config.m_dbFileSystemPath = daemonConfig->storagePath()
+                                            + QDir::separator()
+                                            + daemonConfig->storageFileSystemName();
+            }
+
             config.m_encryptionPassphrase = lockCode;
 
             if (!m_pCAMManager->init(config)) {
                 qCritical("Signond: Cannot set proper configuration of CAM");
-                delete m_pCAMManager;
-                m_pCAMManager = NULL;
                 return false;
             }
 
-            //If not encryption in use just init the storage here - unsecure
+            //If encryption is not in use just init the storage here - unsecure
             if (config.m_useEncryption == false) {
                 if (!m_pCAMManager->openCredentialsSystem()) {
                     qCritical("Signond: Cannot open CAM credentials system...");
-                    delete m_pCAMManager;
-                    m_pCAMManager = NULL;
                     return false;
                 }
             }
@@ -437,30 +554,39 @@ namespace SignonDaemonNS {
 
         if (oldLockCode.isEmpty()) {
             /* --- Current lock code is being communicated to the Signond ---
-               Formatting of LUKS partition or regular SIMless start, if
-               partition is already formatted.
+               Possible situations:
+               1. Formatting of LUKS partition
+               2. Regular SIMless start, if partition is already formatted.
+               3. Add new SIM data to LUKS header
             */
+
+            //1, 2
             if (!initSecureStorage(lockCode)) {
                 TRACE() << "Could not initialize secure storage.";
                 ret = false;
             }
+            //3
+            if (m_pCAMManager->slaveEncryptionKeyPendingAddition()) {
+                if (m_pCAMManager->storeSlaveEncryptionKey(lockCode))
+                    ret = true;
+                else
+                    TRACE() << "Could not store slave encryption key.";
+            }
         } else {
             /* --- New lock code is communicated to the Signond ---
-               Set new master key to the LUKS partition.
+               Possible situations:
+               1. Set new master key for the LUKS partition
             */
 
             // Attempt to initialize secure storage. If already initialized, this will fail.
             if (!initSecureStorage(oldLockCode))
                 TRACE() << "Could not initialize secure storage.";
 
-            // If CAM is valid, attempt to set the lock code.
-            if (m_pCAMManager != NULL) {
-                if (!m_pCAMManager->setDeviceLockCodeKey(lockCode, oldLockCode)) {
-                    ret = false;
-                    TRACE() << "Failed to set device lock code.";
-                } else {
-                    TRACE() << "Device lock code successfully set.";
-                }
+            if (!m_pCAMManager->setMasterEncryptionKey(lockCode, oldLockCode)) {
+                ret = false;
+                TRACE() << "Failed to set device lock code.";
+            } else {
+                TRACE() << "Device lock code successfully set.";
             }
         }
         return ret;

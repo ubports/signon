@@ -72,6 +72,51 @@ namespace SignonDaemonNS {
         int m_identityRequests;
     };
 
+    /*!
+     * @class SignonDaemonConfiguration
+     * The daemon's configuration object;
+     * loads date from the daemon configuration file.
+     */
+    class SignonDaemonConfiguration
+    {
+        SignonDaemonConfiguration();
+        static SignonDaemonConfiguration* m_instance;
+
+    public:
+        ~SignonDaemonConfiguration();
+
+        void load();
+        bool loadedFromFile() const { return m_loadedFromFile; }
+        static SignonDaemonConfiguration *instance();
+
+        bool useSecureStorage() const { return m_useSecureStorage; }
+
+        uint storageSize() const { return m_storageSize; }
+        const QString storageFileSystemType() const
+            { return m_storageFileSystemType; }
+        const QString storagePath() const { return m_storagePath; }
+        const QString storageFileSystemName() const
+            { return m_storageFileSystemName; }
+
+        uint identityTimeout() const { return m_identityTimeout; }
+        uint authSessionTimeout() const { return m_authSessionTimeout; }
+
+    private:
+        bool m_loadedFromFile;
+        //storage related
+        bool m_useSecureStorage;
+
+        //valid only if secure storage is enabled.
+        uint m_storageSize;
+        QString m_storageFileSystemType;
+        QString m_storagePath;
+        QString m_storageFileSystemName;
+
+        //object timeouts
+        uint m_identityTimeout;
+        uint m_authSessionTimeout;
+    };
+
     class SignonIdentity;
 
     /*!
@@ -100,12 +145,12 @@ namespace SignonDaemonNS {
          */
         int identityTimeout() const
         {
-            return m_identityTimeout;
+            return SignonDaemonConfiguration::instance()->identityTimeout();
         }
 
         int authSessionTimeout() const
         {
-            return m_authSessionTimeout;
+            return SignonDaemonConfiguration::instance()->authSessionTimeout();
         }
 
     public Q_SLOTS:

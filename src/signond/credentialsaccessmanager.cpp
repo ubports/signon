@@ -25,8 +25,9 @@
 
 #include "credentialsaccessmanager.h"
 
-#include "accesscodehandler.h"
+#include "simdatahandler.h"
 #include "signond-common.h"
+#include "devicelockcodehandler.h"
 
 #include <QThreadPool>
 #include <QCoreApplication>
@@ -49,8 +50,8 @@ using namespace SignonDaemonNS;
 
 CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String("signon.db")),
-          m_useEncryption(false), //TODO this need to be set true when encryption is ready
-          m_dbFileSystemPath(QLatin1String("/home/user/signonfs")),
+          m_useEncryption(true),
+          m_dbFileSystemPath(QLatin1String("/home/user/.signon/signonfs")),
           m_fileSystemType(QLatin1String("ext2")),
           m_fileSystemSize(4),
           m_encryptionPassphrase(QByteArray())
@@ -90,9 +91,11 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_accessCodeFetched(false),
           m_systemOpened(false),
           m_error(NoError),
+          m_currentSimData(QByteArray()),
           m_pCredentialsDB(NULL),
           m_pCryptoFileSystemManager(NULL),
-          m_pAccessCodeHandler(NULL),
+          m_pSimDataHandler(NULL),
+          m_pLockCodeHandler(NULL),
           m_CAMConfiguration(CAMConfiguration())
 {
 }
@@ -100,6 +103,12 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
 CredentialsAccessManager::~CredentialsAccessManager()
 {
     closeCredentialsSystem();
+
+    if (m_pSimDataHandler)
+        delete m_pSimDataHandler;
+    if (m_pLockCodeHandler)
+        delete m_pLockCodeHandler;
+
     m_pInstance = NULL;
 }
 
@@ -116,9 +125,16 @@ void CredentialsAccessManager::finalize()
     if (m_systemOpened)
         closeCredentialsSystem();
 
-    if (m_pAccessCodeHandler) {
-        m_pAccessCodeHandler->blockSignals(true);
-        delete m_pAccessCodeHandler;
+    if (m_pSimDataHandler) {
+        m_pSimDataHandler->blockSignals(true);
+        delete m_pSimDataHandler;
+        m_pSimDataHandler = NULL;
+    }
+
+    if (m_pLockCodeHandler) {
+        m_pLockCodeHandler->blockSignals(true);
+        delete m_pLockCodeHandler;
+        m_pLockCodeHandler = NULL;
     }
 
     if (m_pCryptoFileSystemManager)
@@ -144,11 +160,26 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     TRACE() << "\n\nInitualizing CredentialsAccessManager with configuration: " << config.data();
 
     if (m_CAMConfiguration.m_useEncryption) {
+        //Initialize CryptoManager
         m_pCryptoFileSystemManager = new CryptoManager(this);
         m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.m_dbFileSystemPath);
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
 
+        //Initialize SIM handler
+        m_pSimDataHandler = new SimDataHandler(this);
+        connect(m_pSimDataHandler,
+                SIGNAL(simAvailable(QByteArray)),
+                SLOT(simDataFetched(QByteArray)));
+
+        connect(m_pSimDataHandler,
+                SIGNAL(error()),
+                SLOT(simError()));
+
+        if (!m_pSimDataHandler->isValid())
+            BLAME() << "AccessCodeHandler invalid, SIM data might not be available.";
+
+        //If passphrase exists (device lock code) open creds system - sync
         if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
 
             m_pCryptoFileSystemManager->setEncryptionKey(
@@ -158,22 +189,18 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
             if (!openCredentialsSystemPriv()) {
                 BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
             }
+        //Else if the secure storage was previously formatted, query SIM - async
+        } else if (fileSystemDeployed()) {
+            // !!! ------- TODO add querying of DLC if SIM query fails ------ !!!.
+            m_pSimDataHandler->querySim();
+        //Else query Device Lock Code - async
+        } else {
+            if (m_pLockCodeHandler == NULL)
+                m_pLockCodeHandler = new DeviceLockCodeHandler(this);
+
+            //This will attemp DLC configuration, if not already existant.
+            m_pLockCodeHandler->queryLockCode();
         }
-
-        m_pAccessCodeHandler = new AccessCodeHandler(this);
-        connect(m_pAccessCodeHandler,
-                SIGNAL(simAvailable(QByteArray)),
-                SLOT(accessCodeFetched(QByteArray)));
-
-        connect(m_pAccessCodeHandler,
-                SIGNAL(simChanged(QByteArray)),
-                SLOT(accessCodeFetched(QByteArray)));
-
-        //todo create handling for the sim change too.
-        if (!m_pAccessCodeHandler->isValid())
-            BLAME() << "AccessCodeHandler invalid, SIM data might not be available.";
-
-        m_pAccessCodeHandler->querySim();
     }
 
     m_isInitialized = true;
@@ -182,7 +209,6 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     TRACE() << "CredentialsAccessManager successfully initialized...";
     return true;
 }
-
 
 bool CredentialsAccessManager::openCredentialsSystemPriv()
 {
@@ -212,17 +238,16 @@ bool CredentialsAccessManager::openCredentialsSystemPriv()
             return false;
         }
     } else {
+        QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
+        QDir storageDir = fInfo.dir();
+        if (!storageDir.exists()) {
+            if (!storageDir.mkpath(storageDir.path()))
+                BLAME() << "Could not create storage directory!!!";
+        }
 
-        /*
-         *   TODO - change this so that openDB takes only the CAM configuration db name
-         *          after the LUKS system is enabled; practically remove this 'else' branch
-         */
-        dbPath = QDir::homePath() + QDir::separator()
-                 + QLatin1String(".signon");
-
-        QDir dir;
-        if (!dir.mkpath(dbPath)) return false;
-        dbPath += QDir::separator() + m_CAMConfiguration.m_dbName;
+        dbPath = storageDir.path()
+                 + QDir::separator()
+                 + m_CAMConfiguration.m_dbName;
     }
 
     TRACE() << "Database name: [" << dbPath << "]";
@@ -291,28 +316,57 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
     return m_error == NoError;
 }
 
-bool CredentialsAccessManager::setDeviceLockCodeKey(const QByteArray &newLockCode,
-                                                    const QByteArray &existingLockCode)
+bool CredentialsAccessManager::setMasterEncryptionKey(const QByteArray &newKey,
+                                                      const QByteArray &existingKey)
 {
     if (!m_CAMConfiguration.m_useEncryption)
         return false;
 
-    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(existingLockCode)) {
+    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(existingKey)) {
         BLAME() << "Existing lock code check failed.";
         return false;
     }
 
     if (!m_pCryptoFileSystemManager->addEncryptionKey(
-            newLockCode, existingLockCode)) {
+            newKey, existingKey, QLatin1String(MASTER_KEY_TAG))) {
         BLAME() << "Failed to add new device lock code.";
         return false;
     }
 
-    if (!m_pCryptoFileSystemManager->removeEncryptionKey(existingLockCode, newLockCode)) {
+    if (!m_pCryptoFileSystemManager->removeEncryptionKey(existingKey, newKey, true)) {
         BLAME() << "Failed to remove old device lock code.";
         return false;
     }
     return true;
+}
+
+bool CredentialsAccessManager::slaveEncryptionKeyPendingAddition() const
+{
+    return !m_currentSimData.isEmpty();
+}
+
+bool CredentialsAccessManager::storeSlaveEncryptionKey(const QByteArray &masterKey)
+{
+    bool ret = false;
+    /*Add the key to a keyslot.
+      If the SIM was recognized by the system or it was just successfully added to it
+      consider it as the current encryption key.
+    */
+    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(m_currentSimData)) {
+        TRACE();
+        if (m_pCryptoFileSystemManager->addEncryptionKey(m_currentSimData, masterKey)) {
+            m_pCryptoFileSystemManager->setEncryptionKey(m_currentSimData);
+            ret = true;
+        } else {
+            BLAME() << "Could not store encryption key.";
+        }
+    } else {
+        TRACE() << masterKey;
+        m_pCryptoFileSystemManager->setEncryptionKey(m_currentSimData);
+    }
+
+    m_currentSimData.clear();
+    return ret;
 }
 
 bool CredentialsAccessManager::lockSecureStorage(const QByteArray &lockData)
@@ -394,36 +448,38 @@ bool CredentialsAccessManager::closeDB()
     return true;
 }
 
-void CredentialsAccessManager::accessCodeFetched(const QByteArray &accessCode)
+void CredentialsAccessManager::simDataFetched(const QByteArray &simData)
 {
-    /* todo - this will be improved when missing components are available
-             a. sim random data query
-             b. device lock code UI query
-     */
-    if (accessCode.isEmpty()) {
+    if (simData.isEmpty()) {
         BLAME() << "Fetched empty access code.";
         m_error = FailedToFetchAccessCode;
         return;
     }
 
-    m_accessCodeFetched = true;
+    if (m_pCryptoFileSystemManager->encryptionKeyInUse(simData)) {
+        m_accessCodeFetched = true;
 
-    //todo - query Device Lock Code here - UI dialog.
-    QByteArray lockCode = "1234";
-
-    //add the key to a keyslot
-    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(accessCode)) {
-        if (!m_pCryptoFileSystemManager->addEncryptionKey(accessCode, lockCode)) //device lock code here
-            BLAME() << "Could not store encryption key.";
-    }
-
-    m_pCryptoFileSystemManager->setEncryptionKey(accessCode);
-
-    if (!credentialsSystemOpened()) {
-        if (openCredentialsSystem()) {
-            TRACE() << "Credentials system opened.";
-        } else {
-            BLAME() << "Failed to open credentials system.";
+        if (!credentialsSystemOpened()) {
+            if (openCredentialsSystem()) {
+                TRACE() << "Credentials system opened.";
+            } else {
+                BLAME() << "Failed to open credentials system.";
+            }
+            return;
         }
     }
+
+    //keep SIM data until the master key (lock code) is available
+    m_currentSimData = simData;
+
+    //Query Device Lock Code here - UI dialog.
+    if (m_pLockCodeHandler == NULL)
+        m_pLockCodeHandler = new DeviceLockCodeHandler(this);
+
+    m_pLockCodeHandler->queryLockCode();
+}
+
+void CredentialsAccessManager::simError()
+{
+    //TODO
 }
