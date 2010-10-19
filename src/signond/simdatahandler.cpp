@@ -56,16 +56,16 @@ QString simStatusAsStr(const SIMStatus::Status status)
 {
     QString statusStr;
     switch (status) {
-    case SIMStatus::UnknownStatus: statusStr = QLatin1String("UnknownStatus"); break;
-    case SIMStatus::Ok: statusStr = QLatin1String("Ok"); break;
-    case SIMStatus::NoSIM: statusStr = QLatin1String("NoSIM"); break;
-    case SIMStatus::PermanentlyBlocked: statusStr = QLatin1String("PermanentlyBlocked"); break;
-    case SIMStatus::NotReady: statusStr = QLatin1String("NotReady"); break;
-    case SIMStatus::PINRequired: statusStr = QLatin1String("PINRequired"); break;
-    case SIMStatus::PUKRequired: statusStr = QLatin1String("PUKRequired"); break;
-    case SIMStatus::Rejected: statusStr = QLatin1String("Rejected"); break;
-    case SIMStatus::SIMLockRejected: statusStr = QLatin1String("SIMLockRejected"); break;
-    default: statusStr = QLatin1String("Not Handled.");
+        case SIMStatus::UnknownStatus: statusStr = QLatin1String("UnknownStatus"); break;
+        case SIMStatus::Ok: statusStr = QLatin1String("Ok"); break;
+        case SIMStatus::NoSIM: statusStr = QLatin1String("NoSIM"); break;
+        case SIMStatus::PermanentlyBlocked: statusStr = QLatin1String("PermanentlyBlocked"); break;
+        case SIMStatus::NotReady: statusStr = QLatin1String("NotReady"); break;
+        case SIMStatus::PINRequired: statusStr = QLatin1String("PINRequired"); break;
+        case SIMStatus::PUKRequired: statusStr = QLatin1String("PUKRequired"); break;
+        case SIMStatus::Rejected: statusStr = QLatin1String("Rejected"); break;
+        case SIMStatus::SIMLockRejected: statusStr = QLatin1String("SIMLockRejected"); break;
+        default: statusStr = QLatin1String("Not Handled.");
     }
     return statusStr;
 }
@@ -97,8 +97,8 @@ void SimDataHandler::refreshSimIdentity()
 
     m_simIdentity = new SIMIdentity;
     connect(m_simIdentity,
-            SIGNAL(authComplete(QByteArray,QByteArray,QByteArray,QByteArray,SIMError)),
-            SLOT(authComplete(QByteArray,QByteArray,QByteArray,QByteArray,SIMError)));
+            SIGNAL(authComplete(QByteArray, QByteArray, QByteArray, QByteArray, SIMError)),
+            SLOT(authComplete(QByteArray, QByteArray, QByteArray, QByteArray, SIMError)));
 }
 
 void SimDataHandler::authComplete(QByteArray res,

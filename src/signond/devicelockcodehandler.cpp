@@ -33,6 +33,7 @@
 using namespace SignonDaemonNS;
 using namespace DeviceLock;
 
+#define SIGNON_DEVICE_LOCK_INTERFACE "com.nokia.devicelock"
 
 DeviceLockCodeHandler::DeviceLockCodeHandler(QObject *parent)
     : QObject(parent)
@@ -40,7 +41,7 @@ DeviceLockCodeHandler::DeviceLockCodeHandler(QObject *parent)
 
     m_dbusInterface = new QDBusInterface(QLatin1String(DEVLOCK_SERVICE),
                                          QLatin1String(DEVLOCK_PATH),
-                                         QLatin1String("com.nokia.devicelock"),
+                                         QLatin1String(SIGNON_DEVICE_LOCK_INTERFACE),
                                          QDBusConnection::systemBus(),
                                          this);
     if (!m_dbusInterface->isValid())
@@ -127,14 +128,15 @@ void DeviceLockCodeHandler::queryLockCode()
 void DeviceLockCodeHandler::setStateReply(bool result)
 {
     if (!result) {
-        TRACE() << "Could not query DLC, attempting to configure it.";
+        TRACE() << "Could not query the device lock code,"
+                   " attempting to configure it.";
         configureLockCode();
     }
 }
 
 void DeviceLockCodeHandler::updateProvisioningSettingsReply(bool result)
 {
-    TRACE() << "Could not configure DLC.";
+    TRACE() << "Could not configure the device lock code.";
 }
 
 void DeviceLockCodeHandler::errorReply(const QDBusError &error)

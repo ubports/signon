@@ -75,6 +75,5 @@ const char signonDefaultDbFileSystemPath[] = "/home/user/.signon/signonfs";
 const char signonDefaultFileSystemType[] = "ext2";
 const bool signonDefaultUseEncryption = true;
 const uint signonMinumumDbSize = 4;
-const uint signonMinimumObjectTimeout = 60;
 
 #endif // SIGNOND_COMMON_H_

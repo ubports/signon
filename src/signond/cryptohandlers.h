@@ -132,7 +132,7 @@ namespace SignonDaemonNS {
         */
         static bool mount(const QString &source,
                           const QString &target,
-                          const QString &fileSystemType = QLatin1String("ext3"));
+                          const QString &fileSystemType = QLatin1String("ext2"));
         /*!
             Unmounts a block device from a specific location.
             @param mounthPath Path of the file system to be unmounted.

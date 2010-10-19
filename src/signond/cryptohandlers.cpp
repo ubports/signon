@@ -65,8 +65,6 @@ namespace SignonDaemonNS {
                                                 const QStringList &args,
                                                 bool readOutput)
     {
-        //TODO - possibly improve handling
-
         QString trace;
         QTextStream stream(&trace);
         stream << appPath << QLatin1Char(' ') << args.join(QLatin1String(" "));
@@ -130,12 +128,12 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
     {
-        QString mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3");
+        QString mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2");
         switch (fileSystemType) {
-        case Ext2: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2"); break;
-        case Ext3: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3"); break;
-        case Ext4: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext4"); break;
-        default: break;
+            case Ext2: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2"); break;
+            case Ext3: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext3"); break;
+            case Ext4: mkfsApp = QString::fromLatin1("/sbin/mkfs.ext4"); break;
+            default: break;
         }
 
         SystemCommandLineCallHandler handler;
@@ -167,15 +165,15 @@ namespace SignonDaemonNS {
         TRACE() << ret;
 
         switch (errno) {
-        case EAGAIN: TRACE() << "EAGAIN"; break;
-        case EBUSY: TRACE() << "EBUSY"; break;
-        case EFAULT: TRACE() << "EFAULT"; break;
-        case EINVAL: TRACE() << "EINVAL"; break;
-        case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
-        case ENOENT: TRACE() << "ENOENT"; break;
-        case ENOMEM: TRACE() << "ENOMEM"; break;
-        case EPERM: TRACE() << "EPERM"; break;
-        default: TRACE() << "UNKNOWN ERROR!!";
+            case EAGAIN: TRACE() << "EAGAIN"; break;
+            case EBUSY: TRACE() << "EBUSY"; break;
+            case EFAULT: TRACE() << "EFAULT"; break;
+            case EINVAL: TRACE() << "EINVAL"; break;
+            case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
+            case ENOENT: TRACE() << "ENOENT"; break;
+            case ENOMEM: TRACE() << "ENOMEM"; break;
+            case EPERM: TRACE() << "EPERM"; break;
+            default: TRACE() << "UNKNOWN ERROR!!";
         }
 
         //TODO - Remove 1st, uncommend 2nd lines after the fix above.
@@ -233,15 +231,15 @@ namespace SignonDaemonNS {
     static void cmdLineLog(int type, char *msg)
     {
         switch (type) {
-        case CRYPT_LOG_NORMAL:
-            TRACE() << msg;
-            break;
-        case CRYPT_LOG_ERROR:
-            TRACE() << "Error: " << msg;
-            break;
-        default:
-            TRACE() << "Internal error on logging class for msg: " << msg;
-            break;
+            case CRYPT_LOG_NORMAL:
+                TRACE() << msg;
+                break;
+            case CRYPT_LOG_ERROR:
+                TRACE() << "Error: " << msg;
+                break;
+            default:
+                TRACE() << "Internal error on logging class for msg: " << msg;
+                break;
         }
     }
 

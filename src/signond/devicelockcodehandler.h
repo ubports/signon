@@ -80,9 +80,9 @@ namespace SignonDaemonNS {
         void lockCode(const QByteArray &);
 
     private Q_SLOTS:
-        void setStateReply(bool);
-        void updateProvisioningSettingsReply(bool);
-        void errorReply(const QDBusError &);
+        void setStateReply(bool result);
+        void updateProvisioningSettingsReply(bool result);
+        void errorReply(const QDBusError &error);
 
     private:
         void configureLockCode();

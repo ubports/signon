@@ -165,13 +165,11 @@ namespace SignonDaemonNS {
 
             bool isOk = false;
             uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
-
-            //Do not allow less than 1 minute timeout
-            if(isOk && aux >= signonMinimumObjectTimeout)
+            if (isOk)
                 m_identityTimeout = aux;
 
             aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
-            if(isOk && aux >= signonMinimumObjectTimeout)
+            if (isOk)
                 m_authSessionTimeout = aux;
 
             settings.endGroup();
@@ -711,7 +709,7 @@ namespace SignonDaemonNS {
                 if (m_pCAMManager->storeEncryptionKey(lockCode))
                     ret = true;
                 else
-                    TRACE() << "Could not store slave encryption key."
+                    TRACE() << "Could not store encryption key."
                             << "Key might be already stored.";
             }
         } else {
