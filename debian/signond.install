@@ -7,3 +7,5 @@ usr/share/backup-framework/applications/singlesignon.conf
 
 # clear device script
 /etc/osso-cud-scripts/signon-cud.sh
+
+/etc/signond.conf
