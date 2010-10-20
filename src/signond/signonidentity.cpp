@@ -309,7 +309,7 @@ namespace SignonDaemonNS {
         if (id() != SIGNOND_NEW_IDENTITY) {
             //clear stored sessiondata
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-            if (!db->removeData(m_id)) {
+            if ((db == 0) || !db->removeData(m_id)) {
                 TRACE() << "clear data failed";
             }
 
