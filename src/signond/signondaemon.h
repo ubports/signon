@@ -66,8 +66,8 @@ namespace SignonDaemonNS {
         virtual ~RequestCounter() {}
         static RequestCounter *instance();
 
-        void addServiceResquest();
-        void addIdentityResquest();
+        void addServiceRequest();
+        void addIdentityRequest();
 
         int serviceRequests() const;
         int identityRequests() const;

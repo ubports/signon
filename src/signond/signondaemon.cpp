@@ -65,12 +65,12 @@ namespace SignonDaemonNS {
         return requestCounter.data();
     }
 
-    void RequestCounter::addServiceResquest()
+    void RequestCounter::addServiceRequest()
     {
         ++m_serviceRequests;
     }
 
-    void RequestCounter::addIdentityResquest()
+    void RequestCounter::addIdentityRequest()
     {
         ++m_identityRequests;
     }
@@ -491,7 +491,7 @@ namespace SignonDaemonNS {
 
     void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
 
         TRACE() << "Registering new identity:";
 
@@ -526,7 +526,7 @@ namespace SignonDaemonNS {
 
     void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
@@ -573,7 +573,7 @@ namespace SignonDaemonNS {
 
     QStringList SignonDaemon::queryMethods()
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
 
         QDir pluginsDir(SIGNOND_PLUGINS_DIR);
         //TODO: in the future remove the sym links comment
@@ -595,7 +595,7 @@ namespace SignonDaemonNS {
 
     QStringList SignonDaemon::queryMechanisms(const QString &method)
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
         TRACE() << "\n\n\n Querying mechanisms\n\n";
 
         QStringList mechs = SignonSessionCore::loadedPluginMethods(method);
@@ -624,7 +624,7 @@ namespace SignonDaemonNS {
 
     QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &filter)
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
 
@@ -658,7 +658,7 @@ namespace SignonDaemonNS {
 
     bool SignonDaemon::clear()
     {
-        RequestCounter::instance()->addServiceResquest();
+        RequestCounter::instance()->addServiceRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 

@@ -159,9 +159,37 @@ namespace SignonDaemonNS {
         return *m_pInfo;
     }
 
+    bool SignonIdentity::addReference(const QString &reference)
+    {
+        RequestCounter::instance()->addIdentityRequest();
+        TRACE() << "addReference: " << reference;
+        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        if (db == NULL) {
+            BLAME() << "NULL database handler object.";
+            return SIGNOND_NEW_IDENTITY;
+        }
+        QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
+        keepInUse();
+        return db->addReference(m_id, aegisIdToken, reference);
+    }
+
+    bool SignonIdentity::removeReference(const QString &reference)
+    {
+        RequestCounter::instance()->addIdentityRequest();
+        TRACE() << "removeReference: " << reference;
+        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        if (db == NULL) {
+            BLAME() << "NULL database handler object.";
+            return SIGNOND_NEW_IDENTITY;
+        }
+        QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
+        keepInUse();
+        return db->removeReference(m_id, aegisIdToken, reference);
+    }
+
     quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
         Q_UNUSED(displayMessage);
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(0);
@@ -176,7 +204,7 @@ namespace SignonDaemonNS {
 
     QList<QVariant> SignonIdentity::queryInfo()
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "QUERYING INFO";
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
@@ -210,7 +238,7 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::verifyUser(const QString &displayMessage)
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
         Q_UNUSED(displayMessage)
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
@@ -224,7 +252,7 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::verifySecret(const QString &secret)
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
@@ -249,7 +277,7 @@ namespace SignonDaemonNS {
 
     void SignonIdentity::remove()
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
@@ -268,7 +296,7 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::signOut()
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "Signout request. Identity ID: " << id();
         /*
            - If the identity is stored (thus registered here)
@@ -278,9 +306,15 @@ namespace SignonDaemonNS {
            - This is just a safety check, as the client identity - if it is a new one -
            should not inform server side to sign out.
         */
-        if (id() != SIGNOND_NEW_IDENTITY)
-            emit infoUpdated((int)SignOn::IdentitySignedOut);
+        if (id() != SIGNOND_NEW_IDENTITY) {
+            //clear stored sessiondata
+            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+            if (!db->removeData(m_id)) {
+                TRACE() << "clear data failed";
+            }
 
+            emit infoUpdated((int)SignOn::IdentitySignedOut);
+        }
         keepInUse();
         return true;
     }
@@ -295,7 +329,7 @@ namespace SignonDaemonNS {
                                              const QStringList &accessControlList,
                                              const int type)
     {
-        RequestCounter::instance()->addIdentityResquest();
+        RequestCounter::instance()->addIdentityRequest();
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 

@@ -161,7 +161,6 @@ namespace SignonDaemonNS {
                 && (me.m_realms ==you.m_realms)
                 && (me.m_accessControlList == you.m_accessControlList)
                 && (m_type == other.m_type)
-                && (m_refCount == other.m_refCount)
                 && (m_validated == other.m_validated);
     }
 

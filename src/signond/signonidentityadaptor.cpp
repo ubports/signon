@@ -77,6 +77,31 @@ namespace SignonDaemonNS {
         return m_parent->queryInfo();
     }
 
+    quint32 SignonIdentityAdaptor::addReference(const QString &reference)
+    {
+        /* Access Control */
+        if (!AccessControlManager::isPeerAllowedToUseIdentity(
+                                        parentDBusContext(), m_parent->id())) {
+            securityErrorReply(__func__);
+            return 0;
+        }
+
+        return m_parent->addReference(reference) ? 1 : 0;
+    }
+
+    quint32 SignonIdentityAdaptor::removeReference(const QString &reference)
+    {
+        /* Access Control */
+        if (!AccessControlManager::isPeerAllowedToUseIdentity(
+                                        parentDBusContext(), m_parent->id())) {
+            securityErrorReply(__func__);
+            return 0;
+        }
+
+        return m_parent->addReference(reference) ? 1 : 0;
+    }
+
+
     bool SignonIdentityAdaptor::verifyUser(const QString &message)
     {
         /* Access Control */

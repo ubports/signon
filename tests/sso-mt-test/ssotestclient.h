@@ -63,6 +63,9 @@ private:
     void queryAvailableMetods();
     void queryInfo();
 
+    void addReference();
+    void removeReference();
+
     void verifyUser();
     void verifySecret();
     void signOut();
