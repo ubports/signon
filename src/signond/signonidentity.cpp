@@ -278,9 +278,15 @@ namespace SignonDaemonNS {
            - This is just a safety check, as the client identity - if it is a new one -
            should not inform server side to sign out.
         */
-        if (id() != SIGNOND_NEW_IDENTITY)
-            emit infoUpdated((int)SignOn::IdentitySignedOut);
+        if (id() != SIGNOND_NEW_IDENTITY) {
+            //clear stored sessiondata
+            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+            if (!db->removeData(m_id)) {
+                TRACE() << "clear data failed";
+            }
 
+            emit infoUpdated((int)SignOn::IdentitySignedOut);
+        }
         keepInUse();
         return true;
     }

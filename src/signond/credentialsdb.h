@@ -236,6 +236,7 @@ namespace SignonDaemonNS {
 
         QVariantMap loadData(const quint32 id, const QString &method);
         bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
+        bool removeData(const quint32 id, const QString &method = QString());
 
     private:
         SqlDatabase *m_pSqlDatabase;
