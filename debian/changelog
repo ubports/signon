@@ -1,8 +1,8 @@
-signon (4.1-1) unstable; urgency=low
+signon (4.1-2) unstable; urgency=low
 
   * Implemented: SWP#ASSOH-529, WP#ASSOH-527 
 	
- -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 20 Oct 2010 10:02:42 +0300
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 20 Oct 2010 13:50:42 +0300
 
 signon (4.0-2) unstable; urgency=low
 
