@@ -74,6 +74,8 @@ public Q_SLOTS:
     void secretVerified(const bool valid);
     void removed();
     void signedOut();
+    void referenceAdded();
+    void referenceRemoved();
 
 Q_SIGNALS:
     void testCompleted();

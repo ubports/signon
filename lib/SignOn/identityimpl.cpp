@@ -47,9 +47,9 @@
 #define SIGNOND_IDENTITY_QUERY_INFO_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("queryInfo()")
 #define SIGNOND_IDENTITY_ADD_REFERENCE_METHOD \
-    SIGNOND_NORMALIZE_METHOD_SIGNATURE("addReference()")
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("addReference(const QString &)")
 #define SIGNOND_IDENTITY_REMOVE_REFERENCE_METHOD \
-    SIGNOND_NORMALIZE_METHOD_SIGNATURE("removeReference()")
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("removeReference(const QString &)")
 #define SIGNOND_IDENTITY_VERIFY_USER_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QString &)")
 #define SIGNOND_IDENTITY_VERIFY_SECRET_METHOD \
@@ -331,20 +331,82 @@ namespace SignOn {
 
     void IdentityImpl::addReference(const QString &reference)
     {
-        Q_UNUSED(reference);
         TRACE() << "Adding reference to identity";
         checkConnection();
 
-        //TODO implement
+        switch (m_state) {
+            case NeedsRegistration:
+                m_operationQueueHandler.enqueueOperation(
+                                SIGNOND_IDENTITY_ADD_REFERENCE_METHOD,
+                                QList<QGenericArgument *>() << (new Q_ARG(QString, reference)));
+                sendRegisterRequest();
+                return;
+            case PendingRegistration:
+                m_operationQueueHandler.enqueueOperation(
+                                SIGNOND_IDENTITY_ADD_REFERENCE_METHOD,
+                                QList<QGenericArgument *>() << (new Q_ARG(QString, reference)));
+                return;
+            case NeedsUpdate:
+                break;
+            case Removed:
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
+                return;
+            case Ready:
+                /* fall trough */
+            default:
+                break;
+        }
+
+        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
+                                  SLOT(addReferenceReply(const quint32)));
+        if (!result) {
+            TRACE() << "Error occurred.";
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        }
     }
 
     void IdentityImpl::removeReference(const QString &reference)
     {
-        Q_UNUSED(reference);
         TRACE() << "Removing reference from identity";
         checkConnection();
 
-        //TODO implement
+        switch (m_state) {
+            case NeedsRegistration:
+                m_operationQueueHandler.enqueueOperation(
+                                SIGNOND_IDENTITY_REMOVE_REFERENCE_METHOD,
+                                QList<QGenericArgument *>() << (new Q_ARG(QString, reference)));
+                sendRegisterRequest();
+                return;
+            case PendingRegistration:
+                m_operationQueueHandler.enqueueOperation(
+                                SIGNOND_IDENTITY_REMOVE_REFERENCE_METHOD,
+                                QList<QGenericArgument *>() << (new Q_ARG(QString, reference)));
+                return;
+            case NeedsUpdate:
+                break;
+            case Removed:
+                emit m_parent->error(
+                        Error(Error::IdentityNotFound,
+                              QLatin1String("Removed from database.")));
+                return;
+            case Ready:
+                /* fall trough */
+            default:
+                break;
+        }
+
+        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
+                                  SLOT(removeReferenceReply(const quint32)));
+        if (!result) {
+            TRACE() << "Error occurred.";
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+        }
     }
 
     void IdentityImpl::queryInfo()

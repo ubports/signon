@@ -62,6 +62,7 @@ private Q_SLOTS:
     void clearTest();
 
     void dataTest();
+    void referenceTest();
 
     void accessControlListTest();
     void credentialsOwnerSecurityTokenTest();

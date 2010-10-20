@@ -180,3 +180,22 @@ void TestIdentityResult::signedOut()
 
     emit testCompleted();
 }
+
+void TestIdentityResult::referenceAdded()
+{
+    IT_IS_HAPPENING
+    m_responseReceived = NormalResp;
+    m_removed = true;
+
+    emit testCompleted();
+}
+
+void TestIdentityResult::referenceRemoved()
+{
+    IT_IS_HAPPENING
+    m_responseReceived = NormalResp;
+    m_removed = true;
+
+    emit testCompleted();
+}
+

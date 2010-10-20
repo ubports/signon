@@ -381,11 +381,45 @@ void TestDatabase::removeCredentialsTest()
     info.m_id = id;
     QVERIFY(retInfo == info);
 
+    QSqlQuery query;
+    QString queryStr = QString::fromLatin1(
+            "SELECT * FROM ACL WHERE identity_id = '%1'")
+           .arg(id);
+    query = m_db->exec(queryStr);
+    QVERIFY(query.first());
+
+
     QVERIFY(m_db->removeCredentials(id));
 
     retInfo = m_db->credentials(id, true);
     QVERIFY(!(retInfo == info));
     QVERIFY(retInfo.m_id == 0);
+
+    //check that db is cleared
+    queryStr = QString::fromLatin1(
+            "SELECT * FROM ACL WHERE identity_id = '%1'")
+           .arg(id);
+    query = m_db->exec(queryStr);
+    QVERIFY(!query.first());
+
+    queryStr = QString::fromLatin1(
+            "SELECT * FROM REALMS WHERE identity_id = '%1'")
+           .arg(id);
+    query = m_db->exec(queryStr);
+    QVERIFY(!query.first());
+
+    queryStr = QString::fromLatin1(
+            "SELECT * FROM REFS WHERE identity_id = '%1'")
+           .arg(id);
+    query = m_db->exec(queryStr);
+    QVERIFY(!query.first());
+
+    queryStr = QString::fromLatin1(
+            "SELECT * FROM STORE WHERE identity_id = '%1'")
+           .arg(id);
+    query = m_db->exec(queryStr);
+    QVERIFY(!query.first());
+
 }
 
 void TestDatabase::clearTest()
@@ -480,6 +514,65 @@ void TestDatabase::dataTest()
 
     result = m_db->loadData(id, method);
     QVERIFY(result.isEmpty());
+
+}
+
+
+void TestDatabase::referenceTest()
+{
+    SignonIdentityInfo info;
+    quint32 id;
+    QString method = QLatin1String("Method1");
+    //insert complete
+    info.m_caption = QLatin1String("Caption");
+    info.m_userName = QLatin1String("User");
+    info.m_password = QLatin1String("Pass");
+    info.m_realms = QStringList() << QLatin1String("Realm1.com") << QLatin1String("Realm2.com") << QLatin1String("Realm3.com") ;
+    QMap<MethodName,MechanismsList> methods;
+    QStringList mechs = QStringList() << QString::fromLatin1("Mech1") << QString::fromLatin1("Mech2") ;
+    methods.insert(QLatin1String("Method1"), mechs);
+    methods.insert(QLatin1String("Method2"), mechs);
+    methods.insert(QLatin1String("Method3"), QStringList());
+    info.m_methods = methods;
+    info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
+
+    id = m_db->insertCredentials(info, true);
+
+    //add reference
+    bool ret = m_db->addReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1") );
+    QVERIFY(ret);
+    QStringList refs = m_db->references(id);
+    qDebug() << refs;
+    QVERIFY(refs.contains(QLatin1String("ref1")) );
+    refs = m_db->references(id,QLatin1String("AID::12345678")  );
+    QVERIFY(refs.contains(QLatin1String("ref1")) );
+    refs = m_db->references(id,QLatin1String("AID::1234567")  );
+    QVERIFY(!refs.contains(QLatin1String("ref1")) );
+
+    //remove references
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678") );
+    QVERIFY(ret);
+    refs = m_db->references(id);
+    qDebug() << refs;
+    QVERIFY(!refs.contains(QLatin1String("ref1")) );
+
+    //add new and remove nonexisting reference
+    ret = m_db->addReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1") );
+    QVERIFY(ret);
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678") , QLatin1String("ref2"));
+    QVERIFY(!ret);
+
+    refs = m_db->references(id);
+    qDebug() << refs;
+    QVERIFY(refs.contains(QLatin1String("ref1")) );
+
+    //remove specific reference
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1"));
+    QVERIFY(ret);
+
+    refs = m_db->references(id);
+    qDebug() << refs;
+    QVERIFY(!refs.contains(QLatin1String("ref1")) );
 
 }
 
@@ -583,6 +676,10 @@ void TestDatabase::runAllTests()
 
     init();
     dataTest();
+    cleanup();
+
+    init();
+    referenceTest();
     cleanup();
 
     init();

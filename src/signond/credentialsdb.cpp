@@ -266,315 +266,291 @@ namespace SignonDaemonNS {
         /* !!! Foreign keys support seems to be disabled, for the moment... */
         QStringList createTableQuery = QStringList()
             <<  QString::fromLatin1(
-                    "CREATE TABLE CREDENTIALS"
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "caption TEXT,"
-                    "username TEXT,"
-                    "password TEXT,"
-                    "flags INTEGER,"
-                    "type INTEGER)")
+                "CREATE TABLE CREDENTIALS"
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "caption TEXT,"
+                "username TEXT,"
+                "password TEXT,"
+                "flags INTEGER,"
+                "type INTEGER)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE METHODS"
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "method TEXT UNIQUE)")
+                "CREATE TABLE METHODS"
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "method TEXT UNIQUE)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE MECHANISMS"
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "mechanism TEXT UNIQUE)")
+                "CREATE TABLE MECHANISMS"
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "mechanism TEXT UNIQUE)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE TOKENS"
-                    "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "token TEXT UNIQUE)")
+                "CREATE TABLE TOKENS"
+                "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "token TEXT UNIQUE)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE REALMS"
-                    "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-                    "realm TEXT,"
-                    "hostname TEXT,"
-                    "PRIMARY KEY (identity_id, realm, hostname))")
+                "CREATE TABLE REALMS"
+                "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+                "realm TEXT,"
+                "hostname TEXT,"
+                "PRIMARY KEY (identity_id, realm, hostname))")
             <<  QString::fromLatin1(
-                    "CREATE TABLE ACL"
-                    "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-                    "method_id INTEGER CONSTRAINT fk_method_id REFERENCES METHODS(id) ON DELETE CASCADE,"
-                    "mechanism_id INTEGER CONSTRAINT fk_mechanism_id REFERENCES MECHANISMS(id) ON DELETE CASCADE,"
-                    "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
+                "CREATE TABLE ACL"
+                "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+                "method_id INTEGER CONSTRAINT fk_method_id REFERENCES METHODS(id) ON DELETE CASCADE,"
+                "mechanism_id INTEGER CONSTRAINT fk_mechanism_id REFERENCES MECHANISMS(id) ON DELETE CASCADE,"
+                "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
             <<  QString::fromLatin1(
-                    "CREATE TABLE REFS"
-                    "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-                    "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE,"
-                    "ref TEXT)")
+                "CREATE TABLE REFS"
+                "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+                "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE,"
+                "ref TEXT,"
+                "PRIMARY KEY (identity_id, token_id, ref))")
             <<  QString::fromLatin1(
-                    "CREATE TABLE STORE"
-                    "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-                    "method_id INTEGER CONSTRAINT fk_method_id REFERENCES METHODS(id) ON DELETE CASCADE,"
-                    "key TEXT,"
-                    "value BLOB,"
-                    "PRIMARY KEY (identity_id, method_id, key))")
+                "CREATE TABLE STORE"
+                "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+                "method_id INTEGER CONSTRAINT fk_method_id REFERENCES METHODS(id) ON DELETE CASCADE,"
+                "key TEXT,"
+                "value BLOB,"
+                "PRIMARY KEY (identity_id, method_id, key))")
 
-/* triggers generated with
-  http://www.rcs-comp.com/site/index.php/view/Utilities-SQLite_foreign_key_trigger_generator
+/*
+ * triggers generated with
+ * http://www.rcs-comp.com/site/index.php/view/Utilities-SQLite_foreign_key_trigger_generator
 */
             //insert triggers to force foreign keys support
             << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_REALMS_identity_id_CREDENTIALS_id "
-"BEFORE INSERT ON [REALMS] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table REALMS violates foreign key constraint fki_REALMS_identity_id_CREDENTIALS_id') "
-"  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-// Foreign key preventing update
-"CREATE TRIGGER fku_REALMS_identity_id_CREDENTIALS_id "
-"BEFORE UPDATE ON [REALMS] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table REALMS violates foreign key constraint fku_REALMS_identity_id_CREDENTIALS_id') "
-"      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_REALMS_identity_id_CREDENTIALS_id "
-"BEFORE DELETE ON CREDENTIALS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM REALMS WHERE REALMS.identity_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_ACL_identity_id_CREDENTIALS_id "
-"BEFORE INSERT ON [ACL] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_identity_id_CREDENTIALS_id') "
-"  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END;"
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_ACL_identity_id_CREDENTIALS_id "
-"BEFORE UPDATE ON [ACL] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_identity_id_CREDENTIALS_id') "
-"      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_ACL_identity_id_CREDENTIALS_id "
-"BEFORE DELETE ON CREDENTIALS "
-"FOR EACH ROW BEGIN "
- "   DELETE FROM ACL WHERE ACL.identity_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_ACL_method_id_METHODS_id "
-"BEFORE INSERT ON [ACL] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_method_id_METHODS_id') "
-"  WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_ACL_method_id_METHODS_id "
-"BEFORE UPDATE ON [ACL] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_method_id_METHODS_id') "
-"      WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_ACL_method_id_METHODS_id "
-"BEFORE DELETE ON METHODS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM ACL WHERE ACL.method_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_ACL_mechanism_id_MECHANISMS_id "
-"BEFORE INSERT ON [ACL] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_mechanism_id_MECHANISMS_id') "
-"  WHERE NEW.mechanism_id IS NOT NULL AND (SELECT id FROM MECHANISMS WHERE id = NEW.mechanism_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_ACL_mechanism_id_MECHANISMS_id "
-"BEFORE UPDATE ON [ACL] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_mechanism_id_MECHANISMS_id') "
-"      WHERE NEW.mechanism_id IS NOT NULL AND (SELECT id FROM MECHANISMS WHERE id = NEW.mechanism_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_ACL_mechanism_id_MECHANISMS_id "
-"BEFORE DELETE ON MECHANISMS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM ACL WHERE ACL.mechanism_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_ACL_token_id_TOKENS_id "
-"BEFORE INSERT ON [ACL] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_token_id_TOKENS_id') "
-"  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_ACL_token_id_TOKENS_id "
-"BEFORE UPDATE ON [ACL] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_token_id_TOKENS_id') "
-"      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_ACL_token_id_TOKENS_id "
-"BEFORE DELETE ON TOKENS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM ACL WHERE ACL.token_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_REFS_identity_id_CREDENTIALS_id "
-"BEFORE INSERT ON [REFS] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table REFS violates foreign key constraint fki_REFS_identity_id_CREDENTIALS_id') "
-"  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_REFS_identity_id_CREDENTIALS_id "
-"BEFORE UPDATE ON [REFS] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table REFS violates foreign key constraint fku_REFS_identity_id_CREDENTIALS_id') "
-"      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_REFS_identity_id_CREDENTIALS_id "
-"BEFORE DELETE ON CREDENTIALS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM REFS WHERE REFS.identity_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_REFS_token_id_TOKENS_id "
-"BEFORE INSERT ON [REFS] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table REFS violates foreign key constraint fki_REFS_token_id_TOKENS_id') "
-"  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_REFS_token_id_TOKENS_id "
-"BEFORE UPDATE ON [REFS] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table REFS violates foreign key constraint fku_REFS_token_id_TOKENS_id') "
-"      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_REFS_token_id_TOKENS_id "
-"BEFORE DELETE ON TOKENS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM REFS WHERE REFS.token_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_STORE_identity_id_CREDENTIALS_id "
-"BEFORE INSERT ON [STORE] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_identity_id_CREDENTIALS_id') "
-"  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_STORE_identity_id_CREDENTIALS_id "
-"BEFORE UPDATE ON [STORE] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_identity_id_CREDENTIALS_id') "
-"      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_STORE_identity_id_CREDENTIALS_id "
-"BEFORE DELETE ON CREDENTIALS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign Key Preventing insert
-"CREATE TRIGGER fki_STORE_method_id_METHODS_id "
-"BEFORE INSERT ON [STORE] "
-"FOR EACH ROW BEGIN "
-"  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_method_id_METHODS_id') "
-"  WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Foreign key preventing update
-"CREATE TRIGGER fku_STORE_method_id_METHODS_id "
-"BEFORE UPDATE ON [STORE] "
-"FOR EACH ROW BEGIN "
-"    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_method_id_METHODS_id') "
-"      WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-"END; "
-        )
-        << QString::fromLatin1(
-
-// Cascading Delete
-"CREATE TRIGGER fkdc_STORE_method_id_METHODS_id "
-"BEFORE DELETE ON METHODS "
-"FOR EACH ROW BEGIN "
-"    DELETE FROM STORE WHERE STORE.method_id = OLD.id; "
-"END; "
-);
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_REALMS_identity_id_CREDENTIALS_id "
+                "BEFORE INSERT ON [REALMS] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table REALMS violates foreign key constraint fki_REALMS_identity_id_CREDENTIALS_id') "
+                "  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_REALMS_identity_id_CREDENTIALS_id "
+                "BEFORE UPDATE ON [REALMS] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table REALMS violates foreign key constraint fku_REALMS_identity_id_CREDENTIALS_id') "
+                "      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_REALMS_identity_id_CREDENTIALS_id "
+                "BEFORE DELETE ON CREDENTIALS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM REALMS WHERE REALMS.identity_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_ACL_identity_id_CREDENTIALS_id "
+                "BEFORE INSERT ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_identity_id_CREDENTIALS_id') "
+                "  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END;"
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_ACL_identity_id_CREDENTIALS_id "
+                "BEFORE UPDATE ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_identity_id_CREDENTIALS_id') "
+                "      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_ACL_identity_id_CREDENTIALS_id "
+                "BEFORE DELETE ON CREDENTIALS "
+                "FOR EACH ROW BEGIN "
+                 "   DELETE FROM ACL WHERE ACL.identity_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_ACL_method_id_METHODS_id "
+                "BEFORE INSERT ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_method_id_METHODS_id') "
+                "  WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_ACL_method_id_METHODS_id "
+                "BEFORE UPDATE ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_method_id_METHODS_id') "
+                "      WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_ACL_method_id_METHODS_id "
+                "BEFORE DELETE ON METHODS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM ACL WHERE ACL.method_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_ACL_mechanism_id_MECHANISMS_id "
+                "BEFORE INSERT ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_mechanism_id_MECHANISMS_id') "
+                "  WHERE NEW.mechanism_id IS NOT NULL AND (SELECT id FROM MECHANISMS WHERE id = NEW.mechanism_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_ACL_mechanism_id_MECHANISMS_id "
+                "BEFORE UPDATE ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_mechanism_id_MECHANISMS_id') "
+                "      WHERE NEW.mechanism_id IS NOT NULL AND (SELECT id FROM MECHANISMS WHERE id = NEW.mechanism_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_ACL_mechanism_id_MECHANISMS_id "
+                "BEFORE DELETE ON MECHANISMS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM ACL WHERE ACL.mechanism_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_ACL_token_id_TOKENS_id "
+                "BEFORE INSERT ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table ACL violates foreign key constraint fki_ACL_token_id_TOKENS_id') "
+                "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_ACL_token_id_TOKENS_id "
+                "BEFORE UPDATE ON [ACL] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table ACL violates foreign key constraint fku_ACL_token_id_TOKENS_id') "
+                "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_ACL_token_id_TOKENS_id "
+                "BEFORE DELETE ON TOKENS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM ACL WHERE ACL.token_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_REFS_identity_id_CREDENTIALS_id "
+                "BEFORE INSERT ON [REFS] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table REFS violates foreign key constraint fki_REFS_identity_id_CREDENTIALS_id') "
+                "  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_REFS_identity_id_CREDENTIALS_id "
+                "BEFORE UPDATE ON [REFS] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table REFS violates foreign key constraint fku_REFS_identity_id_CREDENTIALS_id') "
+                "      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_REFS_identity_id_CREDENTIALS_id "
+                "BEFORE DELETE ON CREDENTIALS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM REFS WHERE REFS.identity_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_REFS_token_id_TOKENS_id "
+                "BEFORE INSERT ON [REFS] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table REFS violates foreign key constraint fki_REFS_token_id_TOKENS_id') "
+                "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_REFS_token_id_TOKENS_id "
+                "BEFORE UPDATE ON [REFS] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table REFS violates foreign key constraint fku_REFS_token_id_TOKENS_id') "
+                "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_REFS_token_id_TOKENS_id "
+                "BEFORE DELETE ON TOKENS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM REFS WHERE REFS.token_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_STORE_identity_id_CREDENTIALS_id "
+                "BEFORE INSERT ON [STORE] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_identity_id_CREDENTIALS_id') "
+                "  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_STORE_identity_id_CREDENTIALS_id "
+                "BEFORE UPDATE ON [STORE] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_identity_id_CREDENTIALS_id') "
+                "      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_STORE_identity_id_CREDENTIALS_id "
+                "BEFORE DELETE ON CREDENTIALS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_STORE_method_id_METHODS_id "
+                "BEFORE INSERT ON [STORE] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_method_id_METHODS_id') "
+                "  WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_STORE_method_id_METHODS_id "
+                "BEFORE UPDATE ON [STORE] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_method_id_METHODS_id') "
+                "      WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_STORE_method_id_METHODS_id "
+                "BEFORE DELETE ON METHODS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM STORE WHERE STORE.method_id = OLD.id; "
+                "END; "
+            );
 /*
   end of generated code
   */
@@ -1203,6 +1179,114 @@ namespace SignonDaemonNS {
         if ((index = acl.indexOf(aegisIdTokenPrefixRegExp)) != -1)
             return acl.at(index);
         return QString();
+    }
+
+    bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
+    {
+
+        if (!startTransaction()) {
+            TRACE() << "Could not start transaction. Error inserting data.";
+            return false;
+        }
+
+        TRACE() << "Storing:" << id << ", " << token << ", " << reference;
+        /* Data insert */
+        bool allOk = true;
+        QString queryStr;
+        QSqlQuery query;
+
+        /* Security token insert */
+        queryStr = QString::fromLatin1(
+                        "INSERT OR IGNORE INTO TOKENS (token) "
+                        "VALUES ( '%1' )")
+                        .arg(token);
+        query = exec(queryStr);
+        query.clear();
+        if (errorOccurred()) {
+                    allOk = false;
+        }
+
+        queryStr = QString::fromLatin1(
+                        "INSERT OR REPLACE INTO REFS "
+                        "(identity_id, token_id, ref) "
+                        "VALUES ( '%1', "
+                        "( SELECT id FROM TOKENS WHERE token = '%2' ),"
+                        "'%3'"
+                        ")")
+                        .arg(id).arg(token).arg(reference);
+        query = exec(queryStr);
+        query.clear();
+        if (errorOccurred()) {
+                    allOk = false;
+        }
+
+        if (allOk && commit()) {
+            TRACE() << "Data insertion ok.";
+            return true;
+        }
+        rollback();
+        TRACE() << "Data insertion failed.";
+        return false;
+    }
+
+    bool CredentialsDB::removeReference(const quint32 id, const QString &token, const QString &reference)
+    {
+        TRACE() << "Removing:" << id << ", " << token << ", " << reference;
+        //check that there is references
+        QStringList refs = references(id, token);
+        if (refs.isEmpty())
+            return false;
+        if (!reference.isNull() && !refs.contains(reference))
+            return false;
+
+        if (!startTransaction()) {
+            TRACE() << "Could not start transaction. Error removing data.";
+            return false;
+        }
+
+        bool allOk = true;
+        QString queryStr;
+        QSqlQuery query;
+
+        if (reference.isEmpty())
+            queryStr = QString::fromLatin1(
+                        "DELETE FROM REFS "
+                        "WHERE identity_id = '%1' AND "
+                        "token_id = ( SELECT id FROM TOKENS WHERE token = '%2' )")
+                        .arg(id).arg(token);
+        else
+            queryStr = QString::fromLatin1(
+                        "DELETE FROM REFS "
+                        "WHERE identity_id = '%1' AND "
+                        "token_id = ( SELECT id FROM TOKENS WHERE token = '%2' ) "
+                        "AND ref ='%3'")
+                        .arg(id).arg(token).arg(reference);
+
+        query = exec(queryStr);
+        query.clear();
+        if (errorOccurred()) {
+                    allOk = false;
+        }
+
+        if (allOk && commit()) {
+            TRACE() << "Data delete ok.";
+            return true;
+        }
+        rollback();
+        TRACE() << "Data delete failed.";
+        return false;
+    }
+
+    QStringList CredentialsDB::references(const quint32 id, const QString &token)
+    {
+        if (token.isEmpty())
+            return queryList(QString::fromLatin1("SELECT ref FROM REFS "
+                "WHERE identity_id = '%1'")
+                .arg(id));
+        return queryList(QString::fromLatin1("SELECT ref FROM REFS "
+                "WHERE identity_id = '%1' AND "
+                "token_id = (SELECT id FROM TOKENS WHERE token = '%2' )")
+                .arg(id).arg(token));
     }
 
 } //namespace SignonDaemonNS

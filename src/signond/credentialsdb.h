@@ -237,6 +237,10 @@ namespace SignonDaemonNS {
         bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
         bool removeData(const quint32 id, const QString &method = QString());
 
+        bool addReference(const quint32 id, const QString &token, const QString &reference);
+        bool removeReference(const quint32 id, const QString &token, const QString &reference = QString());
+        QStringList references(const quint32 id, const QString &token = QString());
+
     private:
         SqlDatabase *m_pSqlDatabase;
     };
