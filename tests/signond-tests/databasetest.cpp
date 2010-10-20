@@ -70,24 +70,34 @@ void TestDatabase::createTableStructureTest()
 void TestDatabase::queryListTest()
 {
     QString queryStr;
+    /*create test table*/
     queryStr = QString::fromLatin1(
-            "INSERT INTO REALMS (identity_id, realm) "
+                    "CREATE TABLE TESTING"
+                    "(identity_id INTEGER ,"
+                    "realm TEXT,"
+                    "hostname TEXT,"
+                    "PRIMARY KEY (identity_id, realm, hostname))");
+    QSqlQuery insertQuery = m_db->exec(queryStr);
+    m_db->commit();
+
+    queryStr = QString::fromLatin1(
+            "INSERT INTO TESTING (identity_id, realm) "
             "VALUES('%1', '%2')")
             .arg(80).arg(QLatin1String("a"));
-    QSqlQuery insertQuery = m_db->exec(queryStr);
+    insertQuery = m_db->exec(queryStr);
     queryStr = QString::fromLatin1(
-            "INSERT INTO REALMS (identity_id, realm) "
+            "INSERT INTO TESTING (identity_id, realm) "
             "VALUES('%1', '%2')")
             .arg(80).arg(QLatin1String("b"));
     insertQuery = m_db->exec(queryStr);
     QStringList list = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 80"));
+            "SELECT realm FROM TESTING WHERE identity_id = 80"));
     QVERIFY(list.contains(QLatin1String("a")));
     QVERIFY(list.contains(QLatin1String("b")));
     QVERIFY(list.count() == 2);
 
     list = m_db->queryList(QString::fromLatin1(
-            "SELECT realm FROM REALMS WHERE identity_id = 81"));
+            "SELECT realm FROM TESTING WHERE identity_id = 81"));
     QVERIFY(list.count() == 0);
 }
 
@@ -121,32 +131,6 @@ void TestDatabase::insertMethodsTest()
     QVERIFY(list.contains(QLatin1String("M1")));
     QVERIFY(list.contains(QLatin1String("M2")));
     QVERIFY(list.count() == 2);
-}
-
-void TestDatabase::cleanUpTablesTest()
-{
-    QMap<QString, QStringList> methods;
-    m_db->cleanUpTables();
-    QStringList mechs = QStringList() << QLatin1String("M1")<< QLatin1String("M2");
-    methods.insert(QLatin1String("Test"), mechs);
-
-    QString queryStr = QString::fromLatin1(
-                        "INSERT INTO TOKENS (token) "
-                        "SELECT '%1' WHERE NOT EXISTS "
-                        "(SELECT id FROM TOKENS WHERE token = '%1')")
-                        .arg(QLatin1String("token"));
-    m_db->exec(queryStr);
-
-    m_db->cleanUpTables();
-    QStringList list = m_db->queryList(QString::fromLatin1(
-            "SELECT method FROM METHODS"));
-    QVERIFY(list.count() == 0);
-    list = m_db->queryList(QString::fromLatin1(
-            "SELECT mechanism FROM MECHANISMS"));
-    QVERIFY(list.count() == 0);
-    list = m_db->queryList(QString::fromLatin1(
-            "SELECT token FROM TOKENS"));
-    QVERIFY(list.count() == 0);
 }
 
 void TestDatabase::methodsTest()
@@ -223,7 +207,6 @@ void TestDatabase::credentialsTest()
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
     info.m_validated = true;
-    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     creds = m_db->credentials(filter);
@@ -263,7 +246,6 @@ void TestDatabase::insertCredentialsTest()
     methods.insert(QLatin1String("Method3"), QStringList());
     info.m_methods = methods;
     info.m_validated = true;
-    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, false);
     retInfo = m_db->credentials(id, false);
@@ -300,7 +282,6 @@ void TestDatabase::insertCredentialsTest()
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
     info.m_type = 3;
     info.m_validated = true;
-    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, false);
@@ -343,7 +324,6 @@ void TestDatabase::updateCredentialsTest()
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
     info.m_validated = true;
-    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, true);
@@ -366,16 +346,10 @@ void TestDatabase::updateCredentialsTest()
     updateInfo.m_id = id;
     updateInfo.m_type = 2;
     updateInfo.m_validated = false;
-    updateInfo.m_refCount = 4;
 
     QVERIFY(m_db->updateCredentials(updateInfo, true));
 
     retInfo = m_db->credentials(id, true);
-
-QVERIFY (updateInfo.m_id == retInfo.m_id);
-QVERIFY (updateInfo.m_userName == retInfo.m_userName);
-QVERIFY (updateInfo.m_password == retInfo.m_password);
-QVERIFY (updateInfo.m_caption == retInfo.m_caption);
 
     QVERIFY(!(retInfo == info));
     QVERIFY((retInfo == updateInfo));
@@ -400,7 +374,6 @@ void TestDatabase::removeCredentialsTest()
     info.m_methods = methods;
     info.m_accessControlList = QStringList() << QLatin1String("AID::12345678") << QLatin1String("AID::87654321") << QLatin1String("test::property") ;
     info.m_validated = true;
-    info.m_refCount = 5;
 
     id = m_db->insertCredentials(info, true);
     retInfo = m_db->credentials(id, true);
@@ -494,9 +467,9 @@ void TestDatabase::dataTest()
     map.insert("key2",qint32(12));
     data.insert("key", map);
     ret = m_db->storeData(0, method, data);
-    QVERIFY(ret);
+    QVERIFY(!ret);
     result = m_db->loadData(0, method);
-    QVERIFY(result == data);
+    QVERIFY(result.isEmpty());
 
     data.insert(QLatin1String("token"), QLatin1String("tokenvalupdated"));
     data.insert(QLatin1String("token2"), QLatin1String("tokenval2"));
@@ -578,10 +551,6 @@ void TestDatabase::runAllTests()
 
     init();
     insertMethodsTest();
-    cleanup();
-
-    init();
-    cleanUpTablesTest();
     cleanup();
 
     init();

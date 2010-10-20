@@ -52,7 +52,6 @@ private Q_SLOTS:
     void createTableStructureTest();
     void queryListTest();
     void insertMethodsTest();
-    void cleanUpTablesTest();
 
     void methodsTest();
     void checkPasswordTest();

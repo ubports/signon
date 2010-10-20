@@ -214,7 +214,6 @@ namespace SignonDaemonNS {
 //helpers
         QStringList queryList(const QString &query_str);
         bool insertMethods(QMap<QString, QStringList> methods);
-        bool cleanUpTables();
 
     public:
         CredentialsDBError error(bool queryError = true, bool clearError = true) const;
