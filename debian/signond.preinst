@@ -13,12 +13,13 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+DAEMON=/usr/bin/signond
 
 case "$1" in
     install|upgrade)
      
        # stop signond before upgrade
-       [ -x "/usr/bin/pkill" ] && /usr/bin/pkill signond
+       start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
 
        # If the package has default file it could be sourced, so that
        # the local admin can overwrite the defaults
