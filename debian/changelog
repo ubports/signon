@@ -1,3 +1,9 @@
+signon (4.1-5) unstable; urgency=low
+
+  * Fixes: NB#199649 - 'Unable to save account' slogan displayed when trying do add Google account
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 22 Oct 2010 10:27:42 +0300
+
 signon (4.1-4) unstable; urgency=low
 
   * Implemented: SWP#ASSOH-529, WP#ASSOH-527 
