@@ -1,3 +1,9 @@
+signon (4.1-6) unstable; urgency=low
+
+  * Fix preinstall script
+	
+ -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 22 Oct 2010 13:13:42 +0300
+
 signon (4.1-5) unstable; urgency=low
 
   * Fixes: NB#199649 - 'Unable to save account' slogan displayed when trying do add Google account
