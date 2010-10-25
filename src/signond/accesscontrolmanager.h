@@ -41,6 +41,12 @@
 
 #include "signonauthsession.h"
 
+//TODO -  remove this constant after the fixing of NB#196033
+const char accessControlTmpWarningMessage[] =
+        "Access control failed. Temporarily allowing the further "
+        "execution of this method.\nThis workaround will be removed "
+        "after the fixing of NB#196033, from that moment on causing "
+        "your application to receive a `PermissionDenied` ERROR.";
 
 namespace SignonDaemonNS {
 
