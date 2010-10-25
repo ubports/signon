@@ -1,3 +1,9 @@
+signon (4.1-8) unstable; urgency=low
+
+  * Fixing signond configuration.
+
+ -- Aurel Popirtac <ext-aurel.popirtac@nokia.com>  Mon, 25 Oct 2010 15:35:42 +0300
+
 signon (4.1-7) unstable; urgency=low
 
   * Fixes: NB#200013 - signond preinst script fails when signond isn't running
