@@ -89,11 +89,11 @@ namespace SignonDaemonNS {
 
     SignonDaemonConfiguration::SignonDaemonConfiguration()
         : m_loadedFromFile(false),
-          m_useSecureStorage(true),
-          m_storageSize(4),
-          m_storageFileSystemType(QLatin1String("ext2")),
-          m_storagePath(QLatin1String("/home/user/.signon")),
-          m_storageFileSystemName(QLatin1String("signonfs")),
+          m_useSecureStorage(signonDefaultUseEncryption),
+          m_storageSize(signonMinumumDbSize),
+          m_storageFileSystemType(QLatin1String(signonDefaultFileSystemType)),
+          m_storagePath(QLatin1String(signonDefaultStoragePath)),
+          m_storageFileSystemName(QLatin1String(signonDefaultFileSystemName)),
           m_identityTimeout(300),//secs
           m_authSessionTimeout(300)//secs
     {}
@@ -112,7 +112,7 @@ namespace SignonDaemonNS {
 
         [SecureStorage]
         FileSystemName=signonfs
-        Size=4
+        Size=8
         FileSystemType=ext2
 
         [ObjectTimeouts]
@@ -337,7 +337,7 @@ namespace SignonDaemonNS {
 
         TRACE();
         if (!(m_configuration = new SignonDaemonConfiguration))
-            qFatal("SignonDaemon requires configuration object") ;
+            qWarning("SignonDaemon could not create the configuration object.") ;
 
         m_configuration->load();
 
