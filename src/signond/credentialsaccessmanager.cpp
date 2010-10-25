@@ -49,7 +49,10 @@ using namespace SignonDaemonNS;
 CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String(signonDefaultDbName)),
           m_useEncryption(signonDefaultUseEncryption),
-          m_dbFileSystemPath(QLatin1String(signonDefaultDbFileSystemPath)),
+          m_dbFileSystemPath(
+                QLatin1String(signonDefaultStoragePath)
+                + QDir::separator()
+                + QLatin1String(signonDefaultFileSystemName)),
           m_fileSystemType(QLatin1String(signonDefaultFileSystemType)),
           m_fileSystemSize(signonMinumumDbSize),
           m_encryptionPassphrase(QByteArray())
