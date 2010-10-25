@@ -1,6 +1,6 @@
-signon (4.1-6) unstable; urgency=low
+signon (4.1-7) unstable; urgency=low
 
-  * Fix preinstall script
+  * Fixes: NB#200013 - signond preinst script fails when signond isn't running
 	
  -- Tomi Suviola <tomi.suviola@nokia.com>  Wed, 22 Oct 2010 13:13:42 +0300
 
