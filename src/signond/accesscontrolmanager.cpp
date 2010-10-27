@@ -117,6 +117,18 @@ namespace SignonDaemonNS {
         return QString();
     }
 
+    QString AccessControlManager::idTokenOfPid(pid_t pid)
+    {
+        RETURN_IF_AC_DISABLED(QString());
+
+        QStringList peerTokens = accessTokens(pid);
+        foreach(QString token, peerTokens) {
+            if (token.startsWith(SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX))
+                return token;
+        }
+        return QString();
+    }
+
     bool AccessControlManager::peerHasOneOfTokens(const QDBusContext &peerContext,
                                                   const QStringList &tokens)
     {
