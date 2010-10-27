@@ -44,15 +44,18 @@ QT -= gui
 CONFIG += qdbus \
     build_all \
     link_pkgconfig
+    
+PKGCONFIG += libsignoncrypto-qt
+
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 headers.files = $$public_headers \
-	AuthService \
-	AuthSession \
-	Identity \
+    AuthService \
+    AuthSession \
+    Identity \
         SessionData \
         Error
 headers.path = $${INSTALL_PREFIX}/include/signon-qt/SignOn
