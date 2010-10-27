@@ -30,6 +30,8 @@
 
 #include "SignOn/authpluginif.h"
 
+#include <SignOnCrypto/Encryptor>
+
 #define MAX_IDLE_TIME SIGNOND_MAX_IDLE_TIME
 /*
  * the watchdog searches for idle sessions with period of half of idle timeout
@@ -41,6 +43,7 @@
 #define SSO_KEY_CAPTION QLatin1String("Caption")
 
 using namespace SignonDaemonNS;
+using namespace SignOnCrypto;
 
 /*
  * cache of session queues, as was mentined they cannot be static
@@ -66,6 +69,11 @@ static QVariantMap filterVariantMap(const QVariantMap &other)
 static QString sessionName(const quint32 id, const QString &method)
 {
    return QString::number(id) + QLatin1String("+") + method;
+}
+
+static pid_t pidOfContext(const QDBusConnection &connection, const QDBusMessage &message)
+{
+    return connection.interface()->servicePid(message.service()).value();
 }
 
 SignonSessionCore::SignonSessionCore(quint32 id,
@@ -234,10 +242,29 @@ void SignonSessionCore::process(const QDBusConnection &connection,
     TRACE();
 
     keepInUse();
+    if (Encryptor::instance()->isVariantMapEncrypted(sessionDataVa)) {
+        pid_t pid = pidOfContext(connection, message);
+        QVariantMap decodedData(Encryptor::instance()->
+                                decodeVariantMap(sessionDataVa, pid));
+        if (Encryptor::instance()->status() != Encryptor::Ok) {
+            replyError(connection,
+                       message,
+                       Error::OperationFailed,
+                       QString::fromLatin1("Failed to decrypt incoming message"));
+            return;
+        }
 
-    RequestData rd(connection, message, sessionDataVa, mechanism, cancelKey);
-    m_listOfRequests.enqueue(rd);
-
+        m_listOfRequests.enqueue(RequestData(connection,
+                                             message,
+                                             decodedData,
+                                             mechanism,
+                                             cancelKey));
+    } else
+        m_listOfRequests.enqueue(RequestData(connection,
+                                             message,
+                                             sessionDataVa,
+                                             mechanism,
+                                             cancelKey));
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
@@ -491,10 +518,20 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         if (m_method != QLatin1String("password") && data2.contains(SSO_KEY_PASSWORD))
             data2.remove(SSO_KEY_PASSWORD);
 
-        arguments << data2;
+        pid_t pid = pidOfContext(rd.m_conn, rd.m_msg);
+        QVariantMap encodedData(Encryptor::instance()->
+                                encodeVariantMap(data2, pid));
+        if (Encryptor::instance()->status() != Encryptor::Ok) {
+            replyError(rd.m_conn,
+                       rd.m_msg,
+                       Error::OperationFailed,
+                       QString::fromLatin1("Failed to decrypt incoming message"));
+        } else {
+            arguments << encodedData;
+            rd.m_conn.send(rd.m_msg.createReply(arguments));
+            TRACE() << "sending reply: " << arguments;
+        }
 
-        TRACE() << "sending reply: " << arguments;
-        rd.m_conn.send(rd.m_msg.createReply(arguments));
         m_canceled = QString();
 
         if (m_watcher && !m_watcher->isFinished()) {
