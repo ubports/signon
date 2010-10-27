@@ -28,6 +28,8 @@
 
 #include <signond/signoncommon.h>
 
+#include <SignOnCrypto/Encryptor>
+
 #include "libsignoncommon.h"
 #include "identityimpl.h"
 #include "identityinfo.h"
@@ -57,6 +59,7 @@
 #define SIGNOND_IDENTITY_SIGN_OUT_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("signOut()")
 
+using namespace SignOnCrypto;
 
 namespace SignOn {
 
@@ -257,11 +260,19 @@ namespace SignOn {
             return;
         }
 
-        QList<QVariant> args;
+        QString encodedSecret(Encryptor::instance()->encodeString(info.secret(), 0));
 
+        if (Encryptor::instance()->status() != Encryptor::Ok) {
+            emit m_parent->error(
+                Error(Error::StoreFailed,
+                      QLatin1String("Data encryption failed")));
+            return;
+        }
+
+        QList<QVariant> args;
         args << m_identityInfo->id()
              << info.userName()
-             << info.secret()
+             << encodedSecret
              << info.isStoringSecret()
              << QVariant(info.impl->m_authMethods)
              << info.caption()
