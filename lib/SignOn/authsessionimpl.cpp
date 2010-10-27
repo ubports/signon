@@ -20,9 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-
-#include <QUuid>
-
+#include <SignOnCrypto/Encryptor>
 #include <signond/signoncommon.h>
 
 #include "authsessionimpl.h"
@@ -45,6 +43,7 @@
 #endif
 
 using namespace SignOn;
+using namespace SignOnCrypto;
 
 static QVariantMap sessionData2VariantMap(const SessionData &data)
 {
@@ -261,9 +260,21 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
 
     QVariantMap sessionDataVa = sessionData2VariantMap(sessionData);
     QString remoteFunctionName;
-    QVariantList arguments;
 
-    arguments += sessionDataVa;
+    QVariantMap encodedSessionData(Encryptor::instance()->
+                                   encodeVariantMap(sessionDataVa, 0));
+    if (Encryptor::instance()->status() != Encryptor::Ok ) {
+        qCritical() << "AuthSession: encryption failed";
+
+        emit m_parent->error(
+                Error(Error::OperationFailed,
+                      QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
+                         .arg(m_methodName)));
+        return;
+    }
+
+    QVariantList arguments;
+    arguments += encodedSessionData;
     arguments += mechanism;
 
     remoteFunctionName = QLatin1String("process");
@@ -281,7 +292,6 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
         m_operationQueueHandler.enqueueOperation(SIGNOND_SESSION_PROCESS_METHOD,
                                                  args);
     }
-
 }
 
 void AuthSessionImpl::cancel()
@@ -457,9 +467,20 @@ void AuthSessionImpl::mechanismsAvailableSlot(const QStringList& mechanisms)
 
 void AuthSessionImpl::responseSlot(const QVariantMap &sessionDataVa)
 {
-    SessionData data(sessionDataVa);
     m_isBusy = false;
-    emit m_parent->response(data);
+
+    if (Encryptor::instance()->isVariantMapEncrypted(sessionDataVa)) {
+        QVariantMap decodedData(Encryptor::instance()->
+                                decodeVariantMap(sessionDataVa, 0));
+        if (Encryptor::instance()->status() != Encryptor::Ok)
+            emit m_parent->error(
+                Error(Error::OperationFailed,
+                      QLatin1String("The response cannot be decrypted.")));
+        else
+            emit m_parent->response(SessionData(decodedData));
+    }
+    else
+        emit m_parent->response(SessionData(sessionDataVa));
 }
 
 void AuthSessionImpl::stateSlot(int state, const QString &message)
