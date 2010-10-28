@@ -37,6 +37,8 @@
 #include "authsession.h"
 #include "dbusoperationqueuehandler.h"
 
+#include <SignOnCrypto/Encryptor>
+
 namespace SignOn {
 
     /*!
@@ -82,6 +84,7 @@ namespace SignOn {
         quint32 m_id;
         QString m_methodName;
         QDBusInterface *m_DBusInterface;
+        SignOnCrypto::Encryptor *m_encryptor;
 
         /*
          * flag to prevent multiple authentication requests

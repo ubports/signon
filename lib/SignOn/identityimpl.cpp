@@ -28,8 +28,6 @@
 
 #include <signond/signoncommon.h>
 
-#include <SignOnCrypto/Encryptor>
-
 #include "libsignoncommon.h"
 #include "identityimpl.h"
 #include "identityinfo.h"
@@ -74,12 +72,17 @@ namespace SignOn {
           m_infoQueried(true),
           m_signOutRequestedByThisIdentity(false)
     {
+        if (!(m_encryptor = new Encryptor))
+            qFatal("Cannot allocate memory for ecnryptor");
+
         m_identityInfo->setId(id);
         sendRegisterRequest();
     }
 
     IdentityImpl::~IdentityImpl()
     {
+        delete m_encryptor;
+
         if (m_identityInfo)
             delete m_identityInfo;
 
@@ -260,9 +263,9 @@ namespace SignOn {
             return;
         }
 
-        QString encodedSecret(Encryptor::instance()->encodeString(info.secret(), 0));
+        QString encodedSecret(m_encryptor->encodeString(info.secret(), 0));
 
-        if (Encryptor::instance()->status() != Encryptor::Ok) {
+        if (m_encryptor->status() != Encryptor::Ok) {
             emit m_parent->error(
                 Error(Error::StoreFailed,
                       QLatin1String("Data encryption failed")));
@@ -743,8 +746,10 @@ namespace SignOn {
         } else if (err.name() == SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
-        }
-        else {
+        } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
+           emit m_parent->error(Error(Error::EncryptionFailed, err.message()));
+           return;
+        } else {
             if (m_state == this->PendingRegistration)
                 updateState(NeedsRegistration);
 
