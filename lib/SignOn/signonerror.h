@@ -98,6 +98,7 @@ namespace SignOn {
             TimedOut,                  /**< Challenge was timed out. */
             UserInteraction,           /**< User interaction dialog failed */
             OperationFailed,           /**< Temporary failure in authentication. */
+            EncryptionFailed,          /**< Failure during data encryption/decryption. */
             UserErr = 400                   /* Placeholder to rearrange enumeration
                                              - User space specific */
         };
