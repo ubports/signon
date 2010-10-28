@@ -26,11 +26,9 @@
 #include "signonidentity.h"
 #include "signonauthsessionadaptor.h"
 #include "signonui_interface.h"
-#include "SignOn/uisessiondata_priv.h"
-
-#include "SignOn/authpluginif.h"
-
-#include <SignOnCrypto/Encryptor>
+#include <SignOn/uisessiondata_priv.h>
+#include <SignOn/authpluginif.h>
+#include <SignOn/Error>
 
 #define MAX_IDLE_TIME SIGNOND_MAX_IDLE_TIME
 /*
@@ -89,6 +87,9 @@ SignonSessionCore::SignonSessionCore(quint32 id,
     m_signonui = NULL;
     m_watcher = NULL;
 
+    if (!(m_encryptor = new Encryptor))
+        qFatal("Cannot allocate memory for encryptor");
+
     m_signonui = new SignonUiAdaptor(
                                     SIGNON_UI_SERVICE,
                                     SIGNON_UI_DAEMON_OBJECTPATH,
@@ -102,6 +103,7 @@ SignonSessionCore::~SignonSessionCore()
     delete m_plugin;
     delete m_watcher;
     delete m_signonui;
+    delete m_encryptor;
 
     m_plugin = NULL;
     m_signonui = NULL;
@@ -242,14 +244,14 @@ void SignonSessionCore::process(const QDBusConnection &connection,
     TRACE();
 
     keepInUse();
-    if (Encryptor::instance()->isVariantMapEncrypted(sessionDataVa)) {
+    if (m_encryptor->isVariantMapEncrypted(sessionDataVa)) {
         pid_t pid = pidOfContext(connection, message);
-        QVariantMap decodedData(Encryptor::instance()->
+        QVariantMap decodedData(m_encryptor->
                                 decodeVariantMap(sessionDataVa, pid));
-        if (Encryptor::instance()->status() != Encryptor::Ok) {
+        if (m_encryptor->status() != Encryptor::Ok) {
             replyError(connection,
                        message,
-                       Error::OperationFailed,
+                       Error::EncryptionFailed,
                        QString::fromLatin1("Failed to decrypt incoming message"));
             return;
         }
@@ -456,6 +458,10 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
                 errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                 break;
+            case Error::EncryptionFailed:
+                errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
+                errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
+                break;
             default:
                 if (message.isEmpty())
                     errMessage = SIGNOND_UNKNOWN_ERR_STR;
@@ -519,13 +525,13 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             data2.remove(SSO_KEY_PASSWORD);
 
         pid_t pid = pidOfContext(rd.m_conn, rd.m_msg);
-        QVariantMap encodedData(Encryptor::instance()->
+        QVariantMap encodedData(m_encryptor->
                                 encodeVariantMap(data2, pid));
-        if (Encryptor::instance()->status() != Encryptor::Ok) {
+        if (m_encryptor->status() != Encryptor::Ok) {
             replyError(rd.m_conn,
                        rd.m_msg,
-                       Error::OperationFailed,
-                       QString::fromLatin1("Failed to decrypt incoming message"));
+                       Error::EncryptionFailed,
+                       QString::fromLatin1("Failed to encrypt outgoing message"));
         } else {
             arguments << encodedData;
             rd.m_conn.send(rd.m_msg.createReply(arguments));

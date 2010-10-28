@@ -27,6 +27,8 @@
 #include <QtCore>
 #include <QtDBus>
 
+#include <SignOnCrypto/Encryptor>
+
 #include "pluginproxy.h"
 
 #include "signond-common.h"
@@ -95,6 +97,7 @@ namespace SignonDaemonNS {
         SignonUiAdaptor *m_signonui;
         SignonIdentityInfo *m_pInfo;
         SignonDaemon *m_pSignonDaemon;
+        SignOnCrypto::Encryptor *m_encryptor;
         bool m_registered;
 
     }; //class SignonDaemon

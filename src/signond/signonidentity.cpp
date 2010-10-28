@@ -23,8 +23,6 @@
 
 #include <iostream>
 
-#include <SignOnCrypto/Encryptor>
-
 #include "signond-common.h"
 #include "signonidentity.h"
 #include "signonui_interface.h"
@@ -71,6 +69,9 @@ namespace SignonDaemonNS {
                                         SIGNON_UI_DAEMON_OBJECTPATH,
                                         SIGNOND_BUS,
                                         this);
+
+        if (!(m_encryptor = new Encryptor))
+            qFatal("Cannot allocate memory for encryptor");
     }
 
     SignonIdentity::~SignonIdentity()
@@ -88,6 +89,7 @@ namespace SignonDaemonNS {
             m_pSignonDaemon->m_unstoredIdentities.remove(objectName());
 
         delete m_signonui;
+        delete m_encryptor;
     }
 
     bool SignonIdentity::init()
@@ -333,7 +335,7 @@ namespace SignonDaemonNS {
                                              const int type)
     {
         RequestCounter::instance()->addIdentityRequest();
-
+        keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
         /*
@@ -343,31 +345,33 @@ namespace SignonDaemonNS {
          * */
 
         pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
-        QString decodedSecret(Encryptor::instance()->decodeString(secret, pidOfPeer));
+        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
 
-        if (Encryptor::instance()->status() == Encryptor::Ok) {
-
-            QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
-
-            QStringList accessControlListLocal = accessControlList;
-            if (!aegisIdToken.isNull())
-                accessControlListLocal.prepend(aegisIdToken);
-
-            SignonIdentityInfo info(id, userName, decodedSecret, methods, caption,
-                                    realms, accessControlListLocal, type);
-
-            TRACE() << info.serialize();
-            storeCredentials(info, storeSecret);
+        if (m_encryptor->status() != Encryptor::Ok) {
+            QDBusMessage errReply = message().createErrorReply(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
+                                                               SIGNOND_ENCRYPTION_FAILED_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return SIGNOND_NEW_IDENTITY;
         }
 
-        if (Encryptor::instance()->status() != Encryptor::Ok ||
-            m_id == SIGNOND_NEW_IDENTITY) {
+        QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
+
+        QStringList accessControlListLocal = accessControlList;
+        if (!aegisIdToken.isNull())
+            accessControlListLocal.prepend(aegisIdToken);
+
+        SignonIdentityInfo info(id, userName, decodedSecret, methods, caption,
+                                realms, accessControlListLocal, type);
+
+        TRACE() << info.serialize();
+        storeCredentials(info, storeSecret);
+
+        if (m_id == SIGNOND_NEW_IDENTITY) {
             QDBusMessage errReply = message().createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
                                                                SIGNOND_STORE_FAILED_ERR_STR);
             SIGNOND_BUS.send(errReply);
         }
 
-        keepInUse();
         return m_id;
 }
 
