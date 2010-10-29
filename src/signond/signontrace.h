@@ -44,7 +44,8 @@ namespace SignOn {
     public:
         ~SignonTrace()
         {
-            delete m_pInstance;
+            if (m_pInstance)
+                delete m_pInstance;
             m_pInstance = NULL;
         }
 
@@ -57,8 +58,6 @@ namespace SignOn {
 
             if (!m_pInstance->m_outputFile.open(QIODevice::Append)) {
                 TRACE() << "Signon: Failed to initialize file tracing.";
-                delete m_pInstance;
-                m_pInstance = NULL;
                 return false;
             }
 
@@ -70,6 +69,8 @@ namespace SignOn {
         {
             //todo - handle max file size !!!
 
+            if (!m_pInstance)
+                return;
             const char *msgType;
             switch (type) {
                 case QtWarningMsg: msgType = "Warning"; break;
@@ -88,10 +89,12 @@ namespace SignOn {
             if (!m_pInstance->m_outputFile.isOpen())
                 m_pInstance->m_outputFile.open(QIODevice::Append);
 
-            m_pInstance->m_writeStream << QString(QLatin1String("%1: %2\n"))
-                . arg(QLatin1String(msgType))
-                . arg(QLatin1String(msg));
-            m_pInstance->m_outputFile.close();
+            if (m_pInstance->m_outputFile.isOpen()) {
+                m_pInstance->m_writeStream << QString(QLatin1String("%1: %2\n"))
+                    . arg(QLatin1String(msgType))
+                    . arg(QLatin1String(msg));
+                m_pInstance->m_outputFile.close();
+            }
          }
 
     private:
