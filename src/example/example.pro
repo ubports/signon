@@ -10,6 +10,8 @@ INCLUDEPATH += . \
 CONFIG += uitools \
     debug \
     link_pkgconfig
+
+PKGCONFIG += libsignoncrypto-qt
 CONFIG += qdbus
 
 # Input
@@ -19,8 +21,8 @@ HEADERS += signonclient.h \
 SOURCES += main.cpp \
     signonclient.cpp
 
-#LIBS += -L../libsignon-qt -lsignon-qt
-LIBS += $${TOP_BUILD_DIR}/lib/SignOn/libsignon-qt.a
+QMAKE_LIBDIR += $${TOP_SRC_DIR}/lib/SignOn
+LIBS += -lsignon-qt
 
 # install
 include( ../../common-installs-config.pri )

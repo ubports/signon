@@ -58,6 +58,9 @@ INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins
 CONFIG += build_all \
     link_pkgconfig
+
+PKGCONFIG += libsignoncrypto-qt
+    
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII \
@@ -94,4 +97,3 @@ conf_file.files = $$OTHER_FILES
 conf_file.path = /etc/
 
 INSTALLS += conf_file
-

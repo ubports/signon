@@ -1,6 +1,9 @@
 include( ../../common-project-config.pri )
 include( ../../common-vars.pri )
-CONFIG += qtestlib
+
+CONFIG += qtestlib \
+    link_pkgconfig
+PKGCONFIG += libsignoncrypto-qt
 QT += core \
     dbus
 QT -= gui
