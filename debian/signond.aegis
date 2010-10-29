@@ -1,0 +1,13 @@
+<aegis>
+  <provide>
+    <credential name="keychain-access" />
+  </provide>
+  <account>
+    <user name="signon" group="signon"/>
+  </account>
+  <request>
+    <credential name="UID::signon" />
+    <credential name="GID::signon" />
+    <for path="/usr/bin/signonpluginprocess" />
+  </request>
+</aegis>
