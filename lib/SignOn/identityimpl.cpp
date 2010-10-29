@@ -57,6 +57,7 @@
 #define SIGNOND_IDENTITY_SIGN_OUT_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("signOut()")
 
+using namespace SignOnCrypto;
 
 namespace SignOn {
 
@@ -257,11 +258,19 @@ namespace SignOn {
             return;
         }
 
-        QList<QVariant> args;
+        QString encodedSecret(m_encryptor.encodeString(info.secret(), 0));
 
+        if (m_encryptor.status() != Encryptor::Ok) {
+            emit m_parent->error(
+                Error(Error::StoreFailed,
+                      QLatin1String("Data encryption failed")));
+            return;
+        }
+
+        QList<QVariant> args;
         args << m_identityInfo->id()
              << info.userName()
-             << info.secret()
+             << encodedSecret
              << info.isStoringSecret()
              << QVariant(info.impl->m_authMethods)
              << info.caption()
@@ -732,8 +741,10 @@ namespace SignOn {
         } else if (err.name() == SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
-        }
-        else {
+        } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
+           emit m_parent->error(Error(Error::EncryptionFailed, err.message()));
+           return;
+        } else {
             if (m_state == this->PendingRegistration)
                 updateState(NeedsRegistration);
 

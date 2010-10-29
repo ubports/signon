@@ -26,9 +26,9 @@
 #include "signonidentity.h"
 #include "signonauthsessionadaptor.h"
 #include "signonui_interface.h"
-#include "SignOn/uisessiondata_priv.h"
-
-#include "SignOn/authpluginif.h"
+#include <SignOn/uisessiondata_priv.h>
+#include <SignOn/authpluginif.h>
+#include <SignOn/Error>
 
 #define MAX_IDLE_TIME SIGNOND_MAX_IDLE_TIME
 /*
@@ -41,6 +41,7 @@
 #define SSO_KEY_CAPTION QLatin1String("Caption")
 
 using namespace SignonDaemonNS;
+using namespace SignOnCrypto;
 
 /*
  * cache of session queues, as was mentined they cannot be static
@@ -68,6 +69,11 @@ static QString sessionName(const quint32 id, const QString &method)
    return QString::number(id) + QLatin1String("+") + method;
 }
 
+static pid_t pidOfContext(const QDBusConnection &connection, const QDBusMessage &message)
+{
+    return connection.interface()->servicePid(message.service()).value();
+}
+
 SignonSessionCore::SignonSessionCore(quint32 id,
                                      const QString &method,
                                      int timeout,
@@ -80,6 +86,9 @@ SignonSessionCore::SignonSessionCore(quint32 id,
     TRACE();
     m_signonui = NULL;
     m_watcher = NULL;
+
+    if (!(m_encryptor = new Encryptor))
+        qFatal("Cannot allocate memory for encryptor");
 
     m_signonui = new SignonUiAdaptor(
                                     SIGNON_UI_SERVICE,
@@ -94,6 +103,7 @@ SignonSessionCore::~SignonSessionCore()
     delete m_plugin;
     delete m_watcher;
     delete m_signonui;
+    delete m_encryptor;
 
     m_plugin = NULL;
     m_signonui = NULL;
@@ -234,10 +244,29 @@ void SignonSessionCore::process(const QDBusConnection &connection,
     TRACE();
 
     keepInUse();
+    if (m_encryptor->isVariantMapEncrypted(sessionDataVa)) {
+        pid_t pid = pidOfContext(connection, message);
+        QVariantMap decodedData(m_encryptor->
+                                decodeVariantMap(sessionDataVa, pid));
+        if (m_encryptor->status() != Encryptor::Ok) {
+            replyError(connection,
+                       message,
+                       Error::EncryptionFailed,
+                       QString::fromLatin1("Failed to decrypt incoming message"));
+            return;
+        }
 
-    RequestData rd(connection, message, sessionDataVa, mechanism, cancelKey);
-    m_listOfRequests.enqueue(rd);
-
+        m_listOfRequests.enqueue(RequestData(connection,
+                                             message,
+                                             decodedData,
+                                             mechanism,
+                                             cancelKey));
+    } else
+        m_listOfRequests.enqueue(RequestData(connection,
+                                             message,
+                                             sessionDataVa,
+                                             mechanism,
+                                             cancelKey));
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
@@ -429,6 +458,10 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
                 errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                 break;
+            case Error::EncryptionFailed:
+                errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
+                errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
+                break;
             default:
                 if (message.isEmpty())
                     errMessage = SIGNOND_UNKNOWN_ERR_STR;
@@ -491,10 +524,20 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         if (m_method != QLatin1String("password") && data2.contains(SSO_KEY_PASSWORD))
             data2.remove(SSO_KEY_PASSWORD);
 
-        arguments << data2;
+        pid_t pid = pidOfContext(rd.m_conn, rd.m_msg);
+        QVariantMap encodedData(m_encryptor->
+                                encodeVariantMap(data2, pid));
+        if (m_encryptor->status() != Encryptor::Ok) {
+            replyError(rd.m_conn,
+                       rd.m_msg,
+                       Error::EncryptionFailed,
+                       QString::fromLatin1("Failed to encrypt outgoing message"));
+        } else {
+            arguments << encodedData;
+            rd.m_conn.send(rd.m_msg.createReply(arguments));
+            TRACE() << "sending reply: " << arguments;
+        }
 
-        TRACE() << "sending reply: " << arguments;
-        rd.m_conn.send(rd.m_msg.createReply(arguments));
         m_canceled = QString();
 
         if (m_watcher && !m_watcher->isFinished()) {

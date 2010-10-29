@@ -30,7 +30,6 @@
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
 
-
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
         if (!(CredentialsAccessManager::instance()->credentialsSystemOpened())) { \
             QDBusMessage errReply = message().createErrorReply(                   \
@@ -40,6 +39,8 @@
             return _ret_arg_;           \
         }                               \
     } while(0)
+
+using namespace SignOnCrypto;
 
 namespace SignonDaemonNS {
 
@@ -68,6 +69,9 @@ namespace SignonDaemonNS {
                                         SIGNON_UI_DAEMON_OBJECTPATH,
                                         SIGNOND_BUS,
                                         this);
+
+        if (!(m_encryptor = new Encryptor))
+            qFatal("Cannot allocate memory for encryptor");
     }
 
     SignonIdentity::~SignonIdentity()
@@ -85,6 +89,7 @@ namespace SignonDaemonNS {
             m_pSignonDaemon->m_unstoredIdentities.remove(objectName());
 
         delete m_signonui;
+        delete m_encryptor;
     }
 
     bool SignonIdentity::init()
@@ -282,7 +287,7 @@ namespace SignonDaemonNS {
         SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        if (!db->removeCredentials(m_id)) {
+        if ((db == 0) || !db->removeCredentials(m_id)) {
             TRACE() << "Error occurred while inserting/updating credemtials.";
             QDBusMessage errReply = message().createErrorReply(
                                                         SIGNOND_REMOVE_FAILED_ERR_NAME,
@@ -330,29 +335,45 @@ namespace SignonDaemonNS {
                                              const int type)
     {
         RequestCounter::instance()->addIdentityRequest();
-
+        keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
-        QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
+        /*
+         * TODO: optimize the interaction with security framework: have 1 less call
+         * In order to have this we need to fetch all tokens once, and parse them
+         * in 'decodeString' and 'idTokenOfPid' as argument, but not pidOfPeer
+         * */
+
+        pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
+        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
+
+        if (m_encryptor->status() != Encryptor::Ok) {
+            QDBusMessage errReply = message().createErrorReply(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
+                                                               SIGNOND_ENCRYPTION_FAILED_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return SIGNOND_NEW_IDENTITY;
+        }
+
+        QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
 
         QStringList accessControlListLocal = accessControlList;
         if (!aegisIdToken.isNull())
             accessControlListLocal.prepend(aegisIdToken);
 
-        SignonIdentityInfo info(id, userName, secret, methods, caption,
+        SignonIdentityInfo info(id, userName, decodedSecret, methods, caption,
                                 realms, accessControlListLocal, type);
 
         TRACE() << info.serialize();
         storeCredentials(info, storeSecret);
+
         if (m_id == SIGNOND_NEW_IDENTITY) {
             QDBusMessage errReply = message().createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
                                                                SIGNOND_STORE_FAILED_ERR_STR);
             SIGNOND_BUS.send(errReply);
         }
 
-        keepInUse();
         return m_id;
-    }
+}
 
     quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info, bool storeSecret)
     {

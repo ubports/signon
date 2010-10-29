@@ -20,9 +20,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-
-#include <QUuid>
-
 #include <signond/signoncommon.h>
 
 #include "authsessionimpl.h"
@@ -45,6 +42,7 @@
 #endif
 
 using namespace SignOn;
+using namespace SignOnCrypto;
 
 static QVariantMap sessionData2VariantMap(const SessionData &data)
 {
@@ -69,6 +67,7 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent, quint32 id, const QString 
     m_isValid = true;
     m_isAuthInProcessing = false;
     m_isBusy = false;
+
     initInterface();
 }
 
@@ -261,9 +260,20 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
 
     QVariantMap sessionDataVa = sessionData2VariantMap(sessionData);
     QString remoteFunctionName;
-    QVariantList arguments;
 
-    arguments += sessionDataVa;
+    QVariantMap encodedSessionData(m_encryptor.encodeVariantMap(sessionDataVa, 0));
+    if (m_encryptor.status() != Encryptor::Ok ) {
+        qCritical() << "AuthSession: encryption failed";
+
+        emit m_parent->error(
+                Error(Error::EncryptionFailed,
+                      QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
+                         .arg(m_methodName)));
+        return;
+    }
+
+    QVariantList arguments;
+    arguments += encodedSessionData;
     arguments += mechanism;
 
     remoteFunctionName = QLatin1String("process");
@@ -281,7 +291,6 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
         m_operationQueueHandler.enqueueOperation(SIGNOND_SESSION_PROCESS_METHOD,
                                                  args);
     }
-
 }
 
 void AuthSessionImpl::cancel()
@@ -403,6 +412,12 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
     } else if (err.name() == SIGNOND_USER_INTERACTION_ERR_NAME) {
         errCodeDeprecated = AuthSession::UserInteractionError;
         errCode = Error::UserInteraction;
+    } else if (err.name() == SIGNOND_OPERATION_FAILED_ERR_NAME) {
+        errCodeDeprecated = AuthSession::UnknownError;
+        errCode = Error::OperationFailed;
+    } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
+        errCodeDeprecated = AuthSession::UnknownError;
+        errCode = Error::EncryptionFailed;
     } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
         errCodeDeprecated = AuthSession::UnknownError;
         //the error message comes in as "code:message"
@@ -457,9 +472,19 @@ void AuthSessionImpl::mechanismsAvailableSlot(const QStringList& mechanisms)
 
 void AuthSessionImpl::responseSlot(const QVariantMap &sessionDataVa)
 {
-    SessionData data(sessionDataVa);
     m_isBusy = false;
-    emit m_parent->response(data);
+
+    if (m_encryptor.isVariantMapEncrypted(sessionDataVa)) {
+        QVariantMap decodedData(m_encryptor.decodeVariantMap(sessionDataVa, 0));
+        if (m_encryptor.status() != Encryptor::Ok)
+            emit m_parent->error(
+                Error(Error::OperationFailed,
+                      QLatin1String("The response cannot be decrypted.")));
+        else
+            emit m_parent->response(SessionData(decodedData));
+    }
+    else
+        emit m_parent->response(SessionData(sessionDataVa));
 }
 
 void AuthSessionImpl::stateSlot(int state, const QString &message)
