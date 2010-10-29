@@ -84,7 +84,7 @@ namespace SignOn {
         quint32 m_id;
         QString m_methodName;
         QDBusInterface *m_DBusInterface;
-        SignOnCrypto::Encryptor *m_encryptor;
+        SignOnCrypto::Encryptor m_encryptor;
 
         /*
          * flag to prevent multiple authentication requests

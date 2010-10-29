@@ -132,7 +132,7 @@ namespace SignOn {
         /* Marks this Identity as the one which requested the sign out */
         bool m_signOutRequestedByThisIdentity;
 
-        SignOnCrypto::Encryptor *m_encryptor;
+        SignOnCrypto::Encryptor m_encryptor;
     };
 
 }  // namespace SignOn

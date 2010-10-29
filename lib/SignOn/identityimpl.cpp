@@ -72,17 +72,12 @@ namespace SignOn {
           m_infoQueried(true),
           m_signOutRequestedByThisIdentity(false)
     {
-        if (!(m_encryptor = new Encryptor))
-            qFatal("Cannot allocate memory for ecnryptor");
-
         m_identityInfo->setId(id);
         sendRegisterRequest();
     }
 
     IdentityImpl::~IdentityImpl()
     {
-        delete m_encryptor;
-
         if (m_identityInfo)
             delete m_identityInfo;
 
@@ -263,9 +258,9 @@ namespace SignOn {
             return;
         }
 
-        QString encodedSecret(m_encryptor->encodeString(info.secret(), 0));
+        QString encodedSecret(m_encryptor.encodeString(info.secret(), 0));
 
-        if (m_encryptor->status() != Encryptor::Ok) {
+        if (m_encryptor.status() != Encryptor::Ok) {
             emit m_parent->error(
                 Error(Error::StoreFailed,
                       QLatin1String("Data encryption failed")));

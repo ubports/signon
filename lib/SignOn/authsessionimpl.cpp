@@ -68,9 +68,6 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent, quint32 id, const QString 
     m_isAuthInProcessing = false;
     m_isBusy = false;
 
-    if (!(m_encryptor = new Encryptor()))
-        qFatal("The AuthSession cannot allocate memory for Encryptor");
-
     initInterface();
 }
 
@@ -80,8 +77,6 @@ AuthSessionImpl::~AuthSessionImpl()
         m_DBusInterface->call(QLatin1String("objectUnref"));
         delete m_DBusInterface;
     }
-
-    delete m_encryptor;
 }
 
 void AuthSessionImpl::send2interface(const QString &operation, const char *slot, const QVariantList &arguments)
@@ -266,9 +261,8 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
     QVariantMap sessionDataVa = sessionData2VariantMap(sessionData);
     QString remoteFunctionName;
 
-    QVariantMap encodedSessionData(m_encryptor->
-                                   encodeVariantMap(sessionDataVa, 0));
-    if (m_encryptor->status() != Encryptor::Ok ) {
+    QVariantMap encodedSessionData(m_encryptor.encodeVariantMap(sessionDataVa, 0));
+    if (m_encryptor.status() != Encryptor::Ok ) {
         qCritical() << "AuthSession: encryption failed";
 
         emit m_parent->error(
@@ -480,10 +474,9 @@ void AuthSessionImpl::responseSlot(const QVariantMap &sessionDataVa)
 {
     m_isBusy = false;
 
-    if (m_encryptor->isVariantMapEncrypted(sessionDataVa)) {
-        QVariantMap decodedData(m_encryptor->
-                                decodeVariantMap(sessionDataVa, 0));
-        if (m_encryptor->status() != Encryptor::Ok)
+    if (m_encryptor.isVariantMapEncrypted(sessionDataVa)) {
+        QVariantMap decodedData(m_encryptor.decodeVariantMap(sessionDataVa, 0));
+        if (m_encryptor.status() != Encryptor::Ok)
             emit m_parent->error(
                 Error(Error::OperationFailed,
                       QLatin1String("The response cannot be decrypted.")));
