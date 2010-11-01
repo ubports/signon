@@ -65,9 +65,14 @@ namespace SignonDaemonNS {
         virtual ~SimDataHandler();
 
         /*!
-          * @returns true upon success. Error handling not supported yet.
+          * @returns true upon success.
           */
         bool isValid();
+
+        /*!
+          * @returns whether the SIM card is fully inserted in the device or not.
+          */
+        bool isSimPresent();
 
         /*!
           * Queries the SIM for authentication info
@@ -113,6 +118,7 @@ namespace SignonDaemonNS {
     private:
         QByteArray m_dataBuffer;
         bool m_simChallengeComplete;
+        int m_randCounter;
 
 #ifdef SIGNON_USES_CELLULAR_QT
         SIMStatus::Status m_lastSimStatus;

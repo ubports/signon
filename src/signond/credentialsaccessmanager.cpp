@@ -194,12 +194,16 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
             if (!openCredentialsSystemPriv(true)) {
                 BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
             }
-        /* Query SIM, in case of error or unstored SIM auth data,
-           will trigger DLC query - async
-        */
-        } else {
-            m_pSimDataHandler->querySim();
         }
+
+        /* Query SIM.
+           1. In case of a SIM query error or if the queried SIM auth data
+           is not stored as a LUKS key, this will later on trigger the DLC query - async.
+           2. In case of the current encryption passphrase being secure (buffered DLC),
+           - signond was started by a setDeviceLockCode() call -
+           then store the SIM reply data right away using the buffered DLC as master key.
+        */
+        m_pSimDataHandler->querySim();
     }
 
     m_isInitialized = true;
@@ -326,6 +330,11 @@ bool CredentialsAccessManager::setMasterEncryptionKey(const QByteArray &newKey,
 {
     if (!m_CAMConfiguration.m_useEncryption)
         return false;
+
+    /* Clear this for security reasons - SIM data must not be stored
+       using an deprecated master key
+    */
+    m_CAMConfiguration.m_encryptionPassphrase.clear();
 
     if (!m_pCryptoFileSystemManager->encryptionKeyInUse(existingKey)) {
         BLAME() << "Existing lock code check failed.";
@@ -468,20 +477,38 @@ void CredentialsAccessManager::simDataFetched(const QByteArray &simData)
        the file system is not already mounted
     */
     if (m_pCryptoFileSystemManager->encryptionKeyInUse(simData)) {
+        TRACE() << "SIM data not in use.";
         if (m_pCryptoFileSystemManager->fileSystemMounted()) {
 
             m_pCryptoFileSystemManager->setEncryptionKey(simData);
-            if (openCredentialsSystemPriv(false)) {
-                TRACE() << "Credentials system opened.";
+
+            if (!credentialsSystemOpened()) {
+                if (openCredentialsSystemPriv(false)) {
+                    TRACE() << "Credentials system opened.";
+                } else {
+                    BLAME() << "Failed to open credentials system.";
+                }
             } else {
-                BLAME() << "Failed to open credentials system.";
+                TRACE() << "Credentials system already opened.";
             }
         }
         return;
     }
 
-    //keep SIM data until the master key (lock code) is available
+    /* Keep SIM data until the master key (device lock code) is available,
+       or if the current encryption passphrase is secure
+       (the daemon has been started by a setDeviceLockCode call, thus
+       the CAMConfiguration passphrase is the current DLC), then
+       store the SIM data right away.
+    */
     m_currentSimData = simData;
+
+    if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
+        if (!storeEncryptionKey(m_CAMConfiguration.m_encryptionPassphrase))
+            BLAME() << "Failed to store SIM data as encryption key.";
+        m_CAMConfiguration.m_encryptionPassphrase.clear();
+        return;
+    }
 
     //Query Device Lock Code here - UI dialog.
     if (m_pLockCodeHandler == NULL)
@@ -508,13 +535,11 @@ void CredentialsAccessManager::simError()
 {
     TRACE() << "SIM error occurred.";
 
-    if (!credentialsSystemOpened()) {
+    if (!m_pSimDataHandler->isSimPresent() && !credentialsSystemOpened()) {
         if (m_pLockCodeHandler == NULL)
             m_pLockCodeHandler = new DeviceLockCodeHandler;
 
         TRACE() << "Querying DLC.";
         m_pLockCodeHandler->queryLockCode();
-    } else {
-        //todo some error UI must be displayed ???
     }
 }

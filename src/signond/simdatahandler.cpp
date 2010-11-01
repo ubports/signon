@@ -74,6 +74,7 @@ SimDataHandler::SimDataHandler(QObject *parent)
     : QObject(parent),
       m_dataBuffer(QByteArray()),
       m_simChallengeComplete(true),
+      m_randCounter(0),
       m_lastSimStatus(SIMStatus::UnknownStatus),
       m_simIdentity(0),
       m_simStatus(new SIMStatus(this))
@@ -119,8 +120,8 @@ void SimDataHandler::authComplete(QByteArray res,
             querySim();
         } else {
             QByteArray sha256DigestBa = sha256Digest(m_dataBuffer);
-            TRACE() << sha256DigestBa;
             m_dataBuffer.clear();
+            TRACE() << sha256DigestBa.toHex();
             emit simAvailable(sha256DigestBa);
             refreshSimIdentity();
         }
@@ -128,6 +129,7 @@ void SimDataHandler::authComplete(QByteArray res,
         BLAME() << "SIM chanllenge error occurred:" << err;
         m_simChallengeComplete = true;
         m_dataBuffer.clear();
+        m_randCounter = 0;
         emit error();
         refreshSimIdentity();
     }
@@ -142,7 +144,7 @@ void SimDataHandler::simStatusChanged(SIMStatus::Status status)
         querySim();
     }
 
-    if ((m_lastSimStatus != SIMStatus::NoSIM) && (status == SIMStatus::NoSIM)) {
+    if ((m_lastSimStatus == SIMStatus::Ok) && (status != SIMStatus::Ok)) {
         TRACE() << "SIM removed.";
         emit simRemoved();
     }
@@ -155,18 +157,22 @@ bool SimDataHandler::isValid()
     return (m_simIdentity->isValid() && m_simStatus->isValid());
 }
 
+bool SimDataHandler::isSimPresent()
+{
+    return (m_lastSimStatus == SIMStatus::Ok);
+}
+
 void SimDataHandler::querySim()
 {
     m_simChallengeComplete = false;
-    static int randCounter = 0;
 
     QByteArray ba(SIM_RAND_BASE_SIZE, '0');
-    ba.append(QByteArray::number(randCounter));
+    ba.append(QByteArray::number(m_randCounter));
     m_simIdentity->auth(ba);
-    randCounter++;
+    m_randCounter++;
 
-    if (randCounter == SIM_AUTH_COUNT) {
-        randCounter = 0;
+    if (m_randCounter == SIM_AUTH_COUNT) {
+        m_randCounter = 0;
         m_simChallengeComplete = true;
     }
 }
@@ -184,6 +190,11 @@ SimDataHandler::~SimDataHandler()
 }
 
 bool SimDataHandler::isValid()
+{
+    return false;
+}
+
+bool SimDataHandler::isSimPresent()
 {
     return false;
 }
