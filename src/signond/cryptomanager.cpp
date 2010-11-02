@@ -387,8 +387,6 @@ namespace SignonDaemonNS {
         if (fileSystemMounted() && (m_accessCode == key))
             return true;
 
-        QString loopDeviceName;
-        bool loopDeviceSet = false;
         if(!fileSystemMounted()) {
            setEncryptionKey(key);
            return mountFileSystem();
