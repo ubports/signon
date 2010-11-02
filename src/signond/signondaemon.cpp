@@ -129,12 +129,12 @@ namespace SignonDaemonNS {
 
             QSettings settings(QLatin1String("/etc/signond.conf"),
                                QSettings::NativeFormat);
-
-            //TODO - update this to support the `$HOME/.signon` naming
-            m_storagePath = settings.value(QLatin1String("StoragePath")).toString();
+            m_storagePath =
+                QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
 
             //Secure storage
-            QString useSecureStorage = settings.value(QLatin1String("UseSecureStorage")).toString();
+            QString useSecureStorage =
+                settings.value(QLatin1String("UseSecureStorage")).toString();
 
             if (!useSecureStorage.isEmpty())
                 m_useSecureStorage =
