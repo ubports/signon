@@ -477,7 +477,7 @@ void CredentialsAccessManager::simDataFetched(const QByteArray &simData)
        the file system is not already mounted
     */
     if (m_pCryptoFileSystemManager->encryptionKeyInUse(simData)) {
-        TRACE() << "SIM data not in use.";
+        TRACE() << "SIM data already in use.";
         if (m_pCryptoFileSystemManager->fileSystemMounted()) {
 
             m_pCryptoFileSystemManager->setEncryptionKey(simData);

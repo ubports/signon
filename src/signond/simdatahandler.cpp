@@ -84,6 +84,11 @@ SimDataHandler::SimDataHandler(QObject *parent)
     connect(m_simStatus,
             SIGNAL(statusChanged(SIMStatus::Status)),
             SLOT(simStatusChanged(SIMStatus::Status)));
+    connect(m_simStatus,
+            SIGNAL(statusComplete(SIMStatus::Status, SIMError)),
+            SLOT(simStatusComplete(SIMStatus::Status, SIMError)));
+
+    m_simStatus->status();
 }
 
 SimDataHandler::~SimDataHandler()
@@ -150,6 +155,16 @@ void SimDataHandler::simStatusChanged(SIMStatus::Status status)
     }
 
     m_lastSimStatus = status;
+}
+
+void SimDataHandler::simStatusComplete(SIMStatus::Status status, SIMError err)
+{
+    if (err == Cellular::SIM::NoError) {
+        m_lastSimStatus = status;
+        TRACE() << "Initial SIM status check:" << simStatusAsStr(status);
+    } else {
+        TRACE() << "Error occurred at initial SIM status check:" << err;
+    }
 }
 
 bool SimDataHandler::isValid()

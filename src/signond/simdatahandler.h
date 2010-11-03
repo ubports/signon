@@ -110,6 +110,7 @@ namespace SignonDaemonNS {
             SIMError error);
 
         void simStatusChanged(SIMStatus::Status status);
+        void simStatusComplete(SIMStatus::Status status, SIMError err);
 
     private:
         void refreshSimIdentity();

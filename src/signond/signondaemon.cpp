@@ -108,7 +108,7 @@ namespace SignonDaemonNS {
 
         [General]
         UseSecureStorage=yes
-        StoragePath=/home/user/.signon/
+        StoragePath=~/.signon/
 
         [SecureStorage]
         FileSystemName=signonfs
@@ -131,6 +131,9 @@ namespace SignonDaemonNS {
                                QSettings::NativeFormat);
             m_storagePath =
                 QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
+
+            if (m_storagePath.startsWith(QLatin1Char('~')))
+                m_storagePath.replace(0, 1, QDir::homePath());
 
             //Secure storage
             QString useSecureStorage =
