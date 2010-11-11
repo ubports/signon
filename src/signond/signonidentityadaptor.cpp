@@ -53,7 +53,7 @@ namespace SignonDaemonNS {
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
-    quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &message)
+    quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
@@ -64,8 +64,12 @@ namespace SignonDaemonNS {
             */
             qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
+        QDBusMessage m_message = parentDBusContext().message();
+        m_message.setDelayedReply(true);
+        QDBusMessage delayReply = m_message.createReply();
+        SIGNOND_BUS.send(delayReply);
 
-        return m_parent->requestCredentialsUpdate(message);
+        return m_parent->requestCredentialsUpdate(msg);
     }
 
     QList<QVariant> SignonIdentityAdaptor::queryInfo()

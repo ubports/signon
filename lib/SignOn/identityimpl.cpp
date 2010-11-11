@@ -206,7 +206,7 @@ namespace SignOn {
         QList<QVariant> args;
         args << message;
         bool result = sendRequest(__func__, args,
-                                  SLOT(storeCredentialsReply(const quint32)));
+                                  SLOT(storeCredentialsReply(const quint32)), SIGNOND_MAX_TIMEOUT);
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -773,13 +773,25 @@ namespace SignOn {
         }
     }
 
-    bool IdentityImpl::sendRequest(const char *remoteMethod, const QList<QVariant> &args, const char *replySlot)
+    bool IdentityImpl::sendRequest(const char *remoteMethod, const QList<QVariant> &args, const char *replySlot, int timeout)
     {
-        return m_DBusInterface->callWithCallback(QLatin1String(remoteMethod),
+        if (timeout <0)
+            return m_DBusInterface->callWithCallback(QLatin1String(remoteMethod),
                                                   args,
                                                   this,
                                                   replySlot,
                                                   SLOT(errorReply(const QDBusError&)));
+        TRACE();
+        QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
+                                                          m_DBusInterface->path(),
+                                                          m_DBusInterface->interface(),
+                                                          QLatin1String(remoteMethod));
+        msg.setArguments(args);
+        return m_DBusInterface->connection().callWithCallback(msg,
+                                                         this,
+                                                         replySlot,
+                                                         SLOT(errorReply(const QDBusError&)),
+                                                         timeout);
     }
 
     bool IdentityImpl::sendRegisterRequest()

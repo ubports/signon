@@ -133,7 +133,7 @@ void CredentialsAccessManagerTest::testCredentialsDatabase()
                                                   << "PREF::package.token.application"
                                                   << "PREF::package.token.wonders"
                                                   << "PREF::package.token.ventilation";
-    SignonIdentityInfo info(0, QLatin1String("username"), QLatin1String("passsssword1231454"),
+    SignonIdentityInfo info(0, QLatin1String("username"), QLatin1String("passsssword1231454"), true,
                             methods, caption, realms);
 
     info.m_accessControlList = accessControlList;
