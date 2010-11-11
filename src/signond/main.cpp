@@ -26,6 +26,8 @@
 
 #include <QtCore>
 
+#include <errno.h>
+
 using namespace SignonDaemonNS;
 using namespace SignOn;
 
@@ -49,7 +51,7 @@ int main(int argc, char *argv[])
 
     SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
 
-    if (setuid(0) != 0) {
+    if (getuid() != 0) {
         BLAME() << "Failed to SUID root. Secure storage will not be available.";
     }
 
