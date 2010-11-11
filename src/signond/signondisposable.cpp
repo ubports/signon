@@ -29,6 +29,7 @@ static QList<SignonDisposable *> disposableObjects;
 SignonDisposable::SignonDisposable(int maxInactivity, QObject *parent)
     : QObject(parent)
     , maxInactivity(maxInactivity)
+    , autoDestruct(true)
 {
     disposableObjects.append(this);
 
@@ -52,6 +53,12 @@ void SignonDisposable::keepInUse() const
     lastActivity = ts.tv_sec;
 }
 
+void SignonDisposable::setAutoDestruct(bool value) const
+{
+    autoDestruct = value;
+    keepInUse();
+}
+
 void SignonDisposable::destroyUnused()
 {
     struct timespec ts;
@@ -62,7 +69,7 @@ void SignonDisposable::destroyUnused()
     }
 
     foreach (SignonDisposable *object, disposableObjects) {
-        if (ts.tv_sec - object->lastActivity > object->maxInactivity) {
+        if (object->autoDestruct  && (ts.tv_sec - object->lastActivity > object->maxInactivity)) {
             TRACE() << "Object unused, deleting: " << object;
             object->destroy();
         }

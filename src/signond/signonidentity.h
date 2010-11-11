@@ -72,7 +72,6 @@ namespace SignonDaemonNS {
         bool verifySecret(const QString &secret);
         void remove();
         bool signOut();
-
         quint32 storeCredentials(const quint32 id,
                                  const QString &userName,
                                  const QString &secret,
@@ -82,6 +81,7 @@ namespace SignonDaemonNS {
                                  const QStringList &realms,
                                  const QStringList &accessControlList,
                                  const int type);
+        void queryUiSlot(QDBusPendingCallWatcher *call);
     Q_SIGNALS:
         void unregistered();
         //TODO - split this into the 3 separate signals(updated, removed, signed out)
@@ -99,6 +99,7 @@ namespace SignonDaemonNS {
         SignonDaemon *m_pSignonDaemon;
         SignOnCrypto::Encryptor *m_encryptor;
         bool m_registered;
+        QDBusMessage m_message;
 
     }; //class SignonDaemon
 

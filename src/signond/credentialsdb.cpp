@@ -719,7 +719,7 @@ namespace SignonDaemonNS {
         int refCount = 0;
         //TODO query for refcount
 
-        return SignonIdentityInfo(id, username, password, methods,
+        return SignonIdentityInfo(id, username, password, savePassword, methods,
                                   caption, realms, security_tokens, type, refCount, validated);
     }
 
@@ -770,13 +770,13 @@ namespace SignonDaemonNS {
         QSqlQuery insertQuery;
         /* Credentials insert */
         QString password;
-        if (storeSecret)
+        if (storeSecret && info.m_storePassword)
             password = info.m_password;
 
         QString queryStr;
         int flags = 0;
         if (info.m_validated) flags |= Validated;
-        if (storeSecret) flags |= RememberPassword;
+        if (info.m_storePassword) flags |= RememberPassword;
 
         if (info.m_id != SIGNOND_NEW_IDENTITY) {
             TRACE() << "UPDATE:" << info.m_id ;

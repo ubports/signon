@@ -32,6 +32,7 @@ namespace SignonDaemonNS {
         : m_id(0),
           m_userName(QString()),
           m_password(QString()),
+          m_storePassword(false),
           m_caption(QString()),
           m_realms(QStringList()),
           m_accessControlList(QStringList()),
@@ -42,13 +43,15 @@ namespace SignonDaemonNS {
     }
 
     SignonIdentityInfo::SignonIdentityInfo(const quint32 id, const QString &userName,
-                const QString &password, const QMap<QString, QVariant> &methods,
+                const QString &password, const bool storePassword,
+                const QMap<QString, QVariant> &methods,
                 const QString &caption, const QStringList &realms,
                 const QStringList &accessControlList,
                 int type, int refCount, bool validated)
         : m_id(id),
           m_userName(userName),
           m_password(password),
+          m_storePassword(storePassword),
           m_caption(caption),
           m_realms(realms),
           m_methods(mapVariantToMapList(methods)),

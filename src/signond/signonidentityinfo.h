@@ -42,6 +42,7 @@ namespace SignonDaemonNS {
         SignonIdentityInfo();
         SignonIdentityInfo(const quint32 id,
                            const QString &userName, const QString &password,
+                           const bool storePassword,
                            const QMap<QString, QVariant> &methods,
                            const QString &caption, const QStringList &realms = QStringList(),
                            const QStringList &accessControlList = QStringList(),
@@ -58,6 +59,7 @@ namespace SignonDaemonNS {
         quint32 m_id;
         QString m_userName;
         QString m_password;
+        bool m_storePassword;
         QString m_caption;
         QStringList m_realms;
         QMap<MethodName, MechanismsList> m_methods;
