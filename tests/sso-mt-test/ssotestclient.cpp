@@ -169,6 +169,9 @@ void SsoTestClient::runAuthSessionTests()
 #ifdef SSOTESTCLIENT_USES_AUTHSESSION
     QTime startTime = QTime::currentTime();
 
+    //run the multi thread test prior to any other thest
+    multiThreadTest();
+
     initAuthSessionTest();
     queryMechanisms_existing_method();
     queryMechanisms_nonexisting_method();
@@ -368,6 +371,8 @@ void SsoTestClient::queryAvailableMetods()
 void SsoTestClient::requestCredentialsUpdate()
 {
     TEST_START
+    QSKIP("This test involves UI interaction...Skipping.", SkipSingle);
+
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
 
     if(identity == NULL)
@@ -1413,12 +1418,20 @@ void SsoTestClient::clearAuthSessionTest()
     TEST_DONE
 }
 
+void SsoTestClient::multiThreadTest()
+{
+    TEST_START
+    testAuthSession.multi_thread_test();
+    TEST_DONE
+}
+
 void SsoTestClient::queryMechanisms_existing_method()
 {
     TEST_START
     testAuthSession.queryMechanisms_existing_method();
     TEST_DONE
 }
+
 void SsoTestClient::queryMechanisms_nonexisting_method()
 {
     TEST_START

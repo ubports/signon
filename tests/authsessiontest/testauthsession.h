@@ -107,6 +107,8 @@ class TestAuthSession: public QObject
 
      void handle_destroyed_signal();
 
+     void multi_thread_test();
+
 #ifdef SSOUI_TESTS_ENABLED
      void processUi_with_existing_identity();
      void processUi_and_cancel();

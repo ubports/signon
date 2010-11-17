@@ -92,6 +92,8 @@ private:
     void initAuthSessionTest();
     void clearAuthSessionTest();
 
+    void multiThreadTest();
+
     void queryMechanisms_existing_method();
     void queryMechanisms_nonexisting_method();
 

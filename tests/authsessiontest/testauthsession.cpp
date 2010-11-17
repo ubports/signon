@@ -24,6 +24,7 @@
 #define TESTAUTHSESSION_CPP_
 
 #include "testauthsession.h"
+#include "testthread.h"
 #include "SignOn/identity.h"
 
 #define SSO_TEST_CREATE_AUTH_SESSION(__session__, __method__) \
@@ -586,6 +587,18 @@ void TestAuthSession::queryMechanisms_existing_method()
      QCOMPARE(spy.count(), 1);
      QStringList result = spy.at(0).at(0).toStringList();
      QCOMPARE(result.size(), 3);
+ }
+
+ void TestAuthSession::multi_thread_test()
+ {
+     //execute a SignOn call in a separate thread
+     TestThread thread;
+     thread.start();
+     thread.wait(g_testThreadTimeout + 1000);
+
+     //do the same in this thread - this test succeeds if the
+     //following succeeds
+     process_with_new_identity();
  }
 
  void TestAuthSession::cancel()

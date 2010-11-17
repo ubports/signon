@@ -14,11 +14,13 @@ LIBS *= -lsignon-qt
 
 SOURCES += libsignon-qt-tests.cpp \
     $$TOP_SRC_DIR/tests/authsessiontest/testauthsession.cpp \
+    $$TOP_SRC_DIR/tests/authsessiontest/testthread.cpp \
     $$TOP_SRC_DIR/tests/sso-mt-test/ssotestclient.cpp \
     $$TOP_SRC_DIR/tests/sso-mt-test/testauthserviceresult.cpp \
     $$TOP_SRC_DIR/tests/sso-mt-test/testidentityresult.cpp
 HEADERS += \
     $$TOP_SRC_DIR/tests/authsessiontest/testauthsession.h \
+    $$TOP_SRC_DIR/tests/authsessiontest/testthread.h \
     $$TOP_SRC_DIR/src/plugins/ssotest2/ssotest2data.h \
     $$TOP_SRC_DIR/tests/sso-mt-test/ssotestclient.h \
     $$TOP_SRC_DIR/tests/sso-mt-test/testauthserviceresult.h \
