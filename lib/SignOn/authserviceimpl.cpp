@@ -31,6 +31,7 @@
 #include "authserviceimpl.h"
 #include "authservice.h"
 #include "signonerror.h"
+#include "dbusconnection.h"
 
 
 namespace SignOn {
@@ -64,7 +65,7 @@ namespace SignOn {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              SIGNOND_DAEMON_OBJECTPATH,
                                              SIGNOND_DAEMON_INTERFACE,
-                                             SIGNOND_BUS,
+                                             DBusConnection::sessionBus(),
                                              this);
         if (!m_DBusInterface->isValid())
             BLAME() << "Signon Daemon not started. Start on demand "

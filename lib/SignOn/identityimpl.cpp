@@ -33,6 +33,7 @@
 #include "identityinfo.h"
 #include "identityinfoimpl.h"
 #include "authsessionimpl.h"
+#include "dbusconnection.h"
 
 #define SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
 
@@ -799,7 +800,7 @@ namespace SignOn {
         QDBusInterface iface(SIGNOND_SERVICE,
                              SIGNOND_DAEMON_OBJECTPATH,
                              SIGNOND_DAEMON_INTERFACE,
-                             SIGNOND_BUS);
+                             DBusConnection::sessionBus());
 
         if (!iface.isValid()) {
             TRACE() << "Signon Daemon not started. Start on demand "
@@ -905,7 +906,7 @@ namespace SignOn {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              objectPath.path(),
                                              QLatin1String(SIGNOND_IDENTITY_INTERFACE),
-                                             SIGNOND_BUS,
+                                             DBusConnection::sessionBus(),
                                              this);
         if (!m_DBusInterface->isValid()) {
             TRACE() << "The interface cannot be registered!!! " << m_DBusInterface->lastError();

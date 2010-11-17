@@ -24,6 +24,7 @@
 
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
+#include "dbusconnection.h"
 
 
 #define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
@@ -194,7 +195,7 @@ bool AuthSessionImpl::initInterface()
     QDBusInterface iface(SIGNOND_SERVICE,
                          SIGNOND_DAEMON_OBJECTPATH,
                          SIGNOND_DAEMON_INTERFACE,
-                         SIGNOND_BUS);
+                         DBusConnection::sessionBus());
 
     if (iface.lastError().isValid()) {
         qCritical() << "cannot initialize interface: " << iface.lastError();
@@ -441,7 +442,7 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              path,
                                              QLatin1String(SIGNOND_AUTH_SESSION_INTERFACE),
-                                             SIGNOND_BUS);
+                                             DBusConnection::sessionBus());
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
 
