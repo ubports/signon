@@ -44,8 +44,6 @@ namespace SignOn {
     public:
         ~SignonTrace()
         {
-            if (m_pInstance)
-                delete m_pInstance;
             m_pInstance = NULL;
         }
 
