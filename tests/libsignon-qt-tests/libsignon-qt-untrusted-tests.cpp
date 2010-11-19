@@ -25,4 +25,4 @@
     #define SSO_TESTS_RUNNING_AS_UNTRUSTED
 #endif
 
-#include "../sso-mt-test/ssotestclient.cpp"
+#include "ssotestclient.cpp"
