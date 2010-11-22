@@ -674,13 +674,28 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
         return;
     }
 
-    SignOn::Key authorizedKey = authorizedKeys.first();
-    if (m_pCryptoFileSystemManager->addEncryptionKey(key, authorizedKey)) {
-        TRACE() << "Encryption key successfullyadded into the CryptoManager.";
+    if (m_pCryptoFileSystemManager->fileSystemMounted()) {
+        /* if the secure FS is already mounted, add the new key to it */
+        SignOn::Key authorizedKey = authorizedKeys.first();
+        if (m_pCryptoFileSystemManager->addEncryptionKey(key, authorizedKey)) {
+            TRACE() << "Encryption key successfullyadded into the CryptoManager.";
+            m_pCryptoFileSystemManager->setEncryptionKey(key);
+            authorizedKeys << key;
+        } else {
+            BLAME() << "Could not store encryption key.";
+        }
+    } else if (!fileSystemDeployed()) {
+        /* if the secure FS does not exist, create it and use this new key to
+         * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);
-        authorizedKeys << key;
+        m_accessCodeFetched = true;
+        if (openCredentialsSystemPriv(true)) {
+            authorizedKeys << key;
+        } else {
+            BLAME() << "Couldn't create the secure FS";
+        }
     } else {
-        BLAME() << "Could not store encryption key.";
+        BLAME() << "Secure FS already created with another set of keys";
     }
 }
 
