@@ -58,12 +58,10 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
+
         QDBusMessage m_message = parentDBusContext().message();
         m_message.setDelayedReply(true);
         QDBusMessage delayReply = m_message.createReply();
@@ -77,11 +75,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return QList<QVariant>();
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->queryInfo();
@@ -92,11 +87,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->addReference(reference) ? 1 : 0;
@@ -107,11 +99,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->addReference(reference) ? 1 : 0;
@@ -123,11 +112,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->verifyUser(message);
@@ -138,11 +124,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->verifySecret(secret);
@@ -159,11 +142,9 @@ namespace SignonDaemonNS {
             //Identity has an owner
             if (ownership == AccessControlManager::ApplicationIsNotOwner
                 && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
-                /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
+
                 securityErrorReply(__func__);
                 return;
-                */
-                qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
             }
         }
 
@@ -175,11 +156,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->signOut();
@@ -205,11 +183,9 @@ namespace SignonDaemonNS {
                 //Identity has an owner
                 if (ownership == AccessControlManager::ApplicationIsNotOwner
                     && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
-                    /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
+
                     securityErrorReply(__func__);
                     return 0;
-                    */
-                    qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
                 }
             }
         }
