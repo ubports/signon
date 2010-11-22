@@ -30,7 +30,6 @@
 #include <QDBusInterface>
 #include <QDBusArgument>
 
-using namespace SignonDaemonNS;
 using namespace DeviceLock;
 
 #define SIGNON_DEVICE_LOCK_INTERFACE "com.nokia.devicelock"

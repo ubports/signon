@@ -37,62 +37,58 @@
 
 class QDBusInterface;
 
-namespace SignonDaemonNS {
+/*!
+ * @class DeviceLockCodeHandler
+ * DeviceLockCodeHandler handles getting the device lock code
+ * which is used by the CryptoManager as a master key for the mounting
+ * of the encrypted file system.
+ * @ingroup Accounts_and_SSO_Framework
+ * @sa CryptoManager
+ */
+class DeviceLockCodeHandler : public QObject
+{
+    Q_OBJECT
+
+public:
+    /*!
+      * Constructs a DeviceLockCodeHandler object with the given parent.
+      * @param parent the parent object
+      */
+    DeviceLockCodeHandler(QObject *parent = 0);
 
     /*!
-     * @class DeviceLockCodeHandler
-     * DeviceLockCodeHandler handles getting the device lock code
-     * which is used by the CryptoManager as a master key for the mounting
-     * of the encrypted file system.
-     * @ingroup Accounts_and_SSO_Framework
-     * @sa CryptoManager
-     */
-    class DeviceLockCodeHandler : public QObject
-    {
-        Q_OBJECT
+      * Destructor, releases allocated resources.
+      */
+    ~DeviceLockCodeHandler();
 
-    public:
-        /*!
-          * Constructs a DeviceLockCodeHandler object with the given parent.
-          * @param parent the parent object
-          */
-        DeviceLockCodeHandler(QObject *parent = 0);
+    /*!
+      * Displays the Device Lock query UI.
+      * If the query is successful, `SignonDaemon::setDeviceLockCode(...)` will
+      * be triggered by the devicelock daemon.
+      * @sa SignonDaemon
+      */
+    void queryLockCode();
 
-        /*!
-          * Destructor, releases allocated resources.
-          */
-        ~DeviceLockCodeHandler();
+    /*!
+      * @todo check if this is needed.
+      */
+    bool isLockCodeValid();
 
-        /*!
-          * Displays the Device Lock query UI.
-          * If the query is successful, `SignonDaemon::setDeviceLockCode(...)` will
-          * be triggered by the devicelock daemon.
-          * @sa SignonDaemon
-          */
-        void queryLockCode();
+Q_SIGNALS:
+    void lockCode(const QByteArray &);
 
-        /*!
-          * @todo check if this is needed.
-          */
-        bool isLockCodeValid();
+private Q_SLOTS:
+    void setStateReply(bool result);
+    void updateProvisioningSettingsReply(bool result);
+    void errorReply(const QDBusError &error);
 
-    Q_SIGNALS:
-        void lockCode(const QByteArray &);
-
-    private Q_SLOTS:
-        void setStateReply(bool result);
-        void updateProvisioningSettingsReply(bool result);
-        void errorReply(const QDBusError &error);
-
-    private:
-        void configureLockCode();
-        bool callWithTimeout(const QString &operation,
-                             const char *replySlot,
-                             const QList<QVariant> &args = QList<QVariant>());
-    private:
-        QDBusInterface *m_dbusInterface;
-    };
-
-} // namespace SignonDaemonNS
+private:
+    void configureLockCode();
+    bool callWithTimeout(const QString &operation,
+                         const char *replySlot,
+                         const QList<QVariant> &args = QList<QVariant>());
+private:
+    QDBusInterface *m_dbusInterface;
+};
 
 #endif // DEVICELOCKCODEHANDLER_H
