@@ -35,3 +35,7 @@ SOURCES = \
 target.path = $${INSTALL_PREFIX}/lib/signon/extensions
 INSTALLS = target
 
+service.path = $${INSTALL_PREFIX}/share/dbus-1/services
+service.files = com.nokia.SingleSignOn.DeviceLock.service
+INSTALLS += service
+

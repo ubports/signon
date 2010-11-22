@@ -22,6 +22,7 @@
  * 02110-1301 USA
  */
 
+#include "device-lock-code-handler.h"
 #include "key-manager.h"
 
 #include <QDebug>
@@ -41,5 +42,7 @@ KeyManager::~KeyManager()
 void KeyManager::setup()
 {
     qDebug() << Q_FUNC_INFO << "Initialized";
+
+    dlcHandler = new DeviceLockCodeHandler(this);
 }
 

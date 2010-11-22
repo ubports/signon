@@ -34,8 +34,30 @@
 #include <QList>
 #include <QVariant>
 #include <QDBusError>
+#include <QtDBus>
+
+#define SIGNON_DLC_HANDLER_PATH "/com/nokia/SingleSignOn/DeviceLock"
+#define SIGNON_DLC_HANDLER_SERVICE "com.nokia.SingleSignOn.DeviceLock"
+#define SIGNON_DLC_HANDLER_INTERFACE SIGNON_DLC_HANDLER_SERVICE
 
 class QDBusInterface;
+class DeviceLockCodeHandler;
+
+class DeviceLockCodeHandlerAdaptor: public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.DeviceLock")
+
+public:
+    DeviceLockCodeHandlerAdaptor(DeviceLockCodeHandler *parent);
+    virtual ~DeviceLockCodeHandlerAdaptor() {};
+
+public Q_SLOTS:
+    bool setDeviceLockCode(const QByteArray &lockCode,
+                           const QByteArray &oldLockCode);
+private:
+    DeviceLockCodeHandler *parent;
+};
 
 /*!
  * @class DeviceLockCodeHandler
@@ -76,6 +98,13 @@ public:
 
 Q_SIGNALS:
     void lockCode(const QByteArray &);
+    void lockCodeSet(const QByteArray lockCode,
+                     const QByteArray oldLockCode);
+
+public Q_SLOTS:
+    // Interface method to set the device lock code
+    bool setDeviceLockCode(const QByteArray &lockCode,
+                           const QByteArray &oldLockCode);
 
 private Q_SLOTS:
     void setStateReply(bool result);
@@ -83,6 +112,7 @@ private Q_SLOTS:
     void errorReply(const QDBusError &error);
 
 private:
+    void registerDBusService();
     void configureLockCode();
     bool callWithTimeout(const QString &operation,
                          const char *replySlot,

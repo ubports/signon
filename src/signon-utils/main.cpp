@@ -41,9 +41,9 @@
 
 void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
+    QDBusInterface dbus_iface(QLatin1String("com.nokia.SingleSignOn.DeviceLock"),
+                              QLatin1String("/com/nokia/SingleSignOn/DeviceLock"),
+                              QLatin1String("com.nokia.SingleSignOn.DeviceLock"),
                               SIGNOND_BUS);
 
     QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);

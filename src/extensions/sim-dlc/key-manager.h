@@ -27,6 +27,8 @@
 
 #include <SignOn/AbstractKeyManager>
 
+class DeviceLockCodeHandler;
+
 class KeyManager: public SignOn::AbstractKeyManager
 {
     Q_OBJECT
@@ -37,6 +39,9 @@ public:
 
     // reimplemented virtual methods
     void setup();
+
+private:
+    DeviceLockCodeHandler *dlcHandler;
 };
 
 #endif // KEYMANAGER_H
