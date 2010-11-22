@@ -39,9 +39,19 @@ public:
 
     // reimplemented virtual methods
     void setup();
+    void authorizeKey(const SignOn::Key &key,
+                      const QString &message = QString());
+    void queryKeys();
+
+private Q_SLOTS:
+    void onLockCodeSet(const QByteArray lockCode,
+                       const QByteArray oldLockCode);
 
 private:
     DeviceLockCodeHandler *dlcHandler;
+    SignOn::Key newDeviceLockKey;
+    SignOn::Key keyToBeRemoved;
+    QList<SignOn::Key> keysToBeAuthorized;
 };
 
 #endif // KEYMANAGER_H
