@@ -518,13 +518,13 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
         return;
     }
 
-    if (authorizedKeys.isEmpty()) {
-        BLAME() << "No authorized keys: cannot add new key";
-        return;
-    }
-
     if (m_pCryptoFileSystemManager->fileSystemMounted()) {
         /* if the secure FS is already mounted, add the new key to it */
+        if (authorizedKeys.isEmpty()) {
+            BLAME() << "No authorized keys: cannot add new key";
+            return;
+        }
+
         SignOn::Key authorizedKey = authorizedKeys.first();
         if (m_pCryptoFileSystemManager->addEncryptionKey(key, authorizedKey)) {
             TRACE() << "Encryption key successfullyadded into the CryptoManager.";
