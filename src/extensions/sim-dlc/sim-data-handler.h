@@ -32,13 +32,9 @@
 
 #include <QObject>
 
-#ifdef SIGNON_USES_CELLULAR_QT
-    #include <SIM>
-    using namespace Cellular::SIM;
-#endif
+#include <SIM>
+using namespace Cellular::SIM;
 
-
-namespace SignonDaemonNS {
 
 /*!
  * @class SimDataHandler
@@ -100,7 +96,6 @@ Q_SIGNALS:
      */
     void error();
 
-#ifdef SIGNON_USES_CELLULAR_QT
 private Q_SLOTS:
     void authComplete(
         QByteArray res,
@@ -114,20 +109,15 @@ private Q_SLOTS:
 
 private:
     void refreshSimIdentity();
-#endif
 
 private:
     QByteArray m_dataBuffer;
     bool m_simChallengeComplete;
     int m_randCounter;
 
-#ifdef SIGNON_USES_CELLULAR_QT
     SIMStatus::Status m_lastSimStatus;
     SIMIdentity *m_simIdentity;
     SIMStatus *m_simStatus;
-#endif
 };
-
-} // namespace SignonDaemonNS
 
 #endif // SIMDATAHANDLER_H

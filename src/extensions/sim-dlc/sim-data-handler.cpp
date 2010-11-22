@@ -22,14 +22,10 @@
  * 02110-1301 USA
  */
 
-#include "simdatahandler.h"
-#include "signond-common.h"
+#include "sim-data-handler.h"
+#include "debug.h"
 
 #include <QDBusError>
-
-using namespace SignonDaemonNS;
-
-#ifdef SIGNON_USES_CELLULAR_QT
 
 #include <openssl/sha.h>
 
@@ -192,31 +188,3 @@ void SimDataHandler::querySim()
     }
 }
 
-#else
-
-SimDataHandler::SimDataHandler(QObject *parent)
-    : QObject(parent),
-      m_dataBuffer(QByteArray())
-{
-}
-
-SimDataHandler::~SimDataHandler()
-{
-}
-
-bool SimDataHandler::isValid()
-{
-    return false;
-}
-
-bool SimDataHandler::isSimPresent()
-{
-    return false;
-}
-
-void SimDataHandler::querySim()
-{
-    return;
-}
-
-#endif

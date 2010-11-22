@@ -25,11 +25,13 @@ HEADERS = \
     debug.h \
     device-lock-code-handler.h \
     key-manager.h \
+    sim-data-handler.h \
     sim-dlc-plugin.h
 
 SOURCES = \
     device-lock-code-handler.cpp \
     key-manager.cpp \
+    sim-data-handler.cpp \
     sim-dlc-plugin.cpp
 
 target.path = $${INSTALL_PREFIX}/lib/signon/extensions
