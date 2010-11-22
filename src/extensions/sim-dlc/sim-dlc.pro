@@ -19,6 +19,8 @@ PKGCONFIG += CellularQt
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/signond \
     $${TOP_SRC_DIR}/lib/sim-dlc
+QMAKE_LIBDIR += \
+    $${TOP_BUILD_DIR}/lib/signond/SignOn
 LIBS += -lsignon-extension
 
 HEADERS = \
