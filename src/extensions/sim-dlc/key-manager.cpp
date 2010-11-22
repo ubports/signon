@@ -25,6 +25,7 @@
 #include "debug.h"
 #include "device-lock-code-handler.h"
 #include "key-manager.h"
+#include "sim-data-handler.h"
 
 using namespace SignOn;
 
@@ -46,6 +47,15 @@ void KeyManager::setup()
     connect(dlcHandler,
             SIGNAL(lockCodeSet(const QByteArray, const QByteArray)),
             SLOT(onLockCodeSet(const QByteArray, const QByteArray)));
+
+    simHandler = new SimDataHandler(this);
+    connect(simHandler,
+            SIGNAL(simAvailable(const QByteArray)),
+            SLOT(onSimAvailable(const QByteArray)));
+    connect(simHandler,
+            SIGNAL(simRemoved(const QByteArray)),
+            SLOT(onSimRemoved(const QByteArray)));
+    simHandler->querySim();
 }
 
 void KeyManager::authorizeKey(const Key &key, const QString &message)
@@ -118,5 +128,17 @@ void KeyManager::onLockCodeSet(const QByteArray lockCode,
         emit keyAuthorized(key, authorized);
     }
     keysToBeAuthorized.clear();
+}
+
+void KeyManager::onSimAvailable(const QByteArray simData)
+{
+    TRACE() << "data:" << simData.toHex();
+    emit keyInserted(simData);
+}
+
+void KeyManager::onSimRemoved(const QByteArray simData)
+{
+    TRACE() << "data:" << simData.toHex();
+    emit keyDisabled(simData);
 }
 

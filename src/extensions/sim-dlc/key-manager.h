@@ -28,6 +28,7 @@
 #include <SignOn/AbstractKeyManager>
 
 class DeviceLockCodeHandler;
+class SimDataHandler;
 
 class KeyManager: public SignOn::AbstractKeyManager
 {
@@ -46,12 +47,16 @@ public:
 private Q_SLOTS:
     void onLockCodeSet(const QByteArray lockCode,
                        const QByteArray oldLockCode);
+    void onSimAvailable(const QByteArray simData);
+    void onSimRemoved(const QByteArray simData);
 
 private:
     DeviceLockCodeHandler *dlcHandler;
     SignOn::Key newDeviceLockKey;
     SignOn::Key keyToBeRemoved;
     QList<SignOn::Key> keysToBeAuthorized;
+
+    SimDataHandler *simHandler;
 };
 
 #endif // KEYMANAGER_H
