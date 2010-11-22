@@ -40,93 +40,93 @@
 
 namespace SignonDaemonNS {
 
+/*!
+ * @class SimDataHandler
+ * SimDataHandler handles acquaring data from the device SIM card
+ * which is used by the CryptoManager as a key for the mounting of the encrypted file system.
+ * @ingroup Accounts_and_SSO_Framework
+ * SimDataHandler inherits QObject.
+ * @sa CryptoManager
+ */
+class SimDataHandler: public QObject
+{
+    Q_OBJECT
+
+public:
     /*!
-     * @class SimDataHandler
-     * SimDataHandler handles acquaring data from the device SIM card
-     * which is used by the CryptoManager as a key for the mounting of the encrypted file system.
-     * @ingroup Accounts_and_SSO_Framework
-     * SimDataHandler inherits QObject.
-     * @sa CryptoManager
+      * Constructs a SimDataHandler object with the given parent.
+      * @param parent The parent object.
+      */
+    SimDataHandler(QObject *parent = 0);
+
+    /*!
+      * Destructor, releases allocated resources.
+      */
+    virtual ~SimDataHandler();
+
+    /*!
+      * @returns true upon success.
+      */
+    bool isValid();
+
+    /*!
+      * @returns whether the SIM card is fully inserted in the device or not.
+      */
+    bool isSimPresent();
+
+    /*!
+      * Queries the SIM for authentication info
+      * @sa simAvailable(const QByteArray &simData) is emitted if the query is successful.
+      * @sa error() is emitted otherwise.
+      */
+    void querySim();
+
+Q_SIGNALS:
+    /*!
+        Is emitted when a the SIM data is available.
+        Can be triggered because of a successful explicit querySim call,
+        or automatically in the case the SIM has been changed.
+        @param simData, the SIM's data.
+    */
+    void simAvailable(const QByteArray &simData);
+
+    /*!
+        Emitted when SIM was removed.
      */
-    class SimDataHandler : public QObject
-    {
-        Q_OBJECT
+    void simRemoved();
 
-    public:
-        /*!
-          * Constructs a SimDataHandler object with the given parent.
-          * @param parent The parent object.
-          */
-        SimDataHandler(QObject *parent = 0);
-
-        /*!
-          * Destructor, releases allocated resources.
-          */
-        virtual ~SimDataHandler();
-
-        /*!
-          * @returns true upon success.
-          */
-        bool isValid();
-
-        /*!
-          * @returns whether the SIM card is fully inserted in the device or not.
-          */
-        bool isSimPresent();
-
-        /*!
-          * Queries the SIM for authentication info
-          * @sa simAvailable(const QByteArray &simData) is emitted if the query is successful.
-          * @sa error() is emitted otherwise.
-          */
-        void querySim();
-
-    Q_SIGNALS:
-        /*!
-            Is emitted when a the SIM data is available.
-            Can be triggered because of a successful explicit querySim call,
-            or automatically in the case the SIM has been changed.
-            @param simData, the SIM's data.
-        */
-        void simAvailable(const QByteArray &simData);
-
-        /*!
-            Emitted when SIM was removed.
-         */
-        void simRemoved();
-
-        /*!
-            Emitted when SIM challenge fails.
-         */
-        void error();
+    /*!
+        Emitted when SIM challenge fails.
+     */
+    void error();
 
 #ifdef SIGNON_USES_CELLULAR_QT
-    private Q_SLOTS:
-        void authComplete(
-            QByteArray res,
-            QByteArray cipheringKey,
-            QByteArray eapCipheringKey,
-            QByteArray eapIntegrityKey,
-            SIMError error);
+private Q_SLOTS:
+    void authComplete(
+        QByteArray res,
+        QByteArray cipheringKey,
+        QByteArray eapCipheringKey,
+        QByteArray eapIntegrityKey,
+        SIMError error);
 
-        void simStatusChanged(SIMStatus::Status status);
-        void simStatusComplete(SIMStatus::Status status, SIMError err);
+    void simStatusChanged(SIMStatus::Status status);
+    void simStatusComplete(SIMStatus::Status status, SIMError err);
 
-    private:
-        void refreshSimIdentity();
+private:
+    void refreshSimIdentity();
 #endif
 
-    private:
-        QByteArray m_dataBuffer;
-        bool m_simChallengeComplete;
-        int m_randCounter;
+private:
+    QByteArray m_dataBuffer;
+    bool m_simChallengeComplete;
+    int m_randCounter;
 
 #ifdef SIGNON_USES_CELLULAR_QT
-        SIMStatus::Status m_lastSimStatus;
-        SIMIdentity *m_simIdentity;
-        SIMStatus *m_simStatus;
+    SIMStatus::Status m_lastSimStatus;
+    SIMIdentity *m_simIdentity;
+    SIMStatus *m_simStatus;
 #endif
-    };
+};
 
 } // namespace SignonDaemonNS
 
