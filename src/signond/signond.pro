@@ -54,7 +54,8 @@ SOURCES += \
     backupifadaptor.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
-    $${TOP_SRC_DIR}/lib/signond
+    $${TOP_SRC_DIR}/lib/signond \
+    $${TOP_SRC_DIR}/lib/sim-dlc
 
 CONFIG += build_all \
     link_pkgconfig

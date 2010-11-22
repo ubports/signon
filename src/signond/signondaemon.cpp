@@ -28,12 +28,15 @@ extern "C" {
 #include <QtDebug>
 #include <QDir>
 #include <QDBusConnection>
+#include <QDBusMessage>
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
 
 #include <SignOn/AbstractKeyManager>
 #include <SignOn/ExtensionInterface>
+
+#include <sim-dlc.h>
 
 #include "signondaemon.h"
 #include "signond-common.h"
@@ -741,9 +744,26 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString t
 bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
                                      const QByteArray &oldLockCode)
 {
-    TRACE() << "Just a stub";
-    Q_UNUSED(lockCode);
-    Q_UNUSED(oldLockCode);
+    /* TODO: remove this: it is just a temporary solution. The whole method
+     * should disappear once the harmattan System-ui starts using the new
+     * interface in the sim-dlc library.
+     */
+    TRACE() << "Forwarding to new interface. New:" << lockCode <<
+        "Old: " << oldLockCode;
+
+    QDBusConnection connection = QDBusConnection::sessionBus();
+
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall(SIMDLC_SERVICE_S,
+                                       SIMDLC_PATH_S,
+                                       SIMDLC_INTERFACE_S,
+                                       QLatin1String("setDeviceLockCode"));
+    QList<QVariant> args;
+    args << lockCode;
+    args << oldLockCode;
+    msg.setArguments(args);
+    // Since it's just a hack, we don't care about the result
+    connection.asyncCall(msg);
     return true;
 }
 
