@@ -184,6 +184,11 @@ bool SimDataHandler::isSimActive()
 
 void SimDataHandler::querySim()
 {
+    if (!simData.isEmpty()) {
+        emit simAvailable(simData);
+        return;
+    }
+
     m_simChallengeComplete = false;
 
     QByteArray ba(SIM_RAND_BASE_SIZE, '0');
