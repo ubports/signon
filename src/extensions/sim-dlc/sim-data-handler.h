@@ -71,6 +71,11 @@ public:
     bool isSimPresent();
 
     /*!
+      * @returns whether the SIM card is present and we've got its data.
+      */
+    bool isSimActive();
+
+    /*!
       * Queries the SIM for authentication info
       * @sa simAvailable(const QByteArray &simData) is emitted if the query is successful.
       * @sa error() is emitted otherwise.
@@ -89,7 +94,7 @@ Q_SIGNALS:
     /*!
         Emitted when SIM was removed.
      */
-    void simRemoved();
+    void simRemoved(const QByteArray simData);
 
     /*!
         Emitted when SIM challenge fails.
@@ -112,6 +117,7 @@ private:
 
 private:
     QByteArray m_dataBuffer;
+    QByteArray simData;
     bool m_simChallengeComplete;
     int m_randCounter;
 

@@ -69,6 +69,7 @@ QString simStatusAsStr(const SIMStatus::Status status)
 SimDataHandler::SimDataHandler(QObject *parent)
     : QObject(parent),
       m_dataBuffer(QByteArray()),
+      simData(QByteArray()),
       m_simChallengeComplete(true),
       m_randCounter(0),
       m_lastSimStatus(SIMStatus::UnknownStatus),
@@ -123,6 +124,7 @@ void SimDataHandler::authComplete(QByteArray res,
             QByteArray sha256DigestBa = sha256Digest(m_dataBuffer);
             m_dataBuffer.clear();
             TRACE() << sha256DigestBa.toHex();
+            simData = sha256DigestBa;
             emit simAvailable(sha256DigestBa);
             refreshSimIdentity();
         }
@@ -147,7 +149,9 @@ void SimDataHandler::simStatusChanged(SIMStatus::Status status)
 
     if ((m_lastSimStatus == SIMStatus::Ok) && (status != SIMStatus::Ok)) {
         TRACE() << "SIM removed.";
-        emit simRemoved();
+        QByteArray simDataTmp = simData;
+        simData.clear();
+        emit simRemoved(simDataTmp);
     }
 
     m_lastSimStatus = status;
@@ -171,6 +175,11 @@ bool SimDataHandler::isValid()
 bool SimDataHandler::isSimPresent()
 {
     return (m_lastSimStatus == SIMStatus::Ok);
+}
+
+bool SimDataHandler::isSimActive()
+{
+    return isSimPresent() && !simData.isEmpty();
 }
 
 void SimDataHandler::querySim()
