@@ -31,14 +31,7 @@
 #define DEVICELOCKCODEHANDLER_H
 
 #include <QObject>
-#include <QList>
-#include <QVariant>
-#include <QDBusError>
 #include <QtDBus>
-
-#define SIGNON_DLC_HANDLER_PATH "/com/nokia/SingleSignOn/DeviceLock"
-#define SIGNON_DLC_HANDLER_SERVICE "com.nokia.SingleSignOn.DeviceLock"
-#define SIGNON_DLC_HANDLER_INTERFACE SIGNON_DLC_HANDLER_SERVICE
 
 class QDBusInterface;
 class DeviceLockCodeHandler;

@@ -17,9 +17,9 @@ QT -= gui
 PKGCONFIG += CellularQt
 
 INCLUDEPATH += . \
-    $${TOP_SRC_DIR}/lib/signond
+    $${TOP_SRC_DIR}/lib/signond \
+    $${TOP_SRC_DIR}/lib/sim-dlc
 LIBS += -lsignon-extension
-
 
 HEADERS = \
     debug.h \

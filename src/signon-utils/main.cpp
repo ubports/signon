@@ -37,13 +37,14 @@
 #include <QtDBus/QtDBus>
 
 #include <signond/signoncommon.h>
+#include <sim-dlc.h>
 
 
 void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 {
-    QDBusInterface dbus_iface(QLatin1String("com.nokia.SingleSignOn.DeviceLock"),
-                              QLatin1String("/com/nokia/SingleSignOn/DeviceLock"),
-                              QLatin1String("com.nokia.SingleSignOn.DeviceLock"),
+    QDBusInterface dbus_iface(SIMDLC_SERVICE_S,
+                              SIMDLC_PATH_S,
+                              SIMDLC_INTERFACE_S,
                               SIGNOND_BUS);
 
     QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);

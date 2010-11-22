@@ -25,6 +25,8 @@
 #include "device-lock-code-handler.h"
 #include "debug.h"
 
+#include "sim-dlc.h"
+
 #include <devicelock/devicelock.h>
 
 #include <QDBusInterface>
@@ -81,14 +83,13 @@ void DeviceLockCodeHandler::registerDBusService()
     new DeviceLockCodeHandlerAdaptor(this);
     QDBusConnection::RegisterOptions registerOptions;
     registerOptions = QDBusConnection::ExportAdaptors;
-    if (!connection.registerObject(QLatin1String(SIGNON_DLC_HANDLER_PATH),
-                                   this, registerOptions)) {
+    if (!connection.registerObject(SIMDLC_PATH_S, this, registerOptions)) {
         QDBusError err = connection.lastError();
         BLAME() << "DLC handler object failed registration:" << err.message();
         qFatal("DLC handler object failed registration");
     }
 
-    if (!connection.registerService(QLatin1String(SIGNON_DLC_HANDLER_SERVICE))) {
+    if (!connection.registerService(SIMDLC_SERVICE_S)) {
         QDBusError err = connection.lastError();
         BLAME() << "DLC handler service failed registration:" << err.message();
         qFatal("DLC handler service failed registration");
