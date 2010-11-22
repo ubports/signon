@@ -263,6 +263,12 @@ private:
     bool fileSystemDeployed();
     bool fetchAccessCode(uint timeout = 30);
     bool openDB(const QString &databaseName);
+
+    /*!
+     * Checks if the key can mount the file system. If it can, the file system
+     * is also mounted.
+     */
+    bool encryptionKeyCanMountFS(const QByteArray &key);
     void closeDB();
 
 private:

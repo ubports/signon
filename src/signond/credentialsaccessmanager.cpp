@@ -361,7 +361,7 @@ bool CredentialsAccessManager::setMasterEncryptionKey(const QByteArray &newKey,
     */
     m_CAMConfiguration.m_encryptionPassphrase.clear();
 
-    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(existingKey)) {
+    if (!encryptionKeyCanMountFS(existingKey)) {
         BLAME() << "Existing lock code check failed.";
         return false;
     }
@@ -392,7 +392,7 @@ bool CredentialsAccessManager::storeEncryptionKey(const QByteArray &masterKey)
       If the SIM was recognized by the system or it was just successfully added to it
       consider it as the current encryption key.
     */
-    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(m_currentSimData)) {
+    if (!encryptionKeyCanMountFS(m_currentSimData)) {
         TRACE() << "Encryption key not in use, attemptin store.";
 
         if (m_pCryptoFileSystemManager->addEncryptionKey(m_currentSimData, masterKey)) {
@@ -479,6 +479,35 @@ bool CredentialsAccessManager::openDB(const QString &databaseName)
     return true;
 }
 
+bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
+{
+    if (!fileSystemDeployed()) {
+        TRACE() << "Secure FS not deployed";
+        return false;
+    }
+
+    if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+        TRACE() << "SIM data already in use.";
+        if (m_pCryptoFileSystemManager->fileSystemMounted()) {
+
+            m_pCryptoFileSystemManager->setEncryptionKey(key);
+
+            if (!credentialsSystemOpened()) {
+                if (openCredentialsSystemPriv(false)) {
+                    TRACE() << "Credentials system opened.";
+                } else {
+                    BLAME() << "Failed to open credentials system.";
+                }
+            } else {
+                TRACE() << "Credentials system already opened.";
+            }
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void CredentialsAccessManager::closeDB()
 {
     if (m_pCredentialsDB) {
@@ -501,22 +530,8 @@ void CredentialsAccessManager::simDataFetched(const QByteArray &simData)
     /* The `key in use` check will attempt to mount using the simData if
        the file system is not already mounted
     */
-    if (m_pCryptoFileSystemManager->encryptionKeyInUse(simData)) {
+    if (encryptionKeyCanMountFS(simData)) {
         TRACE() << "SIM data already in use.";
-        if (m_pCryptoFileSystemManager->fileSystemMounted()) {
-
-            m_pCryptoFileSystemManager->setEncryptionKey(simData);
-
-            if (!credentialsSystemOpened()) {
-                if (openCredentialsSystemPriv(false)) {
-                    TRACE() << "Credentials system opened.";
-                } else {
-                    BLAME() << "Failed to open credentials system.";
-                }
-            } else {
-                TRACE() << "Credentials system already opened.";
-            }
-        }
         return;
     }
 
@@ -578,22 +593,8 @@ void CredentialsAccessManager::onKeyInserted(const SignOn::Key key)
     /* The `key in use` check will attempt to mount using the new key if
        the file system is not already mounted
     */
-    if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+    if (encryptionKeyCanMountFS(key)) {
         TRACE() << "SIM data already in use.";
-        if (m_pCryptoFileSystemManager->fileSystemMounted()) {
-
-            m_pCryptoFileSystemManager->setEncryptionKey(key);
-
-            if (!credentialsSystemOpened()) {
-                if (openCredentialsSystemPriv(false)) {
-                    TRACE() << "Credentials system opened.";
-                } else {
-                    BLAME() << "Failed to open credentials system.";
-                }
-            } else {
-                TRACE() << "Credentials system already opened.";
-            }
-        }
         authorizedKeys << key;
         return;
     }
@@ -637,7 +638,7 @@ void CredentialsAccessManager::onKeyRemoved(const SignOn::Key key)
     // Make sure the key is disabled:
     onKeyDisabled(key);
 
-    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+    if (!encryptionKeyCanMountFS(key)) {
         TRACE() << "Key is not known to the CryptoManager.";
         return;
     }
@@ -662,7 +663,7 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
 
     if (!authorized) return;
 
-    if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+    if (encryptionKeyCanMountFS(key)) {
         TRACE() << "Encryption key already in use.";
         authorizedKeys << key;
         return;
