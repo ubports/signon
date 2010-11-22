@@ -127,6 +127,12 @@ void KeyManager::onLockCodeSet(const QByteArray lockCode,
     foreach (Key key, keysToBeAuthorized) {
         emit keyAuthorized(key, authorized);
     }
+
+    if (!keysToBeAuthorized.isEmpty()) {
+        /* if we have authorized some keys, disable the device-lock-code */
+        emit keyDisabled(lockCode);
+    }
+
     keysToBeAuthorized.clear();
 }
 
