@@ -22,10 +22,13 @@ LIBS += -lsignon-extension
 
 
 HEADERS = \
+    debug.h \
+    device-lock-code-handler.h \
     key-manager.h \
     sim-dlc-plugin.h
 
 SOURCES = \
+    device-lock-code-handler.cpp \
     key-manager.cpp \
     sim-dlc-plugin.cpp
 

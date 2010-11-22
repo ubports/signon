@@ -22,8 +22,8 @@
  * 02110-1301 USA
  */
 
-#include "devicelockcodehandler.h"
-#include "signond-common.h"
+#include "device-lock-code-handler.h"
+#include "debug.h"
 
 #include <devicelock/devicelock.h>
 
@@ -34,6 +34,7 @@ using namespace SignonDaemonNS;
 using namespace DeviceLock;
 
 #define SIGNON_DEVICE_LOCK_INTERFACE "com.nokia.devicelock"
+#define SIGNOND_MAX_TIMEOUT 0x7FFFFFFF
 
 DeviceLockCodeHandler::DeviceLockCodeHandler(QObject *parent)
     : QObject(parent)
