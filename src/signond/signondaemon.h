@@ -180,6 +180,8 @@ private Q_SLOTS:
 
 private:
     SignonDaemon(QObject *parent);
+    void initExtensions();
+    void initExtension(const QString &filePath);
     bool initSecureStorage(const QByteArray &lockCode);
 
     void unregisterIdentity(SignonIdentity *identity);

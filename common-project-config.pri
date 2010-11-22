@@ -23,5 +23,7 @@ DEFINES += SIGNON_TRACE
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 
+# Default directory for signond extensions
+DEFINES += SIGNON_EXTENSIONS_DIR=\\\"/usr/lib/signon/extensions\\\"
 # End of File
 

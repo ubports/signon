@@ -55,7 +55,9 @@ SOURCES += simdatahandler.cpp \
     backupifadaptor.cpp \
     devicelockcodehandler.cpp
 INCLUDEPATH += . \
-    $${TOP_SRC_DIR}/lib/plugins
+    $${TOP_SRC_DIR}/lib/plugins \
+    $${TOP_SRC_DIR}/lib/signond
+
 CONFIG += build_all \
     link_pkgconfig
 

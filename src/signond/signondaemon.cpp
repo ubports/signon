@@ -26,9 +26,14 @@ extern "C" {
 }
 
 #include <QtDebug>
+#include <QDir>
 #include <QDBusConnection>
+#include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
+
+#include <SignOn/AbstractKeyManager>
+#include <SignOn/ExtensionInterface>
 
 #include "signondaemon.h"
 #include "signond-common.h"
@@ -408,6 +413,8 @@ void SignonDaemon::init()
         qFatal("SignonDaemon requires to register daemon's service");
     }
 
+    initExtensions();
+
     if (!initSecureStorage(QByteArray()))
         qFatal("Signond: Cannot initialize credentials secure storage.");
 
@@ -422,6 +429,49 @@ void SignonDaemon::init()
 
     TRACE() << "Signond SUCCESSFULLY initialized.";
     //TODO - end
+}
+
+void SignonDaemon::initExtensions()
+{
+    /* Scan the directory containing signond extensions and attempt loading
+     * all of them.
+     */
+    QDir dir(QString::fromLatin1(SIGNON_EXTENSIONS_DIR));
+    QStringList filters(QLatin1String("lib*.so"));
+    QStringList extensionList = dir.entryList(filters, QDir::Files);
+    foreach(QString filename, extensionList)
+        initExtension(dir.filePath(filename));
+}
+
+void SignonDaemon::initExtension(const QString &filePath)
+{
+    TRACE() << "Loading plugin " << filePath;
+
+    QPluginLoader pluginLoader(filePath);
+    QObject *plugin = pluginLoader.instance();
+    if (plugin == 0) {
+        qWarning() << "Couldn't load plugin:" << pluginLoader.errorString();
+        return;
+    }
+
+    ExtensionInterface *extension = qobject_cast<ExtensionInterface *>(plugin);
+    if (extension == 0) {
+        qWarning() << "Plugin instance is not an ExtensionInterface";
+        return;
+    }
+
+    /* Check whether the extension implements some useful objects; if not,
+     * unload it. */
+    bool extensionInUse = false;
+    AbstractKeyManager *keyManager = extension->keyManager(this);
+    if (keyManager) {
+        // TODO: add the key manager to the CAM
+        extensionInUse = true;
+    }
+
+    if (!extensionInUse) {
+        pluginLoader.unload();
+    }
 }
 
 bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
