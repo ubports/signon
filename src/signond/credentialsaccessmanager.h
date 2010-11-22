@@ -43,9 +43,6 @@
  */
 namespace SignonDaemonNS {
 
-class SimDataHandler;
-class DeviceLockCodeHandler;
-
 /*!
     @class CAMConfiguration
     Configuration object for the CredentialsAccessManager - CAM.
@@ -247,9 +244,6 @@ public:
     bool lockSecureStorage(const QByteArray &lockKey);
 
 private Q_SLOTS:
-    void simDataFetched(const QByteArray &accessCode);
-    void simRemoved();
-    void simError();
     void onKeyInserted(const SignOn::Key key);
     void onKeyDisabled(const SignOn::Key key);
     void onKeyRemoved(const SignOn::Key key);
@@ -278,14 +272,11 @@ private:
     bool m_accessCodeFetched;
     bool m_systemOpened;
     mutable CredentialsAccessError m_error;
-    QByteArray m_currentSimData;
     QList<SignOn::AbstractKeyManager *> keyManagers;
     QList<SignOn::Key> authorizedKeys;
 
     CredentialsDB *m_pCredentialsDB; // make this a QSharedPointer
     CryptoManager *m_pCryptoFileSystemManager;
-    SimDataHandler *m_pSimDataHandler;
-    DeviceLockCodeHandler *m_pLockCodeHandler;
     CAMConfiguration m_CAMConfiguration;
 };
 

@@ -741,48 +741,10 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString t
 bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
                                      const QByteArray &oldLockCode)
 {
-    TRACE() << "SignonDaemon::setDeviceLockCode()";
-    bool ret = true;
-
-    if (oldLockCode.isEmpty()) {
-        /* --- Current lock code is being communicated to the Signond ---
-           Possible situations:
-           1. Formatting of LUKS partition
-           2. Regular SIMless start, if partition is already formatted.
-           3. Add new SIM data to LUKS header
-        */
-
-        //1, 2
-        if (!initSecureStorage(lockCode)) {
-            TRACE() << "Could not initialize secure storage.";
-            ret = false;
-        }
-        //3
-        if (m_pCAMManager->encryptionKeyPendingAddition()) {
-            if (m_pCAMManager->storeEncryptionKey(lockCode))
-                ret = true;
-            else
-                TRACE() << "Could not store encryption key."
-                        << "Key might be already stored.";
-        }
-    } else {
-        /* --- New lock code is communicated to the Signond ---
-           Possible situations:
-           1. Set new master key for the LUKS partition
-        */
-
-        // Attempt to initialize secure storage. If already initialized, this will fail.
-        if (!initSecureStorage(oldLockCode))
-            TRACE() << "Could not initialize secure storage.";
-
-        if (!m_pCAMManager->setMasterEncryptionKey(lockCode, oldLockCode)) {
-            ret = false;
-            TRACE() << "Failed to set device lock code.";
-        } else {
-            TRACE() << "Device lock code successfully set.";
-        }
-    }
-    return ret;
+    TRACE() << "Just a stub";
+    Q_UNUSED(lockCode);
+    Q_UNUSED(oldLockCode);
+    return true;
 }
 
 bool SignonDaemon::remoteLock(const QByteArray &lockCode)
