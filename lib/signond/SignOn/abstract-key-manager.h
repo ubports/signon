@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-#ifndef SIGNOND_ABSTRACT_KEY_MANAGER_H
-#define SIGNOND_ABSTRACT_KEY_MANAGER_H
+#ifndef SIGNON_ABSTRACT_KEY_MANAGER_H
+#define SIGNON_ABSTRACT_KEY_MANAGER_H
 
 #include <SignOn/extension-interface.h>
 
@@ -80,7 +80,7 @@ public:
      * signond calls this method when there are no active keys. This might
      * happen when signond is just starting, or when all existing keys have
      * been disabled (which would cause the secure storage to be unmounted).
-     * If the key manager <em>must</em> emit keyInserted() in response to this
+     * The key manager <em>must</em> emit keyInserted() in response to this
      * call, either with a valid key or with an empty one.
      */
     virtual void queryKeys();
@@ -100,14 +100,14 @@ Q_SIGNALS:
      * accepting it.
      * @param key The new key.
      */
-    void keyInserted(const Key key);
+    void keyInserted(const SignOn::Key key);
 
     /*!
      * Emitted when a key is disabled. For instance, this signal can be
      * emitted when a password expires or when a hardware key is removed.
      * @param key The key which has been disabled.
      */
-    void keyDisabled(const Key key);
+    void keyDisabled(const SignOn::Key key);
 
     /*!
      * Emitted when a key is to be removed. This means that the key will never
@@ -117,7 +117,7 @@ Q_SIGNALS:
      * will be disabled anyway when keyRemoved is emitted.
      * @param key The key which has to be removed.
      */
-    void keyRemoved(const Key key);
+    void keyRemoved(const SignOn::Key key);
 
     /*!
      * The key manager emits this when it has decided whether to authorized
@@ -127,10 +127,10 @@ Q_SIGNALS:
      * @param key The key which underwent the authorization step.
      * @param authorized The result of the authorization.
      */
-    void keyAuthorized(const Key key, bool authorized);
+    void keyAuthorized(const SignOn::Key key, bool authorized);
 };
 
 } // namespace
 
-#endif // SIGNOND_ABSTRACT_KEY_MANAGER_H
+#endif // SIGNON_ABSTRACT_KEY_MANAGER_H
 

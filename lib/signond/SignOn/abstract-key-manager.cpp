@@ -47,6 +47,6 @@ void AbstractKeyManager::queryKeys()
 QString AbstractKeyManager::describeKey(const Key &key)
 {
     Q_UNUSED(key);
-    return QString::null;
+    return QString();
 }
 

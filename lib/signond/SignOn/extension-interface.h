@@ -19,15 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-#ifndef SIGNOND_EXTENSION_INTERFACE_H
-#define SIGNOND_EXTENSION_INTERFACE_H
+#ifndef SIGNON_EXTENSION_INTERFACE_H
+#define SIGNON_EXTENSION_INTERFACE_H
 
 #include <QObject>
 #include <QtPlugin>
 
 namespace SignOn {
 
-class KeyManager;
+class AbstractKeyManager;
 
 /*!
  * @class ExtensionInterface.
@@ -41,9 +41,9 @@ public:
     /*!
      * Get the KeyManager object.
      *
-     * @return A KeyManager object, or 0 if none is provided by this plugin.
+     * @return A key manager object, or 0 if none is provided by this plugin.
      */
-    virtual KeyManager keyManager(QObject *parent = 0) = 0;
+    virtual AbstractKeyManager *keyManager(QObject *parent = 0) const = 0;
 };
 
 } // namespace
@@ -51,4 +51,4 @@ public:
 Q_DECLARE_INTERFACE(SignOn::ExtensionInterface,
                     "com.nokia.SingleSignOn.ExtensionInterface/1.0")
 
-#endif // SIGNOND_EXTENSION_INTERFACE_H
+#endif // SIGNON_EXTENSION_INTERFACE_H
