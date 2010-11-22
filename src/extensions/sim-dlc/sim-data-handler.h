@@ -84,7 +84,7 @@ Q_SIGNALS:
         or automatically in the case the SIM has been changed.
         @param simData, the SIM's data.
     */
-    void simAvailable(const QByteArray &simData);
+    void simAvailable(const QByteArray simData);
 
     /*!
         Emitted when SIM was removed.
