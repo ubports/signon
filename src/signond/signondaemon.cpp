@@ -465,7 +465,7 @@ void SignonDaemon::initExtension(const QString &filePath)
     bool extensionInUse = false;
     AbstractKeyManager *keyManager = extension->keyManager(this);
     if (keyManager) {
-        // TODO: add the key manager to the CAM
+        m_pCAMManager->addKeyManager(keyManager);
         extensionInUse = true;
     }
 

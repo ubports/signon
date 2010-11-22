@@ -93,6 +93,7 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_systemOpened(false),
           m_error(NoError),
           m_currentSimData(QByteArray()),
+          keyManagers(),
           m_pCredentialsDB(NULL),
           m_pCryptoFileSystemManager(NULL),
           m_pSimDataHandler(NULL),
@@ -204,6 +205,24 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
            then store the SIM reply data right away using the buffered DLC as master key.
         */
         m_pSimDataHandler->querySim();
+
+
+        // Initialize all key managers
+        foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
+            connect(keyManager,
+                    SIGNAL(keyInserted(const SignOn::Key)),
+                    SLOT(onKeyInserted(const SignOn::Key)));
+            connect(keyManager,
+                    SIGNAL(keyDisabled(const SignOn::Key)),
+                    SLOT(onKeyDisabled(const SignOn::Key)));
+            connect(keyManager,
+                    SIGNAL(keyRemoved(const SignOn::Key)),
+                    SLOT(onKeyRemoved(const SignOn::Key)));
+            connect(keyManager,
+                    SIGNAL(keyAuthorized(const SignOn::Key, bool)),
+                    SLOT(onKeyAuthorized(const SignOn::Key, bool)));
+            keyManager->setup();
+        }
     }
 
     m_isInitialized = true;
@@ -211,6 +230,12 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     TRACE() << "CredentialsAccessManager successfully initialized...";
     return true;
+}
+
+void CredentialsAccessManager::addKeyManager(
+    SignOn::AbstractKeyManager *keyManager)
+{
+    keyManagers.append(keyManager);
 }
 
 bool CredentialsAccessManager::openCredentialsSystemPriv(bool mountFileSystem)
@@ -543,3 +568,29 @@ void CredentialsAccessManager::simError()
         m_pLockCodeHandler->queryLockCode();
     }
 }
+
+void CredentialsAccessManager::onKeyInserted(const SignOn::Key key)
+{
+    TRACE() << "Key:" << key;
+    // TODO
+}
+
+void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
+{
+    TRACE() << "Key:" << key;
+    // TODO
+}
+
+void CredentialsAccessManager::onKeyRemoved(const SignOn::Key key)
+{
+    TRACE() << "Key:" << key;
+    // TODO
+}
+
+void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
+                                               bool authorized)
+{
+    TRACE() << "Key:" << key << "Authorized:" << authorized;
+    // TODO
+}
+

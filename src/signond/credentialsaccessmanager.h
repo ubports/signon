@@ -35,7 +35,7 @@
 #include "cryptomanager.h"
 
 #include <QObject>
-
+#include <SignOn/AbstractKeyManager>
 
 /**
  * Manager access to the Credentials DB - synchronized singletone available everywhere in
@@ -138,8 +138,9 @@ public:
 
     /*!
         Initializes the CAM instance with the given configuration.
-        If encryption is in use, this will start the AccessCodeHandler and create the CryptoManager object,
-        preparing everything for the mounting of the encrypted file system
+        If encryption is in use, this will start the key managers and
+        create the CryptoManager object, preparing everything for the
+        mounting of the encrypted file system.
         @param configuration
     */
     bool init(const CAMConfiguration &configuration = CAMConfiguration());
@@ -149,6 +150,12 @@ public:
         and resetting the configuration. After this call the CAM needs to be reinitialized.
     */
     void finalize();
+
+    /*!
+     * Adds a key manager. This method must be called before init().
+     * @param keyManager The key manager to add.
+     */
+    void addKeyManager(SignOn::AbstractKeyManager *keyManager);
 
     /*!
         Opens the credentials system, creates the CreadentialsDB object;
@@ -243,6 +250,10 @@ private Q_SLOTS:
     void simDataFetched(const QByteArray &accessCode);
     void simRemoved();
     void simError();
+    void onKeyInserted(const SignOn::Key key);
+    void onKeyDisabled(const SignOn::Key key);
+    void onKeyRemoved(const SignOn::Key key);
+    void onKeyAuthorized(const SignOn::Key key, bool authorized);
 
 private:
     // 1st time start - deploys the database.
@@ -262,6 +273,7 @@ private:
     bool m_systemOpened;
     mutable CredentialsAccessError m_error;
     QByteArray m_currentSimData;
+    QList<SignOn::AbstractKeyManager *> keyManagers;
 
     CredentialsDB *m_pCredentialsDB; // make this a QSharedPointer
     CryptoManager *m_pCryptoFileSystemManager;
