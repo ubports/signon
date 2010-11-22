@@ -571,26 +571,115 @@ void CredentialsAccessManager::simError()
 
 void CredentialsAccessManager::onKeyInserted(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key;
-    // TODO
+    TRACE() << "Key:" << key.toHex();
+
+    if (key.isEmpty()) return;
+
+    /* The `key in use` check will attempt to mount using the new key if
+       the file system is not already mounted
+    */
+    if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+        TRACE() << "SIM data already in use.";
+        if (m_pCryptoFileSystemManager->fileSystemMounted()) {
+
+            m_pCryptoFileSystemManager->setEncryptionKey(key);
+
+            if (!credentialsSystemOpened()) {
+                if (openCredentialsSystemPriv(false)) {
+                    TRACE() << "Credentials system opened.";
+                } else {
+                    BLAME() << "Failed to open credentials system.";
+                }
+            } else {
+                TRACE() << "Credentials system already opened.";
+            }
+        }
+        authorizedKeys << key;
+        return;
+    }
+
+    /* We got here because the inserted key is totally new to the CAM.
+     * Let's see if any key manager wants to authorize it: we call
+     * authorizeKey() on each of them, and continue processing the key when
+     * the keyAuthorized() signal comes.
+     */
+    foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
+        keyManager->authorizeKey(key);
+    }
 }
 
 void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key;
-    // TODO
+    TRACE() << "Key:" << key.toHex();
+
+    if (authorizedKeys.removeAll(key) == 0) {
+        TRACE() << "Key was already disabled";
+        return;
+    }
+
+    if (authorizedKeys.isEmpty()) {
+        TRACE() << "All keys removed, closing secure storage.";
+        if (credentialsSystemOpened())
+            if (!closeCredentialsSystem())
+                BLAME() << "Error occurred while closing secure storage.";
+
+        TRACE() << "Querying for keys.";
+        foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
+            keyManager->queryKeys();
+        }
+    }
 }
 
 void CredentialsAccessManager::onKeyRemoved(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key;
-    // TODO
+    TRACE() << "Key:" << key.toHex();
+
+    // Make sure the key is disabled:
+    onKeyDisabled(key);
+
+    if (!m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+        TRACE() << "Key is not known to the CryptoManager.";
+        return;
+    }
+
+    if (authorizedKeys.isEmpty()) {
+        BLAME() << "Cannot remove key: no authorized keys";
+        return;
+    }
+
+    SignOn::Key authorizedKey = authorizedKeys.first();
+    if (!m_pCryptoFileSystemManager->removeEncryptionKey(key, authorizedKey)) {
+        BLAME() << "Failed to remove key.";
+    } else {
+        TRACE() << "Key successfully removed.";
+    }
 }
 
 void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
                                                bool authorized)
 {
-    TRACE() << "Key:" << key << "Authorized:" << authorized;
-    // TODO
+    TRACE() << "Key:" << key.toHex() << "Authorized:" << authorized;
+
+    if (!authorized) return;
+
+    if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
+        TRACE() << "Encryption key already in use.";
+        authorizedKeys << key;
+        return;
+    }
+
+    if (authorizedKeys.isEmpty()) {
+        BLAME() << "No authorized keys: cannot add new key";
+        return;
+    }
+
+    SignOn::Key authorizedKey = authorizedKeys.first();
+    if (m_pCryptoFileSystemManager->addEncryptionKey(key, authorizedKey)) {
+        TRACE() << "Encryption key successfullyadded into the CryptoManager.";
+        m_pCryptoFileSystemManager->setEncryptionKey(key);
+        authorizedKeys << key;
+    } else {
+        BLAME() << "Could not store encryption key.";
+    }
 }
 

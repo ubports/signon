@@ -274,6 +274,7 @@ private:
     mutable CredentialsAccessError m_error;
     QByteArray m_currentSimData;
     QList<SignOn::AbstractKeyManager *> keyManagers;
+    QList<SignOn::Key> authorizedKeys;
 
     CredentialsDB *m_pCredentialsDB; // make this a QSharedPointer
     CryptoManager *m_pCryptoFileSystemManager;
