@@ -227,6 +227,7 @@ public:
     QStringList references(const quint32 id, const QString &token = QString());
 private:
     bool insertMethods(QMap<QString, QStringList> methods);
+    quint32 updateCredentials(const SignonIdentityInfo &info);
 };
 
 class SecretsDB: public SqlDatabase

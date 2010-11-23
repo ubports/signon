@@ -609,63 +609,18 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
         TRACE() << "Could not start transaction. Error inserting credentials.";
         return 0;
     }
-    quint32 id = 0;
-    QSqlQuery insertQuery;
 
-    QString queryStr;
-    int flags = 0;
-    if (info.validated()) flags |= Validated;
-    if (info.storePassword()) flags |= RememberPassword;
-
-    if (!info.isNew()) {
-        TRACE() << "UPDATE:" << info.id() ;
-         id = info.id() ;
-        queryStr = QString::fromLatin1(
-            "UPDATE CREDENTIALS SET caption = '%1', username = '%2', "
-            "flags = '%3', "
-            "type = '%4' WHERE id = '%5'")
-            .arg(info.caption()).arg(info.userName())
-            .arg(flags).arg(info.type())
-            .arg(info.id());
-
-        insertQuery = exec(queryStr);
-        insertQuery.clear();
-        if (errorOccurred()) {
-            rollback();
-            TRACE() << "Error occurred while updating crendentials";
-            return 0;
-        }
-
-     } else {
-        TRACE() << "INSERT:" << info.id();
-        queryStr = QString::fromLatin1(
-            "INSERT INTO CREDENTIALS "
-            "(caption, username, flags, type) "
-            "VALUES('%1', '%2', '%3', '%4')")
-            .arg(info.caption()).arg(info.userName())
-            .arg(flags).arg(info.type());
-
-        insertQuery = exec(queryStr);
-        if (errorOccurred()) {
-            rollback();
-            TRACE() << "Error occurred while inserting crendentials";
-            return 0;
-        }
-
-        /* Fetch id of the inserted credentials */
-        QVariant idVariant = insertQuery.lastInsertId();
-        if (!idVariant.isValid()) {
-            rollback();
-            TRACE() << "Error occurred while inserting crendentials";
-            return 0;
-        }
-        id = idVariant.toUInt();
+    quint32 id = updateCredentials(info);
+    if (id == 0) {
+        rollback();
+        return 0;
     }
-    insertQuery.clear();
 
     /* Methods inserts */
     insertMethods(info.methods());
 
+    QString queryStr;
+    QSqlQuery insertQuery;
     if (!info.isNew()) {
         //remove realms list
         queryStr = QString::fromLatin1(
@@ -961,6 +916,53 @@ bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
         }
     }
     return allOk;
+}
+
+quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
+{
+    quint32 id;
+    QSqlQuery q;
+
+    int flags = 0;
+    if (info.validated()) flags |= Validated;
+    if (info.storePassword()) flags |= RememberPassword;
+
+    if (!info.isNew()) {
+        TRACE() << "UPDATE:" << info.id() ;
+        q.prepare(S("UPDATE CREDENTIALS SET caption = :caption, "
+                    "username = :username, "
+                    "flags = :flags, "
+                    "type = :type WHERE id = :id"));
+        q.bindValue(S(":id"), info.id());
+    } else {
+        TRACE() << "INSERT:" << info.id();
+        q.prepare(S("INSERT INTO CREDENTIALS "
+                    "(caption, username, flags, type) "
+                    "VALUES(:caption, :username, :flags, :type)"));
+    }
+    q.bindValue(S(":username"), info.userName());
+    q.bindValue(S(":caption"), info.caption());
+    q.bindValue(S(":flags"), flags);
+    q.bindValue(S(":type"), info.type());
+    exec(q);
+    if (errorOccurred()) {
+        TRACE() << "Error occurred while updating crendentials";
+        return 0;
+    }
+
+    if (info.isNew()) {
+        /* Fetch id of the inserted credentials */
+        QVariant idVariant = q.lastInsertId();
+        if (!idVariant.isValid()) {
+            TRACE() << "Error occurred while inserting crendentials";
+            return 0;
+        }
+        id = idVariant.toUInt();
+    } else {
+        id = info.id() ;
+    }
+
+    return id;
 }
 
 bool SecretsDB::createTables()
