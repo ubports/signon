@@ -1375,12 +1375,7 @@ bool CredentialsDB::checkPassword(const quint32 id,
                                   const QString &password)
 {
     INIT_ERROR();
-    if (!isSecretsDBOpen())
-    {
-        TRACE() << "Secrets DB is not available";
-        _lastError = noSecretsDB;
-        return false;
-    }
+    RETURN_IF_NO_SECRETS_DB(false);
     return secretsDB->checkPassword(id, username, password);
 }
 
@@ -1429,11 +1424,7 @@ bool CredentialsDB::removeCredentials(const quint32 id)
 
     /* We don't allow removing the credentials if the secrets DB is not
      * available */
-    if (!isSecretsDBOpen()) {
-        TRACE() << "Secrets DB not opened; aborting DELETE operation";
-        _lastError = noSecretsDB;
-        return false;
-    }
+    RETURN_IF_NO_SECRETS_DB(false);
 
     return secretsDB->removeCredentials(id) &&
         metaDataDB->removeCredentials(id);
@@ -1446,11 +1437,7 @@ bool CredentialsDB::clear()
     INIT_ERROR();
 
     /* We don't allow clearing the DB if the secrets DB is not available */
-    if (!isSecretsDBOpen()) {
-        TRACE() << "Secrets DB not opened; aborting CLEAR operation";
-        _lastError = noSecretsDB;
-        return false;
-    }
+    RETURN_IF_NO_SECRETS_DB(false);
 
     return secretsDB->clear() && metaDataDB->clear();
 }
