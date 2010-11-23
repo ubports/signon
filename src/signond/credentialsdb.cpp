@@ -80,6 +80,22 @@ void SqlDatabase::disconnect()
     m_database.close();
 }
 
+bool SqlDatabase::startTransaction()
+{
+    return m_database.transaction();
+}
+
+bool SqlDatabase::commit()
+{
+    return m_database.commit();
+}
+
+void SqlDatabase::rollback()
+{
+    if (!m_database.rollback())
+        TRACE() << "Rollback failed, db data integrity could be compromised.";
+}
+
 QSqlQuery SqlDatabase::exec(const QString &queryStr)
 {
     QSqlQuery query(QString(), m_database);
@@ -141,7 +157,7 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
     return false;
 }
 
-QSqlError SqlDatabase::lastError()
+QSqlError SqlDatabase::lastError() const
 {
     return m_lastError;
 }
@@ -189,6 +205,19 @@ QString SqlDatabase::errorInfo(const QSqlError &error)
 void SqlDatabase::removeDatabase()
 {
      QSqlDatabase::removeDatabase(connectionName);
+}
+
+QStringList SqlDatabase::queryList(const QString &query_str)
+{
+    TRACE();
+    QStringList list;
+    QSqlQuery query = exec(query_str);
+    if (errorOccurred()) return list;
+    while (query.next()) {
+        list.append(query.value(0).toString());
+    }
+    query.clear();
+    return list;
 }
 
 bool MetaDataDB::createTables()
@@ -496,211 +525,7 @@ end of generated code
     return true;
 }
 
-bool SecretsDB::createTables()
-{
-    QStringList createTableQuery = QStringList()
-        <<  QString::fromLatin1(
-            "CREATE TABLE CREDENTIALS"
-            "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "username TEXT,"
-            "password TEXT)")
-        <<  QString::fromLatin1(
-            "CREATE TABLE STORE"
-            "(identity_id INTEGER,"
-            "method_id INTEGER,"
-            "key TEXT,"
-            "value BLOB,"
-            "PRIMARY KEY (identity_id, method_id, key))")
-
-        << QString::fromLatin1(
-            // Cascading Delete
-            "CREATE TRIGGER tg_delete_credentials "
-            "BEFORE DELETE ON CREDENTIALS "
-            "FOR EACH ROW BEGIN "
-            "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
-            "END; "
-        );
-
-   foreach (QString createTable, createTableQuery) {
-        QSqlQuery query = exec(createTable);
-        if (lastError().isValid()) {
-            TRACE() << "Error occurred while creating the database.";
-            return false;
-        }
-        query.clear();
-        m_database.commit();
-    }
-    return true;
-}
-
-/*    -------   CredentialsDB  implementation   -------    */
-
-CredentialsDB::CredentialsDB(const QString &metaDataDbName):
-    secretsDB(0),
-    metaDataDB(new MetaDataDB(metaDataDbName))
-{
-}
-
-CredentialsDB::~CredentialsDB()
-{
-    if (secretsDB)
-        delete secretsDB;
-    if (metaDataDB)
-        delete metaDataDB;
-
-    SqlDatabase::removeDatabase();
-}
-
-QSqlQuery CredentialsDB::exec(const QString &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-QSqlQuery CredentialsDB::exec(QSqlQuery &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-bool CredentialsDB::transactionalExec(const QStringList &queryList)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return false;
-        }
-    }
-    return metaDataDB->transactionalExec(queryList);
-}
-
-bool CredentialsDB::startTransaction()
-{
-    return metaDataDB->m_database.transaction();
-}
-
-bool CredentialsDB::commit()
-{
-    return metaDataDB->m_database.commit();
-}
-
-void CredentialsDB::rollback()
-{
-    if (!metaDataDB->m_database.rollback())
-        TRACE() << "Rollback failed, db data integrity could be compromised.";
-}
-
-bool CredentialsDB::connect()
-{
-    return metaDataDB->connect();
-}
-
-bool CredentialsDB::init()
-{
-    return metaDataDB->init();
-}
-
-QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
-{
-    return metaDataDB->configuration();
-}
-
-bool CredentialsDB::hasTableStructure() const
-{
-    return metaDataDB->hasTables();
-}
-
-QStringList CredentialsDB::queryList(const QString &query_str)
-{
-    TRACE();
-    QStringList list;
-    QSqlQuery query = exec(query_str);
-    if (errorOccurred()) return list;
-    while (query.next()) {
-        list.append(query.value(0).toString());
-    }
-    query.clear();
-    return list;
-}
-
-bool CredentialsDB::insertMethods(QMap<QString, QStringList> methods)
-{
-    QString queryStr;
-    QSqlQuery insertQuery;
-    bool allOk = true;
-
-    if (methods.isEmpty()) return false;
-    //insert (unique) method names
-    QMapIterator<QString, QStringList> it(methods);
-    while (it.hasNext()) {
-        it.next();
-        queryStr = QString::fromLatin1(
-                    "INSERT OR IGNORE INTO METHODS (method) "
-                    "VALUES( '%1' )")
-                    .arg(it.key());
-        insertQuery = exec(queryStr);
-        insertQuery.clear();
-        if (errorOccurred()) allOk = false;
-        //insert (unique) mechanism names
-        foreach (QString mech, it.value()) {
-            queryStr = QString::fromLatin1(
-                        "INSERT OR IGNORE INTO MECHANISMS (mechanism) "
-                        "VALUES( '%1' )")
-                        .arg(mech);
-            insertQuery = exec(queryStr);
-            if (errorOccurred()) allOk = false;
-            insertQuery.clear();
-        }
-    }
-    return allOk;
-}
-
-bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
-{
-    secretsDB = new SecretsDB(secretsDbName);
-
-    if (!secretsDB->init()) {
-        TRACE() << SqlDatabase::errorInfo(lastError());
-        delete secretsDB;
-        secretsDB = 0;
-        return false;
-    }
-
-    TRACE() << secretsDB->configuration();
-    return true;
-}
-
-bool CredentialsDB::isSecretsDBOpen()
-{
-    return secretsDB != 0;
-}
-
-void CredentialsDB::closeSecretsDB()
-{
-    delete secretsDB;
-}
-
-CredentialsDBError CredentialsDB::lastError() const
-{
-    if (secretsDB != 0) {
-        if (secretsDB->lastError().isValid())
-            return secretsDB->lastError();
-    }
-
-    return metaDataDB->lastError();
-}
-
-QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
+QStringList MetaDataDB::methods(const quint32 id, const QString &securityToken)
 {
     QStringList list;
     if (securityToken.isEmpty()) {
@@ -722,9 +547,9 @@ QStringList CredentialsDB::methods(const quint32 id, const QString &securityToke
     return list;
 }
 
-bool CredentialsDB::checkPassword(const quint32 id,
-                                  const QString &username,
-                                  const QString &password)
+bool MetaDataDB::checkPassword(const quint32 id,
+                               const QString &username,
+                               const QString &password)
 {
     QSqlQuery query = exec(
             QString::fromLatin1("SELECT id FROM CREDENTIALS "
@@ -742,7 +567,7 @@ bool CredentialsDB::checkPassword(const quint32 id,
     return valid;
 }
 
-SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
+SignonIdentityInfo MetaDataDB::credentials(const quint32 id, bool queryPassword)
 {
     QString query_str;
 
@@ -807,7 +632,7 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPasswo
                               caption, realms, security_tokens, type, refCount, validated);
 }
 
-QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
+QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &filter)
 {
     TRACE();
     Q_UNUSED(filter)
@@ -836,15 +661,7 @@ QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString
     return result;
 }
 
-quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
-{
-    SignonIdentityInfo newInfo = info;
-    if (info.m_id != SIGNOND_NEW_IDENTITY)
-        newInfo.m_id = SIGNOND_NEW_IDENTITY;
-    return updateCredentials(newInfo, storeSecret);
-}
-
-quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
+quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
 {
     if (!startTransaction()) {
         TRACE() << "Could not start transaction. Error inserting credentials.";
@@ -1030,7 +847,7 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info, bool st
     }
 }
 
-bool CredentialsDB::removeCredentials(const quint32 id)
+bool MetaDataDB::removeCredentials(const quint32 id)
 {
     if (!startTransaction()) {
         TRACE() << "Could not start database transaction.";
@@ -1071,7 +888,7 @@ bool CredentialsDB::removeCredentials(const quint32 id)
     return true;
 }
 
-bool CredentialsDB::clear()
+bool MetaDataDB::clear()
 {
     exec(QLatin1String("DELETE FROM CREDENTIALS"));
     if (errorOccurred())
@@ -1104,7 +921,7 @@ bool CredentialsDB::clear()
     return true;
 }
 
-QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
+QVariantMap MetaDataDB::loadData(const quint32 id, const QString &method)
 {
     TRACE();
 
@@ -1132,7 +949,7 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
     return result;
 }
 
-bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
+bool MetaDataDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
 {
     TRACE();
 
@@ -1165,7 +982,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVa
             /* Key/value insert/replace/delete */
             if (it.value().isValid() && !it.value().isNull()) {
                 TRACE() << "insert";
-                query = QSqlQuery(QString(), metaDataDB->m_database);
+                query = QSqlQuery(QString(), m_database);
                 query.prepare(QString::fromLatin1(
                     "INSERT OR REPLACE INTO STORE "
                     "(identity_id, method_id, key, value) "
@@ -1177,7 +994,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVa
                 exec(query);
                 if (errorOccurred()) {
                     allOk = false;
-                    TRACE() << metaDataDB->errorInfo(query.lastError());
+                    TRACE() << errorInfo(query.lastError());
                 }
             } else {
                 TRACE() << "remove";
@@ -1207,7 +1024,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVa
     return false;
 }
 
-bool CredentialsDB::removeData(const quint32 id, const QString &method)
+bool MetaDataDB::removeData(const quint32 id, const QString &method)
 {
     TRACE();
 
@@ -1247,7 +1064,7 @@ bool CredentialsDB::removeData(const quint32 id, const QString &method)
     return false;
 }
 
-QStringList CredentialsDB::accessControlList(const quint32 identityId)
+QStringList MetaDataDB::accessControlList(const quint32 identityId)
 {
     return queryList(QString::fromLatin1("SELECT token FROM TOKENS "
             "WHERE id IN "
@@ -1255,17 +1072,7 @@ QStringList CredentialsDB::accessControlList(const quint32 identityId)
             .arg(identityId));
 }
 
-QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
-{
-    QStringList acl = accessControlList(identityId);
-    int index = -1;
-    QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::.*"));
-    if ((index = acl.indexOf(aegisIdTokenPrefixRegExp)) != -1)
-        return acl.at(index);
-    return QString();
-}
-
-bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
+bool MetaDataDB::addReference(const quint32 id, const QString &token, const QString &reference)
 {
 
     if (!startTransaction()) {
@@ -1313,7 +1120,7 @@ bool CredentialsDB::addReference(const quint32 id, const QString &token, const Q
     return false;
 }
 
-bool CredentialsDB::removeReference(const quint32 id, const QString &token, const QString &reference)
+bool MetaDataDB::removeReference(const quint32 id, const QString &token, const QString &reference)
 {
     TRACE() << "Removing:" << id << ", " << token << ", " << reference;
     //check that there is references
@@ -1361,7 +1168,7 @@ bool CredentialsDB::removeReference(const quint32 id, const QString &token, cons
     return false;
 }
 
-QStringList CredentialsDB::references(const quint32 id, const QString &token)
+QStringList MetaDataDB::references(const quint32 id, const QString &token)
 {
     if (token.isEmpty())
         return queryList(QString::fromLatin1("SELECT ref FROM REFS "
@@ -1371,6 +1178,271 @@ QStringList CredentialsDB::references(const quint32 id, const QString &token)
             "WHERE identity_id = '%1' AND "
             "token_id = (SELECT id FROM TOKENS WHERE token = '%2' )")
             .arg(id).arg(token));
+}
+
+bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
+{
+    QString queryStr;
+    QSqlQuery insertQuery;
+    bool allOk = true;
+
+    if (methods.isEmpty()) return false;
+    //insert (unique) method names
+    QMapIterator<QString, QStringList> it(methods);
+    while (it.hasNext()) {
+        it.next();
+        queryStr = QString::fromLatin1(
+                    "INSERT OR IGNORE INTO METHODS (method) "
+                    "VALUES( '%1' )")
+                    .arg(it.key());
+        insertQuery = exec(queryStr);
+        insertQuery.clear();
+        if (errorOccurred()) allOk = false;
+        //insert (unique) mechanism names
+        foreach (QString mech, it.value()) {
+            queryStr = QString::fromLatin1(
+                        "INSERT OR IGNORE INTO MECHANISMS (mechanism) "
+                        "VALUES( '%1' )")
+                        .arg(mech);
+            insertQuery = exec(queryStr);
+            if (errorOccurred()) allOk = false;
+            insertQuery.clear();
+        }
+    }
+    return allOk;
+}
+
+bool SecretsDB::createTables()
+{
+    QStringList createTableQuery = QStringList()
+        <<  QString::fromLatin1(
+            "CREATE TABLE CREDENTIALS"
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "username TEXT,"
+            "password TEXT)")
+        <<  QString::fromLatin1(
+            "CREATE TABLE STORE"
+            "(identity_id INTEGER,"
+            "method_id INTEGER,"
+            "key TEXT,"
+            "value BLOB,"
+            "PRIMARY KEY (identity_id, method_id, key))")
+
+        << QString::fromLatin1(
+            // Cascading Delete
+            "CREATE TRIGGER tg_delete_credentials "
+            "BEFORE DELETE ON CREDENTIALS "
+            "FOR EACH ROW BEGIN "
+            "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
+            "END; "
+        );
+
+   foreach (QString createTable, createTableQuery) {
+        QSqlQuery query = exec(createTable);
+        if (lastError().isValid()) {
+            TRACE() << "Error occurred while creating the database.";
+            return false;
+        }
+        query.clear();
+        m_database.commit();
+    }
+    return true;
+}
+
+/*    -------   CredentialsDB  implementation   -------    */
+
+CredentialsDB::CredentialsDB(const QString &metaDataDbName):
+    secretsDB(0),
+    metaDataDB(new MetaDataDB(metaDataDbName))
+{
+}
+
+CredentialsDB::~CredentialsDB()
+{
+    if (secretsDB)
+        delete secretsDB;
+    if (metaDataDB)
+        delete metaDataDB;
+
+    SqlDatabase::removeDatabase();
+}
+
+QSqlQuery CredentialsDB::exec(const QString &query)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return QSqlQuery();
+        }
+    }
+    return metaDataDB->exec(query);
+}
+
+QSqlQuery CredentialsDB::exec(QSqlQuery &query)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return QSqlQuery();
+        }
+    }
+    return metaDataDB->exec(query);
+}
+
+bool CredentialsDB::transactionalExec(const QStringList &queryList)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return false;
+        }
+    }
+    return metaDataDB->transactionalExec(queryList);
+}
+
+bool CredentialsDB::connect()
+{
+    return metaDataDB->connect();
+}
+
+bool CredentialsDB::init()
+{
+    return metaDataDB->init();
+}
+
+QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
+{
+    return metaDataDB->configuration();
+}
+
+bool CredentialsDB::hasTableStructure() const
+{
+    return metaDataDB->hasTables();
+}
+
+bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
+{
+    secretsDB = new SecretsDB(secretsDbName);
+
+    if (!secretsDB->init()) {
+        TRACE() << SqlDatabase::errorInfo(lastError());
+        delete secretsDB;
+        secretsDB = 0;
+        return false;
+    }
+
+    TRACE() << secretsDB->configuration();
+    return true;
+}
+
+bool CredentialsDB::isSecretsDBOpen()
+{
+    return secretsDB != 0;
+}
+
+void CredentialsDB::closeSecretsDB()
+{
+    delete secretsDB;
+}
+
+CredentialsDBError CredentialsDB::lastError() const
+{
+    if (secretsDB != 0) {
+        if (secretsDB->lastError().isValid())
+            return secretsDB->lastError();
+    }
+
+    return metaDataDB->lastError();
+}
+
+QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
+{
+    return metaDataDB->methods(id, securityToken);
+}
+
+bool CredentialsDB::checkPassword(const quint32 id,
+                                  const QString &username,
+                                  const QString &password)
+{
+    return metaDataDB->checkPassword(id, username, password);
+}
+
+SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
+{
+    return metaDataDB->credentials(id, queryPassword);
+}
+
+QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
+{
+    return metaDataDB->credentials(filter);
+}
+
+quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
+{
+    SignonIdentityInfo newInfo = info;
+    if (info.m_id != SIGNOND_NEW_IDENTITY)
+        newInfo.m_id = SIGNOND_NEW_IDENTITY;
+    return updateCredentials(newInfo, storeSecret);
+}
+
+quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
+{
+    return metaDataDB->updateCredentials(info, storeSecret);
+}
+
+bool CredentialsDB::removeCredentials(const quint32 id)
+{
+    return metaDataDB->removeCredentials(id);
+}
+
+bool CredentialsDB::clear()
+{
+    return metaDataDB->clear();
+}
+
+QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
+{
+    return metaDataDB->loadData(id, method);
+}
+
+bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
+{
+    return metaDataDB->storeData(id, method, data);
+}
+
+bool CredentialsDB::removeData(const quint32 id, const QString &method)
+{
+    return metaDataDB->removeData(id, method);
+}
+
+QStringList CredentialsDB::accessControlList(const quint32 identityId)
+{
+    return metaDataDB->accessControlList(identityId);
+}
+
+QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
+{
+    QStringList acl = accessControlList(identityId);
+    int index = -1;
+    QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::.*"));
+    if ((index = acl.indexOf(aegisIdTokenPrefixRegExp)) != -1)
+        return acl.at(index);
+    return QString();
+}
+
+bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
+{
+    return metaDataDB->addReference(id, token, reference);
+}
+
+bool CredentialsDB::removeReference(const quint32 id, const QString &token, const QString &reference)
+{
+    return metaDataDB->removeReference(id, token, reference);
+}
+
+QStringList CredentialsDB::references(const quint32 id, const QString &token)
+{
+    return metaDataDB->references(id, token);
 }
 
 } //namespace SignonDaemonNS

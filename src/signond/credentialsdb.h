@@ -86,6 +86,11 @@ public:
         Destroys the database connection.
     */
     void disconnect();
+
+    bool startTransaction();
+    bool commit();
+    void rollback();
+
     /*!
         @returns true if database connection is opened, false otherwise.
     */
@@ -167,7 +172,8 @@ public:
     /*!
         @returns the last occurred error if any. If not error occurred on the last performed operation the QSqlError object is invalid.
     */
-    QSqlError lastError();
+    QSqlError lastError() const;
+    bool errorOccurred() const { return lastError().isValid(); };
 
     /*!
         Serializes a SQL error into a string.
@@ -177,6 +183,9 @@ public:
     static QString errorInfo(const QSqlError &error);
 
     static void removeDatabase();
+
+protected:
+    QStringList queryList(const QString &query_str);
 
 private:
     QSqlError m_lastError;
@@ -193,6 +202,38 @@ public:
         SqlDatabase(name) {}
 
     bool createTables();
+
+    QStringList methods(const quint32 id,
+                        const QString &securityToken = QString());
+    bool checkPassword(const quint32 id,
+                       const QString &username,
+                       const QString &password);
+    SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
+    QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
+
+    quint32 updateCredentials(const SignonIdentityInfo &info,
+                              bool storeSecret = true);
+    bool removeCredentials(const quint32 id);
+
+    bool clear();
+
+    QStringList accessControlList(const quint32 identityId);
+
+    QVariantMap loadData(const quint32 id, const QString &method);
+    bool storeData(const quint32 id,
+                   const QString &method,
+                   const QVariantMap &data);
+    bool removeData(const quint32 id, const QString &method = QString());
+
+    bool addReference(const quint32 id,
+                      const QString &token,
+                      const QString &reference);
+    bool removeReference(const quint32 id,
+                         const QString &token,
+                         const QString &reference = QString());
+    QStringList references(const quint32 id, const QString &token = QString());
+private:
+    bool insertMethods(QMap<QString, QStringList> methods);
 };
 
 class SecretsDB: public SqlDatabase
@@ -227,18 +268,12 @@ private:
     QSqlQuery exec(const QString &query);
     QSqlQuery exec(QSqlQuery &query);
     bool transactionalExec(const QStringList &queryList);
-    bool startTransaction();
-    bool commit();
-    void rollback();
     bool connect();
     QMap<QString, QString> sqlDBConfiguration() const;
     bool hasTableStructure() const;
     bool createTableStructure();
     bool createSecretsDB();
     bool initSecretsDB();
-//helpers
-    QStringList queryList(const QString &query_str);
-    bool insertMethods(QMap<QString, QStringList> methods);
 
 public:
     bool init();
