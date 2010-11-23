@@ -177,7 +177,7 @@ void CredentialsAccessManager::addKeyManager(
     keyManagers.append(keyManager);
 }
 
-bool CredentialsAccessManager::openCredentialsSystemPriv(bool mountFileSystem)
+bool CredentialsAccessManager::openSecretsDB(bool mountFileSystem)
 {
     //todo remove this variable after LUKS implementation becomes stable.
     QString dbPath;
@@ -246,14 +246,14 @@ bool CredentialsAccessManager::openCredentialsSystem()
                     m_CAMConfiguration.m_encryptionPassphrase);
             m_accessCodeFetched = true;
 
-            if (!openCredentialsSystemPriv(true)) {
+            if (!openSecretsDB(true)) {
                 BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
             }
         }
     }
 
 
-    return openCredentialsSystemPriv(true);
+    return openSecretsDB(true);
 }
 
 bool CredentialsAccessManager::closeCredentialsSystem()
@@ -397,7 +397,7 @@ bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
             m_pCryptoFileSystemManager->setEncryptionKey(key);
 
             if (!credentialsSystemOpened()) {
-                if (openCredentialsSystemPriv(false)) {
+                if (openSecretsDB(false)) {
                     TRACE() << "Credentials system opened.";
                 } else {
                     BLAME() << "Failed to open credentials system.";
@@ -525,7 +525,7 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
          * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);
         m_accessCodeFetched = true;
-        if (openCredentialsSystemPriv(true)) {
+        if (openSecretsDB(true)) {
             authorizedKeys << key;
         } else {
             BLAME() << "Couldn't create the secure FS";

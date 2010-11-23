@@ -252,7 +252,7 @@ private Q_SLOTS:
 private:
     // 1st time start - deploys the database.
     bool deployCredentialsSystem();
-    bool openCredentialsSystemPriv(bool mountFileSystem);
+    bool openSecretsDB(bool mountFileSystem);
     bool fileSystemLoaded(bool checkForDatabase = false);
     bool fileSystemDeployed();
     bool fetchAccessCode(uint timeout = 30);
