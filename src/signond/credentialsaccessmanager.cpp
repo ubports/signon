@@ -452,8 +452,8 @@ void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
 
     if (authorizedKeys.isEmpty()) {
         TRACE() << "All keys removed, closing secure storage.";
-        if (credentialsSystemOpened())
-            if (!closeCredentialsSystem())
+        if (isSecretsDBOpen())
+            if (!closeSecretsDB())
                 BLAME() << "Error occurred while closing secure storage.";
 
         TRACE() << "Querying for keys.";
