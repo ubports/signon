@@ -238,7 +238,6 @@ bool MetaDataDB::createTables()
             "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "caption TEXT,"
             "username TEXT,"
-            "password TEXT,"
             "flags INTEGER,"
             "type INTEGER)")
         <<  QString::fromLatin1(
@@ -272,13 +271,6 @@ bool MetaDataDB::createTables()
             "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE,"
             "ref TEXT,"
             "PRIMARY KEY (identity_id, token_id, ref))")
-        <<  QString::fromLatin1(
-            "CREATE TABLE STORE"
-            "(identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-            "method_id INTEGER CONSTRAINT fk_method_id REFERENCES METHODS(id) ON DELETE CASCADE,"
-            "key TEXT,"
-            "value BLOB,"
-            "PRIMARY KEY (identity_id, method_id, key))")
 
 /*
 * triggers generated with
@@ -465,58 +457,6 @@ bool MetaDataDB::createTables()
             "BEFORE DELETE ON TOKENS "
             "FOR EACH ROW BEGIN "
             "    DELETE FROM REFS WHERE REFS.token_id = OLD.id; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Foreign Key Preventing insert
-            "CREATE TRIGGER fki_STORE_identity_id_CREDENTIALS_id "
-            "BEFORE INSERT ON [STORE] "
-            "FOR EACH ROW BEGIN "
-            "  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_identity_id_CREDENTIALS_id') "
-            "  WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Foreign key preventing update
-            "CREATE TRIGGER fku_STORE_identity_id_CREDENTIALS_id "
-            "BEFORE UPDATE ON [STORE] "
-            "FOR EACH ROW BEGIN "
-            "    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_identity_id_CREDENTIALS_id') "
-            "      WHERE NEW.identity_id IS NOT NULL AND (SELECT id FROM CREDENTIALS WHERE id = NEW.identity_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Cascading Delete
-            "CREATE TRIGGER fkdc_STORE_identity_id_CREDENTIALS_id "
-            "BEFORE DELETE ON CREDENTIALS "
-            "FOR EACH ROW BEGIN "
-            "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Foreign Key Preventing insert
-            "CREATE TRIGGER fki_STORE_method_id_METHODS_id "
-            "BEFORE INSERT ON [STORE] "
-            "FOR EACH ROW BEGIN "
-            "  SELECT RAISE(ROLLBACK, 'insert on table STORE violates foreign key constraint fki_STORE_method_id_METHODS_id') "
-            "  WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Foreign key preventing update
-            "CREATE TRIGGER fku_STORE_method_id_METHODS_id "
-            "BEFORE UPDATE ON [STORE] "
-            "FOR EACH ROW BEGIN "
-            "    SELECT RAISE(ROLLBACK, 'update on table STORE violates foreign key constraint fku_STORE_method_id_METHODS_id') "
-            "      WHERE NEW.method_id IS NOT NULL AND (SELECT id FROM METHODS WHERE id = NEW.method_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Cascading Delete
-            "CREATE TRIGGER fkdc_STORE_method_id_METHODS_id "
-            "BEFORE DELETE ON METHODS "
-            "FOR EACH ROW BEGIN "
-            "    DELETE FROM STORE WHERE STORE.method_id = OLD.id; "
             "END; "
         );
 /*
@@ -855,9 +795,7 @@ bool MetaDataDB::removeCredentials(const quint32 id)
         << QString::fromLatin1(
             "DELETE FROM ACL WHERE identity_id = %1").arg(id)
         << QString::fromLatin1(
-            "DELETE FROM REALMS WHERE identity_id = %1").arg(id)
-        << QString::fromLatin1(
-            "DELETE FROM STORE WHERE identity_id = %1").arg(id);
+            "DELETE FROM REALMS WHERE identity_id = %1").arg(id);
 
     return transactionalExec(queries);
 }
@@ -872,8 +810,7 @@ bool MetaDataDB::clear()
         << QLatin1String("DELETE FROM MECHANISMS")
         << QLatin1String("DELETE FROM ACL")
         << QLatin1String("DELETE FROM REALMS")
-        << QLatin1String("DELETE FROM TOKENS")
-        << QLatin1String("DELETE FROM STORE");
+        << QLatin1String("DELETE FROM TOKENS");
 
     return transactionalExec(clearCommands);
 }
