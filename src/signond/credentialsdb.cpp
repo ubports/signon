@@ -191,93 +191,6 @@ void SqlDatabase::removeDatabase()
      QSqlDatabase::removeDatabase(connectionName);
 }
 
-/*    -------   CredentialsDB  implementation   -------    */
-
-CredentialsDB::CredentialsDB(const QString &metaDataDbName):
-    secretsDB(0),
-    metaDataDB(new MetaDataDB(metaDataDbName))
-{
-}
-
-CredentialsDB::~CredentialsDB()
-{
-    if (secretsDB)
-        delete secretsDB;
-    if (metaDataDB)
-        delete metaDataDB;
-
-    SqlDatabase::removeDatabase();
-}
-
-QSqlQuery CredentialsDB::exec(const QString &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-QSqlQuery CredentialsDB::exec(QSqlQuery &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-bool CredentialsDB::transactionalExec(const QStringList &queryList)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return false;
-        }
-    }
-    return metaDataDB->transactionalExec(queryList);
-}
-
-bool CredentialsDB::startTransaction()
-{
-    return metaDataDB->m_database.transaction();
-}
-
-bool CredentialsDB::commit()
-{
-    return metaDataDB->m_database.commit();
-}
-
-void CredentialsDB::rollback()
-{
-    if (!metaDataDB->m_database.rollback())
-        TRACE() << "Rollback failed, db data integrity could be compromised.";
-}
-
-bool CredentialsDB::connect()
-{
-    return metaDataDB->connect();
-}
-
-bool CredentialsDB::init()
-{
-    return metaDataDB->init();
-}
-
-QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
-{
-    return metaDataDB->configuration();
-}
-
-bool CredentialsDB::hasTableStructure() const
-{
-    return metaDataDB->hasTables();
-}
-
 bool MetaDataDB::createTables()
 {
     /* !!! Foreign keys support seems to be disabled, for the moment... */
@@ -618,6 +531,93 @@ bool SecretsDB::createTables()
         m_database.commit();
     }
     return true;
+}
+
+/*    -------   CredentialsDB  implementation   -------    */
+
+CredentialsDB::CredentialsDB(const QString &metaDataDbName):
+    secretsDB(0),
+    metaDataDB(new MetaDataDB(metaDataDbName))
+{
+}
+
+CredentialsDB::~CredentialsDB()
+{
+    if (secretsDB)
+        delete secretsDB;
+    if (metaDataDB)
+        delete metaDataDB;
+
+    SqlDatabase::removeDatabase();
+}
+
+QSqlQuery CredentialsDB::exec(const QString &query)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return QSqlQuery();
+        }
+    }
+    return metaDataDB->exec(query);
+}
+
+QSqlQuery CredentialsDB::exec(QSqlQuery &query)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return QSqlQuery();
+        }
+    }
+    return metaDataDB->exec(query);
+}
+
+bool CredentialsDB::transactionalExec(const QStringList &queryList)
+{
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
+            TRACE() << "Could not establish database connection.";
+            return false;
+        }
+    }
+    return metaDataDB->transactionalExec(queryList);
+}
+
+bool CredentialsDB::startTransaction()
+{
+    return metaDataDB->m_database.transaction();
+}
+
+bool CredentialsDB::commit()
+{
+    return metaDataDB->m_database.commit();
+}
+
+void CredentialsDB::rollback()
+{
+    if (!metaDataDB->m_database.rollback())
+        TRACE() << "Rollback failed, db data integrity could be compromised.";
+}
+
+bool CredentialsDB::connect()
+{
+    return metaDataDB->connect();
+}
+
+bool CredentialsDB::init()
+{
+    return metaDataDB->init();
+}
+
+QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
+{
+    return metaDataDB->configuration();
+}
+
+bool CredentialsDB::hasTableStructure() const
+{
+    return metaDataDB->hasTables();
 }
 
 QStringList CredentialsDB::queryList(const QString &query_str)
