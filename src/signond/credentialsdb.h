@@ -264,18 +264,6 @@ public:
     CredentialsDB(const QString &metaDataDbName);
     ~CredentialsDB();
 
-private:
-    QSqlQuery exec(const QString &query);
-    QSqlQuery exec(QSqlQuery &query);
-    bool transactionalExec(const QStringList &queryList);
-    bool connect();
-    QMap<QString, QString> sqlDBConfiguration() const;
-    bool hasTableStructure() const;
-    bool createTableStructure();
-    bool createSecretsDB();
-    bool initSecretsDB();
-
-public:
     bool init();
     /*!
      * This method will open the DB file containing the user secrets.

@@ -1267,57 +1267,9 @@ CredentialsDB::~CredentialsDB()
     SqlDatabase::removeDatabase();
 }
 
-QSqlQuery CredentialsDB::exec(const QString &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-QSqlQuery CredentialsDB::exec(QSqlQuery &query)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return QSqlQuery();
-        }
-    }
-    return metaDataDB->exec(query);
-}
-
-bool CredentialsDB::transactionalExec(const QStringList &queryList)
-{
-    if (!metaDataDB->connected()) {
-        if (!metaDataDB->connect()) {
-            TRACE() << "Could not establish database connection.";
-            return false;
-        }
-    }
-    return metaDataDB->transactionalExec(queryList);
-}
-
-bool CredentialsDB::connect()
-{
-    return metaDataDB->connect();
-}
-
 bool CredentialsDB::init()
 {
     return metaDataDB->init();
-}
-
-QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
-{
-    return metaDataDB->configuration();
-}
-
-bool CredentialsDB::hasTableStructure() const
-{
-    return metaDataDB->hasTables();
 }
 
 bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
