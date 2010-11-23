@@ -208,11 +208,11 @@ public:
     QStringList methods(const quint32 id,
                         const QString &securityToken = QString());
     quint32 methodId(const QString &method);
-    SignonIdentityInfo credentials(const quint32 id);
-    QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
+    SignonIdentityInfo identity(const quint32 id);
+    QList<SignonIdentityInfo> identities(const QMap<QString, QString> &filter);
 
-    quint32 updateCredentials(const SignonIdentityInfo &info);
-    bool removeCredentials(const quint32 id);
+    quint32 updateIdentity(const SignonIdentityInfo &info);
+    bool removeIdentity(const quint32 id);
 
     bool clear();
 

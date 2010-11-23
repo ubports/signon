@@ -512,7 +512,7 @@ quint32 MetaDataDB::methodId(const QString &method)
     return q.value(0).toUInt();
 }
 
-SignonIdentityInfo MetaDataDB::credentials(const quint32 id)
+SignonIdentityInfo MetaDataDB::identity(const quint32 id)
 {
     QString query_str;
 
@@ -574,7 +574,7 @@ SignonIdentityInfo MetaDataDB::credentials(const quint32 id)
                               caption, realms, security_tokens, type, refCount, validated);
 }
 
-QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &filter)
+QList<SignonIdentityInfo> MetaDataDB::identities(const QMap<QString, QString> &filter)
 {
     TRACE();
     Q_UNUSED(filter)
@@ -593,7 +593,7 @@ QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &
     }
 
     while (query.next()) {
-        SignonIdentityInfo info = credentials(query.value(0).toUInt());
+        SignonIdentityInfo info = identity(query.value(0).toUInt());
         if (errorOccurred())
             break;
         result << info;
@@ -603,7 +603,7 @@ QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &
     return result;
 }
 
-quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
+quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
 {
     if (!startTransaction()) {
         TRACE() << "Could not start transaction. Error inserting credentials.";
@@ -785,7 +785,7 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
     }
 }
 
-bool MetaDataDB::removeCredentials(const quint32 id)
+bool MetaDataDB::removeIdentity(const quint32 id)
 {
     TRACE();
 
@@ -1319,7 +1319,7 @@ bool CredentialsDB::checkPassword(const quint32 id,
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
 {
     INIT_ERROR();
-    SignonIdentityInfo info = metaDataDB->credentials(id);
+    SignonIdentityInfo info = metaDataDB->identity(id);
     if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
         QString password = secretsDB->password(info.id());
         info.setPassword(password);
@@ -1330,7 +1330,7 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPasswo
 QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
 {
     INIT_ERROR();
-    return metaDataDB->credentials(filter);
+    return metaDataDB->identities(filter);
 }
 
 quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
@@ -1345,7 +1345,7 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
                                          bool storeSecret)
 {
     INIT_ERROR();
-    quint32 id = metaDataDB->updateCredentials(info);
+    quint32 id = metaDataDB->updateIdentity(info);
     if (id == 0) return id;
 
     if (storeSecret && isSecretsDBOpen()) {
@@ -1364,7 +1364,7 @@ bool CredentialsDB::removeCredentials(const quint32 id)
     RETURN_IF_NO_SECRETS_DB(false);
 
     return secretsDB->removeCredentials(id) &&
-        metaDataDB->removeCredentials(id);
+        metaDataDB->removeIdentity(id);
 }
 
 bool CredentialsDB::clear()
