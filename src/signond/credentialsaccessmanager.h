@@ -255,6 +255,7 @@ private:
     bool openSecretsDB();
     bool closeSecretsDB();
     bool openMetaDataDB();
+    void closeMetaDataDB();
     bool fileSystemLoaded(bool checkForDatabase = false);
     bool fileSystemDeployed();
     bool fetchAccessCode(uint timeout = 30);
@@ -264,7 +265,6 @@ private:
      * is also mounted.
      */
     bool encryptionKeyCanMountFS(const QByteArray &key);
-    void closeDB();
 
 private:
     static CredentialsAccessManager *m_pInstance;

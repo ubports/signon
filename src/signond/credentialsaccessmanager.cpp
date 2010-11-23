@@ -264,6 +264,14 @@ bool CredentialsAccessManager::openMetaDataDB()
     return true;
 }
 
+void CredentialsAccessManager::closeMetaDataDB()
+{
+    if (m_pCredentialsDB) {
+        delete m_pCredentialsDB;
+        m_pCredentialsDB = NULL;
+    }
+}
+
 bool CredentialsAccessManager::openCredentialsSystem()
 {
     RETURN_IF_NOT_INITIALIZED(false);
@@ -297,7 +305,7 @@ bool CredentialsAccessManager::closeCredentialsSystem()
 
     if (!closeSecretsDB())
         return false;
-    closeDB();
+    closeMetaDataDB();
 
     m_error = NoError;
     m_systemOpened = false;
@@ -427,14 +435,6 @@ bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
         return true;
     } else {
         return false;
-    }
-}
-
-void CredentialsAccessManager::closeDB()
-{
-    if (m_pCredentialsDB) {
-        delete m_pCredentialsDB;
-        m_pCredentialsDB = NULL;
     }
 }
 
