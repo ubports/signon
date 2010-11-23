@@ -228,6 +228,7 @@ public:
 private:
     bool insertMethods(QMap<QString, QStringList> methods);
     quint32 updateCredentials(const SignonIdentityInfo &info);
+    bool updateRealms(quint32 id, const QStringList &realms, bool isNew);
 };
 
 class SecretsDB: public SqlDatabase

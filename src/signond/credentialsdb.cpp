@@ -619,27 +619,14 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
     /* Methods inserts */
     insertMethods(info.methods());
 
+    if (!updateRealms(id, info.realms(), info.isNew())) {
+        TRACE() << "Error in updating realms";
+        rollback();
+        return 0;
+    }
+
     QString queryStr;
     QSqlQuery insertQuery;
-    if (!info.isNew()) {
-        //remove realms list
-        queryStr = QString::fromLatin1(
-                    "DELETE FROM REALMS WHERE "
-                    "identity_id = '%1'")
-                    .arg(info.id());
-        insertQuery = exec(queryStr);
-    }
-    insertQuery.clear();
-
-     /* Realms insert */
-    foreach (QString realm, info.realms()) {
-        queryStr = QString::fromLatin1(
-                    "INSERT OR IGNORE INTO REALMS (identity_id, realm) "
-                    "VALUES ( '%1', '%2')")
-                    .arg(id).arg(realm);
-        insertQuery = exec(queryStr);
-    }
-    insertQuery.clear();
 
     /* Security tokens insert */
     foreach (QString token, info.accessControlList()) {
@@ -963,6 +950,31 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
     }
 
     return id;
+}
+
+bool MetaDataDB::updateRealms(quint32 id, const QStringList &realms, bool isNew)
+{
+    QString queryStr;
+
+    if (!isNew) {
+        //remove realms list
+        queryStr = QString::fromLatin1(
+            "DELETE FROM REALMS WHERE identity_id = '%1'")
+            .arg(id);
+        exec(queryStr);
+    }
+
+    /* Realms insert */
+    QSqlQuery q;
+    q.prepare(S("INSERT OR IGNORE INTO REALMS (identity_id, realm) "
+                "VALUES (:id, :realm)"));
+    foreach (QString realm, realms) {
+        q.bindValue(S(":id"), id);
+        q.bindValue(S(":realm"), realm);
+        exec(q);
+        if (errorOccurred()) return false;
+    }
+    return true;
 }
 
 bool SecretsDB::createTables()
