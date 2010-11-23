@@ -372,25 +372,10 @@ bool CredentialsAccessManager::openDB(const QString &databaseName)
 {
     m_pCredentialsDB = new CredentialsDB(databaseName);
 
-    if (!m_pCredentialsDB->connect()) {
-        TRACE() << SqlDatabase::errorInfo(m_pCredentialsDB->error(false));
+    if (!m_pCredentialsDB->init()) {
         m_error = CredentialsDbConnectionError;
         return false;
     }
-    TRACE() <<  "Database connection succeeded.";
-
-    if (!m_pCredentialsDB->hasTableStructure()) {
-        TRACE() << "Creating SQL table structure...";
-        if (!m_pCredentialsDB->createTableStructure()) {
-            TRACE() << SqlDatabase::errorInfo(m_pCredentialsDB->error());
-            m_error = CredentialsDbSqlError;
-            return false;
-        }
-    } else {
-        TRACE() << "SQL table structure already created...";
-    }
-
-    TRACE() << m_pCredentialsDB->sqlDBConfiguration();
 
     return true;
 }

@@ -249,6 +249,29 @@ bool CredentialsDB::connect()
     return metaDataDB->connect();
 }
 
+bool CredentialsDB::init()
+{
+    if (!connect()) {
+        TRACE() << SqlDatabase::errorInfo(error(false));
+        return false;
+    }
+    TRACE() <<  "Database connection succeeded.";
+
+    if (!hasTableStructure()) {
+        TRACE() << "Creating SQL table structure...";
+        if (!createTableStructure()) {
+            TRACE() << SqlDatabase::errorInfo(error());
+            return false;
+        }
+    } else {
+        TRACE() << "SQL table structure already created...";
+    }
+
+    TRACE() << sqlDBConfiguration();
+
+    return true;
+}
+
 void CredentialsDB::disconnect()
 {
     metaDataDB->disconnect();
