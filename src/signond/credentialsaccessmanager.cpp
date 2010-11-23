@@ -245,8 +245,11 @@ bool CredentialsAccessManager::openMetaDataDB()
     QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
     QDir storageDir = fInfo.dir();
     if (!storageDir.exists()) {
-        if (!storageDir.mkpath(storageDir.path()))
+        if (!storageDir.mkpath(storageDir.path())) {
             BLAME() << "Could not create storage directory!!!";
+            m_error = CredentialsDbSetupFailed;
+            false;
+        }
     }
 
     QString dbPath = storageDir.path()
