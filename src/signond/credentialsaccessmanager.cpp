@@ -280,6 +280,7 @@ bool CredentialsAccessManager::openCredentialsSystem()
          * that's why we return "true" anyways. */
     }
 
+    m_systemOpened = true;
     return true;
 }
 
