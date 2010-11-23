@@ -20,7 +20,10 @@ CONFIG += \
     build_all \
     link_pkgconfig
 
-PKGCONFIG += gq-gconf
+system(pkg-config --exists gq-gconf) {
+    PKGCONFIG += gq-gconf
+    DEFINES += HAVE_GCONF
+}
 
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti
