@@ -178,6 +178,20 @@ private:
     friend class CredentialsDB;
 };
 
+class MetaDataDB: public SqlDatabase
+{
+public:
+    MetaDataDB(const QString &name):
+        SqlDatabase(name) {}
+};
+
+class SecretsDB: public SqlDatabase
+{
+public:
+    SecretsDB(const QString &name):
+        SqlDatabase(name) {}
+};
+
 /*!
     @class CredentialsDB
     Manages the credentials I/O.
@@ -251,8 +265,8 @@ public:
     QStringList references(const quint32 id, const QString &token = QString());
 
 private:
-    SqlDatabase *secretsDB;
-    SqlDatabase *metaDataDB;
+    SecretsDB *secretsDB;
+    MetaDataDB *metaDataDB;
 };
 
 } // namespace SignonDaemonNS

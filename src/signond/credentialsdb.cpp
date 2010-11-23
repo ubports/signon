@@ -177,7 +177,7 @@ void SqlDatabase::removeDatabase()
 
 CredentialsDB::CredentialsDB(const QString &metaDataDbName):
     secretsDB(0),
-    metaDataDB(new SqlDatabase(metaDataDbName))
+    metaDataDB(new MetaDataDB(metaDataDbName))
 {
 }
 
@@ -685,7 +685,7 @@ bool CredentialsDB::insertMethods(QMap<QString, QStringList> methods)
 
 bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
 {
-    secretsDB = new SqlDatabase(secretsDbName);
+    secretsDB = new SecretsDB(secretsDbName);
 
     if (!initSecretsDB()) {
         TRACE() << SqlDatabase::errorInfo(lastError());
