@@ -76,6 +76,7 @@ public:
     bool init();
 
     virtual bool createTables() = 0;
+    virtual bool clear() = 0;
 
     /*!
         Creates the database connection.
@@ -243,6 +244,7 @@ public:
         SqlDatabase(name) {}
 
     bool createTables();
+    bool clear();
 };
 
 /*!

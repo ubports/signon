@@ -1207,6 +1207,17 @@ bool SecretsDB::createTables()
     return true;
 }
 
+bool SecretsDB::clear()
+{
+    TRACE();
+
+    QStringList clearCommands = QStringList()
+        << QLatin1String("DELETE FROM CREDENTIALS")
+        << QLatin1String("DELETE FROM STORE");
+
+    return transactionalExec(clearCommands);
+}
+
 /*    -------   CredentialsDB  implementation   -------    */
 
 CredentialsDB::CredentialsDB(const QString &metaDataDbName):
@@ -1307,7 +1318,16 @@ bool CredentialsDB::removeCredentials(const quint32 id)
 
 bool CredentialsDB::clear()
 {
-    return metaDataDB->clear();
+    TRACE();
+
+    /* We don't allow clearing the DB if the secrets DB is not available */
+    if (!isSecretsDBOpen()) {
+        TRACE() << "Secrets DB not opened; aborting CLEAR operation";
+        // TODO: set error
+        return false;
+    }
+
+    return secretsDB->clear() && metaDataDB->clear();
 }
 
 QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
