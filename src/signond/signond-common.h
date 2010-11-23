@@ -40,8 +40,8 @@
 #endif
 
 #ifdef SIGNOND_TRACE
-    #define TRACE() qDebug() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
 
     #define SIGNOND_TRACE_FILE QLatin1String("signon_trace_file")
     #define SIGNOND_TRACE_DIR  QLatin1String(".signon")
