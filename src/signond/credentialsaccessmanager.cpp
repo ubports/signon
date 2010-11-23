@@ -189,7 +189,7 @@ bool CredentialsAccessManager::openSecretsDB()
 
         if (!fileSystemDeployed()) {
             if (deployCredentialsSystem()) {
-                if (openDB(dbPath))
+                if (m_pCredentialsDB->openSecretsDB(dbPath))
                     m_systemOpened = true;
             }
             return m_systemOpened;
@@ -214,12 +214,13 @@ bool CredentialsAccessManager::openSecretsDB()
 
         dbPath = storageDir.path()
                  + QDir::separator()
-                 + m_CAMConfiguration.m_dbName;
+                 + m_CAMConfiguration.m_dbName
+                 + QLatin1String(".creds");
     }
 
     TRACE() << "Database name: [" << dbPath << "]";
 
-    if (openDB(dbPath)) {
+    if (m_pCredentialsDB->openSecretsDB(dbPath)) {
         m_systemOpened = true;
         m_error = NoError;
     }
