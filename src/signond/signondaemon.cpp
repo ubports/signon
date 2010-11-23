@@ -501,12 +501,10 @@ bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
             return false;
         }
 
-        //If encryption is not in use just init the storage here - unsecure
-        if (config.m_useEncryption == false) {
-            if (!m_pCAMManager->openCredentialsSystem()) {
-                qCritical("Signond: Cannot open CAM credentials system...");
-                return false;
-            }
+        // If encryption is in use this will just open the metadata DB
+        if (!m_pCAMManager->openCredentialsSystem()) {
+            qCritical("Signond: Cannot open CAM credentials system...");
+            return false;
         }
     } else {
         TRACE() << "Secure storage already initialized...";
