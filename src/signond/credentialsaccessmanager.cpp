@@ -228,12 +228,18 @@ bool CredentialsAccessManager::openSecretsDB()
     return m_systemOpened;
 }
 
+bool CredentialsAccessManager::openMetaDataDB()
+{
+    // TODO
+    return true;
+}
+
 bool CredentialsAccessManager::openCredentialsSystem()
 {
     RETURN_IF_NOT_INITIALIZED(false);
 
-    if (m_CAMConfiguration.m_useEncryption && !m_accessCodeFetched) {
-        m_error = AccessCodeNotReady;
+    if (!openMetaDataDB()) {
+        BLAME() << "Couldn't open metadata DB!";
         return false;
     }
 
