@@ -59,6 +59,7 @@ enum IdentityFlags {
  */
 class SqlDatabase
 {
+    friend class ::TestDatabase;
 public:
     /*!
         Constructs a SqlDatabase object using the given hostname.
@@ -202,6 +203,7 @@ protected:
 
 class MetaDataDB: public SqlDatabase
 {
+    friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
         SqlDatabase(name, QLatin1String("SSO-metadata")) {}
@@ -236,6 +238,7 @@ private:
 
 class SecretsDB: public SqlDatabase
 {
+    friend class ::TestDatabase;
 public:
     SecretsDB(const QString &name):
         SqlDatabase(name, QLatin1String("SSO-secrets")) {}

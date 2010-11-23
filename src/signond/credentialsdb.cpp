@@ -457,7 +457,7 @@ bool MetaDataDB::createTables()
 /*
 end of generated code
 */
-   foreach (QString createTable, createTableQuery) {
+    foreach (QString createTable, createTableQuery) {
         QSqlQuery query = exec(createTable);
         if (lastError().isValid()) {
             TRACE() << "Error occurred while creating the database.";
@@ -466,6 +466,8 @@ end of generated code
         query.clear();
         commit();
     }
+    TRACE() << "Creation successful";
+
     return true;
 }
 
@@ -1351,6 +1353,7 @@ bool CredentialsDB::checkPassword(const quint32 id,
 
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
 {
+    TRACE() << "id:" << id << "queryPassword:" << queryPassword;
     INIT_ERROR();
     SignonIdentityInfo info = metaDataDB->identity(id);
     if (queryPassword && !info.isNew() && isSecretsDBOpen()) {

@@ -60,6 +60,7 @@ namespace SignonDaemonNS {
 
         void setNew() { m_id = SIGNOND_NEW_IDENTITY; }
         bool isNew() const { return m_id == SIGNOND_NEW_IDENTITY; }
+        void setId(quint32 id) { m_id = id; }
         quint32 id() const { return m_id; }
         void setUserName(const QString &userName) { m_userName = userName; }
         QString userName() const { return m_userName; }
