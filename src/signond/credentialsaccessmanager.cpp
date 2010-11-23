@@ -297,6 +297,9 @@ bool CredentialsAccessManager::closeCredentialsSystem()
 {
     RETURN_IF_NOT_INITIALIZED(false);
 
+    if (!credentialsSystemOpened())
+        return true;
+
     if (!closeSecretsDB())
         return false;
     closeMetaDataDB();
