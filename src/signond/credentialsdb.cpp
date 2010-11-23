@@ -569,12 +569,12 @@ bool MetaDataDB::checkPassword(const quint32 id,
     return valid;
 }
 
-SignonIdentityInfo MetaDataDB::credentials(const quint32 id, bool queryPassword)
+SignonIdentityInfo MetaDataDB::credentials(const quint32 id)
 {
     QString query_str;
 
     query_str = QString::fromLatin1(
-            "SELECT caption, username, flags, type, password "
+            "SELECT caption, username, flags, type "
             "FROM credentials WHERE id = %1").arg(id);
     QSqlQuery query = exec(query_str);
 
@@ -589,9 +589,6 @@ SignonIdentityInfo MetaDataDB::credentials(const quint32 id, bool queryPassword)
     bool savePassword = flags & RememberPassword;
     bool validated =  flags & Validated;
     int type = query.value(3).toInt();
-    QString password;
-    if (savePassword && queryPassword)
-        password = query.value(4).toString();
 
     query.clear();
     QStringList realms = queryList(
@@ -630,7 +627,7 @@ SignonIdentityInfo MetaDataDB::credentials(const quint32 id, bool queryPassword)
     int refCount = 0;
     //TODO query for refcount
 
-    return SignonIdentityInfo(id, username, password, savePassword, methods,
+    return SignonIdentityInfo(id, username, QString(), savePassword, methods,
                               caption, realms, security_tokens, type, refCount, validated);
 }
 
@@ -653,7 +650,7 @@ QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &
     }
 
     while (query.next()) {
-        SignonIdentityInfo info = credentials(query.value(0).toUInt(), false);
+        SignonIdentityInfo info = credentials(query.value(0).toUInt());
         if (errorOccurred())
             break;
         result << info;
@@ -1221,6 +1218,21 @@ bool SecretsDB::clear()
     return transactionalExec(clearCommands);
 }
 
+QString SecretsDB::password(const quint32 id)
+{
+    TRACE();
+
+    QString queryStr = QString::fromLatin1("SELECT password FROM credentials "
+                                           "WHERE id = %1").arg(id);
+    QSqlQuery query = exec(queryStr);
+    if (!query.first()) {
+        TRACE() << "No result or invalid credentials query.";
+        return QString();
+    }
+
+    return query.value(0).toString();
+}
+
 /* Error monitor class */
 
 CredentialsDB::ErrorMonitor::ErrorMonitor(CredentialsDB *db)
@@ -1321,7 +1333,12 @@ bool CredentialsDB::checkPassword(const quint32 id,
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
 {
     INIT_ERROR();
-    return metaDataDB->credentials(id, queryPassword);
+    SignonIdentityInfo info = metaDataDB->credentials(id);
+    if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
+        QString password = secretsDB->password(info.id());
+        info.setPassword(password);
+    }
+    return info;
 }
 
 QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)

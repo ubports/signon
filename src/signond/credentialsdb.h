@@ -210,7 +210,7 @@ public:
     bool checkPassword(const quint32 id,
                        const QString &username,
                        const QString &password);
-    SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
+    SignonIdentityInfo credentials(const quint32 id);
     QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
 
     quint32 updateCredentials(const SignonIdentityInfo &info,
@@ -246,6 +246,8 @@ public:
 
     bool createTables();
     bool clear();
+
+    QString password(const quint32 id);
 };
 
 /*!
