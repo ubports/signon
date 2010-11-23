@@ -65,7 +65,8 @@ public:
         Constructs a SqlDatabase object using the given hostname.
         @param hostname
     */
-    SqlDatabase(const QString &hostname, const QString &connectionName);
+    SqlDatabase(const QString &hostname, const QString &connectionName,
+                int version);
 
     /*!
         Destroys the SqlDatabase object, closing the database connection.
@@ -79,6 +80,7 @@ public:
 
     virtual bool createTables() = 0;
     virtual bool clear() = 0;
+    virtual bool updateDB(int version);
 
     /*!
         Creates the database connection.
@@ -195,6 +197,7 @@ protected:
 
 private:
     QSqlError m_lastError;
+    int m_version;
 protected:
     QSqlDatabase m_database;
 
@@ -206,9 +209,10 @@ class MetaDataDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-metadata")) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata"), 1) {}
 
     bool createTables();
+    bool updateDB(int version);
 
     QStringList methods(const quint32 id,
                         const QString &securityToken = QString());
@@ -241,7 +245,7 @@ class SecretsDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     SecretsDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-secrets")) {}
+        SqlDatabase(name, QLatin1String("SSO-secrets"), 1) {}
 
     bool createTables();
     bool clear();

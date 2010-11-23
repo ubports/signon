@@ -39,9 +39,11 @@ namespace SignonDaemonNS {
 static const QString driver = QLatin1String("QSQLITE");
 
 SqlDatabase::SqlDatabase(const QString &databaseName,
-                         const QString &connectionName)
-        : m_lastError(QSqlError()),
-          m_database(QSqlDatabase::addDatabase(driver, connectionName))
+                         const QString &connectionName,
+                         int version):
+    m_lastError(QSqlError()),
+    m_version(version),
+    m_database(QSqlDatabase::addDatabase(driver, connectionName))
 
 {
     TRACE() << "Supported Drivers:" << this->supportedDrivers();
@@ -68,9 +70,22 @@ bool SqlDatabase::init()
         if (!createTables())
             return false;
     } else {
+        // check the DB version
+        QSqlQuery q = exec(S("PRAGMA user_version"));
+        int oldVersion = q.first() ? q.value(0).toInt() : 0;
+        if (oldVersion < m_version)
+            updateDB(oldVersion);
         TRACE() << "SQL table structure already created...";
     }
 
+    return true;
+}
+
+bool SqlDatabase::updateDB(int version)
+{
+    Q_UNUSED(version);
+    TRACE() << "Setting DB version:" << m_version;
+    exec(QString::fromLatin1("PRAGMA user_version = %1").arg(m_version));
     return true;
 }
 
@@ -469,6 +484,26 @@ end of generated code
     TRACE() << "Creation successful";
 
     return true;
+}
+
+bool MetaDataDB::updateDB(int version)
+{
+    if (version < 1) {
+        TRACE() << "Upgrading from version < 1 not supported. Clearing DB";
+        QString fileName = m_database.databaseName();
+        QString connectionName = m_database.connectionName();
+        m_database.close();
+        QFile::remove(fileName);
+        m_database = QSqlDatabase(QSqlDatabase::addDatabase(driver,
+                                                            connectionName));
+        m_database.setDatabaseName(fileName);
+        if (!connect())
+            return false;
+
+        if (!createTables())
+            return false;
+    }
+    return SqlDatabase::updateDB(version);
 }
 
 QStringList MetaDataDB::methods(const quint32 id, const QString &securityToken)
