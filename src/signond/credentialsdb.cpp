@@ -890,35 +890,18 @@ bool MetaDataDB::removeCredentials(const quint32 id)
 
 bool MetaDataDB::clear()
 {
-    exec(QLatin1String("DELETE FROM CREDENTIALS"));
-    if (errorOccurred())
-        return false;
+    TRACE();
 
-    exec(QLatin1String("DELETE FROM METHODS"));
-    if (errorOccurred())
-        return false;
+    QStringList clearCommands = QStringList()
+        << QLatin1String("DELETE FROM CREDENTIALS")
+        << QLatin1String("DELETE FROM METHODS")
+        << QLatin1String("DELETE FROM MECHANISMS")
+        << QLatin1String("DELETE FROM ACL")
+        << QLatin1String("DELETE FROM REALMS")
+        << QLatin1String("DELETE FROM TOKENS")
+        << QLatin1String("DELETE FROM STORE");
 
-    exec(QLatin1String("DELETE FROM MECHANISMS"));
-    if (errorOccurred())
-        return false;
-
-    exec(QLatin1String("DELETE FROM ACL"));
-    if (errorOccurred())
-        return false;
-
-    exec(QLatin1String("DELETE FROM REALMS"));
-    if (errorOccurred())
-        return false;
-
-    exec(QLatin1String("DELETE FROM TOKENS"));
-    if (errorOccurred())
-        return false;
-
-    exec(QLatin1String("DELETE FROM STORE"));
-    if (errorOccurred())
-        return false;
-
-    return true;
+    return transactionalExec(clearCommands);
 }
 
 QVariantMap MetaDataDB::loadData(const quint32 id, const QString &method)
