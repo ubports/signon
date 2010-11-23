@@ -25,6 +25,8 @@
 #include "credentialsdb.h"
 #include "signond-common.h"
 
+#define INIT_ERROR() ErrorMonitor errorMonitor(this)
+
 namespace SignonDaemonNS {
 
 static const QString driver = QLatin1String("QSQLITE");
@@ -1218,6 +1220,33 @@ bool SecretsDB::clear()
     return transactionalExec(clearCommands);
 }
 
+/* Error monitor class */
+
+CredentialsDB::ErrorMonitor::ErrorMonitor(CredentialsDB *db)
+{
+    db->_lastError.setType(QSqlError::NoError);
+    db->metaDataDB->clearError();
+    if (db->secretsDB != 0)
+        db->secretsDB->clearError();
+    _db = db;
+}
+
+CredentialsDB::ErrorMonitor::~ErrorMonitor()
+{
+    /* If there's an error set on the CredentialsDB, just let it be and return.
+     * If not, take the error from the SqlDatabase objects, if any.
+     */
+    if (_db->_lastError.isValid())
+        return;
+
+    if (_db->secretsDB != 0 && _db->secretsDB->errorOccurred()) {
+        _db->_lastError = _db->secretsDB->lastError();
+        return;
+    }
+
+    _db->_lastError = _db->metaDataDB->lastError();
+}
+
 /*    -------   CredentialsDB  implementation   -------    */
 
 CredentialsDB::CredentialsDB(const QString &metaDataDbName):
@@ -1268,16 +1297,12 @@ void CredentialsDB::closeSecretsDB()
 
 CredentialsDBError CredentialsDB::lastError() const
 {
-    if (secretsDB != 0) {
-        if (secretsDB->lastError().isValid())
-            return secretsDB->lastError();
-    }
-
-    return metaDataDB->lastError();
+    return _lastError;
 }
 
 QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
 {
+    INIT_ERROR();
     return metaDataDB->methods(id, securityToken);
 }
 
@@ -1285,16 +1310,19 @@ bool CredentialsDB::checkPassword(const quint32 id,
                                   const QString &username,
                                   const QString &password)
 {
+    INIT_ERROR();
     return metaDataDB->checkPassword(id, username, password);
 }
 
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
 {
+    INIT_ERROR();
     return metaDataDB->credentials(id, queryPassword);
 }
 
 QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
 {
+    INIT_ERROR();
     return metaDataDB->credentials(filter);
 }
 
@@ -1308,11 +1336,13 @@ quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool st
 
 quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
 {
+    INIT_ERROR();
     return metaDataDB->updateCredentials(info, storeSecret);
 }
 
 bool CredentialsDB::removeCredentials(const quint32 id)
 {
+    INIT_ERROR();
     return metaDataDB->removeCredentials(id);
 }
 
@@ -1320,10 +1350,14 @@ bool CredentialsDB::clear()
 {
     TRACE();
 
+    INIT_ERROR();
+
     /* We don't allow clearing the DB if the secrets DB is not available */
     if (!isSecretsDBOpen()) {
         TRACE() << "Secrets DB not opened; aborting CLEAR operation";
-        // TODO: set error
+        _lastError = QSqlError(QLatin1String("Secrets DB not opened"),
+                               QLatin1String("Secrets DB not opened"),
+                               QSqlError::ConnectionError);
         return false;
     }
 
@@ -1332,21 +1366,25 @@ bool CredentialsDB::clear()
 
 QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
 {
+    INIT_ERROR();
     return metaDataDB->loadData(id, method);
 }
 
 bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
 {
+    INIT_ERROR();
     return metaDataDB->storeData(id, method, data);
 }
 
 bool CredentialsDB::removeData(const quint32 id, const QString &method)
 {
+    INIT_ERROR();
     return metaDataDB->removeData(id, method);
 }
 
 QStringList CredentialsDB::accessControlList(const quint32 identityId)
 {
+    INIT_ERROR();
     return metaDataDB->accessControlList(identityId);
 }
 
@@ -1362,16 +1400,19 @@ QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
 
 bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
 {
+    INIT_ERROR();
     return metaDataDB->addReference(id, token, reference);
 }
 
 bool CredentialsDB::removeReference(const quint32 id, const QString &token, const QString &reference)
 {
+    INIT_ERROR();
     return metaDataDB->removeReference(id, token, reference);
 }
 
 QStringList CredentialsDB::references(const quint32 id, const QString &token)
 {
+    INIT_ERROR();
     return metaDataDB->references(id, token);
 }
 

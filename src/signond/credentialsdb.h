@@ -175,6 +175,7 @@ public:
     */
     QSqlError lastError() const;
     bool errorOccurred() const { return lastError().isValid(); };
+    void clearError() { m_lastError.setType(QSqlError::NoError); }
 
     /*!
         Serializes a SQL error into a string.
@@ -262,6 +263,20 @@ class CredentialsDB : public QObject
 
     friend class ::TestDatabase;
 
+    class ErrorMonitor
+    {
+    public:
+        /* The constructor clears the errors in CredentialsDB, MetaDataDB and
+         * SecretsDB. */
+        ErrorMonitor(CredentialsDB *db);
+        /* The destructor collects the errors and sets
+         * CredentialsDB::_lastError to the appropriate value. */
+        ~ErrorMonitor();
+    private:
+        CredentialsDB *_db;
+    };
+    friend class ErrorMonitor;
+
 public:
     CredentialsDB(const QString &metaDataDbName);
     ~CredentialsDB();
@@ -304,6 +319,7 @@ public:
 private:
     SecretsDB *secretsDB;
     MetaDataDB *metaDataDB;
+    CredentialsDBError _lastError;
 };
 
 } // namespace SignonDaemonNS
