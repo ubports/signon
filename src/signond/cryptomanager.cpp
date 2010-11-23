@@ -122,6 +122,11 @@ namespace SignonDaemonNS {
             return false;
         }
 
+        if (m_accessCode.isEmpty()) {
+            TRACE() << "No access code set";
+            return false;
+        }
+
         if (!CryptsetupHandler::loadDmMod()) {
             BLAME() << "Could not load `dm_mod`!";
             return false;
