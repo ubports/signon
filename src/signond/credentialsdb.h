@@ -196,7 +196,7 @@ class CredentialsDB : public QObject
     friend class CredentialsAccessManager;
     friend class ::TestDatabase;
 
-    CredentialsDB(const QString &dbName);
+    CredentialsDB(const QString &metaDataDbName);
     ~CredentialsDB();
 
 private:
@@ -242,7 +242,8 @@ public:
     QStringList references(const quint32 id, const QString &token = QString());
 
 private:
-    SqlDatabase *m_pSqlDatabase;
+    SqlDatabase *secretsDB;
+    SqlDatabase *metaDataDB;
 };
 
 } // namespace SignonDaemonNS

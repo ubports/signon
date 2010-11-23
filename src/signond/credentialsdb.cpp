@@ -179,86 +179,89 @@ void SqlDatabase::removeDatabase()
 
 /*    -------   CredentialsDB  implementation   -------    */
 
-CredentialsDB::CredentialsDB(const QString &dbName)
-    : m_pSqlDatabase(new SqlDatabase(dbName))
+CredentialsDB::CredentialsDB(const QString &metaDataDbName):
+    secretsDB(0),
+    metaDataDB(new SqlDatabase(metaDataDbName))
 {
 }
 
 CredentialsDB::~CredentialsDB()
 {
-    if (m_pSqlDatabase)
-        delete m_pSqlDatabase;
+    if (secretsDB)
+        delete secretsDB;
+    if (metaDataDB)
+        delete metaDataDB;
 
     SqlDatabase::removeDatabase();
 }
 
 QSqlQuery CredentialsDB::exec(const QString &query)
 {
-    if (!m_pSqlDatabase->connected()) {
-        if (!m_pSqlDatabase->connect()) {
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
             TRACE() << "Could not establish database connection.";
             return QSqlQuery();
         }
     }
-    return m_pSqlDatabase->exec(query);
+    return metaDataDB->exec(query);
 }
 
 QSqlQuery CredentialsDB::exec(QSqlQuery &query)
 {
-    if (!m_pSqlDatabase->connected()) {
-        if (!m_pSqlDatabase->connect()) {
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
             TRACE() << "Could not establish database connection.";
             return QSqlQuery();
         }
     }
-    return m_pSqlDatabase->exec(query);
+    return metaDataDB->exec(query);
 }
 
 bool CredentialsDB::transactionalExec(const QStringList &queryList)
 {
-    if (!m_pSqlDatabase->connected()) {
-        if (!m_pSqlDatabase->connect()) {
+    if (!metaDataDB->connected()) {
+        if (!metaDataDB->connect()) {
             TRACE() << "Could not establish database connection.";
             return false;
         }
     }
-    return m_pSqlDatabase->transactionalExec(queryList);
+    return metaDataDB->transactionalExec(queryList);
 }
 
 bool CredentialsDB::startTransaction()
 {
-    return m_pSqlDatabase->m_database.transaction();
+    return metaDataDB->m_database.transaction();
 }
 
 bool CredentialsDB::commit()
 {
-    return m_pSqlDatabase->m_database.commit();
+    return metaDataDB->m_database.commit();
 }
 
 void CredentialsDB::rollback()
 {
-    if (!m_pSqlDatabase->m_database.rollback())
+    if (!metaDataDB->m_database.rollback())
         TRACE() << "Rollback failed, db data integrity could be compromised.";
 }
 
 bool CredentialsDB::connect()
 {
-    return m_pSqlDatabase->connect();
+    return metaDataDB->connect();
 }
 
 void CredentialsDB::disconnect()
 {
-    m_pSqlDatabase->disconnect();
+    metaDataDB->disconnect();
 }
 
 QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
 {
-    return m_pSqlDatabase->configuration();
+    return metaDataDB->configuration();
 }
 
 bool CredentialsDB::hasTableStructure() const
 {
-    return m_pSqlDatabase->hasTables();
+    return metaDataDB->hasTables();
 }
 
 bool CredentialsDB::createTableStructure()
@@ -613,7 +616,7 @@ bool CredentialsDB::insertMethods(QMap<QString, QStringList> methods)
 
 CredentialsDBError CredentialsDB::error(bool queryError, bool clearError) const
 {
-    return m_pSqlDatabase->lastError(queryError, clearError);
+    return metaDataDB->lastError(queryError, clearError);
 }
 
 QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
@@ -1081,7 +1084,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVa
             /* Key/value insert/replace/delete */
             if (it.value().isValid() && !it.value().isNull()) {
                 TRACE() << "insert";
-                query = QSqlQuery(QString(), m_pSqlDatabase->m_database);
+                query = QSqlQuery(QString(), metaDataDB->m_database);
                 query.prepare(QString::fromLatin1(
                     "INSERT OR REPLACE INTO STORE "
                     "(identity_id, method_id, key, value) "
@@ -1093,7 +1096,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVa
                 exec(query);
                 if (errorOccurred()) {
                     allOk = false;
-                    TRACE() << m_pSqlDatabase->errorInfo(query.lastError());
+                    TRACE() << metaDataDB->errorInfo(query.lastError());
                 }
             } else {
                 TRACE() << "remove";
