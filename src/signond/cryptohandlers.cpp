@@ -139,7 +139,7 @@ namespace SignonDaemonNS {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
                             mkfsApp,
-                            QStringList() << QLatin1String("-j") << fileName);
+                            QStringList() << fileName);
     }
 
 
