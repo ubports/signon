@@ -27,6 +27,8 @@
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
 
+#define S(s) QLatin1String(s)
+
 namespace SignonDaemonNS {
 
 static const QString driver = QLatin1String("QSQLITE");
@@ -640,7 +642,7 @@ QList<SignonIdentityInfo> MetaDataDB::credentials(const QMap<QString, QString> &
     return result;
 }
 
-quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
+quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
 {
     if (!startTransaction()) {
         TRACE() << "Could not start transaction. Error inserting credentials.";
@@ -648,10 +650,6 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
     }
     quint32 id = 0;
     QSqlQuery insertQuery;
-    /* Credentials insert */
-    QString password;
-    if (storeSecret && info.storePassword())
-        password = info.password();
 
     QString queryStr;
     int flags = 0;
@@ -663,9 +661,9 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
          id = info.id() ;
         queryStr = QString::fromLatin1(
             "UPDATE CREDENTIALS SET caption = '%1', username = '%2', "
-            "password = '%3', flags = '%4', "
-            "type = '%5' WHERE id = '%6'")
-            .arg(info.caption()).arg(info.userName()).arg(password)
+            "flags = '%3', "
+            "type = '%4' WHERE id = '%5'")
+            .arg(info.caption()).arg(info.userName())
             .arg(flags).arg(info.type())
             .arg(info.id());
 
@@ -681,9 +679,9 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
         TRACE() << "INSERT:" << info.id();
         queryStr = QString::fromLatin1(
             "INSERT INTO CREDENTIALS "
-            "(caption, username, password, flags, type) "
-            "VALUES('%1', '%2', '%3', '%4', '%5')")
-            .arg(info.caption()).arg(info.userName()).arg(password)
+            "(caption, username, flags, type) "
+            "VALUES('%1', '%2', '%3', '%4')")
+            .arg(info.caption()).arg(info.userName())
             .arg(flags).arg(info.type());
 
         insertQuery = exec(queryStr);
@@ -1198,6 +1196,46 @@ bool SecretsDB::clear()
     return transactionalExec(clearCommands);
 }
 
+bool SecretsDB::updateCredentials(const quint32 id,
+                                  const SignonIdentityInfo &info)
+{
+    if (!startTransaction()) {
+        TRACE() << "Could not start transaction. Error inserting credentials.";
+        return false;
+    }
+    QSqlQuery query;
+    /* Credentials insert */
+    QString password;
+    if (info.storePassword())
+        password = info.password();
+
+    if (!info.isNew()) {
+        TRACE() << "UPDATE:" << id;
+        query.prepare(S("UPDATE CREDENTIALS SET username = :username, "
+                        "password = :password "
+                        "WHERE id = :id"));
+
+     } else {
+        TRACE() << "INSERT:" << id;
+        query.prepare(S("INSERT INTO CREDENTIALS "
+                        "(id, username, password) "
+                        "VALUES(:id, :username, :password)"));
+    }
+
+    query.bindValue(S(":id"), id);
+    query.bindValue(S(":username"), info.userName());
+    query.bindValue(S(":password"), password);
+
+    exec(query);
+
+    if (errorOccurred()) {
+        rollback();
+        TRACE() << "Error occurred while storing crendentials";
+        return false;
+    }
+    return commit();
+}
+
 QString SecretsDB::password(const quint32 id)
 {
     TRACE();
@@ -1361,10 +1399,18 @@ quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool st
     return updateCredentials(newInfo, storeSecret);
 }
 
-quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info, bool storeSecret)
+quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
+                                         bool storeSecret)
 {
     INIT_ERROR();
-    return metaDataDB->updateCredentials(info, storeSecret);
+    quint32 id = metaDataDB->updateCredentials(info);
+    if (id == 0) return id;
+
+    if (storeSecret && isSecretsDBOpen()) {
+        secretsDB->updateCredentials(id, info);
+    }
+
+    return id;
 }
 
 bool CredentialsDB::removeCredentials(const quint32 id)
