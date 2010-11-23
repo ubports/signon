@@ -177,7 +177,7 @@ void CredentialsAccessManager::addKeyManager(
     keyManagers.append(keyManager);
 }
 
-bool CredentialsAccessManager::openSecretsDB(bool mountFileSystem)
+bool CredentialsAccessManager::openSecretsDB()
 {
     //todo remove this variable after LUKS implementation becomes stable.
     QString dbPath;
@@ -187,24 +187,22 @@ bool CredentialsAccessManager::openSecretsDB(bool mountFileSystem)
             + QDir::separator()
             + m_CAMConfiguration.m_dbName;
 
-        if (mountFileSystem) {
-            if (!fileSystemDeployed()) {
-                if (deployCredentialsSystem()) {
-                    if (openDB(dbPath))
-                        m_systemOpened = true;
-                }
-                return m_systemOpened;
+        if (!fileSystemDeployed()) {
+            if (deployCredentialsSystem()) {
+                if (openDB(dbPath))
+                    m_systemOpened = true;
             }
+            return m_systemOpened;
+        }
 
-            if (fileSystemLoaded()) {
-                m_error = CredentialsDbAlreadyDeployed;
-                return false;
-            }
+        if (fileSystemLoaded()) {
+            m_error = CredentialsDbAlreadyDeployed;
+            return false;
+        }
 
-            if (!m_pCryptoFileSystemManager->mountFileSystem()) {
-                m_error = CredentialsDbMountFailed;
-                return false;
-            }
+        if (!m_pCryptoFileSystemManager->mountFileSystem()) {
+            m_error = CredentialsDbMountFailed;
+            return false;
         }
     } else {
         QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
@@ -246,14 +244,14 @@ bool CredentialsAccessManager::openCredentialsSystem()
                     m_CAMConfiguration.m_encryptionPassphrase);
             m_accessCodeFetched = true;
 
-            if (!openSecretsDB(true)) {
+            if (!openSecretsDB()) {
                 BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
             }
         }
     }
 
 
-    return openSecretsDB(true);
+    return openSecretsDB();
 }
 
 bool CredentialsAccessManager::closeCredentialsSystem()
@@ -397,7 +395,7 @@ bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
             m_pCryptoFileSystemManager->setEncryptionKey(key);
 
             if (!credentialsSystemOpened()) {
-                if (openSecretsDB(false)) {
+                if (openSecretsDB()) {
                     TRACE() << "Credentials system opened.";
                 } else {
                     BLAME() << "Failed to open credentials system.";
@@ -525,7 +523,7 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
          * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);
         m_accessCodeFetched = true;
-        if (openSecretsDB(true)) {
+        if (openSecretsDB()) {
             authorizedKeys << key;
         } else {
             BLAME() << "Couldn't create the secure FS";
