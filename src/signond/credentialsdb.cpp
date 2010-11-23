@@ -848,43 +848,19 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
 
 bool MetaDataDB::removeCredentials(const quint32 id)
 {
-    if (!startTransaction()) {
-        TRACE() << "Could not start database transaction.";
-        return false;
-    }
+    TRACE();
 
-    exec(QString::fromLatin1(
-            "DELETE FROM CREDENTIALS WHERE id = %1").arg(id));
-    if (errorOccurred()) {
-        rollback();
-        return false;
-    }
+    QStringList queries = QStringList()
+        << QString::fromLatin1(
+            "DELETE FROM CREDENTIALS WHERE id = %1").arg(id)
+        << QString::fromLatin1(
+            "DELETE FROM ACL WHERE identity_id = %1").arg(id)
+        << QString::fromLatin1(
+            "DELETE FROM REALMS WHERE identity_id = %1").arg(id)
+        << QString::fromLatin1(
+            "DELETE FROM STORE WHERE identity_id = %1").arg(id);
 
-    exec(QString::fromLatin1(
-            "DELETE FROM ACL WHERE identity_id = %1").arg(id));
-    if (errorOccurred()) {
-        rollback();
-        return false;
-    }
-
-    exec(QString::fromLatin1(
-            "DELETE FROM REALMS WHERE identity_id = %1").arg(id));
-    if (errorOccurred()) {
-        rollback();
-        return false;
-    }
-
-    exec(QString::fromLatin1(
-            "DELETE FROM STORE WHERE identity_id = %1").arg(id));
-    if (errorOccurred()) {
-        rollback();
-        return false;
-    }
-
-    if (!commit())
-        return false;
-
-    return true;
+    return transactionalExec(queries);
 }
 
 bool MetaDataDB::clear()
