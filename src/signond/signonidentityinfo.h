@@ -27,6 +27,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <signond/signoncommon.h>
+
 namespace SignonDaemonNS {
 
     typedef QString MethodName;
@@ -56,6 +58,21 @@ namespace SignonDaemonNS {
         const QString serialize();
         bool operator== (const SignonIdentityInfo &other) const;
 
+        void setNew() { m_id = SIGNOND_NEW_IDENTITY; }
+        bool isNew() const { return m_id == SIGNOND_NEW_IDENTITY; }
+        quint32 id() const { return m_id; }
+        QString userName() const { return m_userName; }
+        void setPassword(const QString &password) { m_password = password; }
+        QString password() const { return m_password; }
+        bool storePassword() const { return m_storePassword; }
+        QString caption() const { return m_caption; }
+        QStringList realms() const { return m_realms; }
+        QMap<MethodName, MechanismsList> methods() const { return m_methods; }
+        QStringList accessControlList() const { return m_accessControlList; }
+        void setValidated(bool validated) { m_validated = validated; }
+        bool validated() const { return m_validated; }
+        int type() const { return m_type; }
+    private:
         quint32 m_id;
         QString m_userName;
         QString m_password;

@@ -605,7 +605,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
     bool ok;
     SignonIdentityInfo info = identity->queryInfo(ok);
 
-    if (info.m_id == 0)
+    if (info.isNew())
     {
         QDBusMessage errReply = message().createErrorReply(
                                                         SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,

@@ -673,24 +673,24 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
     QSqlQuery insertQuery;
     /* Credentials insert */
     QString password;
-    if (storeSecret && info.m_storePassword)
-        password = info.m_password;
+    if (storeSecret && info.storePassword())
+        password = info.password();
 
     QString queryStr;
     int flags = 0;
-    if (info.m_validated) flags |= Validated;
-    if (info.m_storePassword) flags |= RememberPassword;
+    if (info.validated()) flags |= Validated;
+    if (info.storePassword()) flags |= RememberPassword;
 
-    if (info.m_id != SIGNOND_NEW_IDENTITY) {
-        TRACE() << "UPDATE:" << info.m_id ;
-         id = info.m_id ;
+    if (!info.isNew()) {
+        TRACE() << "UPDATE:" << info.id() ;
+         id = info.id() ;
         queryStr = QString::fromLatin1(
             "UPDATE CREDENTIALS SET caption = '%1', username = '%2', "
             "password = '%3', flags = '%4', "
             "type = '%5' WHERE id = '%6'")
-            .arg(info.m_caption).arg(info.m_userName).arg(password)
-            .arg(flags).arg(info.m_type)
-            .arg(info.m_id);
+            .arg(info.caption()).arg(info.userName()).arg(password)
+            .arg(flags).arg(info.type())
+            .arg(info.id());
 
         insertQuery = exec(queryStr);
         insertQuery.clear();
@@ -701,13 +701,13 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
         }
 
      } else {
-        TRACE() << "INSERT:" << info.m_id;
+        TRACE() << "INSERT:" << info.id();
         queryStr = QString::fromLatin1(
             "INSERT INTO CREDENTIALS "
             "(caption, username, password, flags, type) "
             "VALUES('%1', '%2', '%3', '%4', '%5')")
-            .arg(info.m_caption).arg(info.m_userName).arg(password)
-            .arg(flags).arg(info.m_type);
+            .arg(info.caption()).arg(info.userName()).arg(password)
+            .arg(flags).arg(info.type());
 
         insertQuery = exec(queryStr);
         if (errorOccurred()) {
@@ -728,20 +728,20 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
     insertQuery.clear();
 
     /* Methods inserts */
-    insertMethods(info.m_methods);
+    insertMethods(info.methods());
 
-    if (info.m_id != SIGNOND_NEW_IDENTITY) {
+    if (!info.isNew()) {
         //remove realms list
         queryStr = QString::fromLatin1(
                     "DELETE FROM REALMS WHERE "
                     "identity_id = '%1'")
-                    .arg(info.m_id);
+                    .arg(info.id());
         insertQuery = exec(queryStr);
     }
     insertQuery.clear();
 
      /* Realms insert */
-    foreach (QString realm, info.m_realms) {
+    foreach (QString realm, info.realms()) {
         queryStr = QString::fromLatin1(
                     "INSERT OR IGNORE INTO REALMS (identity_id, realm) "
                     "VALUES ( '%1', '%2')")
@@ -751,7 +751,7 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
     insertQuery.clear();
 
     /* Security tokens insert */
-    foreach (QString token, info.m_accessControlList) {
+    foreach (QString token, info.accessControlList()) {
         queryStr = QString::fromLatin1(
                     "INSERT OR IGNORE INTO TOKENS (token) "
                     "VALUES ( '%1' )")
@@ -760,22 +760,22 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
     }
     insertQuery.clear();
 
-    if (info.m_id != SIGNOND_NEW_IDENTITY) {
+    if (!info.isNew()) {
         //remove acl
         queryStr = QString::fromLatin1(
                     "DELETE FROM ACL WHERE "
                     "identity_id = '%1'")
-                    .arg(info.m_id);
+                    .arg(info.id());
         insertQuery = exec(queryStr);
     }
     insertQuery.clear();
 
     /* ACL insert, this will do basically identity level ACL */
-    QMapIterator<QString, QStringList> it(info.m_methods);
+    QMapIterator<QString, QStringList> it(info.methods());
     while (it.hasNext()) {
         it.next();
-        if (!info.m_accessControlList.isEmpty()) {
-            foreach (QString token, info.m_accessControlList) {
+        if (!info.accessControlList().isEmpty()) {
+            foreach (QString token, info.accessControlList()) {
                 foreach (QString mech, it.value()) {
                     queryStr = QString::fromLatin1(
                         "INSERT OR REPLACE INTO ACL "
@@ -827,8 +827,8 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info, bool store
         }
     }
     //insert acl in case where methods are missing
-    if (info.m_methods.isEmpty()) {
-        foreach (QString token, info.m_accessControlList) {
+    if (info.methods().isEmpty()) {
+        foreach (QString token, info.accessControlList()) {
             queryStr = QString::fromLatin1(
                     "INSERT OR REPLACE INTO ACL "
                     "(identity_id, token_id) "
@@ -1333,8 +1333,8 @@ QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString
 quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
 {
     SignonIdentityInfo newInfo = info;
-    if (info.m_id != SIGNOND_NEW_IDENTITY)
-        newInfo.m_id = SIGNOND_NEW_IDENTITY;
+    if (!info.isNew())
+        newInfo.setNew();
     return updateCredentials(newInfo, storeSecret);
 }
 

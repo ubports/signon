@@ -224,7 +224,7 @@ namespace SignonDaemonNS {
             SIGNOND_BUS.send(errReply);
             return SIGNOND_NEW_IDENTITY;
         }
-        if (!info.m_storePassword) {
+        if (!info.storePassword()) {
             BLAME() << "Password cannot be stored.";
             QDBusMessage errReply = message().createErrorReply(
                                                 SIGNOND_STORE_FAILED_ERR_NAME,
@@ -240,9 +240,9 @@ namespace SignonDaemonNS {
         //create ui request to ask password
         QVariantMap uiRequest;
         uiRequest.insert(SSOUI_KEY_QUERYPASSWORD, true);
-        uiRequest.insert(SSOUI_KEY_USERNAME, info.m_userName);
+        uiRequest.insert(SSOUI_KEY_USERNAME, info.userName());
         uiRequest.insert(SSOUI_KEY_MESSAGE, displayMessage);
-        uiRequest.insert(SSOUI_KEY_CAPTION, info.m_caption);
+        uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
 
         TRACE() << "Waiting for reply from signon-ui";
         QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(uiRequest),
@@ -274,7 +274,7 @@ namespace SignonDaemonNS {
             return QList<QVariant>();
         }
 
-        if (info.m_id == 0) {
+        if (info.isNew()) {
             TRACE();
             QDBusMessage errReply = message().createErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
                                                                SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
@@ -320,7 +320,7 @@ namespace SignonDaemonNS {
         }
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        bool ret = db->checkPassword(m_pInfo->m_id, m_pInfo->m_userName, secret);
+        bool ret = db->checkPassword(m_pInfo->id(), m_pInfo->userName(), secret);
 
         keepInUse();
         return ret;
@@ -429,7 +429,7 @@ namespace SignonDaemonNS {
             return SIGNOND_NEW_IDENTITY;
         }
 
-        bool newIdentity = (info.m_id == SIGNOND_NEW_IDENTITY);
+        bool newIdentity = info.isNew();
 
         if (newIdentity)
             m_id = db->insertCredentials(info, storeSecret);
@@ -509,7 +509,7 @@ namespace SignonDaemonNS {
 
             //store new password
             if (m_pInfo) {
-                m_pInfo->m_password = resultParameters[SSOUI_KEY_PASSWORD].toString();
+                m_pInfo->setPassword(resultParameters[SSOUI_KEY_PASSWORD].toString());
 
                 quint32 ret = db->updateCredentials(*m_pInfo, true);
                 delete m_pInfo;
