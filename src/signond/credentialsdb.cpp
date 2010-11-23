@@ -140,8 +140,7 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
         TRACE() << QString::fromLatin1("TRANSACT Query [%1]").arg(queryStr);
         QSqlQuery query = exec(queryStr);
 
-        if (lastError().isValid()) {
-            TRACE() << "Error occurred while executing query in transaction." << queryStr;
+        if (errorOccurred()) {
             allOk = false;
             break;
         }
