@@ -256,7 +256,6 @@ private:
     bool closeSecretsDB();
     bool openMetaDataDB();
     void closeMetaDataDB();
-    bool fileSystemLoaded(bool checkForDatabase = false);
     bool fileSystemDeployed();
     bool fetchAccessCode(uint timeout = 30);
 

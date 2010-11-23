@@ -188,21 +188,15 @@ bool CredentialsAccessManager::openSecretsDB()
             + m_CAMConfiguration.m_dbName;
 
         if (!fileSystemDeployed()) {
-            if (deployCredentialsSystem()) {
-                if (m_pCredentialsDB->openSecretsDB(dbPath))
-                    m_systemOpened = true;
+            if (!deployCredentialsSystem())
+                return false;
+        }
+
+        if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
+            if (!m_pCryptoFileSystemManager->mountFileSystem()) {
+                m_error = CredentialsDbMountFailed;
+                return false;
             }
-            return m_systemOpened;
-        }
-
-        if (fileSystemLoaded()) {
-            m_error = CredentialsDbAlreadyDeployed;
-            return false;
-        }
-
-        if (!m_pCryptoFileSystemManager->mountFileSystem()) {
-            m_error = CredentialsDbMountFailed;
-            return false;
         }
     } else {
         QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
@@ -380,18 +374,6 @@ bool CredentialsAccessManager::deployCredentialsSystem()
             return false;
         }
     }
-    return true;
-}
-
-bool CredentialsAccessManager::fileSystemLoaded(bool checkForDatabase)
-{
-    if (!m_pCryptoFileSystemManager->fileSystemMounted())
-        return false;
-
-    if (checkForDatabase
-        && !m_pCryptoFileSystemManager->fileSystemContainsFile(m_CAMConfiguration.m_dbName))
-        return false;
-
     return true;
 }
 
