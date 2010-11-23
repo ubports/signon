@@ -281,22 +281,13 @@ bool CredentialsAccessManager::openCredentialsSystem()
         return false;
     }
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        //If passphrase exists (device lock code) open creds system - sync
-        if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
-
-            m_pCryptoFileSystemManager->setEncryptionKey(
-                    m_CAMConfiguration.m_encryptionPassphrase);
-            m_accessCodeFetched = true;
-
-            if (!openSecretsDB()) {
-                BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
-            }
-        }
+    if (!openSecretsDB()) {
+        BLAME() << "Failed to open secrets DB.";
+        /* Even if the secrets DB couldn't be opened, signond is still usable:
+         * that's why we return "true" anyways. */
     }
 
-
-    return openSecretsDB();
+    return true;
 }
 
 bool CredentialsAccessManager::closeCredentialsSystem()
