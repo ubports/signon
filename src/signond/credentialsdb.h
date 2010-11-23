@@ -207,9 +207,6 @@ public:
 
     QStringList methods(const quint32 id,
                         const QString &securityToken = QString());
-    bool checkPassword(const quint32 id,
-                       const QString &username,
-                       const QString &password);
     SignonIdentityInfo credentials(const quint32 id);
     QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
 
@@ -248,6 +245,9 @@ public:
     bool clear();
 
     QString password(const quint32 id);
+    bool checkPassword(const quint32 id,
+                       const QString &username,
+                       const QString &password);
 };
 
 /*!

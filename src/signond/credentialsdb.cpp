@@ -549,26 +549,6 @@ QStringList MetaDataDB::methods(const quint32 id, const QString &securityToken)
     return list;
 }
 
-bool MetaDataDB::checkPassword(const quint32 id,
-                               const QString &username,
-                               const QString &password)
-{
-    QSqlQuery query = exec(
-            QString::fromLatin1("SELECT id FROM CREDENTIALS "
-                    "WHERE id = '%1' AND username = '%2' AND password = '%3'")
-                    .arg(id).arg(username).arg(password));
-
-    if (errorOccurred()) {
-        TRACE() << "Error occurred while checking password";
-        return false;
-    }
-    bool valid = false;
-    valid = query.first();
-    query.clear();
-
-    return valid;
-}
-
 SignonIdentityInfo MetaDataDB::credentials(const quint32 id)
 {
     QString query_str;
@@ -1233,6 +1213,26 @@ QString SecretsDB::password(const quint32 id)
     return query.value(0).toString();
 }
 
+bool SecretsDB::checkPassword(const quint32 id,
+                              const QString &username,
+                              const QString &password)
+{
+    QSqlQuery query = exec(
+            QString::fromLatin1("SELECT id FROM CREDENTIALS "
+                    "WHERE id = '%1' AND username = '%2' AND password = '%3'")
+                    .arg(id).arg(username).arg(password));
+
+    if (errorOccurred()) {
+        TRACE() << "Error occurred while checking password";
+        return false;
+    }
+    bool valid = false;
+    valid = query.first();
+    query.clear();
+
+    return valid;
+}
+
 /* Error monitor class */
 
 CredentialsDB::ErrorMonitor::ErrorMonitor(CredentialsDB *db)
@@ -1327,7 +1327,13 @@ bool CredentialsDB::checkPassword(const quint32 id,
                                   const QString &password)
 {
     INIT_ERROR();
-    return metaDataDB->checkPassword(id, username, password);
+    if (!isSecretsDBOpen())
+    {
+        TRACE() << "Secrets DB is not available";
+        _lastError = noSecretsDB;
+        return false;
+    }
+    return secretsDB->checkPassword(id, username, password);
 }
 
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
