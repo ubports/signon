@@ -253,6 +253,7 @@ private:
     // 1st time start - deploys the database.
     bool deployCredentialsSystem();
     bool openSecretsDB();
+    bool closeSecretsDB();
     bool openMetaDataDB();
     bool fileSystemLoaded(bool checkForDatabase = false);
     bool fileSystemDeployed();

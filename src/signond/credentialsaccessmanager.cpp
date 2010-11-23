@@ -228,6 +228,20 @@ bool CredentialsAccessManager::openSecretsDB()
     return m_systemOpened;
 }
 
+bool CredentialsAccessManager::closeSecretsDB()
+{
+    m_pCredentialsDB->closeSecretsDB();
+
+    if (m_CAMConfiguration.m_useEncryption) {
+        if (!m_pCryptoFileSystemManager->unmountFileSystem()) {
+            m_error = CredentialsDbUnmountFailed;
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool CredentialsAccessManager::openMetaDataDB()
 {
     QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
@@ -281,14 +295,9 @@ bool CredentialsAccessManager::closeCredentialsSystem()
 {
     RETURN_IF_NOT_INITIALIZED(false);
 
+    if (!closeSecretsDB())
+        return false;
     closeDB();
-
-    if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_pCryptoFileSystemManager->unmountFileSystem()) {
-            m_error = CredentialsDbUnmountFailed;
-            return false;
-        }
-    }
 
     m_error = NoError;
     m_systemOpened = false;
