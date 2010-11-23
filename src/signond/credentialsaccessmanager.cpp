@@ -400,7 +400,7 @@ bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
 
             m_pCryptoFileSystemManager->setEncryptionKey(key);
 
-            if (!credentialsSystemOpened()) {
+            if (!isSecretsDBOpen()) {
                 if (openSecretsDB()) {
                     TRACE() << "Credentials system opened.";
                 } else {
