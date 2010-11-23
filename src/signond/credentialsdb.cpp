@@ -1153,9 +1153,10 @@ bool SecretsDB::createTables()
     QStringList createTableQuery = QStringList()
         <<  QString::fromLatin1(
             "CREATE TABLE CREDENTIALS"
-            "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "(id INTEGER NOT NULL UNIQUE,"
             "username TEXT,"
-            "password TEXT)")
+            "password TEXT,"
+            "PRIMARY KEY (id))")
         <<  QString::fromLatin1(
             "CREATE TABLE STORE"
             "(identity_id INTEGER,"
