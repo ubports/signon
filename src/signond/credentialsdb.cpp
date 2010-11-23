@@ -495,7 +495,7 @@ quint32 MetaDataDB::methodId(const QString &method)
 {
     TRACE() << "method:" << method;
 
-    QSqlQuery q;
+    QSqlQuery q = newQuery();
     q.prepare(S("SELECT id FROM METHODS WHERE method = :method"));
     q.bindValue(S(":method"), method);
     exec(q);
@@ -908,7 +908,7 @@ bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
 quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
 {
     quint32 id;
-    QSqlQuery q;
+    QSqlQuery q = newQuery();
 
     int flags = 0;
     if (info.validated()) flags |= Validated;
@@ -967,7 +967,7 @@ bool MetaDataDB::updateRealms(quint32 id, const QStringList &realms, bool isNew)
     }
 
     /* Realms insert */
-    QSqlQuery q;
+    QSqlQuery q = newQuery();
     q.prepare(S("INSERT OR IGNORE INTO REALMS (identity_id, realm) "
                 "VALUES (:id, :realm)"));
     foreach (QString realm, realms) {
@@ -1035,7 +1035,7 @@ bool SecretsDB::updateCredentials(const quint32 id,
         TRACE() << "Could not start transaction. Error inserting credentials.";
         return false;
     }
-    QSqlQuery query;
+    QSqlQuery query = newQuery();
     /* Credentials insert */
     QString password;
     if (info.storePassword())
@@ -1128,7 +1128,7 @@ QVariantMap SecretsDB::loadData(quint32 id, quint32 method)
 {
     TRACE();
 
-    QSqlQuery q;
+    QSqlQuery q = newQuery();
     q.prepare(S("SELECT key, value "
                 "FROM STORE WHERE identity_id = :id AND method_id = :method"));
     q.bindValue(S(":id"), id);
@@ -1177,7 +1177,7 @@ bool SecretsDB::storeData(quint32 id, quint32 method, const QVariantMap &data)
                 break;
             }
             /* Key/value insert/replace/delete */
-            QSqlQuery query;
+            QSqlQuery query = newQuery();
             if (it.value().isValid() && !it.value().isNull()) {
                 TRACE() << "insert";
                 query.prepare(S(
@@ -1222,7 +1222,7 @@ bool SecretsDB::removeData(quint32 id, quint32 method)
         return false;
     }
 
-    QSqlQuery q;
+    QSqlQuery q = newQuery();
     if (method == 0) {
         q.prepare(S("DELETE FROM STORE WHERE identity_id = :id"));
     } else {

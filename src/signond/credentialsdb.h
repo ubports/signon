@@ -131,6 +131,8 @@ public:
     */
     QString password() const { return m_database.password(); }
 
+    QSqlQuery newQuery() const { return QSqlQuery(m_database); }
+
     /*!
         Executes a specific database query.
         If an error occurres the lastError() method can be used for handling decissions.
