@@ -257,7 +257,6 @@ private:
     bool fileSystemLoaded(bool checkForDatabase = false);
     bool fileSystemDeployed();
     bool fetchAccessCode(uint timeout = 30);
-    bool openDB(const QString &databaseName);
 
     /*!
      * Checks if the key can mount the file system. If it can, the file system

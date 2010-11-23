@@ -230,7 +230,23 @@ bool CredentialsAccessManager::openSecretsDB()
 
 bool CredentialsAccessManager::openMetaDataDB()
 {
-    // TODO
+    QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
+    QDir storageDir = fInfo.dir();
+    if (!storageDir.exists()) {
+        if (!storageDir.mkpath(storageDir.path()))
+            BLAME() << "Could not create storage directory!!!";
+    }
+
+    QString dbPath = storageDir.path()
+             + QDir::separator()
+             + m_CAMConfiguration.m_dbName;
+    m_pCredentialsDB = new CredentialsDB(dbPath);
+
+    if (!m_pCredentialsDB->init()) {
+        m_error = CredentialsDbConnectionError;
+        return false;
+    }
+
     return true;
 }
 
@@ -374,18 +390,6 @@ bool CredentialsAccessManager::fileSystemLoaded(bool checkForDatabase)
 bool CredentialsAccessManager::fileSystemDeployed()
 {
     return QFile::exists(m_pCryptoFileSystemManager->fileSystemPath());
-}
-
-bool CredentialsAccessManager::openDB(const QString &databaseName)
-{
-    m_pCredentialsDB = new CredentialsDB(databaseName);
-
-    if (!m_pCredentialsDB->init()) {
-        m_error = CredentialsDbConnectionError;
-        return false;
-    }
-
-    return true;
 }
 
 bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
