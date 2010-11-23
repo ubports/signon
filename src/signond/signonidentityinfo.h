@@ -61,7 +61,10 @@ namespace SignonDaemonNS {
         void setNew() { m_id = SIGNOND_NEW_IDENTITY; }
         bool isNew() const { return m_id == SIGNOND_NEW_IDENTITY; }
         quint32 id() const { return m_id; }
+        void setUserName(const QString &userName) { m_userName = userName; }
         QString userName() const { return m_userName; }
+        void setUserNameSecret(bool secret) { m_isUserNameSecret = secret; }
+        bool isUserNameSecret() const { return m_isUserNameSecret; }
         void setPassword(const QString &password) { m_password = password; }
         QString password() const { return m_password; }
         bool storePassword() const { return m_storePassword; }
@@ -84,6 +87,7 @@ namespace SignonDaemonNS {
         int m_type;
         int m_refCount;
         bool m_validated;
+        bool m_isUserNameSecret;
     }; //struct SignonIdentityInfo
 
 } //namespace SignonDaemonNS

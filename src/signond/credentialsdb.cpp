@@ -531,6 +531,8 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
     int flags = query.value(2).toInt();
     bool savePassword = flags & RememberPassword;
     bool validated =  flags & Validated;
+    bool isUserNameSecret = flags & UserNameIsSecret;
+    if (isUserNameSecret) username = QString();
     int type = query.value(3).toInt();
 
     query.clear();
@@ -570,8 +572,11 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
     int refCount = 0;
     //TODO query for refcount
 
-    return SignonIdentityInfo(id, username, QString(), savePassword, methods,
-                              caption, realms, security_tokens, type, refCount, validated);
+    SignonIdentityInfo info =
+        SignonIdentityInfo(id, username, QString(), savePassword, methods,
+                           caption, realms, security_tokens, type, refCount, validated);
+    info.setUserNameSecret(isUserNameSecret);
+    return info;
 }
 
 QList<SignonIdentityInfo> MetaDataDB::identities(const QMap<QString, QString> &filter)
@@ -913,6 +918,7 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
     int flags = 0;
     if (info.validated()) flags |= Validated;
     if (info.storePassword()) flags |= RememberPassword;
+    if (info.isUserNameSecret()) flags |= UserNameIsSecret;
 
     if (!info.isNew()) {
         TRACE() << "UPDATE:" << info.id() ;
@@ -927,7 +933,8 @@ quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
                     "(caption, username, flags, type) "
                     "VALUES(:caption, :username, :flags, :type)"));
     }
-    q.bindValue(S(":username"), info.userName());
+    q.bindValue(S(":username"),
+                info.isUserNameSecret() ? QString() : info.userName());
     q.bindValue(S(":caption"), info.caption());
     q.bindValue(S(":flags"), flags);
     q.bindValue(S(":type"), info.type());
@@ -1079,19 +1086,27 @@ bool SecretsDB::removeCredentials(const quint32 id)
     return transactionalExec(queries);
 }
 
-QString SecretsDB::password(const quint32 id)
+bool SecretsDB::loadCredentials(SignonIdentityInfo &info)
 {
     TRACE();
 
-    QString queryStr = QString::fromLatin1("SELECT password FROM credentials "
-                                           "WHERE id = %1").arg(id);
+    QString queryStr =
+        QString::fromLatin1("SELECT username, password FROM credentials "
+                            "WHERE id = %1").arg(info.id());
     QSqlQuery query = exec(queryStr);
     if (!query.first()) {
         TRACE() << "No result or invalid credentials query.";
-        return QString();
+        return false;
     }
 
-    return query.value(0).toString();
+    QString username = query.value(0).toString();
+    if (info.isUserNameSecret())
+        info.setUserName(username);
+
+    QString password = query.value(1).toString();
+    info.setPassword(password);
+
+    return true;
 }
 
 bool SecretsDB::checkPassword(const quint32 id,
@@ -1335,8 +1350,7 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPasswo
     INIT_ERROR();
     SignonIdentityInfo info = metaDataDB->identity(id);
     if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
-        QString password = secretsDB->password(info.id());
-        info.setPassword(password);
+        secretsDB->loadCredentials(info);
     }
     return info;
 }

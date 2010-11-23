@@ -48,7 +48,8 @@ namespace SignonDaemonNS {
  */
 enum IdentityFlags {
     Validated = 0x0001,
-    RememberPassword = 0x0002
+    RememberPassword = 0x0002,
+    UserNameIsSecret = 0x0004,
 };
 
 /*!
@@ -242,8 +243,8 @@ public:
 
     bool updateCredentials(const quint32 id, const SignonIdentityInfo &info);
     bool removeCredentials(const quint32 id);
+    bool loadCredentials(SignonIdentityInfo &info);
 
-    QString password(const quint32 id);
     bool checkPassword(const quint32 id,
                        const QString &username,
                        const QString &password);

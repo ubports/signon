@@ -58,7 +58,8 @@ namespace SignonDaemonNS {
           m_accessControlList(accessControlList),
           m_type(type),
           m_refCount(refCount),
-          m_validated(validated)
+          m_validated(validated),
+          m_isUserNameSecret(false)
     {
     }
 
@@ -74,7 +75,8 @@ namespace SignonDaemonNS {
              << m_accessControlList
              << m_type
              << m_refCount
-             << m_validated;
+             << m_validated
+             << m_isUserNameSecret;
 
         return list;
     }
