@@ -639,6 +639,12 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
     return true;
 }
 
+bool CredentialsDB::isSecretsDBOpen()
+{
+    // TODO
+    return true;
+}
+
 void CredentialsDB::closeSecretsDB()
 {
     // TODO

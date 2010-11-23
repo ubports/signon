@@ -221,6 +221,11 @@ bool CredentialsAccessManager::openSecretsDB()
     return true;
 }
 
+bool CredentialsAccessManager::isSecretsDBOpen()
+{
+    return m_pCredentialsDB->isSecretsDBOpen();
+}
+
 bool CredentialsAccessManager::closeSecretsDB()
 {
     m_pCredentialsDB->closeSecretsDB();

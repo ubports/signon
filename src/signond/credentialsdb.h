@@ -222,6 +222,7 @@ public:
      * available.
      */
     bool openSecretsDB(const QString &secretsDbName);
+    bool isSecretsDBOpen();
     void closeSecretsDB();
 
     CredentialsDBError error(bool queryError = true, bool clearError = true) const;
