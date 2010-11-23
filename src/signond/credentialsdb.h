@@ -208,6 +208,8 @@ private:
     QMap<QString, QString> sqlDBConfiguration() const;
     bool hasTableStructure() const;
     bool createTableStructure();
+    bool createSecretsDB();
+    bool initSecretsDB();
 //helpers
     QStringList queryList(const QString &query_str);
     bool insertMethods(QMap<QString, QStringList> methods);

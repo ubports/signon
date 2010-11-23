@@ -583,6 +583,61 @@ end of generated code
     return true;
 }
 
+bool CredentialsDB::createSecretsDB()
+{
+    QStringList createTableQuery = QStringList()
+        <<  QString::fromLatin1(
+            "CREATE TABLE CREDENTIALS"
+            "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "username TEXT,"
+            "password TEXT)")
+        <<  QString::fromLatin1(
+            "CREATE TABLE STORE"
+            "(identity_id INTEGER,"
+            "method_id INTEGER,"
+            "key TEXT,"
+            "value BLOB,"
+            "PRIMARY KEY (identity_id, method_id, key))")
+
+        << QString::fromLatin1(
+            // Cascading Delete
+            "CREATE TRIGGER tg_delete_credentials "
+            "BEFORE DELETE ON CREDENTIALS "
+            "FOR EACH ROW BEGIN "
+            "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
+            "END; "
+        );
+
+   foreach (QString createTable, createTableQuery) {
+        QSqlQuery query = secretsDB->exec(createTable);
+        if (lastError().isValid()) {
+            TRACE() << "Error occurred while creating the database.";
+            return false;
+        }
+        query.clear();
+        commit();
+    }
+    return true;
+}
+
+bool CredentialsDB::initSecretsDB()
+{
+    if (!secretsDB->connect())
+        return false;
+
+    TRACE() <<  "Database connection succeeded.";
+
+    if (!secretsDB->hasTables()) {
+        TRACE() << "Creating SQL table structure...";
+        if (!createSecretsDB())
+            return false;
+    } else {
+        TRACE() << "SQL table structure already created...";
+    }
+
+    return true;
+}
+
 QStringList CredentialsDB::queryList(const QString &query_str)
 {
     TRACE();
@@ -630,20 +685,27 @@ bool CredentialsDB::insertMethods(QMap<QString, QStringList> methods)
 
 bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
 {
-    // TODO
-    Q_UNUSED(secretsDbName);
+    secretsDB = new SqlDatabase(secretsDbName);
+
+    if (!initSecretsDB()) {
+        TRACE() << SqlDatabase::errorInfo(lastError());
+        delete secretsDB;
+        secretsDB = 0;
+        return false;
+    }
+
+    TRACE() << secretsDB->configuration();
     return true;
 }
 
 bool CredentialsDB::isSecretsDBOpen()
 {
-    // TODO
-    return true;
+    return secretsDB != 0;
 }
 
 void CredentialsDB::closeSecretsDB()
 {
-    // TODO
+    delete secretsDB;
 }
 
 CredentialsDBError CredentialsDB::lastError() const
