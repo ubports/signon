@@ -193,9 +193,9 @@ class CredentialsDB : public QObject
     Q_OBJECT
     Q_DISABLE_COPY(CredentialsDB)
 
-    friend class CredentialsAccessManager;
     friend class ::TestDatabase;
 
+public:
     CredentialsDB(const QString &metaDataDbName);
     ~CredentialsDB();
 
@@ -207,7 +207,6 @@ private:
     bool commit();
     void rollback();
     bool connect();
-    bool init();
     QMap<QString, QString> sqlDBConfiguration() const;
     bool hasTableStructure() const;
     bool createTableStructure();
@@ -216,13 +215,14 @@ private:
     bool insertMethods(QMap<QString, QStringList> methods);
 
 public:
+    bool init();
     /*!
      * This method will open the DB file containing the user secrets.
      * If this method is not called, or if it fails, the secrets will not be
      * available.
      */
-    bool openSecrets(const QString &secretsDbName);
-    void closeSecrets();
+    bool openSecretsDB(const QString &secretsDbName);
+    void closeSecretsDB();
 
     CredentialsDBError error(bool queryError = true, bool clearError = true) const;
     bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
