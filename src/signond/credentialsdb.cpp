@@ -51,6 +51,7 @@ bool SqlDatabase::connect()
 {
     if (!m_database.open()) {
         TRACE() << "Could not open database connection.\n";
+        m_lastError = m_database.lastError();
         return false;
     }
     return true;
@@ -95,6 +96,7 @@ QSqlQuery SqlDatabase::exec(QSqlQuery &query)
 bool SqlDatabase::transactionalExec(const QStringList &queryList)
 {
     if (!m_database.transaction()) {
+        m_lastError = m_database.lastError();
         TRACE() << "Could not start transaction";
         return false;
     }
@@ -104,7 +106,7 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
         TRACE() << QString::fromLatin1("TRANSACT Query [%1]").arg(queryStr);
         QSqlQuery query = exec(queryStr);
 
-        if (lastError().type() != QSqlError::NoError) {
+        if (lastError().isValid()) {
             TRACE() << "Error occurred while executing query in transaction." << queryStr;
             allOk = false;
             break;
@@ -121,15 +123,9 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
     return false;
 }
 
-QSqlError SqlDatabase::lastError(bool queryExecuted, bool clearError)
+QSqlError SqlDatabase::lastError()
 {
-    if (queryExecuted) {
-        QSqlError error = m_lastError;
-        if (clearError)
-            m_lastError.setType(QSqlError::NoError);
-        return error;
-    } else
-        return m_database.lastError();
+    return m_lastError;
 }
 
 QMap<QString, QString> SqlDatabase::configuration()
@@ -252,7 +248,7 @@ bool CredentialsDB::connect()
 bool CredentialsDB::init()
 {
     if (!connect()) {
-        TRACE() << SqlDatabase::errorInfo(error(false));
+        TRACE() << SqlDatabase::errorInfo(lastError());
         return false;
     }
     TRACE() <<  "Database connection succeeded.";
@@ -260,7 +256,7 @@ bool CredentialsDB::init()
     if (!hasTableStructure()) {
         TRACE() << "Creating SQL table structure...";
         if (!createTableStructure()) {
-            TRACE() << SqlDatabase::errorInfo(error());
+            TRACE() << SqlDatabase::errorInfo(lastError());
             return false;
         }
     } else {
@@ -577,7 +573,7 @@ end of generated code
 */
    foreach (QString createTable, createTableQuery) {
         QSqlQuery query = exec(createTable);
-        if (error().type() != QSqlError::NoError) {
+        if (lastError().isValid()) {
             TRACE() << "Error occurred while creating the database.";
             return false;
         }
@@ -650,9 +646,14 @@ void CredentialsDB::closeSecretsDB()
     // TODO
 }
 
-CredentialsDBError CredentialsDB::error(bool queryError, bool clearError) const
+CredentialsDBError CredentialsDB::lastError() const
 {
-    return metaDataDB->lastError(queryError, clearError);
+    if (secretsDB != 0) {
+        if (secretsDB->lastError().isValid())
+            return secretsDB->lastError();
+    }
+
+    return metaDataDB->lastError();
 }
 
 QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)

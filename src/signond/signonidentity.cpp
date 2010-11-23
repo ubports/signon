@@ -162,7 +162,7 @@ namespace SignonDaemonNS {
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             m_pInfo = new SignonIdentityInfo(db->credentials(m_id, queryPassword));
 
-            if (db->error().type() != QSqlError::NoError) {
+            if (db->lastError().isValid()) {
                 ok = false;
                 delete m_pInfo;
                 m_pInfo = NULL;

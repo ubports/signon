@@ -158,11 +158,9 @@ public:
     QMap<QString, QString> configuration();
 
     /*!
-        @param queryExecuted, by default true, if otherwise will return specific database errors - non-query, use to check connection errors.
-        @param clearError, clears the error cache, future calls of this methods without any addition querying will indicate no error occurred.
         @returns the last occurred error if any. If not error occurred on the last performed operation the QSqlError object is invalid.
     */
-    QSqlError lastError(bool queryExecuted = true, bool clearError = true);
+    QSqlError lastError();
 
     /*!
         Serializes a SQL error into a string.
@@ -225,8 +223,8 @@ public:
     bool isSecretsDBOpen();
     void closeSecretsDB();
 
-    CredentialsDBError error(bool queryError = true, bool clearError = true) const;
-    bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
+    CredentialsDBError lastError() const;
+    bool errorOccurred() const { return lastError().isValid(); };
 
     QStringList methods(const quint32 id, const QString &securityToken = QString());
     bool checkPassword(const quint32 id, const QString &username, const QString &password);
