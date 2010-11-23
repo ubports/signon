@@ -272,11 +272,6 @@ bool CredentialsDB::init()
     return true;
 }
 
-void CredentialsDB::disconnect()
-{
-    metaDataDB->disconnect();
-}
-
 QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
 {
     return metaDataDB->configuration();

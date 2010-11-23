@@ -208,7 +208,6 @@ private:
     void rollback();
     bool connect();
     bool init();
-    void disconnect();
     QMap<QString, QString> sqlDBConfiguration() const;
     bool hasTableStructure() const;
     bool createTableStructure();

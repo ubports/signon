@@ -412,7 +412,6 @@ bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
 void CredentialsAccessManager::closeDB()
 {
     if (m_pCredentialsDB) {
-        m_pCredentialsDB->disconnect();
         delete m_pCredentialsDB;
         m_pCredentialsDB = NULL;
     }
