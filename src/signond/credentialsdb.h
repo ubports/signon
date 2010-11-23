@@ -207,6 +207,7 @@ public:
 
     QStringList methods(const quint32 id,
                         const QString &securityToken = QString());
+    quint32 methodId(const QString &method);
     SignonIdentityInfo credentials(const quint32 id);
     QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
 
@@ -216,12 +217,6 @@ public:
     bool clear();
 
     QStringList accessControlList(const quint32 identityId);
-
-    QVariantMap loadData(const quint32 id, const QString &method);
-    bool storeData(const quint32 id,
-                   const QString &method,
-                   const QVariantMap &data);
-    bool removeData(const quint32 id, const QString &method = QString());
 
     bool addReference(const quint32 id,
                       const QString &token,
@@ -250,6 +245,10 @@ public:
     bool checkPassword(const quint32 id,
                        const QString &username,
                        const QString &password);
+
+    QVariantMap loadData(quint32 id, quint32 method);
+    bool storeData(quint32 id, quint32 method, const QVariantMap &data);
+    bool removeData(quint32 id, quint32 method);
 };
 
 /*!

@@ -26,6 +26,11 @@
 #include "signond-common.h"
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
+#define RETURN_IF_NO_SECRETS_DB(retval) \
+    if (!isSecretsDBOpen()) { \
+        TRACE() << "Secrets DB is not available"; \
+        _lastError = noSecretsDB; return retval; \
+    }
 
 #define S(s) QLatin1String(s)
 
@@ -551,6 +556,22 @@ QStringList MetaDataDB::methods(const quint32 id, const QString &securityToken)
     return list;
 }
 
+quint32 MetaDataDB::methodId(const QString &method)
+{
+    TRACE() << "method:" << method;
+
+    QSqlQuery q;
+    q.prepare(S("SELECT id FROM METHODS WHERE method = :method"));
+    q.bindValue(S(":method"), method);
+    exec(q);
+    if (!q.first()) {
+        TRACE() << "No result or invalid method query.";
+        return 0;
+    }
+
+    return q.value(0).toUInt();
+}
+
 SignonIdentityInfo MetaDataDB::credentials(const quint32 id)
 {
     QString query_str;
@@ -857,149 +878,6 @@ bool MetaDataDB::clear()
     return transactionalExec(clearCommands);
 }
 
-QVariantMap MetaDataDB::loadData(const quint32 id, const QString &method)
-{
-    TRACE();
-
-    QString query_str = QString::fromLatin1(
-            "SELECT key, value "
-            "FROM STORE WHERE identity_id = %1 AND "
-            "method_id = (SELECT id FROM METHODS WHERE method = '%2')")
-            .arg(id).arg(method);
-
-    QSqlQuery query = exec(query_str);
-    if (errorOccurred())
-        return QVariantMap();
-
-    QVariantMap result;
-    while (query.next()) {
-        QByteArray array;
-        array = query.value(1).toByteArray();
-        QDataStream stream(array);
-        QVariant data;
-        stream >> data;
-        result.insert(query.value(0).toString(), data);
-        TRACE() << "insert" << query.value(0).toString() << ", " << data ;
-    }
-    query.clear();
-    return result;
-}
-
-bool MetaDataDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
-{
-    TRACE();
-
-    if (!startTransaction()) {
-        TRACE() << "Could not start transaction. Error inserting data.";
-        return false;
-    }
-
-    TRACE() << "Storing:" << id << ", " << method << ", " << data;
-    /* Data insert */
-    bool allOk = true;
-    qint32 dataCounter = 0;
-    QString queryStr;
-    QSqlQuery query;
-    if (!(data.keys().empty())) {
-        QMapIterator<QString, QVariant> it(data);
-        while (it.hasNext()) {
-            it.next();
-
-            QByteArray array;
-            QDataStream stream(&array, QIODevice::WriteOnly);
-            stream << it.value();
-
-            dataCounter += it.key().size() +array.size();
-            if (dataCounter >= SSO_MAX_TOKEN_STORAGE) {
-                BLAME() << "storing data max size exceeded";
-                allOk = false;
-                break;
-            }
-            /* Key/value insert/replace/delete */
-            if (it.value().isValid() && !it.value().isNull()) {
-                TRACE() << "insert";
-                query = QSqlQuery(QString(), m_database);
-                query.prepare(QString::fromLatin1(
-                    "INSERT OR REPLACE INTO STORE "
-                    "(identity_id, method_id, key, value) "
-                    "VALUES('%1', "
-                    "(SELECT id FROM METHODS WHERE method = '%2'), "
-                    "'%3', :blob)")
-                    .arg(id).arg(method).arg(it.key()));
-                query.bindValue(QLatin1String(":blob"), array);
-                exec(query);
-                if (errorOccurred()) {
-                    allOk = false;
-                    TRACE() << errorInfo(query.lastError());
-                }
-            } else {
-                TRACE() << "remove";
-                queryStr = QString::fromLatin1(
-                    "DELETE FROM STORE WHERE identity_id = '%1' AND "
-                    "method_id = "
-                    "(SELECT id FROM METHODS WHERE method = '%2') "
-                    "AND key = '%3'")
-                    .arg(id).arg(method).arg(it.key());
-                query = exec(queryStr);
-
-            }
-            query.clear();
-            if (errorOccurred()) {
-                allOk = false;
-                break;
-            }
-        }
-    }
-
-    if (allOk && commit()) {
-        TRACE() << "Data insertion ok.";
-        return true;
-    }
-    rollback();
-    TRACE() << "Data insertion failed.";
-    return false;
-}
-
-bool MetaDataDB::removeData(const quint32 id, const QString &method)
-{
-    TRACE();
-
-    if (!startTransaction()) {
-        TRACE() << "Could not start transaction. Error removing data.";
-        return false;
-    }
-
-    TRACE() << "Removing:" << id << ", " << method;
-    /* Data remove */
-    bool allOk = true;
-    QString queryStr;
-    QSqlQuery query;
-    if (method.isEmpty()) {
-        queryStr = QString::fromLatin1(
-                    "DELETE FROM STORE WHERE identity_id = '%1' ")
-                    .arg(id);
-    } else {
-        queryStr = QString::fromLatin1(
-                    "DELETE FROM STORE WHERE identity_id = '%1' AND "
-                    "method_id = "
-                    "(SELECT id FROM METHODS WHERE method = '%2') ")
-                    .arg(id).arg(method);
-    }
-    query = exec(queryStr);
-    query.clear();
-    if (errorOccurred()) {
-        allOk = false;
-    }
-
-    if (allOk && commit()) {
-        TRACE() << "Data removal ok.";
-        return true;
-    }
-    rollback();
-    TRACE() << "Data removal failed.";
-    return false;
-}
-
 QStringList MetaDataDB::accessControlList(const quint32 identityId)
 {
     return queryList(QString::fromLatin1("SELECT token FROM TOKENS "
@@ -1285,6 +1163,124 @@ bool SecretsDB::checkPassword(const quint32 id,
     return valid;
 }
 
+QVariantMap SecretsDB::loadData(quint32 id, quint32 method)
+{
+    TRACE();
+
+    QSqlQuery q;
+    q.prepare(S("SELECT key, value "
+                "FROM STORE WHERE identity_id = :id AND method_id = :method"));
+    q.bindValue(S(":id"), id);
+    q.bindValue(S(":method"), method);
+    exec(q);
+    if (errorOccurred())
+        return QVariantMap();
+
+    QVariantMap result;
+    while (q.next()) {
+        QByteArray array;
+        array = q.value(1).toByteArray();
+        QDataStream stream(array);
+        QVariant data;
+        stream >> data;
+        result.insert(q.value(0).toString(), data);
+        TRACE() << "insert" << q.value(0).toString() << ", " << data ;
+    }
+    return result;
+}
+
+bool SecretsDB::storeData(quint32 id, quint32 method, const QVariantMap &data)
+{
+    TRACE();
+
+    if (!startTransaction()) {
+        TRACE() << "Could not start transaction. Error inserting data.";
+        return false;
+    }
+
+    bool allOk = true;
+    qint32 dataCounter = 0;
+    if (!(data.keys().empty())) {
+        QMapIterator<QString, QVariant> it(data);
+        while (it.hasNext()) {
+            it.next();
+
+            QByteArray array;
+            QDataStream stream(&array, QIODevice::WriteOnly);
+            stream << it.value();
+
+            dataCounter += it.key().size() +array.size();
+            if (dataCounter >= SSO_MAX_TOKEN_STORAGE) {
+                BLAME() << "storing data max size exceeded";
+                allOk = false;
+                break;
+            }
+            /* Key/value insert/replace/delete */
+            QSqlQuery query;
+            if (it.value().isValid() && !it.value().isNull()) {
+                TRACE() << "insert";
+                query.prepare(S(
+                    "INSERT OR REPLACE INTO STORE "
+                    "(identity_id, method_id, key, value) "
+                    "VALUES(:id, :method, :key, :value)"));
+                query.bindValue(S(":value"), array);
+            } else {
+                TRACE() << "remove";
+                query.prepare(S(
+                    "DELETE FROM STORE WHERE identity_id = :id "
+                    "AND method_id = :method "
+                    "AND key = :key"));
+
+            }
+            query.bindValue(S(":id"), id);
+            query.bindValue(S(":method"), method);
+            query.bindValue(S(":key"), it.key());
+            exec(query);
+            if (errorOccurred()) {
+                allOk = false;
+                break;
+            }
+        }
+    }
+
+    if (allOk && commit()) {
+        TRACE() << "Data insertion ok.";
+        return true;
+    }
+    rollback();
+    TRACE() << "Data insertion failed.";
+    return false;
+}
+
+bool SecretsDB::removeData(quint32 id, quint32 method)
+{
+    TRACE();
+
+    if (!startTransaction()) {
+        TRACE() << "Could not start transaction. Error removing data.";
+        return false;
+    }
+
+    QSqlQuery q;
+    if (method == 0) {
+        q.prepare(S("DELETE FROM STORE WHERE identity_id = :id"));
+    } else {
+        q.prepare(S("DELETE FROM STORE WHERE identity_id = :id "
+                    "AND method_id = :method"));
+        q.bindValue(S(":method"), method);
+    }
+    q.bindValue(S(":id"), id);
+    exec(q);
+    if (!errorOccurred() && commit()) {
+        TRACE() << "Data removal ok.";
+        return true;
+    } else {
+        rollback();
+        TRACE() << "Data removal failed.";
+        return false;
+    }
+}
+
 /* Error monitor class */
 
 CredentialsDB::ErrorMonitor::ErrorMonitor(CredentialsDB *db)
@@ -1461,20 +1457,47 @@ bool CredentialsDB::clear()
 
 QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
 {
+    TRACE() << "Loading:" << id << "," << method;
+
     INIT_ERROR();
-    return metaDataDB->loadData(id, method);
+    RETURN_IF_NO_SECRETS_DB(QVariantMap());
+
+    quint32 methodId = metaDataDB->methodId(method);
+    if (methodId == 0) return QVariantMap();
+
+    return secretsDB->loadData(id, methodId);
 }
 
-bool CredentialsDB::storeData(const quint32 id, const QString &method, const QVariantMap &data)
+bool CredentialsDB::storeData(const quint32 id, const QString &method,
+                              const QVariantMap &data)
 {
+    TRACE() << "Storing:" << id << "," << method << "," << data;
+
     INIT_ERROR();
-    return metaDataDB->storeData(id, method, data);
+    RETURN_IF_NO_SECRETS_DB(false);
+
+    quint32 methodId = metaDataDB->methodId(method);
+    if (methodId == 0) return false;
+
+    return secretsDB->storeData(id, methodId, data);
 }
 
 bool CredentialsDB::removeData(const quint32 id, const QString &method)
 {
+    TRACE() << "Removing:" << id << "," << method;
+
     INIT_ERROR();
-    return metaDataDB->removeData(id, method);
+    RETURN_IF_NO_SECRETS_DB(false);
+
+    quint32 methodId;
+    if (!method.isEmpty()) {
+        methodId = metaDataDB->methodId(method);
+        if (methodId == 0) return false;
+    } else {
+        methodId = 0;
+    }
+
+    return secretsDB->removeData(id, methodId);
 }
 
 QStringList CredentialsDB::accessControlList(const quint32 identityId)
