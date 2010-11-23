@@ -131,7 +131,7 @@ QSqlQuery SqlDatabase::exec(QSqlQuery &query)
 
 bool SqlDatabase::transactionalExec(const QStringList &queryList)
 {
-    if (!m_database.transaction()) {
+    if (!startTransaction()) {
         m_lastError = m_database.lastError();
         TRACE() << "Could not start transaction";
         return false;
@@ -148,11 +148,12 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
         }
     }
 
-    if (allOk && m_database.commit()) {
+    if (allOk && commit()) {
         TRACE() << "Commit SUCCEEDED.";
         return true;
-    } else if (!m_database.rollback())
-        TRACE() << "Rollback failed";
+    } else {
+        rollback();
+    }
 
     TRACE() << "Transactional exec FAILED!";
     return false;
@@ -521,7 +522,7 @@ end of generated code
             return false;
         }
         query.clear();
-        m_database.commit();
+        commit();
     }
     return true;
 }
@@ -1204,7 +1205,7 @@ bool SecretsDB::createTables()
             return false;
         }
         query.clear();
-        m_database.commit();
+        commit();
     }
     return true;
 }
