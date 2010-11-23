@@ -68,7 +68,14 @@ public:
     /*!
         Destroys the SqlDatabase object, closing the database connection.
     */
-    ~SqlDatabase();
+    virtual ~SqlDatabase();
+
+    /*!
+     * Connects to the DB and if necessary creates the tables
+     */
+    bool init();
+
+    virtual bool createTables() = 0;
 
     /*!
         Creates the database connection.
@@ -173,6 +180,7 @@ public:
 
 private:
     QSqlError m_lastError;
+protected:
     QSqlDatabase m_database;
 
     friend class CredentialsDB;
@@ -183,6 +191,8 @@ class MetaDataDB: public SqlDatabase
 public:
     MetaDataDB(const QString &name):
         SqlDatabase(name) {}
+
+    bool createTables();
 };
 
 class SecretsDB: public SqlDatabase
@@ -190,6 +200,8 @@ class SecretsDB: public SqlDatabase
 public:
     SecretsDB(const QString &name):
         SqlDatabase(name) {}
+
+    bool createTables();
 };
 
 /*!

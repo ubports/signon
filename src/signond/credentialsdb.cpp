@@ -47,6 +47,24 @@ SqlDatabase::~SqlDatabase()
     m_database.close();
 }
 
+bool SqlDatabase::init()
+{
+    if (!connect())
+        return false;
+
+    TRACE() <<  "Database connection succeeded.";
+
+    if (!hasTables()) {
+        TRACE() << "Creating SQL table structure...";
+        if (!createTables())
+            return false;
+    } else {
+        TRACE() << "SQL table structure already created...";
+    }
+
+    return true;
+}
+
 bool SqlDatabase::connect()
 {
     if (!m_database.open()) {
@@ -247,25 +265,7 @@ bool CredentialsDB::connect()
 
 bool CredentialsDB::init()
 {
-    if (!connect()) {
-        TRACE() << SqlDatabase::errorInfo(lastError());
-        return false;
-    }
-    TRACE() <<  "Database connection succeeded.";
-
-    if (!hasTableStructure()) {
-        TRACE() << "Creating SQL table structure...";
-        if (!createTableStructure()) {
-            TRACE() << SqlDatabase::errorInfo(lastError());
-            return false;
-        }
-    } else {
-        TRACE() << "SQL table structure already created...";
-    }
-
-    TRACE() << sqlDBConfiguration();
-
-    return true;
+    return metaDataDB->init();
 }
 
 QMap<QString, QString> CredentialsDB::sqlDBConfiguration() const
@@ -278,7 +278,7 @@ bool CredentialsDB::hasTableStructure() const
     return metaDataDB->hasTables();
 }
 
-bool CredentialsDB::createTableStructure()
+bool MetaDataDB::createTables()
 {
     /* !!! Foreign keys support seems to be disabled, for the moment... */
     QStringList createTableQuery = QStringList()
@@ -578,12 +578,12 @@ end of generated code
             return false;
         }
         query.clear();
-        commit();
+        m_database.commit();
     }
     return true;
 }
 
-bool CredentialsDB::createSecretsDB()
+bool SecretsDB::createTables()
 {
     QStringList createTableQuery = QStringList()
         <<  QString::fromLatin1(
@@ -609,32 +609,14 @@ bool CredentialsDB::createSecretsDB()
         );
 
    foreach (QString createTable, createTableQuery) {
-        QSqlQuery query = secretsDB->exec(createTable);
+        QSqlQuery query = exec(createTable);
         if (lastError().isValid()) {
             TRACE() << "Error occurred while creating the database.";
             return false;
         }
         query.clear();
-        commit();
+        m_database.commit();
     }
-    return true;
-}
-
-bool CredentialsDB::initSecretsDB()
-{
-    if (!secretsDB->connect())
-        return false;
-
-    TRACE() <<  "Database connection succeeded.";
-
-    if (!secretsDB->hasTables()) {
-        TRACE() << "Creating SQL table structure...";
-        if (!createSecretsDB())
-            return false;
-    } else {
-        TRACE() << "SQL table structure already created...";
-    }
-
     return true;
 }
 
@@ -687,7 +669,7 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
 {
     secretsDB = new SecretsDB(secretsDbName);
 
-    if (!initSecretsDB()) {
+    if (!secretsDB->init()) {
         TRACE() << SqlDatabase::errorInfo(lastError());
         delete secretsDB;
         secretsDB = 0;
