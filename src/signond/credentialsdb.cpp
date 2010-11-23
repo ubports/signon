@@ -1417,6 +1417,7 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
 
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(QVariantMap());
+    if (id == 0) return QVariantMap();
 
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return QVariantMap();
@@ -1431,6 +1432,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
 
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(false);
+    if (id == 0) return false;
 
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return false;
@@ -1444,6 +1446,7 @@ bool CredentialsDB::removeData(const quint32 id, const QString &method)
 
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(false);
+    if (id == 0) return false;
 
     quint32 methodId;
     if (!method.isEmpty()) {
