@@ -248,7 +248,7 @@ bool CredentialsAccessManager::openMetaDataDB()
         if (!storageDir.mkpath(storageDir.path())) {
             BLAME() << "Could not create storage directory!!!";
             m_error = CredentialsDbSetupFailed;
-            false;
+            return false;
         }
     }
 
