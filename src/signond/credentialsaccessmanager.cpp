@@ -146,18 +146,6 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
 
-        //If passphrase exists (device lock code) open creds system - sync
-        if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
-
-            m_pCryptoFileSystemManager->setEncryptionKey(
-                    m_CAMConfiguration.m_encryptionPassphrase);
-            m_accessCodeFetched = true;
-
-            if (!openCredentialsSystemPriv(true)) {
-                BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
-            }
-        }
-
         // Initialize all key managers
         foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
             connect(keyManager,
@@ -249,6 +237,21 @@ bool CredentialsAccessManager::openCredentialsSystem()
         m_error = AccessCodeNotReady;
         return false;
     }
+
+    if (m_CAMConfiguration.m_useEncryption) {
+        //If passphrase exists (device lock code) open creds system - sync
+        if (!m_CAMConfiguration.m_encryptionPassphrase.isEmpty()) {
+
+            m_pCryptoFileSystemManager->setEncryptionKey(
+                    m_CAMConfiguration.m_encryptionPassphrase);
+            m_accessCodeFetched = true;
+
+            if (!openCredentialsSystemPriv(true)) {
+                BLAME() << "Failed to open credentials system. Fallback to alternative methods.";
+            }
+        }
+    }
+
 
     return openCredentialsSystemPriv(true);
 }
