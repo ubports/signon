@@ -214,12 +214,11 @@ bool CredentialsAccessManager::openSecretsDB()
 
     TRACE() << "Database name: [" << dbPath << "]";
 
-    if (m_pCredentialsDB->openSecretsDB(dbPath)) {
-        m_systemOpened = true;
-        m_error = NoError;
-    }
+    if (!m_pCredentialsDB->openSecretsDB(dbPath))
+        return false;
 
-    return m_systemOpened;
+    m_error = NoError;
+    return true;
 }
 
 bool CredentialsAccessManager::closeSecretsDB()
