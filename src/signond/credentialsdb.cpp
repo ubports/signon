@@ -1254,6 +1254,9 @@ CredentialsDB::CredentialsDB(const QString &metaDataDbName):
     secretsDB(0),
     metaDataDB(new MetaDataDB(metaDataDbName))
 {
+    noSecretsDB = QSqlError(QLatin1String("Secrets DB not opened"),
+                            QLatin1String("Secrets DB not opened"),
+                            QSqlError::ConnectionError);
 }
 
 CredentialsDB::~CredentialsDB()
@@ -1356,9 +1359,7 @@ bool CredentialsDB::clear()
     /* We don't allow clearing the DB if the secrets DB is not available */
     if (!isSecretsDBOpen()) {
         TRACE() << "Secrets DB not opened; aborting CLEAR operation";
-        _lastError = QSqlError(QLatin1String("Secrets DB not opened"),
-                               QLatin1String("Secrets DB not opened"),
-                               QSqlError::ConnectionError);
+        _lastError = noSecretsDB;
         return false;
     }
 
