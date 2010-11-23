@@ -216,6 +216,14 @@ private:
     bool insertMethods(QMap<QString, QStringList> methods);
 
 public:
+    /*!
+     * This method will open the DB file containing the user secrets.
+     * If this method is not called, or if it fails, the secrets will not be
+     * available.
+     */
+    bool openSecrets(const QString &secretsDbName);
+    void closeSecrets();
+
     CredentialsDBError error(bool queryError = true, bool clearError = true) const;
     bool errorOccurred(bool queryError = true) { return error(queryError, false).type() != QSqlError::NoError; }
 

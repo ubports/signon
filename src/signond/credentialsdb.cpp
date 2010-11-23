@@ -614,6 +614,18 @@ bool CredentialsDB::insertMethods(QMap<QString, QStringList> methods)
     return allOk;
 }
 
+bool CredentialsDB::openSecrets(const QString &secretsDbName)
+{
+    // TODO
+    Q_UNUSED(secretsDbName);
+    return true;
+}
+
+void CredentialsDB::closeSecrets()
+{
+    // TODO
+}
+
 CredentialsDBError CredentialsDB::error(bool queryError, bool clearError) const
 {
     return metaDataDB->lastError(queryError, clearError);
