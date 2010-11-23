@@ -37,9 +37,9 @@
 namespace SignonDaemonNS {
 
 static const QString driver = QLatin1String("QSQLITE");
-static const QString connectionName = QLatin1String("SSO-Connection");
 
-SqlDatabase::SqlDatabase(const QString &databaseName)
+SqlDatabase::SqlDatabase(const QString &databaseName,
+                         const QString &connectionName)
         : m_lastError(QSqlError()),
           m_database(QSqlDatabase::addDatabase(driver, connectionName))
 
@@ -209,11 +209,6 @@ QString SqlDatabase::errorInfo(const QSqlError &error)
     stream << "\n\tNumber: " << error.number();
 
     return text;
-}
-
-void SqlDatabase::removeDatabase()
-{
-     QSqlDatabase::removeDatabase(connectionName);
 }
 
 QStringList SqlDatabase::queryList(const QString &query_str)
@@ -1287,12 +1282,17 @@ CredentialsDB::CredentialsDB(const QString &metaDataDbName):
 
 CredentialsDB::~CredentialsDB()
 {
-    if (secretsDB)
+    TRACE();
+    if (secretsDB) {
+        QString connectionName = secretsDB->connectionName();
         delete secretsDB;
-    if (metaDataDB)
+        QSqlDatabase::removeDatabase(connectionName);
+    }
+    if (metaDataDB) {
+        QString connectionName = metaDataDB->connectionName();
         delete metaDataDB;
-
-    SqlDatabase::removeDatabase();
+        QSqlDatabase::removeDatabase(connectionName);
+    }
 }
 
 bool CredentialsDB::init()
@@ -1322,7 +1322,11 @@ bool CredentialsDB::isSecretsDBOpen()
 
 void CredentialsDB::closeSecretsDB()
 {
+    TRACE();
+    QString connectionName = secretsDB->connectionName();
     delete secretsDB;
+    QSqlDatabase::removeDatabase(connectionName);
+    secretsDB = 0;
 }
 
 CredentialsDBError CredentialsDB::lastError() const

@@ -64,7 +64,7 @@ public:
         Constructs a SqlDatabase object using the given hostname.
         @param hostname
     */
-    SqlDatabase(const QString &hostname);
+    SqlDatabase(const QString &hostname, const QString &connectionName);
 
     /*!
         Destroys the SqlDatabase object, closing the database connection.
@@ -185,7 +185,7 @@ public:
     */
     static QString errorInfo(const QSqlError &error);
 
-    static void removeDatabase();
+    QString connectionName() const { return m_database.connectionName(); }
 
 protected:
     QStringList queryList(const QString &query_str);
@@ -202,7 +202,7 @@ class MetaDataDB: public SqlDatabase
 {
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata")) {}
 
     bool createTables();
 
@@ -236,7 +236,7 @@ class SecretsDB: public SqlDatabase
 {
 public:
     SecretsDB(const QString &name):
-        SqlDatabase(name) {}
+        SqlDatabase(name, QLatin1String("SSO-secrets")) {}
 
     bool createTables();
     bool clear();
