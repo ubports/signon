@@ -244,6 +244,8 @@ public:
     bool clear();
 
     bool updateCredentials(const quint32 id, const SignonIdentityInfo &info);
+    bool removeCredentials(const quint32 id);
+
     QString password(const quint32 id);
     bool checkPassword(const quint32 id,
                        const QString &username,

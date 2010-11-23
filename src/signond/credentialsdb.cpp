@@ -1237,6 +1237,19 @@ bool SecretsDB::updateCredentials(const quint32 id,
     return commit();
 }
 
+bool SecretsDB::removeCredentials(const quint32 id)
+{
+    TRACE();
+
+    QStringList queries = QStringList()
+        << QString::fromLatin1(
+            "DELETE FROM CREDENTIALS WHERE id = %1").arg(id)
+        << QString::fromLatin1(
+            "DELETE FROM STORE WHERE identity_id = %1").arg(id);
+
+    return transactionalExec(queries);
+}
+
 QString SecretsDB::password(const quint32 id)
 {
     TRACE();
@@ -1417,7 +1430,17 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
 bool CredentialsDB::removeCredentials(const quint32 id)
 {
     INIT_ERROR();
-    return metaDataDB->removeCredentials(id);
+
+    /* We don't allow removing the credentials if the secrets DB is not
+     * available */
+    if (!isSecretsDBOpen()) {
+        TRACE() << "Secrets DB not opened; aborting DELETE operation";
+        _lastError = noSecretsDB;
+        return false;
+    }
+
+    return secretsDB->removeCredentials(id) &&
+        metaDataDB->removeCredentials(id);
 }
 
 bool CredentialsDB::clear()
