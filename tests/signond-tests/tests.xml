@@ -4,15 +4,15 @@
     <set description="signond:signond-tests" name="./signond-tests" feature="SSO CORE">
        
         <case description="signond:signond-tests:runPluginProxyTests" name="signond-tests-runPluginProxyTests">
-            <step>/usr/bin/signond-tests runPluginProxyTests</step>
+            <step>/usr/bin/signon-tests runPluginProxyTests</step>
         </case>
         
         <case description="signond:signond-tests:runCAMTests" name="signond-tests-runCAMTests">
-            <step>/usr/bin/signond-tests runCAMTests</step>
+            <step>/usr/bin/signon-tests runCAMTests</step>
         </case>
         
         <case description="signond:signond-runTimeoutTests" name="signond-tests-runTimeoutTests">
-            <step>/usr/bin/signond-tests runTimeoutTests</step>
+            <step>/usr/bin/signon-tests runTimeoutTests</step>
         </case>
         
         <case description="signond:signond-tests:signonremoteplugin-test" name="signond:signond-tests:signonremoteplugin-test">
@@ -20,12 +20,12 @@
         </case>
 
         <case description="signond:signond-tests:DatabaseTests" name="signond:signond-tests:DatabaseTests">
-            <step>/usr/bin/signond-tests runDatabaseTests</step>
+            <step>/usr/bin/signon-tests runDatabaseTests</step>
         </case>
 
         <case description="signond:signond-tests:backup-test"
 	name="signond:signond-tests:backup-test">
-            <step>/usr/bin/signond-tests runBackupTests</step>
+            <step>/usr/bin/signon-tests runBackupTests</step>
         </case>
         <environments>
         <scratchbox>true</scratchbox>
