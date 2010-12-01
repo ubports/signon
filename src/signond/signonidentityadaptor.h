@@ -70,6 +70,7 @@ namespace SignonDaemonNS {
 
     private:
         void securityErrorReply(const char *failedMethodName);
+        void errorReply(const QString &name, const QString &message);
 
     private:
         SignonIdentity *m_parent;

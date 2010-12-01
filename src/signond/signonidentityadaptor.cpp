@@ -45,12 +45,16 @@ namespace SignonDaemonNS {
                              << "Method:"
                              << failedMethodName;
 
-        QDBusMessage errReply =
-                    parentDBusContext().message().createErrorReply(
-                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
-                                            errMsg);
-        SIGNOND_BUS.send(errReply);
+        errorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME, errMsg);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
+    }
+
+    void SignonIdentityAdaptor::errorReply(const QString &name,
+                                           const QString &message)
+    {
+        QDBusMessage errReply =
+            parentDBusContext().message().createErrorReply(name, message);
+        SIGNOND_BUS.send(errReply);
     }
 
     quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
