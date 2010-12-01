@@ -370,7 +370,7 @@ namespace SignOn {
         }
 
         bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
-                                  SLOT(addReferenceReply(const quint32)));
+                                  SLOT(addReferenceReply()));
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -410,7 +410,7 @@ namespace SignOn {
         }
 
         bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
-                                  SLOT(removeReferenceReply(const quint32)));
+                                  SLOT(removeReferenceReply()));
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -630,15 +630,13 @@ namespace SignOn {
         emit m_parent->removed();
     }
 
-    void IdentityImpl::addReferenceReply(const quint32 count)
+    void IdentityImpl::addReferenceReply()
     {
-        Q_UNUSED(count);
         emit m_parent->referenceAdded();
     }
 
-    void IdentityImpl::removeReferenceReply(const quint32 count)
+    void IdentityImpl::removeReferenceReply()
     {
-        Q_UNUSED(count);
         emit m_parent->referenceRemoved();
     }
 

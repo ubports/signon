@@ -78,8 +78,8 @@ namespace SignOn {
         void errorReply(const QDBusError &err);
         void storeCredentialsReply(const quint32 id);
         void removeReply();
-        void addReferenceReply(const quint32 count);
-        void removeReferenceReply(const quint32 count);
+        void addReferenceReply();
+        void removeReferenceReply();
         void queryInfoReply(const QList<QVariant> &infoData);
         void verifyUserReply(const bool valid);
         void verifySecretReply(const bool valid);
