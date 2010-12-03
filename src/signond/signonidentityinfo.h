@@ -62,20 +62,36 @@ namespace SignonDaemonNS {
         bool isNew() const { return m_id == SIGNOND_NEW_IDENTITY; }
         void setId(quint32 id) { m_id = id; }
         quint32 id() const { return m_id; }
+
         void setUserName(const QString &userName) { m_userName = userName; }
         QString userName() const { return m_userName; }
         void setUserNameSecret(bool secret) { m_isUserNameSecret = secret; }
         bool isUserNameSecret() const { return m_isUserNameSecret; }
+
         void setPassword(const QString &password) { m_password = password; }
         QString password() const { return m_password; }
         bool storePassword() const { return m_storePassword; }
+
+        void setCaption(const QString &caption) { m_caption = caption; }
         QString caption() const { return m_caption; }
+
+        void setRealms(const QStringList &realms) { m_realms = realms; }
         QStringList realms() const { return m_realms; }
+
+        void setMethods(const QMap<MethodName, MechanismsList> &methods)
+            { m_methods = methods; }
         QMap<MethodName, MechanismsList> methods() const { return m_methods; }
+
+        void setAccessControlList(const QStringList &acl)
+            { m_accessControlList = acl; }
         QStringList accessControlList() const { return m_accessControlList; }
+
         void setValidated(bool validated) { m_validated = validated; }
         bool validated() const { return m_validated; }
+
+        void setType(const int type) { m_type = type; }
         int type() const { return m_type; }
+
     private:
         quint32 m_id;
         QString m_userName;

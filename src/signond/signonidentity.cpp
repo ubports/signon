@@ -406,11 +406,22 @@ namespace SignonDaemonNS {
         if (!aegisIdToken.isNull())
             accessControlListLocal.prepend(aegisIdToken);
 
-        SignonIdentityInfo info(id, userName, secret, storeSecret, methods, caption,
-                                realms, accessControlListLocal, type);
+        if (m_pInfo == 0) {
+            m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
+                                             methods, caption, realms,
+                                             accessControlListLocal, type);
+        } else {
+            m_pInfo->setUserName(userName);
+            m_pInfo->setPassword(secret);
+            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setCaption(caption);
+            m_pInfo->setRealms(realms);
+            m_pInfo->setAccessControlList(accessControlListLocal);
+            m_pInfo->setType(type);
+        }
 
-        TRACE() << info.serialize();
-        storeCredentials(info, storeSecret);
+        TRACE() << m_pInfo->serialize();
+        storeCredentials(*m_pInfo, storeSecret);
 
         if (m_id == SIGNOND_NEW_IDENTITY) {
             QDBusMessage errReply = message().createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
