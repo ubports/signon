@@ -69,6 +69,10 @@ bool SqlDatabase::init()
         TRACE() << "Creating SQL table structure...";
         if (!createTables())
             return false;
+
+        if (!SqlDatabase::updateDB(m_version))
+            BLAME() << "Failed to set database version to: " << m_version
+                    << ".This could lead to data loss.";
     } else {
         // check the DB version
         QSqlQuery q = exec(S("PRAGMA user_version"));
