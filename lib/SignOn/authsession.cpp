@@ -36,14 +36,10 @@ namespace SignOn {
                impl(new AuthSessionImpl(this, id, methodName))
     {
         qRegisterMetaType<SessionData>("SessionData");
-        qRegisterMetaType<AuthSessionError>("AuthSession::AuthSessionError");
         qRegisterMetaType<AuthSessionState>("AuthSession::AuthSessionState");
 
         if (qMetaTypeId<SessionData>() < QMetaType::User)
             BLAME() << "AuthSession::AuthSession() - SessionData meta type not registered.";
-
-        if (qMetaTypeId<AuthSessionError>() < QMetaType::User)
-            BLAME() << "AuthSession::AuthSession() - AuthSessionError meta type not registered.";
 
         if (qMetaTypeId<AuthSessionState>() < QMetaType::User)
             BLAME() << "AuthSession::AuthSession() - AuthSessionState meta type not registered.";

@@ -46,7 +46,6 @@ SignonClient::SignonClient(QWidget *parent)
             this, SLOT(identities(const QList<SignOn::IdentityInfo>& )));
 
     qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
-    qRegisterMetaType<AuthSession::AuthSessionError>("AuthSession::AuthSessionError");
 }
 
 void SignonClient::methodsAvailable(const QStringList &mechs)

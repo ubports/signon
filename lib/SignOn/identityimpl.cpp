@@ -34,6 +34,7 @@
 #include "identityinfoimpl.h"
 #include "authsessionimpl.h"
 #include "dbusconnection.h"
+#include "signonerror.h"
 
 #define SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
 
@@ -577,24 +578,26 @@ namespace SignOn {
         while (!m_authSessions.empty()) {
             AuthSession *session = m_authSessions.takeFirst();
             connect(session,
-                    SIGNAL(error(AuthSession::AuthSessionError, const QString &)),
+                    SIGNAL(error(const SignOn::Error &)),
                     this,
-                    SLOT(authSessionCancelReply(AuthSession::AuthSessionError)));
+                    SLOT(authSessionCancelReply(const SignOn::Error &)));
 
             session->cancel();
             QTimer::singleShot(SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT, session, SLOT(deleteLater()));
         }
     }
 
-    void IdentityImpl::authSessionCancelReply(AuthSession::AuthSessionError error)
+    void IdentityImpl::authSessionCancelReply(const SignOn::Error &err)
     {
         TRACE() << "CANCEL SESSION REPLY";
 
         bool deleteTheSender = false;
-        switch (error) {
+        switch (err.type()) {
             /* fall trough */
-            case AuthSession::CanceledError:
-            case AuthSession::WrongStateError: deleteTheSender = true; break;
+            case Error::SessionCanceled:
+            case Error::WrongState:
+                deleteTheSender = true;
+                break;
             default: break;
         }
 

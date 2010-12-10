@@ -98,7 +98,7 @@ namespace SignOn {
         void verifyUser(const QString &message = QString());
         void verifySecret(const QString &secret);
         void signOut();
-        void authSessionCancelReply(AuthSession::AuthSessionError error);
+        void authSessionCancelReply(const SignOn::Error &err);
         void registerReply(const QDBusObjectPath &objectPath, const QList<QVariant> &infoData);
         void registerReply(const QDBusObjectPath &objectPath);
 
