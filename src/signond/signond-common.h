@@ -35,25 +35,31 @@
 
 #include <QDebug>
 
-#ifndef SIGNOND_TRACE
-    #define SIGNOND_TRACE
-#endif
+/* 0 - fatal, 1 - critical(default), 2 - info/debug */
+extern int loggingLevel;
+
+inline bool debugEnabled()
+{
+    return loggingLevel == 2;
+}
+
+inline bool criticalsEnabled()
+{
+    return loggingLevel >= 1;
+}
 
 #ifdef SIGNOND_TRACE
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #define TRACE() \
+        if (debugEnabled()) qDebug() << __FILE__ << __LINE__ << __func__
+    #define BLAME() \
+        if (criticalsEnabled()) qCritical() << __FILE__ << __LINE__ << __func__
 
-    #define SIGNOND_TRACE_FILE QLatin1String("signon_trace_file")
-    #define SIGNOND_TRACE_DIR  QLatin1String(".signon")
-    #define SIGNOND_TRACE_FILE_MAX_SIZE 102400 // 100 * 1024 bytes
-
-    #define SIGNOND_INITIALIZE_TRACE(_file_name_, _maxFileSize_) \
-        initializeTrace(_file_name_, _maxFileSize_);
+    #define SIGNOND_INITIALIZE_TRACE() initializeTrace();
 #else
-    #define TRACE() if(1) ; else qDebug()
-    #define BLAME() if(1) ; else qDebug()
+    #define TRACE() while (0) qDebug()
+    #define BLAME() while (0) qDebug()
 
-    #define SIGNOND_INITIALIZE_TRACE(_file_name_, _maxFileSize_)
+    #define SIGNOND_INITIALIZE_TRACE()
 #endif //SIGNON_TRACE
 
 /*
