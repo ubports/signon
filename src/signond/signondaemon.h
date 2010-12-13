@@ -54,30 +54,6 @@ class QSocketNotifier;
 namespace SignonDaemonNS {
 
 /*!
- * Request counter, small info class.
- */
-class RequestCounter
-{
-    RequestCounter() : m_serviceRequests(0),
-                       m_identityRequests(0)
-    {}
-
-public:
-    virtual ~RequestCounter() {}
-    static RequestCounter *instance();
-
-    void addServiceRequest();
-    void addIdentityRequest();
-
-    int serviceRequests() const;
-    int identityRequests() const;
-
-private:
-    int m_serviceRequests;
-    int m_identityRequests;
-};
-
-/*!
  * @class SignonDaemonConfiguration
  * The daemon's configuration object;
  * loads date from the daemon configuration file.
@@ -174,9 +150,6 @@ public Q_SLOTS: // backup METHODS
     uchar backupFinished();
     uchar restoreStarts();
     uchar restoreFinished();
-
-private Q_SLOTS:
-    void displayRequestsCount();
 
 private:
     SignonDaemon(QObject *parent);

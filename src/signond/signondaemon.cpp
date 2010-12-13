@@ -40,6 +40,7 @@ extern "C" {
 
 #include "signondaemon.h"
 #include "signond-common.h"
+#include "signontrace.h"
 #include "signondaemonadaptor.h"
 #include "signonidentity.h"
 #include "signonauthsession.h"
@@ -57,41 +58,11 @@ extern "C" {
 
 using namespace SignOn;
 
+/* Global variable used by the logging system:
+ * 0 - fatal, 1 - critical(default), 2 - info/debug */
+int loggingLevel = 1;
+
 namespace SignonDaemonNS {
-
-QScopedPointer<RequestCounter> requestCounter;
-
-/* ---------------------- RequestCounter ---------------------- */
-RequestCounter *RequestCounter::instance()
-{
-    if (requestCounter.isNull())
-    {
-        QScopedPointer<RequestCounter> tmp(new RequestCounter());
-        requestCounter.swap(tmp);
-    }
-
-    return requestCounter.data();
-}
-
-void RequestCounter::addServiceRequest()
-{
-    ++m_serviceRequests;
-}
-
-void RequestCounter::addIdentityRequest()
-{
-    ++m_identityRequests;
-}
-
-int RequestCounter::serviceRequests() const
-{
-    return m_serviceRequests;
-}
-
-int RequestCounter::identityRequests() const
-{
-    return m_identityRequests;
-}
 
 /* ---------------------- SignonDaemonConfiguration ---------------------- */
 
@@ -117,6 +88,8 @@ SignonDaemonConfiguration::~SignonDaemonConfiguration()
     [General]
     UseSecureStorage=yes
     StoragePath=~/.signon/
+    ;0 - fatal, 1 - critical(default), 2 - info/debug
+    LoggingLevel=1
 
     [SecureStorage]
     FileSystemName=signonfs
@@ -127,7 +100,6 @@ SignonDaemonConfiguration::~SignonDaemonConfiguration()
     IdentityTimeout=300
     AuthSessionTimeout=300
  */
-
 void SignonDaemonConfiguration::load()
 {
     //Daemon configuration file
@@ -137,6 +109,9 @@ void SignonDaemonConfiguration::load()
 
         QSettings settings(QLatin1String("/etc/signond.conf"),
                            QSettings::NativeFormat);
+
+        loggingLevel = settings.value(QLatin1String("LoggingLevel"), 1).toUInt();
+
         m_storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
 
@@ -222,12 +197,10 @@ SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
 
 SignonDaemon::~SignonDaemon()
 {
-    TRACE() << "started";
     ::close(sigFd[0]);
     ::close(sigFd[1]);
 
     if (m_backup) {
-        TRACE() << "completed";
         exit(0);
     }
 
@@ -253,7 +226,6 @@ SignonDaemon::~SignonDaemon()
     }
 
     delete m_configuration;
-    TRACE() << "completed";
 }
 
 void SignonDaemon::setupSignalHandlers()
@@ -320,7 +292,6 @@ void SignonDaemon::handleUnixSignal()
 
 SignonDaemon *SignonDaemon::instance()
 {
-    TRACE();
     if (m_instance != NULL)
         return m_instance;
 
@@ -329,28 +300,31 @@ SignonDaemon *SignonDaemon::instance()
     if (!app)
         qFatal("SignonDaemon requires a QCoreApplication instance to be constructed first");
 
-    TRACE() << "New instance must be created";
+    TRACE() << "Creating new daemon instance.";
     m_instance = new SignonDaemon(app);
     return m_instance;
 }
 
 void SignonDaemon::init()
 {
-    TRACE();
+    if (!(m_configuration = new SignonDaemonConfiguration))
+        qWarning("SignonDaemon could not create the configuration object.") ;
+
+    m_configuration->load();
+
+    SIGNOND_INITIALIZE_TRACE()
+
+    if (getuid() != 0) {
+        BLAME() << "Failed to SUID root. Secure storage will not be available.";
+    }
+
     QCoreApplication *app = QCoreApplication::instance();
-    TRACE();
     if (!app)
         qFatal("SignonDaemon requires a QCoreApplication instance to be constructed first");
 
     setupSignalHandlers();
     m_backup = app->arguments().contains(QLatin1String("-backup"));
     m_pCAMManager = CredentialsAccessManager::instance();
-
-    TRACE();
-    if (!(m_configuration = new SignonDaemonConfiguration))
-        qWarning("SignonDaemon could not create the configuration object.") ;
-
-    m_configuration->load();
 
     /* backup dbus interface */
     QDBusConnection sessionConnection = QDBusConnection::sessionBus();
@@ -383,7 +357,7 @@ void SignonDaemon::init()
 
     if (m_backup) {
         TRACE() << "Signond initialized in backup mode.";
-        //skit rest of initialization in backup mode
+        //skip rest of initialization in backup mode
         return;
     }
 
@@ -421,17 +395,7 @@ void SignonDaemon::init()
     if (!initSecureStorage(QByteArray()))
         qFatal("Signond: Cannot initialize credentials secure storage.");
 
-    // TODO - remove this
-    QTimer *requestCounterTimer = new QTimer(this);
-    requestCounterTimer->setInterval(500000);
-    connect(requestCounterTimer,
-            SIGNAL(timeout()),
-            this,
-            SLOT(displayRequestsCount()));
-    requestCounterTimer->start();
-
     TRACE() << "Signond SUCCESSFULLY initialized.";
-    //TODO - end
 }
 
 void SignonDaemon::initExtensions()
@@ -514,17 +478,6 @@ bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
     return true;
 }
 
-void SignonDaemon::displayRequestsCount()
-{
-    SignonDisposable::destroyUnused();
-
-    TRACE() << "\n\n\nUnstored identities:" << m_unstoredIdentities.count()
-            << "\nStored identities:" << m_storedIdentities.count()
-            << "\nService requests:" << RequestCounter::instance()->serviceRequests()
-            << "\nIdentity requests:" << RequestCounter::instance()->identityRequests()
-            << "\n\n";
-}
-
 void SignonDaemon::unregisterIdentity(SignonIdentity *identity)
 {
     if (m_storedIdentities.contains(identity->id()))
@@ -545,8 +498,6 @@ void SignonDaemon::identityStored(SignonIdentity *identity)
 
 void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
 {
-    RequestCounter::instance()->addServiceRequest();
-
     TRACE() << "Registering new identity:";
 
     SignonIdentity *identity = SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
@@ -580,8 +531,6 @@ int SignonDaemon::authSessionTimeout() const
 
 void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
 {
-    RequestCounter::instance()->addServiceRequest();
-
     SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
     TRACE() << "Registering identity:" << id;
@@ -627,8 +576,6 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
 QStringList SignonDaemon::queryMethods()
 {
-    RequestCounter::instance()->addServiceRequest();
-
     QDir pluginsDir(SIGNOND_PLUGINS_DIR);
     //TODO: in the future remove the sym links comment
     QStringList fileNames = pluginsDir.entryList(
@@ -649,7 +596,6 @@ QStringList SignonDaemon::queryMethods()
 
 QStringList SignonDaemon::queryMechanisms(const QString &method)
 {
-    RequestCounter::instance()->addServiceRequest();
     TRACE() << "\n\n\n Querying mechanisms\n\n";
 
     QStringList mechs = SignonSessionCore::loadedPluginMethods(method);
@@ -678,8 +624,6 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
 QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &filter)
 {
-    RequestCounter::instance()->addServiceRequest();
-
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
 
     TRACE() << "\n\n\n Querying identities\n\n";
@@ -712,8 +656,6 @@ QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &fil
 
 bool SignonDaemon::clear()
 {
-    RequestCounter::instance()->addServiceRequest();
-
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
     TRACE() << "\n\n\n Clearing DB\n\n";
