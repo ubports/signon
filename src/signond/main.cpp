@@ -20,16 +20,11 @@
  * 02110-1301 USA
  */
 
-#include "signond-common.h"
 #include "signondaemon.h"
-#include "signontrace.h"
 
 #include <QtCore>
 
-#include <errno.h>
-
 using namespace SignonDaemonNS;
-using namespace SignOn;
 
 void installSigHandlers()
 {
@@ -46,14 +41,7 @@ void installSigHandlers()
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-
     installSigHandlers();
-
-    SIGNOND_INITIALIZE_TRACE(SIGNOND_TRACE_FILE, SIGNOND_TRACE_FILE_MAX_SIZE)
-
-    if (getuid() != 0) {
-        BLAME() << "Failed to SUID root. Secure storage will not be available.";
-    }
 
     QMetaObject::invokeMethod(SignonDaemon::instance(),
                               "init",

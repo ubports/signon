@@ -174,7 +174,6 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::addReference(const QString &reference)
     {
-        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "addReference: " << reference;
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
@@ -191,7 +190,6 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::removeReference(const QString &reference)
     {
-        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "removeReference: " << reference;
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
@@ -208,7 +206,6 @@ namespace SignonDaemonNS {
 
     quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
     {
-        RequestCounter::instance()->addIdentityRequest();
         Q_UNUSED(displayMessage);
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
@@ -255,7 +252,6 @@ namespace SignonDaemonNS {
 
     QList<QVariant> SignonIdentity::queryInfo()
     {
-        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "QUERYING INFO";
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
@@ -289,7 +285,6 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::verifyUser(const QString &displayMessage)
     {
-        RequestCounter::instance()->addIdentityRequest();
         Q_UNUSED(displayMessage)
 
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
@@ -303,8 +298,6 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::verifySecret(const QString &secret)
     {
-        RequestCounter::instance()->addIdentityRequest();
-
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
         bool ok;
@@ -328,8 +321,6 @@ namespace SignonDaemonNS {
 
     void SignonIdentity::remove()
     {
-        RequestCounter::instance()->addIdentityRequest();
-
         SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
@@ -347,7 +338,6 @@ namespace SignonDaemonNS {
 
     bool SignonIdentity::signOut()
     {
-        RequestCounter::instance()->addIdentityRequest();
         TRACE() << "Signout request. Identity ID: " << id();
         /*
            - If the identity is stored (thus registered here)
@@ -380,7 +370,6 @@ namespace SignonDaemonNS {
                                              const QStringList &accessControlList,
                                              const int type)
     {
-        RequestCounter::instance()->addIdentityRequest();
         keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 

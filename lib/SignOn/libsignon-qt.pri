@@ -51,7 +51,11 @@ PKGCONFIG += libsignoncrypto-qt
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
-DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
+DEFINES += \
+    QT_NO_CAST_TO_ASCII \
+    QT_NO_CAST_FROM_ASCII \
+    LIBSIGNON_TRACE
+
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 headers.files = $$public_headers \
