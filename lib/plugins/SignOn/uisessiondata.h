@@ -40,7 +40,8 @@ enum QueryError {
     QUERY_ERROR_BAD_CAPTCHA,     /**< Given captcha image was not valid. */
     QUERY_ERROR_BAD_CAPTCHA_URL, /**< Given url for capctha loading was not valid. */
     QUERY_ERROR_REFRESH_FAILED,  /**< Refresh failed. */
-    QUERY_ERROR_FORBIDDEN        /**< Showing ui forbidden by ui policy. */
+    QUERY_ERROR_FORBIDDEN,       /**< Showing ui forbidden by ui policy. */
+    QUERY_ERROR_FORGOT_PASSWORD  /**< User pressed forgot password. */
     //TODO add more errors
 };
 
@@ -160,12 +161,26 @@ public:
 
     /*!
      * Declare property CaptchaResponse setter and getter
-     * CaptchaString is passed to plugin after signon-ui has processed captcha query.
+     * CaptchaResponse is passed to plugin after signon-ui has processed captcha query.
      * It contains user input for captcha query.
      * @see CaptchaUrl
      * @see CaptchaImage.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, CaptchaResponse)
+
+    /*!
+     * Declare property ForgotPassword setter and getter
+     * ForgotPassword string is shown as s link to user.
+     * @see ForgotPasswordUrl
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPassword)
+
+    /*!
+     * Declare property ForgotPasswordUrl setter and getter
+     * ForgotPasswordUrl is shown to user if ForgotPassword link is pressed.
+     * @see ForgotPassword
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPasswordUrl)
 
 };
 

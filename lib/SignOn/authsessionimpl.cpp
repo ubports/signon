@@ -401,6 +401,10 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errCode = Error::OperationFailed;
     } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
         errCode = Error::EncryptionFailed;
+    } else if (err.name() == SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME) {
+        errCode = Error::TOSNotAccepted;
+    } else if (err.name() == SIGNOND_FORGOT_PASSWORD_ERR_NAME) {
+        errCode = Error::ForgotPassword;
     } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
         //the error message comes in as "code:message"
         bool ok = false;

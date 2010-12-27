@@ -96,6 +96,7 @@ namespace SignOn {
         void removeReference(const QString &reference = QString());
         void queryInfo();
         void verifyUser(const QString &message = QString());
+        void verifyUser(const QVariantMap &params);
         void verifySecret(const QString &secret);
         void signOut();
         void authSessionCancelReply(const SignOn::Error &err);

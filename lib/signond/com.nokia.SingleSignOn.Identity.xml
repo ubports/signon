@@ -15,7 +15,8 @@
     </method>
     <method name="verifyUser">
       <arg type="b" direction="out"/>
-      <arg name="message" type="s" direction="in"/>
+      <arg name="params" type="a{sv}" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In4" value="QVariantMap"/>
     </method>
     <method name="verifySecret">
       <arg type="b" direction="out"/>
