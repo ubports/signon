@@ -119,7 +119,7 @@ namespace SignonDaemonNS {
     }
 
 
-    bool SignonIdentityAdaptor::verifyUser(const QString &message)
+    bool SignonIdentityAdaptor::verifyUser(const QVariantMap &params)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
@@ -128,7 +128,12 @@ namespace SignonDaemonNS {
             return false;
         }
 
-        return m_parent->verifyUser(message);
+        QDBusMessage m_message = parentDBusContext().message();
+        m_message.setDelayedReply(true);
+        QDBusMessage delayReply = m_message.createReply();
+        SIGNOND_BUS.send(delayReply);
+
+        return m_parent->verifyUser(params);
     }
 
     bool SignonIdentityAdaptor::verifySecret(const QString &secret)

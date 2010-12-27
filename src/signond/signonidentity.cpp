@@ -206,8 +206,6 @@ namespace SignonDaemonNS {
 
     quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
     {
-        Q_UNUSED(displayMessage);
-
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
         bool ok;
@@ -283,16 +281,47 @@ namespace SignonDaemonNS {
         return info.toVariantList();
     }
 
-    bool SignonIdentity::verifyUser(const QString &displayMessage)
+    bool SignonIdentity::verifyUser(const QVariantMap &params)
     {
-        Q_UNUSED(displayMessage)
-
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
-        QDBusMessage errReply = message().createErrorReply(SIGNOND_UNKNOWN_ERR_NAME,
-                                                           QLatin1String("Not implemented."));
-        SIGNOND_BUS.send(errReply);
-        keepInUse();
+        bool ok;
+        SignonIdentityInfo info = queryInfo(ok, true);
+
+        if (!ok) {
+            BLAME() << "Identity not found.";
+            QDBusMessage errReply = message().createErrorReply(
+                                                SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                                                SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return false;
+        }
+        if (!info.storePassword()) {
+            BLAME() << "Password is not stored.";
+            QDBusMessage errReply = message().createErrorReply(
+                                                SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                                                SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return false;
+        }
+
+        //delay dbus reply, ui interaction might take long time to complete
+        setDelayedReply(true);
+        m_message = message();
+
+        //create ui request to ask password
+        QVariantMap uiRequest;
+        uiRequest.unite(params);
+        uiRequest.insert(SSOUI_KEY_QUERYPASSWORD, true);
+        uiRequest.insert(SSOUI_KEY_USERNAME, info.userName());
+        uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
+
+        TRACE() << "Waiting for reply from signon-ui";
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(uiRequest),
+                                                this);
+        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
+
+        setAutoDestruct(false);
         return false;
     }
 
@@ -525,6 +554,80 @@ namespace SignonDaemonNS {
             }
         }
 
+        //this should not happen, return error
+        errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                SIGNOND_INTERNAL_SERVER_ERR_STR);
+        SIGNOND_BUS.send(errReply);
+        return;
+    }
+
+    void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
+    {
+        TRACE();
+        setAutoDestruct(true);
+
+        if (call)
+            call->deleteLater();
+
+        QDBusMessage errReply;
+        QDBusPendingReply<QVariantMap> reply = *call;
+        QVariantMap resultParameters;
+        if (!reply.isError() && reply.count()) {
+            resultParameters = reply.argumentAt<0>();
+        } else {
+            errReply = m_message.createErrorReply(SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
+                    SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return;
+        }
+
+        TRACE() << resultParameters;
+
+        if (!resultParameters.contains(SSOUI_KEY_ERROR)) {
+            //no reply code
+            errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                    SIGNOND_INTERNAL_SERVER_ERR_STR);
+            SIGNOND_BUS.send(errReply);
+            return;
+        }
+
+        //TODO add forgot error
+        int errorCode = resultParameters.value(SSOUI_KEY_ERROR).toInt();
+        TRACE() << "error: " << errorCode;
+        if (errorCode != QUERY_ERROR_NONE) {
+            if (errorCode == QUERY_ERROR_CANCELED)
+                errReply = m_message.createErrorReply(SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
+                        SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
+            else
+                errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                        QString(QLatin1String("signon-ui call returned error %1")).arg(errorCode));
+
+            SIGNOND_BUS.send(errReply);
+            return;
+        }
+
+        if (resultParameters.contains(SSOUI_KEY_PASSWORD)) {
+            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+            if (db == NULL) {
+                BLAME() << "NULL database handler object.";
+                errReply = m_message.createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                        SIGNOND_STORE_FAILED_ERR_STR);
+                SIGNOND_BUS.send(errReply);
+                return;
+            }
+
+            //store new password
+            if (m_pInfo) {
+                bool ret = m_pInfo->password() == resultParameters[SSOUI_KEY_PASSWORD].toString();
+
+                delete m_pInfo;
+                m_pInfo = NULL;
+                QDBusMessage dbusreply = m_message.createReply();
+                dbusreply << ret;
+                SIGNOND_BUS.send(dbusreply);
+                return;
+            }
+        }
         //this should not happen, return error
         errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
                 SIGNOND_INTERNAL_SERVER_ERR_STR);

@@ -68,7 +68,7 @@ namespace SignonDaemonNS {
         QList<QVariant> queryInfo();
         bool addReference(const QString &reference);
         bool removeReference(const QString &reference);
-        bool verifyUser(const QString &message);
+        bool verifyUser(const QVariantMap &params);
         bool verifySecret(const QString &secret);
         void remove();
         bool signOut();
@@ -82,6 +82,7 @@ namespace SignonDaemonNS {
                                  const QStringList &accessControlList,
                                  const int type);
         void queryUiSlot(QDBusPendingCallWatcher *call);
+        void verifyUiSlot(QDBusPendingCallWatcher *call);
     Q_SIGNALS:
         void unregistered();
         //TODO - split this into the 3 separate signals(updated, removed, signed out)

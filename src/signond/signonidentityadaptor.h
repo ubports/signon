@@ -50,7 +50,7 @@ namespace SignonDaemonNS {
         void addReference(const QString &reference);
         void removeReference(const QString &reference);
 
-        bool verifyUser(const QString &message);
+        bool verifyUser(const QVariantMap &params);
         bool verifySecret(const QString &secret);
         void remove();
         bool signOut();
