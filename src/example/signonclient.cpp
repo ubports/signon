@@ -92,6 +92,11 @@ void SignonClient::sessionError(const SignOn::Error &error)
     qDebug() << error.message();
 }
 
+void SignonClient::userVerified(const bool valid)
+{
+        qDebug() << "user verified:" << valid;
+}
+
 void SignonClient::credentialsStored(const quint32 id)
 {
     qDebug() << "stored id: " << id;
@@ -149,6 +154,9 @@ void SignonClient::on_store_clicked()
 
     connect(m_identity, SIGNAL(credentialsStored(const quint32)),
             this, SLOT(credentialsStored(const quint32)));
+
+    connect(m_identity, SIGNAL(userVerified(const bool)),
+            this, SLOT(userVerified(const bool)));
 
     connect(m_identity, SIGNAL(error(const SignOn::Error &)),
             this, SLOT(error(const SignOn::Error &)));
@@ -214,5 +222,19 @@ void SignonClient::on_google_clicked()
     }
 
     m_session->process(data , QLatin1String("ClientLogin"));
+}
+
+void SignonClient::on_verify_clicked()
+{
+    qDebug("on_verify_clicked");
+    if (!m_identity) {
+        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
+        return;
+    }
+    QVariantMap params;
+    params.insert(QLatin1String("QueryMessage"), QLatin1String("hello"));
+    params.insert(QLatin1String("test"), QLatin1String("testing"));
+
+    m_identity->verifyUser(params);
 }
 }
