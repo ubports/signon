@@ -251,7 +251,7 @@ void SignonSessionCore::process(const QDBusConnection &connection,
         if (m_encryptor->status() != Encryptor::Ok) {
             replyError(connection,
                        message,
-                       Error::EncryptionFailed,
+                       Error::EncryptionFailure,
                        QString::fromLatin1("Failed to decrypt incoming message"));
             return;
         }
@@ -458,9 +458,17 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
                 errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                 break;
-            case Error::EncryptionFailed:
+            case Error::EncryptionFailure:
                 errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
+                break;
+            case Error::TOSNotAccepted:
+                errName = SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME;
+                errMessage = SIGNOND_TOS_NOT_ACCEPTED_ERR_STR;
+                break;
+            case Error::ForgotPassword:
+                errName = SIGNOND_FORGOT_PASSWORD_ERR_NAME;
+                errMessage = SIGNOND_FORGOT_PASSWORD_ERR_STR;
                 break;
             default:
                 if (message.isEmpty())
@@ -530,7 +538,7 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         if (m_encryptor->status() != Encryptor::Ok) {
             replyError(rd.m_conn,
                        rd.m_msg,
-                       Error::EncryptionFailed,
+                       Error::EncryptionFailure,
                        QString::fromLatin1("Failed to encrypt outgoing message"));
         } else {
             arguments << encodedData;

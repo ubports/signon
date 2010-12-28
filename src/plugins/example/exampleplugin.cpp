@@ -85,6 +85,12 @@ namespace ExamplePluginNS {
 
         if ( inData.UserName() == QLatin1String("error" ) ) {
             emit error(Error::NotAuthorized);
+            return;
+        }
+
+        if ( inData.UserName() == QLatin1String("toserror" ) ) {
+            emit error(Error::TOSNotAccepted);
+            return;
         }
 
         if ( inData.UserName() == QLatin1String("store" ) ) {

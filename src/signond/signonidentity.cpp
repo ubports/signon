@@ -317,9 +317,10 @@ namespace SignonDaemonNS {
         uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
 
         TRACE() << "Waiting for reply from signon-ui";
-        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(uiRequest),
-                                                this);
-        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(
+                m_signonui->queryDialog(uiRequest), this);
+        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this,
+                SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
 
         setAutoDestruct(false);
         return false;
@@ -591,13 +592,15 @@ namespace SignonDaemonNS {
             return;
         }
 
-        //TODO add forgot error
         int errorCode = resultParameters.value(SSOUI_KEY_ERROR).toInt();
         TRACE() << "error: " << errorCode;
         if (errorCode != QUERY_ERROR_NONE) {
             if (errorCode == QUERY_ERROR_CANCELED)
                 errReply = m_message.createErrorReply(SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
                         SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
+            else if (errorCode == QUERY_ERROR_FORGOT_PASSWORD)
+                errReply = m_message.createErrorReply(SIGNOND_FORGOT_PASSWORD_ERR_NAME,
+                        SIGNOND_FORGOT_PASSWORD_ERR_STR);
             else
                 errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
                         QString(QLatin1String("signon-ui call returned error %1")).arg(errorCode));
@@ -616,7 +619,7 @@ namespace SignonDaemonNS {
                 return;
             }
 
-            //store new password
+            //compare passwords
             if (m_pInfo) {
                 bool ret = m_pInfo->password() == resultParameters[SSOUI_KEY_PASSWORD].toString();
 

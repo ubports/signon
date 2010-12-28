@@ -723,7 +723,7 @@ namespace SignOn {
             emit m_parent->error(Error(Error::PermissionDenied, err.message()));
             return;
         } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
-            emit m_parent->error(Error(Error::EncryptionFailed, err.message()));
+            emit m_parent->error(Error(Error::EncryptionFailure, err.message()));
             return;
         } else if (err.name() == SIGNOND_METHOD_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Error(Error::MethodNotAvailable, err.message()));

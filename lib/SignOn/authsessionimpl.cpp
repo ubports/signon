@@ -267,8 +267,8 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
         qCritical() << "AuthSession: encryption failed";
 
         emit m_parent->error(
-                Error(Error::EncryptionFailed,
-                      QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
+            Error(Error::EncryptionFailure,
+                QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
                          .arg(m_methodName)));
         return;
     }
@@ -400,7 +400,7 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
     } else if (err.name() == SIGNOND_OPERATION_FAILED_ERR_NAME) {
         errCode = Error::OperationFailed;
     } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
-        errCode = Error::EncryptionFailed;
+        errCode = Error::EncryptionFailure;
     } else if (err.name() == SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME) {
         errCode = Error::TOSNotAccepted;
     } else if (err.name() == SIGNOND_FORGOT_PASSWORD_ERR_NAME) {

@@ -62,7 +62,7 @@ namespace SignOn {
             InternalCommunication = 3, /**< Communication with Signon Daemon error. */
             PermissionDenied = 4,      /**< The operation cannot be performed due to
                                             insufficient client permissions. */
-            EncryptionFailed,          /**< Failure during data encryption/decryption. */
+            EncryptionFailure,         /**< Failure during data encryption/decryption. */
             AuthServiceErr = 100,           /* Placeholder to rearrange enumeration
                                              - AuthService specific */
             MethodNotKnown,            /**< The method with this name is not found. */
@@ -99,6 +99,7 @@ namespace SignOn {
             TimedOut,                  /**< Challenge was timed out. */
             UserInteraction,           /**< User interaction dialog failed */
             OperationFailed,           /**< Temporary failure in authentication. */
+            EncryptionFailed,          /**< @deprecated Failure during data encryption/decryption. */
             TOSNotAccepted,            /**< User declined Terms of Service. */
             ForgotPassword,            /**< User requested reset password sequence. */
             UserErr = 400                   /* Placeholder to rearrange enumeration
