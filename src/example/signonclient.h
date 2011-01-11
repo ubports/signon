@@ -41,6 +41,7 @@ public slots:
     void error(const SignOn::Error &error);
     void sessionError(const SignOn::Error &error);
     void credentialsStored(const quint32 id);
+    void userVerified(const bool valid);
 
 private slots:
     void methodsAvailable(const QStringList &mechs);
@@ -51,6 +52,7 @@ private slots:
     void on_query_clicked();
     void on_challenge_clicked();
     void on_google_clicked();
+    void on_verify_clicked();
 
 private:
     Ui::SignonClient ui;

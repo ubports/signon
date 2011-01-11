@@ -47,10 +47,10 @@ namespace SignonDaemonNS {
     public Q_SLOTS:
         quint32 requestCredentialsUpdate(const QString &message);
         QList<QVariant> queryInfo();
-        quint32 addReference(const QString &reference);
-        quint32 removeReference(const QString &reference);
+        void addReference(const QString &reference);
+        void removeReference(const QString &reference);
 
-        bool verifyUser(const QString &message);
+        bool verifyUser(const QVariantMap &params);
         bool verifySecret(const QString &secret);
         void remove();
         bool signOut();
@@ -70,6 +70,7 @@ namespace SignonDaemonNS {
 
     private:
         void securityErrorReply(const char *failedMethodName);
+        void errorReply(const QString &name, const QString &message);
 
     private:
         SignonIdentity *m_parent;

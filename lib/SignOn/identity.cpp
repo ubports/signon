@@ -116,6 +116,11 @@ namespace SignOn {
         impl->verifyUser(message);
     }
 
+    void Identity::verifyUser(const QVariantMap &params)
+    {
+        impl->verifyUser(params);
+    }
+
     void Identity::verifySecret(const QString &secret)
     {
         impl->verifySecret(secret);

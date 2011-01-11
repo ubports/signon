@@ -251,7 +251,6 @@ namespace SignOn {
 
 }  // namespace SignOn
 
-Q_DECLARE_METATYPE(SignOn::AuthSession::AuthSessionError)
 Q_DECLARE_METATYPE(SignOn::AuthSession::AuthSessionState)
 
 #endif // AUTHSESSION_H

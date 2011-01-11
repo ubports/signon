@@ -1,7 +1,8 @@
+/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2010 Nokia Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
  *
@@ -20,40 +21,21 @@
  * 02110-1301 USA
  */
 
-#ifndef SSOCLIENTTHREAD_H
-#define SSOCLIENTTHREAD_H
+#ifndef SIMDLC_H
+#define SIMDLC_H
 
-#include <QThread>
+#define SIMDLC_SERVICE "com.nokia.SingleSignOn.DeviceLock"
+#define SIMDLC_PATH "/com/nokia/SingleSignOn/DeviceLock"
+#define SIMDLC_INTERFACE SIMDLC_SERVICE
 
-#include "ssotestclient.h"
+#ifdef __cplusplus
+    #include <QLatin1String>
+    #define SIMDLC_STRING(s) QLatin1String(s)
 
-#define NUMBER_OF_TEST_CLIENTS 5
+    #define SIMDLC_SERVICE_S QLatin1String(SIMDLC_SERVICE)
+    #define SIMDLC_PATH_S QLatin1String(SIMDLC_PATH)
+    #define SIMDLC_INTERFACE_S QLatin1String(SIMDLC_INTERFACE)
+#endif
 
-class SsoClientThread : public QThread
-{
-    Q_OBJECT
+#endif // SIMDLC_H
 
-public:
-    SsoClientThread(SsoTestClient::TestType type);
-    ~SsoClientThread();
-
-    bool isPrimary();
-    void run();
-
-private Q_SLOTS:
-    void startTests();
-    void stopAllExceptPrimary();
-
-Q_SIGNALS:
-    void reallyStarted();
-    void runTests();
-    void done();
-
-private:
-    SsoTestClient *m_pTestClient;
-    SsoTestClient::TestType m_testType;
-
-    int m_id;
-};
-
-#endif // SSOCLIENTTHREAD_H

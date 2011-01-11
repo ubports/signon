@@ -45,7 +45,7 @@
 #define SIGNON_LUKS_KEY_SIZE	  256
 #define SIGNON_LUKS_BASE_KEYSLOT  0
 
-#define SIGNON_EXTERNAL_PROCESS_READ_TIMEOUT 100
+#define SIGNON_EXTERNAL_PROCESS_READ_TIMEOUT 300
 
 namespace SignonDaemonNS {
 
@@ -139,7 +139,7 @@ namespace SignonDaemonNS {
         SystemCommandLineCallHandler handler;
         return handler.makeCall(
                             mkfsApp,
-                            QStringList() << QLatin1String("-j") << fileName);
+                            QStringList() << fileName);
     }
 
 
@@ -158,7 +158,6 @@ namespace SignonDaemonNS {
         /* Unmount a filesystem.  */
 
         //TODO - investigate why errno is EINVAL
-        //Until this is fixed the system has an "unmount encrypted partition impossibe" bug
 
         TRACE() << mountPath.toUtf8().constData();
         int ret = ::umount2(mountPath.toUtf8().constData(), MNT_FORCE);
@@ -173,7 +172,7 @@ namespace SignonDaemonNS {
             case ENOENT: TRACE() << "ENOENT"; break;
             case ENOMEM: TRACE() << "ENOMEM"; break;
             case EPERM: TRACE() << "EPERM"; break;
-            default: TRACE() << "UNKNOWN ERROR!!";
+            default: TRACE() << "umount unknown error - ignoring.";
         }
 
         //TODO - Remove 1st, uncommend 2nd lines after the fix above.
@@ -277,7 +276,7 @@ namespace SignonDaemonNS {
         options.icb = &cmd_icb;
 
         TRACE() << "Device: [" << options.device << "]";
-        TRACE() << "Key:" << key.data();
+        TRACE() << "Key:" << key;
         TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksFormat(&options);
@@ -335,7 +334,7 @@ namespace SignonDaemonNS {
 
         TRACE() << "Device [" << options.device << "]";
         TRACE() << "Map name [" << options.name << "]";
-        TRACE() << "Key:" << key.constData();
+        TRACE() << "Key:" << key.toHex();
         TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksOpen(&options);
@@ -416,6 +415,7 @@ namespace SignonDaemonNS {
         options.flags = 0;
         options.iteration_time = 1000;
         options.timeout = 0;
+        options.tries = 0;
 
         static struct interface_callbacks cmd_icb;
         cmd_icb.yesDialog = yesDialog;
@@ -451,9 +451,6 @@ namespace SignonDaemonNS {
         options.key_file = NULL;
         options.key_slot = -1;
 
-        TRACE() << "Key to be deleted:" << key.constData()
-                << ", Remaining key:" << remainingKey.constData();
-
         options.key_material = key.constData();
         options.key_material2 = remainingKey.constData();
 
@@ -467,6 +464,9 @@ namespace SignonDaemonNS {
         cmd_icb.yesDialog = yesDialog;
         cmd_icb.log = cmdLineLog;
         options.icb = &cmd_icb;
+
+        TRACE() << "Key to be deleted:" << key.toHex()
+                << ", Remaining key:" << remainingKey.toHex();
 
         int ret = crypt_luksRemoveKey(&options);
 

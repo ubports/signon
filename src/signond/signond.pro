@@ -13,7 +13,7 @@ QT -= gui
 system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
     ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
 
-HEADERS += simdatahandler.h \
+HEADERS += \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
@@ -32,9 +32,8 @@ HEADERS += simdatahandler.h \
     signonidentityinfo.h \
     signonui_interface.h \
     signonidentityadaptor.h \
-    backupifadaptor.h \
-    devicelockcodehandler.h
-SOURCES += simdatahandler.cpp \
+    backupifadaptor.h
+SOURCES += \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
@@ -52,10 +51,12 @@ SOURCES += simdatahandler.cpp \
     signondaemon.cpp \
     signonidentityinfo.cpp \
     signonidentityadaptor.cpp \
-    backupifadaptor.cpp \
-    devicelockcodehandler.cpp
+    backupifadaptor.cpp
 INCLUDEPATH += . \
-    $${TOP_SRC_DIR}/lib/plugins
+    $${TOP_SRC_DIR}/lib/plugins \
+    $${TOP_SRC_DIR}/lib/signond \
+    $${TOP_SRC_DIR}/lib/sim-dlc
+
 CONFIG += build_all \
     link_pkgconfig
 
@@ -65,19 +66,10 @@ QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
-DEFINES += SIGNOND_TRACE \
-    SIGNON_PLUGIN_TRACE
+#Trace defines can be overruled by signond's configuration file `LoggingLevel`
+DEFINES += SIGNOND_TRACE
 LIBS += -lcreds \
     -lcryptsetup
-
-#TODO: add some sort of pkgconfig
-#directory autodetection
-PKG_CONFIG_PATH = /usr/lib/pkgconfig
-
-exists ($(PKG_CONFIG_PATH)/CellularQt.pc) {
-    PKGCONFIG += CellularQt
-    DEFINES += SIGNON_USES_CELLULAR_QT
-}
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h

@@ -24,6 +24,7 @@
 #define TESTAUTHSESSION_CPP_
 
 #include "testauthsession.h"
+#include "testthread.h"
 #include "SignOn/identity.h"
 
 #define SSO_TEST_CREATE_AUTH_SESSION(__session__, __method__) \
@@ -588,6 +589,18 @@ void TestAuthSession::queryMechanisms_existing_method()
      QCOMPARE(result.size(), 3);
  }
 
+ void TestAuthSession::multi_thread_test()
+ {
+     //execute a SignOn call in a separate thread
+     TestThread thread;
+     thread.start();
+     thread.wait(g_testThreadTimeout + 1000);
+
+     //do the same in this thread - this test succeeds if the
+     //following succeeds
+     process_with_new_identity();
+ }
+
  void TestAuthSession::cancel()
  {
      g_currentSession->cancel();
@@ -606,13 +619,13 @@ void TestAuthSession::queryMechanisms_existing_method()
        AuthSession *as;
        SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
 
-       QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+       QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
        QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
        QSignalSpy spy(as, SIGNAL(response(const SessionData&)));
        QEventLoop loop;
 
        QObject::connect(as, SIGNAL(response(const SessionData&)), &loop, SLOT(quit()));
-       QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+       QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
        QTimer::singleShot(500*1000, &loop, SLOT(quit()));
 
        /*
@@ -655,13 +668,13 @@ void TestAuthSession::queryMechanisms_existing_method()
        SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
        g_currentSession = as;
 
-       QSignalSpy errorCounter(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)));
+       QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
        QSignalSpy stateCounter(as, SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
        QSignalSpy spy(as, SIGNAL(response(const SessionData&)));
        QEventLoop loop;
 
        QObject::connect(as, SIGNAL(response(const SessionData&)), &loop, SLOT(quit()));
-       QObject::connect(as, SIGNAL(error(AuthSession::AuthSessionError, const QString&)), &loop, SLOT(quit()));
+       QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
        QTimer::singleShot(500*1000, &loop, SLOT(quit()));
 
        /*

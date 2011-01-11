@@ -122,6 +122,11 @@ namespace SignonDaemonNS {
             return false;
         }
 
+        if (m_accessCode.isEmpty()) {
+            TRACE() << "No access code set";
+            return false;
+        }
+
         if (!CryptsetupHandler::loadDmMod()) {
             BLAME() << "Could not load `dm_mod`!";
             return false;
@@ -215,7 +220,6 @@ namespace SignonDaemonNS {
         updateMountState(LoopSet);
 
         //attempt luks close, in case of a leftover.
-        TRACE() << "%:"<< QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName;
         if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName))
             CryptsetupHandler::closeFile(m_fileSystemName);
 
@@ -245,7 +249,9 @@ namespace SignonDaemonNS {
             the secure storage.
         */
 
-        TRACE() << "Clearing secure storage possibly used resources.";
+        TRACE() << "--- START clearing secure storage possibly used resources."
+                   " Ignore possible errors. ---";
+
         if (!unmountMappedDevice())
             TRACE() << "Unmounting mapped device failed.";
 
@@ -263,7 +269,7 @@ namespace SignonDaemonNS {
             TRACE() << "Failed to release loop device.";
         */
 
-        TRACE() << "Clearing secure storage possibly used resources DONE.";
+        TRACE() << "--- DONE clearing secure storage possibly used resources. ---";
     }
 
     bool CryptoManager::unmountFileSystem()
@@ -386,8 +392,6 @@ namespace SignonDaemonNS {
         if (fileSystemMounted() && (m_accessCode == key))
             return true;
 
-        QString loopDeviceName;
-        bool loopDeviceSet = false;
         if(!fileSystemMounted()) {
            setEncryptionKey(key);
            return mountFileSystem();

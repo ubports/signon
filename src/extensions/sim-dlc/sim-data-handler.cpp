@@ -22,14 +22,10 @@
  * 02110-1301 USA
  */
 
-#include "simdatahandler.h"
-#include "signond-common.h"
+#include "sim-data-handler.h"
+#include "debug.h"
 
 #include <QDBusError>
-
-using namespace SignonDaemonNS;
-
-#ifdef SIGNON_USES_CELLULAR_QT
 
 #include <openssl/sha.h>
 
@@ -73,7 +69,9 @@ QString simStatusAsStr(const SIMStatus::Status status)
 SimDataHandler::SimDataHandler(QObject *parent)
     : QObject(parent),
       m_dataBuffer(QByteArray()),
+      simData(QByteArray()),
       m_simChallengeComplete(true),
+      m_randCounter(0),
       m_lastSimStatus(SIMStatus::UnknownStatus),
       m_simIdentity(0),
       m_simStatus(new SIMStatus(this))
@@ -83,6 +81,11 @@ SimDataHandler::SimDataHandler(QObject *parent)
     connect(m_simStatus,
             SIGNAL(statusChanged(SIMStatus::Status)),
             SLOT(simStatusChanged(SIMStatus::Status)));
+    connect(m_simStatus,
+            SIGNAL(statusComplete(SIMStatus::Status, SIMError)),
+            SLOT(simStatusComplete(SIMStatus::Status, SIMError)));
+
+    m_simStatus->status();
 }
 
 SimDataHandler::~SimDataHandler()
@@ -119,8 +122,9 @@ void SimDataHandler::authComplete(QByteArray res,
             querySim();
         } else {
             QByteArray sha256DigestBa = sha256Digest(m_dataBuffer);
-            TRACE() << sha256DigestBa;
             m_dataBuffer.clear();
+            TRACE() << sha256DigestBa.toHex();
+            simData = sha256DigestBa;
             emit simAvailable(sha256DigestBa);
             refreshSimIdentity();
         }
@@ -128,6 +132,7 @@ void SimDataHandler::authComplete(QByteArray res,
         BLAME() << "SIM chanllenge error occurred:" << err;
         m_simChallengeComplete = true;
         m_dataBuffer.clear();
+        m_randCounter = 0;
         emit error();
         refreshSimIdentity();
     }
@@ -142,12 +147,24 @@ void SimDataHandler::simStatusChanged(SIMStatus::Status status)
         querySim();
     }
 
-    if ((m_lastSimStatus != SIMStatus::NoSIM) && (status == SIMStatus::NoSIM)) {
+    if ((m_lastSimStatus == SIMStatus::Ok) && (status != SIMStatus::Ok)) {
         TRACE() << "SIM removed.";
-        emit simRemoved();
+        QByteArray simDataTmp = simData;
+        simData.clear();
+        emit simRemoved(simDataTmp);
     }
 
     m_lastSimStatus = status;
+}
+
+void SimDataHandler::simStatusComplete(SIMStatus::Status status, SIMError err)
+{
+    if (err == Cellular::SIM::NoError) {
+        m_lastSimStatus = status;
+        TRACE() << "Initial SIM status check:" << simStatusAsStr(status);
+    } else {
+        TRACE() << "Error occurred at initial SIM status check:" << err;
+    }
 }
 
 bool SimDataHandler::isValid()
@@ -155,42 +172,33 @@ bool SimDataHandler::isValid()
     return (m_simIdentity->isValid() && m_simStatus->isValid());
 }
 
+bool SimDataHandler::isSimPresent()
+{
+    return (m_lastSimStatus == SIMStatus::Ok);
+}
+
+bool SimDataHandler::isSimActive()
+{
+    return isSimPresent() && !simData.isEmpty();
+}
+
 void SimDataHandler::querySim()
 {
+    if (!simData.isEmpty()) {
+        emit simAvailable(simData);
+        return;
+    }
+
     m_simChallengeComplete = false;
-    static int randCounter = 0;
 
     QByteArray ba(SIM_RAND_BASE_SIZE, '0');
-    ba.append(QByteArray::number(randCounter));
+    ba.append(QByteArray::number(m_randCounter));
     m_simIdentity->auth(ba);
-    randCounter++;
+    m_randCounter++;
 
-    if (randCounter == SIM_AUTH_COUNT) {
-        randCounter = 0;
+    if (m_randCounter == SIM_AUTH_COUNT) {
+        m_randCounter = 0;
         m_simChallengeComplete = true;
     }
 }
 
-#else
-
-SimDataHandler::SimDataHandler(QObject *parent)
-    : QObject(parent),
-      m_dataBuffer(QByteArray())
-{
-}
-
-SimDataHandler::~SimDataHandler()
-{
-}
-
-bool SimDataHandler::isValid()
-{
-    return false;
-}
-
-void SimDataHandler::querySim()
-{
-    return;
-}
-
-#endif

@@ -37,13 +37,14 @@
 #include <QtDBus/QtDBus>
 
 #include <signond/signoncommon.h>
+#include <sim-dlc.h>
 
 
 void dbusCall(const QLatin1String &method, const QList<QVariant> &args)
 {
-    QDBusInterface dbus_iface(SIGNOND_SERVICE,
-                              SIGNOND_DAEMON_OBJECTPATH,
-                              SIGNOND_DAEMON_INTERFACE,
+    QDBusInterface dbus_iface(SIMDLC_SERVICE_S,
+                              SIMDLC_PATH_S,
+                              SIMDLC_INTERFACE_S,
                               SIGNOND_BUS);
 
     QDBusMessage reply = dbus_iface.callWithArgumentList(QDBus::Block, method, args);

@@ -251,7 +251,7 @@ void SignonSessionCore::process(const QDBusConnection &connection,
         if (m_encryptor->status() != Encryptor::Ok) {
             replyError(connection,
                        message,
-                       Error::EncryptionFailed,
+                       Error::EncryptionFailure,
                        QString::fromLatin1("Failed to decrypt incoming message"));
             return;
         }
@@ -349,14 +349,14 @@ void SignonSessionCore::startProcess()
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         if (db != NULL) {
             SignonIdentityInfo info = db->credentials(m_id);
-            if (info.m_id != SIGNOND_NEW_IDENTITY) {
+            if (info.id() != SIGNOND_NEW_IDENTITY) {
                 /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
                 if (!parameters.contains(SSO_KEY_PASSWORD))
-                    parameters[SSO_KEY_PASSWORD] = info.m_password;
+                    parameters[SSO_KEY_PASSWORD] = info.password();
                 //database overrules over sessiondata for validated username,
                 //so that identity cannot be misused
-                if (info.m_validated || !parameters.contains(SSO_KEY_USERNAME))
-                    parameters[SSO_KEY_USERNAME] = info.m_userName;
+                if (info.validated() || !parameters.contains(SSO_KEY_USERNAME))
+                    parameters[SSO_KEY_USERNAME] = info.userName();
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
                 //credentials not available, so authentication probably fails
@@ -458,9 +458,17 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
                 errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
                 break;
-            case Error::EncryptionFailed:
+            case Error::EncryptionFailure:
                 errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
                 errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
+                break;
+            case Error::TOSNotAccepted:
+                errName = SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME;
+                errMessage = SIGNOND_TOS_NOT_ACCEPTED_ERR_STR;
+                break;
+            case Error::ForgotPassword:
+                errName = SIGNOND_FORGOT_PASSWORD_ERR_NAME;
+                errMessage = SIGNOND_FORGOT_PASSWORD_ERR_STR;
                 break;
             default:
                 if (message.isEmpty())
@@ -503,16 +511,16 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             if (db != NULL) {
                 SignonIdentityInfo info = db->credentials(m_id);
                 //allow update only for not validated username
-                if (!info.m_validated
+                if (!info.validated()
                         && data2.contains(SSO_KEY_USERNAME)
                         && !data2[SSO_KEY_USERNAME].toString().isEmpty())
-                    info.m_userName = data2[SSO_KEY_USERNAME].toString();
+                    info.setUserName(data2[SSO_KEY_USERNAME].toString());
                 if (!m_passwordUpdate.isEmpty())
-                    info.m_password = m_passwordUpdate;
+                    info.setPassword(m_passwordUpdate);
                 if (data2.contains(SSO_KEY_PASSWORD)
                         && !data2[SSO_KEY_PASSWORD].toString().isEmpty())
-                    info.m_password = data2[SSO_KEY_PASSWORD].toString();
-                info.m_validated = true;
+                    info.setPassword(data2[SSO_KEY_PASSWORD].toString());
+                info.setValidated(true);
                 if (!(db->updateCredentials(info)))
                     BLAME() << "Error occured while updating credentials.";
             } else {
@@ -530,7 +538,7 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         if (m_encryptor->status() != Encryptor::Ok) {
             replyError(rd.m_conn,
                        rd.m_msg,
-                       Error::EncryptionFailed,
+                       Error::EncryptionFailure,
                        QString::fromLatin1("Failed to encrypt outgoing message"));
         } else {
             arguments << encodedData;
@@ -614,8 +622,8 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
                 CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
                 if (db != NULL) {
                     SignonIdentityInfo info = db->credentials(m_id);
-                    m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.m_caption);
-                    TRACE() << "Got caption: " << info.m_caption;
+                    m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.caption());
+                    TRACE() << "Got caption: " << info.caption();
                 }
             }
         }

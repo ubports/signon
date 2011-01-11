@@ -12,6 +12,8 @@ RCC_DIR         = resources
 
 # we don't like warnings...
 QMAKE_CXXFLAGS -= -Werror -Wno-write-strings
+# Disable RTTI
+QMAKE_CXXFLAGS += -fno-exceptions -fno-rtti
 
 TOP_SRC_DIR     = $$PWD
 TOP_BUILD_DIR   = $${TOP_SRC_DIR}/$(BUILD_DIR)
@@ -23,5 +25,7 @@ DEFINES += SIGNON_TRACE
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 
+# Default directory for signond extensions
+DEFINES += SIGNON_EXTENSIONS_DIR=\\\"/usr/lib/signon/extensions\\\"
 # End of File
 

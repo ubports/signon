@@ -45,27 +45,33 @@ namespace SignonDaemonNS {
                              << "Method:"
                              << failedMethodName;
 
-        QDBusMessage errReply =
-                    parentDBusContext().message().createErrorReply(
-                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
-                                            errMsg);
-        SIGNOND_BUS.send(errReply);
+        errorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME, errMsg);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
-    quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &message)
+    void SignonIdentityAdaptor::errorReply(const QString &name,
+                                           const QString &message)
+    {
+        QDBusMessage errReply =
+            parentDBusContext().message().createErrorReply(name, message);
+        SIGNOND_BUS.send(errReply);
+    }
+
+    quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
-        return m_parent->requestCredentialsUpdate(message);
+        QDBusMessage m_message = parentDBusContext().message();
+        m_message.setDelayedReply(true);
+        QDBusMessage delayReply = m_message.createReply();
+        SIGNOND_BUS.send(delayReply);
+
+        return m_parent->requestCredentialsUpdate(msg);
     }
 
     QList<QVariant> SignonIdentityAdaptor::queryInfo()
@@ -73,60 +79,61 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return QList<QVariant>();
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->queryInfo();
     }
 
-    quint32 SignonIdentityAdaptor::addReference(const QString &reference)
+    void SignonIdentityAdaptor::addReference(const QString &reference)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
-            return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
+            return;
         }
 
-        return m_parent->addReference(reference) ? 1 : 0;
+        if (!m_parent->addReference(reference)) {
+            /* TODO: add a lastError() method to SignonIdentity */
+            errorReply(SIGNOND_OPERATION_FAILED_ERR_NAME,
+                       SIGNOND_OPERATION_FAILED_ERR_STR);
+        }
     }
 
-    quint32 SignonIdentityAdaptor::removeReference(const QString &reference)
+    void SignonIdentityAdaptor::removeReference(const QString &reference)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
-            return 0;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
+            return;
         }
 
-        return m_parent->addReference(reference) ? 1 : 0;
+        if (!m_parent->removeReference(reference)) {
+            /* TODO: add a lastError() method to SignonIdentity */
+            errorReply(SIGNOND_OPERATION_FAILED_ERR_NAME,
+                       SIGNOND_OPERATION_FAILED_ERR_STR);
+        }
     }
 
 
-    bool SignonIdentityAdaptor::verifyUser(const QString &message)
+    bool SignonIdentityAdaptor::verifyUser(const QVariantMap &params)
     {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
-        return m_parent->verifyUser(message);
+        QDBusMessage m_message = parentDBusContext().message();
+        m_message.setDelayedReply(true);
+        QDBusMessage delayReply = m_message.createReply();
+        SIGNOND_BUS.send(delayReply);
+
+        return m_parent->verifyUser(params);
     }
 
     bool SignonIdentityAdaptor::verifySecret(const QString &secret)
@@ -134,11 +141,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->verifySecret(secret);
@@ -155,11 +159,9 @@ namespace SignonDaemonNS {
             //Identity has an owner
             if (ownership == AccessControlManager::ApplicationIsNotOwner
                 && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
-                /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
+
                 securityErrorReply(__func__);
                 return;
-                */
-                qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
             }
         }
 
@@ -171,11 +173,8 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (!AccessControlManager::isPeerAllowedToUseIdentity(
                                         parentDBusContext(), m_parent->id())) {
-            /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
             securityErrorReply(__func__);
             return false;
-            */
-            qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
         }
 
         return m_parent->signOut();
@@ -201,11 +200,9 @@ namespace SignonDaemonNS {
                 //Identity has an owner
                 if (ownership == AccessControlManager::ApplicationIsNotOwner
                     && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
-                    /*TODO - uncomment this and remove trace line after NB#196033 is fixed.
+
                     securityErrorReply(__func__);
                     return 0;
-                    */
-                    qWarning() << Q_FUNC_INFO << accessControlTmpWarningMessage;
                 }
             }
         }

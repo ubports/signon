@@ -48,7 +48,7 @@ contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/dbuspeer.cpp
 }
 
-TARGET = signond-tests
+TARGET = signon-tests
 
 INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
@@ -65,7 +65,7 @@ target.path = /usr/bin
 scripts.path = /usr/bin
 scripts.files += signonremoteplugin-test.sh
 
-testsuite.path  = /usr/share/$$TARGET
+testsuite.path  = /usr/share/signond-tests
 testsuite.files = tests.xml
 
 INSTALLS += target \

@@ -53,172 +53,147 @@ class QSocketNotifier;
 
 namespace SignonDaemonNS {
 
-    /*!
-     * Request counter, small info class.
-     */
-    class RequestCounter
-    {
-        RequestCounter() : m_serviceRequests(0),
-                           m_identityRequests(0)
-        {}
+/*!
+ * @class SignonDaemonConfiguration
+ * The daemon's configuration object;
+ * loads date from the daemon configuration file.
+ */
+class SignonDaemonConfiguration
+{
+public:
+    SignonDaemonConfiguration();
+    ~SignonDaemonConfiguration();
 
-    public:
-        virtual ~RequestCounter() {}
-        static RequestCounter *instance();
+    void load();
+    bool loadedFromFile() const { return m_loadedFromFile; }
+    bool useSecureStorage() const { return m_useSecureStorage; }
 
-        void addServiceRequest();
-        void addIdentityRequest();
+    uint storageSize() const { return m_storageSize; }
+    const QString storageFileSystemType() const
+        { return m_storageFileSystemType; }
+    const QString storagePath() const { return m_storagePath; }
+    const QString storageFileSystemName() const
+        { return m_storageFileSystemName; }
 
-        int serviceRequests() const;
-        int identityRequests() const;
+    uint identityTimeout() const { return m_identityTimeout; }
+    uint authSessionTimeout() const { return m_authSessionTimeout; }
 
-    private:
-        int m_serviceRequests;
-        int m_identityRequests;
-    };
+private:
+    bool m_loadedFromFile;
+    //storage related
+    bool m_useSecureStorage;
 
-    /*!
-     * @class SignonDaemonConfiguration
-     * The daemon's configuration object;
-     * loads date from the daemon configuration file.
-     */
-    class SignonDaemonConfiguration
-    {
-    public:
-        SignonDaemonConfiguration();
-        ~SignonDaemonConfiguration();
+    //valid only if secure storage is enabled.
+    uint m_storageSize;
+    QString m_storageFileSystemType;
+    QString m_storagePath;
+    QString m_storageFileSystemName;
 
-        void load();
-        bool loadedFromFile() const { return m_loadedFromFile; }
-        bool useSecureStorage() const { return m_useSecureStorage; }
+    //object timeouts
+    uint m_identityTimeout;
+    uint m_authSessionTimeout;
+};
 
-        uint storageSize() const { return m_storageSize; }
-        const QString storageFileSystemType() const
-            { return m_storageFileSystemType; }
-        const QString storagePath() const { return m_storagePath; }
-        const QString storageFileSystemName() const
-            { return m_storageFileSystemName; }
+class SignonIdentity;
 
-        uint identityTimeout() const { return m_identityTimeout; }
-        uint authSessionTimeout() const { return m_authSessionTimeout; }
+/*!
+ * @class SignonDaemon
+ * Daemon core.
+ * @todo description.
+ */
+class SignonDaemon: public QObject, protected QDBusContext
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthService")
 
-    private:
-        bool m_loadedFromFile;
-        //storage related
-        bool m_useSecureStorage;
+    friend class SignonIdentity;
+    friend class SignonSessionCore;
+    friend class SignonDaemonAdaptor;
 
-        //valid only if secure storage is enabled.
-        uint m_storageSize;
-        QString m_storageFileSystemType;
-        QString m_storagePath;
-        QString m_storageFileSystemName;
+public:
+    static SignonDaemon *instance();
+    virtual ~SignonDaemon();
 
-        //object timeouts
-        uint m_identityTimeout;
-        uint m_authSessionTimeout;
-    };
-
-    class SignonIdentity;
+    Q_INVOKABLE void init();
 
     /*!
-     * @class SignonDaemon
-     * Daemon core.
-     * @todo description.
+     * Returns the number of seconds of inactivity after which identity
+     * objects might be automatically deleted.
      */
-    class SignonDaemon: public QObject, protected QDBusContext
-    {
-        Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthService")
+    int identityTimeout() const;
+    int authSessionTimeout() const;
 
-        friend class SignonIdentity;
-        friend class SignonSessionCore;
-        friend class SignonDaemonAdaptor;
+public Q_SLOTS:
+    /* Immediate reply calls */
 
-    public:
-        static SignonDaemon *instance();
-        virtual ~SignonDaemon();
+    void registerNewIdentity(QDBusObjectPath &objectPath);
+    void registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath,
+                                QList<QVariant> &identityData);
+    QString getAuthSessionObjectPath(const quint32 id, const QString type);
 
-        Q_INVOKABLE void init();
+    QStringList queryMethods();
+    QStringList queryMechanisms(const QString &method);
+    QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
+    bool clear();
 
-        /*!
-         * Returns the number of seconds of inactivity after which identity
-         * objects might be automatically deleted.
-         */
-        int identityTimeout() const;
-        int authSessionTimeout() const;
+    /* Delayed reply calls */
 
-    public Q_SLOTS:
-        /* Immediate reply calls */
+    // Interface method to set the device lock code
+    bool setDeviceLockCode(const QByteArray &lockCode,
+                           const QByteArray &oldLockCode);
 
-        void registerNewIdentity(QDBusObjectPath &objectPath);
-        void registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath,
-                                    QList<QVariant> &identityData);
-        QString getAuthSessionObjectPath(const quint32 id, const QString type);
+    // Interface method to drop the database
+    bool remoteLock(const QByteArray &lockCode);
 
-        QStringList queryMethods();
-        QStringList queryMechanisms(const QString &method);
-        QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
-        bool clear();
+public Q_SLOTS: // backup METHODS
+    uchar backupStarts();
+    uchar backupFinished();
+    uchar restoreStarts();
+    uchar restoreFinished();
 
-        /* Delayed reply calls */
+private:
+    SignonDaemon(QObject *parent);
+    void initExtensions();
+    void initExtension(const QString &filePath);
+    bool initSecureStorage(const QByteArray &lockCode);
 
-        // Interface method to set the device lock code
-        bool setDeviceLockCode(const QByteArray &lockCode,
-                               const QByteArray &oldLockCode);
+    void unregisterIdentity(SignonIdentity *identity);
+    void identityStored(SignonIdentity *identity);
+    void setupSignalHandlers();
+    void listDBusInterfaces();
 
-        // Interface method to drop the database
-        bool remoteLock(const QByteArray &lockCode);
+private:
+    /*
+     * The list of created SignonIdentities
+     * */
+    QMap<quint32, SignonIdentity *> m_storedIdentities;
+    QMap<QString, SignonIdentity *> m_unstoredIdentities;
 
-    public Q_SLOTS: // backup METHODS
-        uchar backupStarts();
-        uchar backupFinished();
-        uchar restoreStarts();
-        uchar restoreFinished();
+    SignonDaemonConfiguration *m_configuration;
 
-    private Q_SLOTS:
-        void displayRequestsCount();
+    /*
+     * The instance of CAM
+     * */
+    CredentialsAccessManager *m_pCAMManager;
 
-    private:
-        SignonDaemon(QObject *parent);
-        bool initSecureStorage(const QByteArray &lockCode);
+    bool m_backup;
 
-        void unregisterIdentity(SignonIdentity *identity);
-        void identityStored(SignonIdentity *identity);
-        void setupSignalHandlers();
-        void listDBusInterfaces();
+    int m_identityTimeout;
+    int m_authSessionTimeout;
 
-    private:
-        /*
-         * The list of created SignonIdentities
-         * */
-        QMap<quint32, SignonIdentity *> m_storedIdentities;
-        QMap<QString, SignonIdentity *> m_unstoredIdentities;
+    /*
+     * UNIX signals handling related
+     * */
+public:
+    static void signalHandler(int signal);
 
-        SignonDaemonConfiguration *m_configuration;
+public Q_SLOTS:
+    void handleUnixSignal();
 
-        /*
-         * The instance of CAM
-         * */
-        CredentialsAccessManager *m_pCAMManager;
-
-        bool m_backup;
-
-        int m_identityTimeout;
-        int m_authSessionTimeout;
-
-        /*
-         * UNIX signals handling related
-         * */
-    public:
-        static void signalHandler(int signal);
-
-    public Q_SLOTS:
-        void handleUnixSignal();
-
-    private:
-        QSocketNotifier *m_sigSn;
-        static SignonDaemon *m_instance;
-    }; //class SignonDaemon
+private:
+    QSocketNotifier *m_sigSn;
+    static SignonDaemon *m_instance;
+}; //class SignonDaemon
 
 } //namespace SignonDaemonNS
 

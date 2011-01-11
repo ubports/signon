@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${prefix}/lib/
+includedir=${prefix}/include
+plugindir=${libdir}/signon/extensions
+
+Name: SignOnExtension
+Description: SignOn extension development 
+Version: 0.1
+Requires: QtCore
+Libs: -L${libdir} -lsignon-extension
+Libs.private: -L/usr/lib -lQtCore
+Cflags: -I${includedir}/signon-extension

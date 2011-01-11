@@ -30,23 +30,24 @@
 #include "SignOn/sessiondata.h"
 #include "SignOn/uisessiondata.h"
 
-
-#ifdef TRACE
-    #undef TRACE
-#endif
-
-#ifdef BLAME
-    #undef BLAME
-#endif
-
 #ifdef SIGNON_PLUGIN_TRACE
     #include <QDebug>
 
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+    #ifdef TRACE
+        #undef TRACE
+    #endif
+
+    #ifdef BLAME
+        #undef BLAME
+    #endif
+
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
 #else
-    #define TRACE() if(1) ; else qDebug()
-    #define BLAME() if(1) ; else qDebug()
+    #ifndef SIGNOND_TRACE
+        #define TRACE() while (0) qDebug()
+        #define BLAME() while (0) qCritical()
+    #endif
 #endif
 
 

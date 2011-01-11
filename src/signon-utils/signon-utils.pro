@@ -7,6 +7,7 @@ QT += core \
 QT -= gui
 SOURCES += main.cpp
 INCLUDEPATH += . \
+    $${TOP_SRC_DIR}/lib/sim-dlc \
     $${TOP_SRC_DIR}/src/plugins
 CONFIG += thread \
     build_all \

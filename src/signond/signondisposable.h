@@ -47,7 +47,7 @@ public:
     /*!
      * Construct an object that can be automatically destroyed after
      * having being unused for @maxInactivity seconds.
-     * 
+     *
      * @param maxInactivity the number of seconds of inactivity.
      * @param parent the parent object.
      */
@@ -66,6 +66,13 @@ public:
     void keepInUse() const;
 
     /*!
+     * Mark the object as used. Calling this method enables/disables
+     * autodestruction.
+     * @param value enable/disable autodestruction
+     */
+    void setAutoDestruct(bool value = true) const;
+
+    /*!
      * Deletes all disposable object for which the inactivity time has
      * elapsed.
      */
@@ -74,6 +81,7 @@ public:
 private:
     int maxInactivity;
     mutable time_t lastActivity;
+    mutable bool autoDestruct;
 }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

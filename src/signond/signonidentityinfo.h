@@ -27,6 +27,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <signond/signoncommon.h>
+
 namespace SignonDaemonNS {
 
     typedef QString MethodName;
@@ -42,6 +44,7 @@ namespace SignonDaemonNS {
         SignonIdentityInfo();
         SignonIdentityInfo(const quint32 id,
                            const QString &userName, const QString &password,
+                           const bool storePassword,
                            const QMap<QString, QVariant> &methods,
                            const QString &caption, const QStringList &realms = QStringList(),
                            const QStringList &accessControlList = QStringList(),
@@ -55,9 +58,45 @@ namespace SignonDaemonNS {
         const QString serialize();
         bool operator== (const SignonIdentityInfo &other) const;
 
+        void setNew() { m_id = SIGNOND_NEW_IDENTITY; }
+        bool isNew() const { return m_id == SIGNOND_NEW_IDENTITY; }
+        void setId(quint32 id) { m_id = id; }
+        quint32 id() const { return m_id; }
+
+        void setUserName(const QString &userName) { m_userName = userName; }
+        QString userName() const { return m_userName; }
+        void setUserNameSecret(bool secret) { m_isUserNameSecret = secret; }
+        bool isUserNameSecret() const { return m_isUserNameSecret; }
+
+        void setPassword(const QString &password) { m_password = password; }
+        QString password() const { return m_password; }
+        bool storePassword() const { return m_storePassword; }
+
+        void setCaption(const QString &caption) { m_caption = caption; }
+        QString caption() const { return m_caption; }
+
+        void setRealms(const QStringList &realms) { m_realms = realms; }
+        QStringList realms() const { return m_realms; }
+
+        void setMethods(const QMap<MethodName, MechanismsList> &methods)
+            { m_methods = methods; }
+        QMap<MethodName, MechanismsList> methods() const { return m_methods; }
+
+        void setAccessControlList(const QStringList &acl)
+            { m_accessControlList = acl; }
+        QStringList accessControlList() const { return m_accessControlList; }
+
+        void setValidated(bool validated) { m_validated = validated; }
+        bool validated() const { return m_validated; }
+
+        void setType(const int type) { m_type = type; }
+        int type() const { return m_type; }
+
+    private:
         quint32 m_id;
         QString m_userName;
         QString m_password;
+        bool m_storePassword;
         QString m_caption;
         QStringList m_realms;
         QMap<MethodName, MechanismsList> m_methods;
@@ -65,6 +104,7 @@ namespace SignonDaemonNS {
         int m_type;
         int m_refCount;
         bool m_validated;
+        bool m_isUserNameSecret;
     }; //struct SignonIdentityInfo
 
 } //namespace SignonDaemonNS

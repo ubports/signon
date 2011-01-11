@@ -226,6 +226,16 @@ namespace SignOn {
         void verifyUser(const QString &message = QString());
 
         /*!
+         * Get secret verification from user and compare it to stored secret.
+         * This will launch external dialog for asking secret.
+         * When verification is completed, signal userVerified() is emitted.
+         * If the operation fails, a signal error() is emitted.
+         *
+         * @param params dialog customization parameters
+         */
+        void verifyUser(const QVariantMap &params);
+
+        /*!
          * Verify if given secret match stored secret.
          * When verification is completed, signal secretVerified() is emitted.
          * If the operation fails, a signal error() is emitted.

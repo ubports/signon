@@ -23,6 +23,8 @@
 #ifndef SIGNONTRACE_H
 #define SIGNONTRACE_H
 
+#include <syslog.h>
+
 #include <QCoreApplication>
 #include <QFile>
 #include <QDebug>
@@ -35,83 +37,47 @@ namespace SignOn {
     template <typename T = void>
     class SignonTrace
     {
-        SignonTrace(const QString &filePath, const quint32 maxFileSize)
-            : m_outputFile(filePath),
-            m_writeStream(&m_outputFile),
-            m_maxFileSize(maxFileSize)
-        {}
+        SignonTrace() {}
 
     public:
         ~SignonTrace()
         {
-            if (m_pInstance)
-                delete m_pInstance;
             m_pInstance = NULL;
         }
 
-        static bool initialize(const QString &filePath, const quint32 maxFileSize)
+        static void initialize()
         {
             if (m_pInstance)
-                return true;
+                return;
 
-            m_pInstance = new SignonTrace<T>(filePath, maxFileSize);
-
-            if (!m_pInstance->m_outputFile.open(QIODevice::Append)) {
-                TRACE() << "Signon: Failed to initialize file tracing.";
-                return false;
-            }
-
+            m_pInstance = new SignonTrace<T>();
             qInstallMsgHandler(output);
-            return true;
         }
 
         static void output(QtMsgType type, const char *msg)
         {
-            //todo - handle max file size !!!
-
             if (!m_pInstance)
                 return;
-            const char *msgType;
+
+            int priority;
             switch (type) {
-                case QtWarningMsg: msgType = "Warning"; break;
-                case QtCriticalMsg: msgType = "Critical"; break;
-                case QtFatalMsg: msgType = "Fatal"; break;
+                case QtWarningMsg: priority = LOG_WARNING; break;
+                case QtCriticalMsg: priority = LOG_CRIT; break;
+                case QtFatalMsg: priority = LOG_EMERG; break;
                 case QtDebugMsg:
                     /* fall through */
-                default: msgType = "Debug"; break;
+                default: priority = LOG_INFO; break;
             }
 
-            if (m_pInstance->m_outputFile.size() >= m_pInstance->m_maxFileSize) {
-                m_pInstance->m_outputFile.close();
-                m_pInstance->m_outputFile.remove();
-            }
-
-            if (!m_pInstance->m_outputFile.isOpen())
-                m_pInstance->m_outputFile.open(QIODevice::Append);
-
-            if (m_pInstance->m_outputFile.isOpen()) {
-                m_pInstance->m_writeStream << QString(QLatin1String("%1: %2\n"))
-                    . arg(QLatin1String(msgType))
-                    . arg(QLatin1String(msg));
-                m_pInstance->m_outputFile.close();
-            }
+            syslog(priority, msg);
          }
 
     private:
         static SignonTrace<T> *m_pInstance;
-        QFile m_outputFile;
-        QTextStream m_writeStream;
-        quint32 m_maxFileSize;
     };
 
-    static void initializeTrace(const QString &fileName, const quint32 maxFileSize) {
-        QDir dir;
-        QString homeDir = QLatin1String(qgetenv("HOME"));
-        if (homeDir.isEmpty())
-            homeDir = QLatin1String("/tmp");
-        QString path = homeDir + QDir::separator () + SIGNOND_TRACE_DIR;
-        dir.mkpath(path);
-        SignonTrace<>::initialize((path + QDir::separator () + fileName), maxFileSize);
+    static void initializeTrace() {
+        SignonTrace<>::initialize();
     }
 
 template <typename T>

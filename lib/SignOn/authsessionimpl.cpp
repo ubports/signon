@@ -24,6 +24,7 @@
 
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
+#include "dbusconnection.h"
 
 
 #define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
@@ -194,7 +195,7 @@ bool AuthSessionImpl::initInterface()
     QDBusInterface iface(SIGNOND_SERVICE,
                          SIGNOND_DAEMON_OBJECTPATH,
                          SIGNOND_DAEMON_INTERFACE,
-                         SIGNOND_BUS);
+                         DBusConnection::sessionBus());
 
     if (iface.lastError().isValid()) {
         qCritical() << "cannot initialize interface: " << iface.lastError();
@@ -266,8 +267,8 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
         qCritical() << "AuthSession: encryption failed";
 
         emit m_parent->error(
-                Error(Error::EncryptionFailed,
-                      QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
+            Error(Error::EncryptionFailure,
+                QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
                          .arg(m_methodName)));
         return;
     }
@@ -351,7 +352,6 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
     }
 
     m_isBusy = false;
-    AuthSession::AuthSessionError errCodeDeprecated = AuthSession::UnknownError;
     int errCode = Error::Unknown;
     QString errMessage;
 
@@ -369,57 +369,43 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
             m_DBusInterface = NULL;
         }
 
-        errCodeDeprecated = AuthSession::UnknownError;
     } else if (err.name() == SIGNOND_SESSION_CANCELED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::CanceledError;
         errCode = Error::SessionCanceled;
     } else if (err.name() == SIGNOND_TIMED_OUT_ERR_NAME) {
-        errCodeDeprecated = AuthSession::TimedOutError;
         errCode = Error::TimedOut;
     } else if (err.name() == SIGNOND_INVALID_CREDENTIALS_ERR_NAME) {
-        errCodeDeprecated = AuthSession::InvalidCredentialsError;
         errCode = Error::InvalidCredentials;
     } else if (err.name() == SIGNOND_NOT_AUTHORIZED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::InvalidCredentialsError;
         errCode = Error::NotAuthorized;
     } else if (err.name() == SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::OperationNotSupportedError;
         errCode = Error::OperationNotSupported;
     } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::PermissionDeniedError;
         errCode = Error::PermissionDenied;
     } else if (err.name() == SIGNOND_WRONG_STATE_ERR_NAME) {
-        errCodeDeprecated = AuthSession::WrongStateError;
         errCode = Error::WrongState;
     } else if (err.name() == SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME) {
-        errCodeDeprecated = AuthSession::MechanismNotAvailableError;
         errCode = Error::MechanismNotAvailable;
     } else if (err.name() == SIGNOND_MISSING_DATA_ERR_NAME) {
-         errCodeDeprecated = AuthSession::MissingDataError;
          errCode = Error::MissingData;
     } else if (err.name() == SIGNOND_RUNTIME_ERR_NAME) {
-        errCodeDeprecated = AuthSession::RuntimeError;
         errCode = Error::Runtime;
     } else if (err.name() == SIGNOND_NO_CONNECTION_ERR_NAME) {
-        errCodeDeprecated = AuthSession::NoConnectionError;
         errCode = Error::NoConnection;
     } else if (err.name() == SIGNOND_NETWORK_ERR_NAME) {
-        errCodeDeprecated = AuthSession::NetworkError;
         errCode = Error::Network;
     } else if (err.name() == SIGNOND_SSL_ERR_NAME) {
-        errCodeDeprecated = AuthSession::SslError;
         errCode = Error::Ssl;
     } else if (err.name() == SIGNOND_USER_INTERACTION_ERR_NAME) {
-        errCodeDeprecated = AuthSession::UserInteractionError;
         errCode = Error::UserInteraction;
     } else if (err.name() == SIGNOND_OPERATION_FAILED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::UnknownError;
         errCode = Error::OperationFailed;
     } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
-        errCodeDeprecated = AuthSession::UnknownError;
-        errCode = Error::EncryptionFailed;
+        errCode = Error::EncryptionFailure;
+    } else if (err.name() == SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME) {
+        errCode = Error::TOSNotAccepted;
+    } else if (err.name() == SIGNOND_FORGOT_PASSWORD_ERR_NAME) {
+        errCode = Error::ForgotPassword;
     } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
-        errCodeDeprecated = AuthSession::UnknownError;
         //the error message comes in as "code:message"
         bool ok = false;
         errCode = err.message().section(QLatin1Char(':'), 0, 0).toInt(&ok);
@@ -441,7 +427,7 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              path,
                                              QLatin1String(SIGNOND_AUTH_SESSION_INTERFACE),
-                                             SIGNOND_BUS);
+                                             DBusConnection::sessionBus());
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
 

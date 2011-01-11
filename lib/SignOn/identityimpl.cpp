@@ -33,6 +33,8 @@
 #include "identityinfo.h"
 #include "identityinfoimpl.h"
 #include "authsessionimpl.h"
+#include "dbusconnection.h"
+#include "signonerror.h"
 
 #define SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
 
@@ -51,7 +53,7 @@
 #define SIGNOND_IDENTITY_REMOVE_REFERENCE_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("removeReference(const QString &)")
 #define SIGNOND_IDENTITY_VERIFY_USER_METHOD \
-    SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QString &)")
+    SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifyUser(const QVariantMap &)")
 #define SIGNOND_IDENTITY_VERIFY_SECRET_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("verifySecret(const QString &)")
 #define SIGNOND_IDENTITY_SIGN_OUT_METHOD \
@@ -206,7 +208,7 @@ namespace SignOn {
         QList<QVariant> args;
         args << message;
         bool result = sendRequest(__func__, args,
-                                  SLOT(storeCredentialsReply(const quint32)));
+                                  SLOT(storeCredentialsReply(const quint32)), SIGNOND_MAX_TIMEOUT);
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -369,7 +371,7 @@ namespace SignOn {
         }
 
         bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
-                                  SLOT(addReferenceReply(const quint32)));
+                                  SLOT(addReferenceReply()));
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -409,7 +411,7 @@ namespace SignOn {
         }
 
         bool result = sendRequest(__func__, QList<QVariant>() << QVariant(reference),
-                                  SLOT(removeReferenceReply(const quint32)));
+                                  SLOT(removeReferenceReply()));
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -450,6 +452,13 @@ namespace SignOn {
 
     void IdentityImpl::verifyUser(const QString &message)
     {
+        QVariantMap params;
+        params.insert(QLatin1String("QueryMessage"), message);
+        verifyUser(params);
+    }
+
+    void IdentityImpl::verifyUser(const QVariantMap &params)
+    {
         TRACE() << "Verifying user.";
         checkConnection();
 
@@ -457,13 +466,13 @@ namespace SignOn {
             case NeedsRegistration:
                 m_operationQueueHandler.enqueueOperation(
                                         SIGNOND_IDENTITY_VERIFY_USER_METHOD,
-                                        QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
+                                        QList<QGenericArgument *>() << (new Q_ARG(QVariantMap, params)));
                 sendRegisterRequest();
                 return;
             case PendingRegistration:
                 m_operationQueueHandler.enqueueOperation(
                                         SIGNOND_IDENTITY_VERIFY_USER_METHOD,
-                                        QList<QGenericArgument *>() << (new Q_ARG(QString, message)));
+                                        QList<QGenericArgument *>() << (new Q_ARG(QVariantMap, params)));
                 return;
             case Removed:
                 emit m_parent->error(
@@ -478,8 +487,8 @@ namespace SignOn {
                 break;
         }
 
-        bool result = sendRequest(__func__, QList<QVariant>() << message,
-                                  SLOT(verifyUserReply(const bool)));
+        bool result = sendRequest(__func__, QList<QVariant>() << params,
+                                  SLOT(verifyUserReply(const bool)), SIGNOND_MAX_TIMEOUT);
         if (!result) {
             TRACE() << "Error occurred.";
             emit m_parent->error(
@@ -576,24 +585,26 @@ namespace SignOn {
         while (!m_authSessions.empty()) {
             AuthSession *session = m_authSessions.takeFirst();
             connect(session,
-                    SIGNAL(error(AuthSession::AuthSessionError, const QString &)),
+                    SIGNAL(error(const SignOn::Error &)),
                     this,
-                    SLOT(authSessionCancelReply(AuthSession::AuthSessionError)));
+                    SLOT(authSessionCancelReply(const SignOn::Error &)));
 
             session->cancel();
             QTimer::singleShot(SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT, session, SLOT(deleteLater()));
         }
     }
 
-    void IdentityImpl::authSessionCancelReply(AuthSession::AuthSessionError error)
+    void IdentityImpl::authSessionCancelReply(const SignOn::Error &err)
     {
         TRACE() << "CANCEL SESSION REPLY";
 
         bool deleteTheSender = false;
-        switch (error) {
+        switch (err.type()) {
             /* fall trough */
-            case AuthSession::CanceledError:
-            case AuthSession::WrongStateError: deleteTheSender = true; break;
+            case Error::SessionCanceled:
+            case Error::WrongState:
+                deleteTheSender = true;
+                break;
             default: break;
         }
 
@@ -629,15 +640,13 @@ namespace SignOn {
         emit m_parent->removed();
     }
 
-    void IdentityImpl::addReferenceReply(const quint32 count)
+    void IdentityImpl::addReferenceReply()
     {
-        Q_UNUSED(count);
         emit m_parent->referenceAdded();
     }
 
-    void IdentityImpl::removeReferenceReply(const quint32 count)
+    void IdentityImpl::removeReferenceReply()
     {
-        Q_UNUSED(count);
         emit m_parent->referenceRemoved();
     }
 
@@ -710,17 +719,17 @@ namespace SignOn {
         } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
             emit m_parent->error(Error(Error::InternalServer, err.message()));
             return;
-        } else if (err.name() == SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME) {
-            emit m_parent->error(Error(Error::IdentityNotFound, err.message()));
+        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
+            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
+            return;
+        } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
+            emit m_parent->error(Error(Error::EncryptionFailure, err.message()));
             return;
         } else if (err.name() == SIGNOND_METHOD_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Error(Error::MethodNotAvailable, err.message()));
             return;
-        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
-            return;
-        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
+        } else if (err.name() == SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME) {
+            emit m_parent->error(Error(Error::IdentityNotFound, err.message()));
             return;
         } else if (err.name() == SIGNOND_STORE_FAILED_ERR_NAME) {
             emit m_parent->error(Error(Error::StoreFailed, err.message()));
@@ -741,8 +750,11 @@ namespace SignOn {
         } else if (err.name() == SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME) {
             emit m_parent->error(Error(Error::CredentialsNotAvailable, err.message()));
             return;
-        } else if (err.name() == SIGNOND_ENCRYPTION_FAILED_ERR_NAME) {
-           emit m_parent->error(Error(Error::EncryptionFailed, err.message()));
+        } else if (err.name() == SIGNOND_REFERENCE_NOT_FOUND_ERR_NAME) {
+           emit m_parent->error(Error(Error::ReferenceNotFound, err.message()));
+           return;
+        } else if (err.name() == SIGNOND_FORGOT_PASSWORD_ERR_NAME) {
+           emit m_parent->error(Error(Error::ForgotPassword, err.message()));
            return;
         } else {
             if (m_state == this->PendingRegistration)
@@ -773,13 +785,25 @@ namespace SignOn {
         }
     }
 
-    bool IdentityImpl::sendRequest(const char *remoteMethod, const QList<QVariant> &args, const char *replySlot)
+    bool IdentityImpl::sendRequest(const char *remoteMethod, const QList<QVariant> &args, const char *replySlot, int timeout)
     {
-        return m_DBusInterface->callWithCallback(QLatin1String(remoteMethod),
+        if (timeout <0)
+            return m_DBusInterface->callWithCallback(QLatin1String(remoteMethod),
                                                   args,
                                                   this,
                                                   replySlot,
                                                   SLOT(errorReply(const QDBusError&)));
+        TRACE();
+        QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
+                                                          m_DBusInterface->path(),
+                                                          m_DBusInterface->interface(),
+                                                          QLatin1String(remoteMethod));
+        msg.setArguments(args);
+        return m_DBusInterface->connection().callWithCallback(msg,
+                                                         this,
+                                                         replySlot,
+                                                         SLOT(errorReply(const QDBusError&)),
+                                                         timeout);
     }
 
     bool IdentityImpl::sendRegisterRequest()
@@ -787,7 +811,7 @@ namespace SignOn {
         QDBusInterface iface(SIGNOND_SERVICE,
                              SIGNOND_DAEMON_OBJECTPATH,
                              SIGNOND_DAEMON_INTERFACE,
-                             SIGNOND_BUS);
+                             DBusConnection::sessionBus());
 
         if (!iface.isValid()) {
             TRACE() << "Signon Daemon not started. Start on demand "
@@ -893,7 +917,7 @@ namespace SignOn {
         m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
                                              objectPath.path(),
                                              QLatin1String(SIGNOND_IDENTITY_INTERFACE),
-                                             SIGNOND_BUS,
+                                             DBusConnection::sessionBus(),
                                              this);
         if (!m_DBusInterface->isValid()) {
             TRACE() << "The interface cannot be registered!!! " << m_DBusInterface->lastError();

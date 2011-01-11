@@ -12,21 +12,22 @@ QT -= gui
 
 LIBS *= -lsignon-qt
 
-SOURCES += libsignon-qt-tests.cpp \
-    $$TOP_SRC_DIR/tests/authsessiontest/testauthsession.cpp \
-    $$TOP_SRC_DIR/tests/sso-mt-test/ssotestclient.cpp \
-    $$TOP_SRC_DIR/tests/sso-mt-test/testauthserviceresult.cpp \
-    $$TOP_SRC_DIR/tests/sso-mt-test/testidentityresult.cpp
+SOURCES += \
+    libsignon-qt-tests.cpp \
+    testauthsession.cpp \
+    testthread.cpp \
+    ssotestclient.cpp \
+    testauthserviceresult.cpp \
+    testidentityresult.cpp
 HEADERS += \
-    $$TOP_SRC_DIR/tests/authsessiontest/testauthsession.h \
-    $$TOP_SRC_DIR/src/plugins/ssotest2/ssotest2data.h \
-    $$TOP_SRC_DIR/tests/sso-mt-test/ssotestclient.h \
-    $$TOP_SRC_DIR/tests/sso-mt-test/testauthserviceresult.h \
-    $$TOP_SRC_DIR/tests/sso-mt-test/testidentityresult.h
+    testauthsession.h \
+    testthread.h \
+    ssotestclient.h \
+    testauthserviceresult.h \
+    testidentityresult.h \
+    $$TOP_SRC_DIR/src/plugins/ssotest2/ssotest2data.h
 INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
-    $$TOP_SRC_DIR/tests/authsessiontest \
-    $$TOP_SRC_DIR/tests/sso-mt-test \
     $$TOP_SRC_DIR/src/plugins/ssotest2
 DEFINES += SSO_CI_TESTMANAGEMENT
 QMAKE_CXXFLAGS += -fno-exceptions \
@@ -36,4 +37,3 @@ TARGET = libsignon-qt-tests
 testsuite.path = /usr/share/$$TARGET
 testsuite.files = tests.xml
 INSTALLS += testsuite pkgconfig
-

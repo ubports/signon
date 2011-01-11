@@ -48,7 +48,6 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void sqlDBConfigurationTest();
     void createTableStructureTest();
     void queryListTest();
     void insertMethodsTest();
@@ -69,6 +68,10 @@ private Q_SLOTS:
 
 private:
     CredentialsDB *m_db;
+    MetaDataDB *m_meta;
+    QMap<QString,QVariant> testMethods;
+    QStringList testRealms;
+    QStringList testAcl;
 };
 
 

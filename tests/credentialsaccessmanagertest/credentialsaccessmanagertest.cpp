@@ -44,8 +44,9 @@ void CredentialsAccessManagerTest::initTestCase()
 
     //otherwise using currrent default configuration
     CAMConfiguration config;
-    config.m_useEncryption = true;
-    config.m_dbFileSystemPath = QLatin1String("/home/user/MyDocs/signonfs");
+    config.m_useEncryption = false;
+    config.m_dbFileSystemPath = QDir::homePath() + QDir::separator() +
+        QLatin1String("camtest-signonfs");
     config.m_encryptionPassphrase = "1234";
 
     QVERIFY(m_pManager->init(config));
@@ -86,13 +87,11 @@ void CredentialsAccessManagerTest::createCredentialsSystem()
 void CredentialsAccessManagerTest::openCredentialsSystem()
 {
     TEST_START
-    QSKIP("This test requires to be reconsidered.", SkipSingle);
 
     QVERIFY(m_pManager->openCredentialsSystem());
 
     QVERIFY(m_pManager->credentialsSystemOpened());
 
-    QCOMPARE(m_pManager->lastError(), SignonDaemonNS::NoError);
     TEST_DONE
 }
 
@@ -106,8 +105,8 @@ void CredentialsAccessManagerTest::testCredentialsDatabase()
     if (!db->clear())
         qDebug() << "Clearing of credentials db failed. Test could fail.";
 
-    // TODO - test with a greater number of crendetials.
-    int numberOfStoredCredentials = 500;
+    // TODO - test with a greater number of credentials.
+    int numberOfStoredCredentials = 10;
 
     //Prepare Identity data
     QMap<QString, QStringList> mapList;
@@ -133,10 +132,8 @@ void CredentialsAccessManagerTest::testCredentialsDatabase()
                                                   << "PREF::package.token.application"
                                                   << "PREF::package.token.wonders"
                                                   << "PREF::package.token.ventilation";
-    SignonIdentityInfo info(0, QLatin1String("username"), QLatin1String("passsssword1231454"),
-                            methods, caption, realms);
-
-    info.m_accessControlList = accessControlList;
+    SignonIdentityInfo info(0, QLatin1String("username"), QLatin1String("passsssword1231454"), true,
+                            methods, caption, realms, accessControlList);
 
     //store 200 identities
     for(int j = 0; j < numberOfStoredCredentials; ++j) {

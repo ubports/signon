@@ -24,6 +24,7 @@ HEADERS += \
     $$TOP_SRC_DIR/src/signond/cryptomanager.h \
     $$TOP_SRC_DIR/src/signond/credentialsdb.h
 INCLUDEPATH += \
+    $$TOP_SRC_DIR/lib/signond \
     $$TOP_SRC_DIR/src/signond \
     $$TOP_SRC_DIR/include
 

@@ -2,6 +2,7 @@ include( ../../common-project-config.pri )
 include( ../../common-installs-config.pri )
 
 TEMPLATE = subdirs
+SUBDIRS = SignOn
 
 # Input
 public_headers += \

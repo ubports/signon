@@ -24,26 +24,24 @@
 #ifndef LIBSIGNONCOMMON_H
 #define LIBSIGNONCOMMON_H
 
-#ifdef TRACE
-    #undef TRACE
-#endif
-
-#ifdef BLAME
-    #undef BLAME
-#endif
-
-#ifndef LIBSIGNON_TRACE
-    #define LIBSIGNON_TRACE
-#endif
-
 #ifdef LIBSIGNON_TRACE
     #include <QDebug>
 
-    #define TRACE() qDebug() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
-    #define BLAME() qCritical() << __TIME__ << __FILE__ << __LINE__ << __func__ << ":\t"
+    #ifdef TRACE
+        #undef TRACE
+    #endif
+
+    #ifdef BLAME
+        #undef BLAME
+    #endif
+
+    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
+    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
 #else
-    #define TRACE() if(1) ; else qDebug()
-    #define BLAME() if(1) ; else qDebug()
+    #ifndef SIGNOND_TRACE
+        #define TRACE() while (0) qDebug()
+        #define BLAME() while (0) qCritical()
+    #endif
 #endif
 
 #if __GNUC__ >= 4

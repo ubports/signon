@@ -29,6 +29,7 @@
 #include <QThreadStorage>
 #include <QThread>
 
+#include "signond-common.h"
 #include "SignOn/uisessiondata_priv.h"
 #include "SignOn/signonplugincommon.h"
 

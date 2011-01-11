@@ -18,7 +18,8 @@ private_headers = authserviceimpl.h \
     identityimpl.h \
     authsessionimpl.h \
     identityinfoimpl.h \
-    dbusoperationqueuehandler.h
+    dbusoperationqueuehandler.h \
+    dbusconnection.h
 
 HEADERS = $$public_headers \
     $$private_headers
@@ -34,7 +35,8 @@ SOURCES += identityinfo.cpp \
     authsession.cpp \
     authsessionimpl.cpp \
     identityinfoimpl.cpp \
-    dbusoperationqueuehandler.cpp
+    dbusoperationqueuehandler.cpp \
+    dbusconnection.cpp
 
 QT += core \
     dbus
@@ -49,7 +51,11 @@ PKGCONFIG += libsignoncrypto-qt
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
-DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
+DEFINES += \
+    QT_NO_CAST_TO_ASCII \
+    QT_NO_CAST_FROM_ASCII \
+    LIBSIGNON_TRACE
+
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 headers.files = $$public_headers \
