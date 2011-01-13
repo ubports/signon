@@ -53,6 +53,7 @@ public Q_SLOTS:
 private:
     class Private;
     Private *d; // Owned.
+    bool m_showTos;
 };
 
 } //namespace ExamplePluginNS

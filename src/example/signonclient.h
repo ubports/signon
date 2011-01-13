@@ -35,6 +35,7 @@ class SignonClient : public QWidget
 
 public:
     SignonClient(QWidget *parent = 0);
+    ~SignonClient();
 
 public slots:
     void response(const SignOn::SessionData &sessionData);

@@ -170,7 +170,7 @@ public:
 
     /*!
      * Declare property ForgotPassword setter and getter
-     * ForgotPassword string is shown as s link to user.
+     * ForgotPassword string is shown as link to user.
      * @see ForgotPasswordUrl
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPassword)
