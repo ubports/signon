@@ -109,7 +109,6 @@ QStringList SignonAuthSession::queryAvailableMechanisms(const QStringList &wante
 QVariantMap SignonAuthSession::process(const QVariantMap &sessionDataVa,
                                        const QString &mechanism)
 {
-    TRACE();
     setDelayedReply(true);
     parent()->process(connection(),
                       message(),

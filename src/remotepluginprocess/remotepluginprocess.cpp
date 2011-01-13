@@ -23,6 +23,9 @@
 #include <QProcess>
 #include <QUrl>
 #include <QTimer>
+#include <QBuffer>
+#include <QDataStream>
+
 #ifdef HAVE_GCONF
 #include <gq/GConfItem>
 #endif
@@ -33,6 +36,40 @@ using namespace SignOn;
 namespace RemotePluginProcessNS {
 
     static CancelEventThread *cancelThread = NULL;
+
+    // TODO - move these 2 helper functions to a common lib
+    //        Hint: will do so when all auth plugins will become standalone execs
+
+    QByteArray variantMapToByteArray(const QVariantMap &map)
+    {
+        QBuffer buffer;
+        if (!buffer.open(QIODevice::WriteOnly))
+            BLAME() << "Buffer opening failed.";
+
+        QDataStream stream(&buffer);
+        stream << map;
+        buffer.close();
+
+        TRACE() << "Buffer size:" << buffer.data().size();
+        return buffer.data();
+    }
+
+    QVariantMap byteArrayToVariantMap(const QByteArray &array)
+    {
+        QByteArray nonConst = array;
+        QBuffer buffer(&nonConst);
+        if (!buffer.open(QIODevice::ReadOnly))
+            BLAME() << "Buffer opening failed.";
+
+        buffer.reset();
+        QDataStream stream(&buffer);
+        QVariantMap map;
+        stream >> map;
+        buffer.close();
+
+        TRACE() << "Buffer size:" << buffer.data().size();
+        return map;
+    }
 
     RemotePluginProcess::RemotePluginProcess(QObject *parent) : QObject(parent)
     {
@@ -203,10 +240,10 @@ namespace RemotePluginProcessNS {
             resultDataMap[key] = data.getProperty(key);
 
         out << (quint32)PLUGIN_RESPONSE_RESULT;
-        out << QVariant(resultDataMap);
-        m_outfile.flush();
 
-        TRACE() << resultDataMap;
+        QByteArray ba = variantMapToByteArray(resultDataMap);
+        out << ba;
+        m_outfile.flush();
     }
 
     void RemotePluginProcess::store(const SignOn::SessionData &data)
@@ -220,10 +257,9 @@ namespace RemotePluginProcessNS {
             storeDataMap[key] = data.getProperty(key);
 
         out << (quint32)PLUGIN_RESPONSE_STORE;
-        out << QVariant(storeDataMap);
+        QByteArray ba = variantMapToByteArray(storeDataMap);
+        out << ba;
         m_outfile.flush();
-
-        TRACE() << storeDataMap;
     }
 
     void RemotePluginProcess::error(const SignOn::Error &err)
@@ -252,7 +288,8 @@ namespace RemotePluginProcessNS {
             resultDataMap[key] = data.getProperty(key);
 
         out << (quint32)PLUGIN_RESPONSE_UI;
-        out << QVariant(resultDataMap);
+        QByteArray ba = variantMapToByteArray(resultDataMap);
+        out << ba;
         m_outfile.flush();
     }
 
@@ -270,7 +307,8 @@ namespace RemotePluginProcessNS {
         m_readnotifier->setEnabled(true);
 
         out << (quint32)PLUGIN_RESPONSE_REFRESHED;
-        out << QVariant(resultDataMap);
+        QByteArray ba = variantMapToByteArray(resultDataMap);
+        out << ba;
         m_outfile.flush();
     }
 
@@ -315,31 +353,36 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::process()
     {
-//        TRACE();
         QDataStream in(&m_infile);
 
-        QVariant infoVa;
         QVariant mechanismVa;
+        QVariantMap sessionDataMap;
 
-        in >> infoVa;
+        QByteArray ba;
+        in >> ba;
+        sessionDataMap = byteArrayToVariantMap(ba);
+
         in >> mechanismVa;
 
-        SessionData inData(infoVa.toMap());
+        SessionData inData(sessionDataMap);
         QString mechanism(mechanismVa.toString());
 
         enableCancelThread();
         TRACE() << "The cancel thread is started";
 
-        TRACE() << infoVa.toMap();
         m_plugin->process(inData, mechanism);
     }
 
     void RemotePluginProcess::userActionFinished()
     {
         QDataStream in(&m_infile);
-        QVariant infoVa;
-        in >> infoVa;
-        UiSessionData inData((QVariantMap)(infoVa.toMap()));
+        QVariantMap infoMap;
+
+        QByteArray ba;
+        in >> ba;
+        infoMap = byteArrayToVariantMap(ba);
+
+        UiSessionData inData(infoMap);
 
         enableCancelThread();
         m_plugin->userActionFinished(inData);
@@ -348,9 +391,13 @@ namespace RemotePluginProcessNS {
     void RemotePluginProcess::refresh()
     {
         QDataStream in(&m_infile);
-        QVariant infoVa;
-        in >> infoVa;
-        UiSessionData inData(infoVa.toMap());
+        QVariantMap infoMap;
+
+        QByteArray ba;
+        in >> ba;
+        infoMap = byteArrayToVariantMap(ba);
+
+        UiSessionData inData(infoMap);
 
         enableCancelThread();
         m_plugin->refresh(inData);

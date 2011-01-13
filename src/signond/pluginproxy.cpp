@@ -28,6 +28,7 @@
 #include <QStringList>
 #include <QThreadStorage>
 #include <QThread>
+#include <QDataStream>
 
 #include "signond-common.h"
 #include "SignOn/uisessiondata_priv.h"
@@ -49,6 +50,40 @@ using namespace SignOn;
 #define PLUGINPROCESS_STOP_TIMEOUT 1000
 
 namespace SignonDaemonNS {
+
+    // TODO - move these 2 helper functions to a common lib
+    //        Hint: will do so when all auth plugins will become standalone execs
+
+    QByteArray variantMapToByteArray(const QVariantMap &map)
+    {
+        QBuffer buffer;
+        if (!buffer.open(QIODevice::WriteOnly))
+            BLAME() << "Buffer opening failed.";
+
+        QDataStream stream(&buffer);
+        stream << map;
+        buffer.close();
+
+        TRACE() << "Buffer size:" << buffer.data().size();
+        return buffer.data();
+    }
+
+    QVariantMap byteArrayToVariantMap(const QByteArray &array)
+    {
+        QByteArray nonConst = array;
+        QBuffer buffer(&nonConst);
+        if (!buffer.open(QIODevice::ReadOnly))
+            BLAME() << "Buffer opening failed.";
+
+        buffer.reset();
+        QDataStream stream(&buffer);
+        QVariantMap map;
+        stream >> map;
+        buffer.close();
+
+        TRACE() << "Buffer size:" << buffer.data().size();
+        return map;
+    }
 
     PluginProcess::PluginProcess(QObject *parent) : QProcess(parent)
     {
@@ -171,11 +206,12 @@ namespace SignonDaemonNS {
 
         QDataStream in(m_process);
         in << (quint32)PLUGIN_OP_PROCESS;
-        in << QVariant(inData);
+
+        QByteArray ba = variantMapToByteArray(inData);
+        in << ba;
         in << QVariant(mechanism);
 
         m_isProcessing = true;
-
         return true;
     }
 
@@ -191,7 +227,9 @@ namespace SignonDaemonNS {
         QDataStream in(m_process);
 
         in << (quint32)PLUGIN_OP_PROCESS_UI;
-        in << QVariant(inData);
+
+        QByteArray ba = variantMapToByteArray(inData);
+        in << ba;
 
         m_isProcessing = true;
 
@@ -210,7 +248,9 @@ namespace SignonDaemonNS {
         QDataStream in(m_process);
 
         in << (quint32)PLUGIN_OP_REFRESH;
-        in << QVariant(inData);
+
+        QByteArray ba = variantMapToByteArray(inData);
+        in << ba;
 
         m_isProcessing = true;
 
@@ -289,8 +329,11 @@ namespace SignonDaemonNS {
 
             if (opres == PLUGIN_RESPONSE_RESULT) {
                 TRACE() << "PLUGIN_RESPONSE_RESULT";
-                out >> infoVa; //SessionData in QVariant
-                info = infoVa.toMap();
+
+                QByteArray ba;
+                out >> ba;
+                info = byteArrayToVariantMap(ba);
+
                 m_isProcessing = false;
 
                 if (!isResultObtained)
@@ -301,8 +344,10 @@ namespace SignonDaemonNS {
                 isResultObtained = true;
             } else if (opres == PLUGIN_RESPONSE_STORE) {
                 TRACE() << "PLUGIN_RESPONSE_STORE";
-                out >> infoVa; //SessionData in QVariant
-                info = infoVa.toMap();
+
+                QByteArray ba;
+                out >> ba;
+                info = byteArrayToVariantMap(ba);
 
                 if (!isResultObtained)
                     emit processStore(m_cancelKey, info);
@@ -311,8 +356,10 @@ namespace SignonDaemonNS {
 
             } else if (opres == PLUGIN_RESPONSE_UI) {
                 TRACE() << "PLUGIN_RESPONSE_UI";
-                out >> infoVa; //UiSessionData in QVariant
-                info = infoVa.toMap();
+
+                QByteArray ba;
+                out >> ba;
+                info = byteArrayToVariantMap(ba);
 
                 if (!isResultObtained) {
                     bool allowed = true;
@@ -347,8 +394,10 @@ namespace SignonDaemonNS {
                 }
             } else if (opres == PLUGIN_RESPONSE_REFRESHED) {
                 TRACE() << "PLUGIN_RESPONSE_REFRESHED";
-                out >> infoVa; //UiSessionData in QVariant
-                info = infoVa.toMap();
+
+                QByteArray ba;
+                out >> ba;
+                info = byteArrayToVariantMap(ba);
 
                 if (!isResultObtained)
                     emit processRefreshRequest(m_cancelKey, info);

@@ -373,6 +373,7 @@ void SignonSessionCore::startProcess()
         parameters.remove(SSO_KEY_PASSWORD);
     }
     TRACE() << "all params: " << parameters;
+
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
                                                             SIGNOND_RUNTIME_ERR_STR);
