@@ -38,14 +38,20 @@ SignonClient::SignonClient(QWidget *parent)
     m_service = new SignOn::AuthService();
     m_identity = NULL;
     m_session = NULL;
-    connect(m_service, SIGNAL(methodsAvailable(const QStringList&)),
-            this, SLOT(methodsAvailable(const QStringList&)));
-    connect(m_service, SIGNAL(mechanismsAvailable(const QString &, const QStringList&)),
-            this, SLOT( mechanismsAvailable(const QString &,  const QStringList&)));
-    connect(m_service, SIGNAL(identities(const QList<SignOn::IdentityInfo>& )),
-            this, SLOT(identities(const QList<SignOn::IdentityInfo>& )));
+    connect(m_service, SIGNAL(methodsAvailable(const QStringList &)),
+            this, SLOT(methodsAvailable(const QStringList &)));
+    connect(m_service, SIGNAL(mechanismsAvailable(const QString &, const QStringList &)),
+            this, SLOT( mechanismsAvailable(const QString &, const QStringList&)));
+    connect(m_service, SIGNAL(identities(const QList<SignOn::IdentityInfo> &)),
+            this, SLOT(identities(const QList<SignOn::IdentityInfo> &)));
 
     qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
+}
+
+SignonClient::~SignonClient()
+{
+    delete m_service;
+    if (m_identity) delete m_identity;
 }
 
 void SignonClient::methodsAvailable(const QStringList &mechs)
@@ -76,8 +82,9 @@ void SignonClient::identities(const QList<SignOn::IdentityInfo> &identityList)
 
 void SignonClient::response(const SessionData &sessionData)
 {
-    Q_UNUSED(sessionData);
     qDebug("response");
+    ExampleData response = sessionData.data<ExampleData>();
+    qDebug() << response.Example();
 }
 
 void SignonClient::error(const SignOn::Error &error)
@@ -94,7 +101,7 @@ void SignonClient::sessionError(const SignOn::Error &error)
 
 void SignonClient::userVerified(const bool valid)
 {
-        qDebug() << "user verified:" << valid;
+    qDebug() << "user verified:" << valid;
 }
 
 void SignonClient::credentialsStored(const quint32 id)
@@ -107,7 +114,8 @@ void SignonClient::credentialsStored(const quint32 id)
 void SignonClient::on_store_clicked()
 {
     qDebug("on_store_clicked");
-    if ( m_identity ) delete m_identity;
+    if (m_identity) delete m_identity;
+
     QMap<MethodName,MechanismsList> methods;
 
     QStringList mechs = QStringList() << QString::fromLatin1("ClientLogin")
@@ -168,30 +176,39 @@ void SignonClient::on_query_clicked()
 {
     qDebug("on_query_clicked");
     m_service->queryMethods();
-    m_service->queryIdentities();
 }
 
 void SignonClient::on_challenge_clicked()
 {
     qDebug("on_challenge_clicked");
     if (!m_identity) {
-        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
+        error(Error(SignOn::Identity::CanceledError,
+                    QLatin1String("Identity not created")));
         return;
     }
     ExampleData data;
-    data.setSecret("test");
 
     data.setSecret("secret");
-//    data.setUserName("url");
     data.setExample("http://www.flickr.com/");
 
+    data.setTos(QLatin1String("<b>Terms of Service</b><br>"
+                              "blah blaah blah hah haa"
+                              "blah blaah blah hah haa"
+                              "blah blaah blah hah haa"
+                              "<br>Click <a href=\"%1\">"
+                              "here" "! </a> to see changes."
+                              ));
+
+    //do not show tos dialog by default
+    data.setTos(QString());
+
     if (!m_session) {
-        m_session=m_identity->createSession(QLatin1String("example"));
+        m_session = m_identity->createSession(QLatin1String("example"));
 
-    connect(m_session, SIGNAL(response(const SignOn::SessionData&)),
-            this, SLOT(response(const SignOn::SessionData&)));
+        connect(m_session, SIGNAL(response(const SignOn::SessionData &)),
+            this, SLOT(response(const SignOn::SessionData &)));
 
-    connect(m_session, SIGNAL(error(const SignOn::Error &)),
+        connect(m_session, SIGNAL(error(const SignOn::Error &)),
             this, SLOT(sessionError(const SignOn::Error &)));
     }
 
@@ -203,7 +220,8 @@ void SignonClient::on_google_clicked()
 {
     qDebug("on_google_clicked");
     if (!m_identity) {
-        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
+        error(Error(SignOn::Identity::CanceledError,
+                    QLatin1String("Identity not created")));
         return;
     }
     SignOn::SessionData data;
@@ -212,10 +230,10 @@ void SignonClient::on_google_clicked()
     data.setUserName("user@google.com");
 
     if (!m_session) {
-        m_session=m_identity->createSession(QLatin1String("google"));
+        m_session = m_identity->createSession(QLatin1String("google"));
 
-        connect(m_session, SIGNAL(response(const SignOn::SessionData&)),
-            this, SLOT(response(const SignOn::SessionData&)));
+        connect(m_session, SIGNAL(response(const SignOn::SessionData &)),
+            this, SLOT(response(const SignOn::SessionData &)));
 
         connect(m_session, SIGNAL(error(const SignOn::Error &)),
             this, SLOT(sessionError(const SignOn::Error &)));
@@ -228,13 +246,27 @@ void SignonClient::on_verify_clicked()
 {
     qDebug("on_verify_clicked");
     if (!m_identity) {
-        error(Error(SignOn::Identity::CanceledError,QLatin1String("Identity not created")));
+        error(Error(SignOn::Identity::CanceledError,
+                    QLatin1String("Identity not created")));
         return;
     }
+    //verifyUser takes QVariantMap containing setup parameters
+    //see uisessiondata.h for details
     QVariantMap params;
-    params.insert(QLatin1String("QueryMessage"), QLatin1String("hello"));
-    params.insert(QLatin1String("test"), QLatin1String("testing"));
+    QString link("<a href=\"http://www.google.com\"> "
+                    "Click for Google"
+                 "! </a>"
+                    " or maybe you can try "
+                 "<a href=\"http::/error\"> "
+                    "Invalid link"
+                 "! </a> "
+                 );
+    params.insert(QLatin1String("ForgotPassword"), link);
 
+    //params.insert(QLatin1String("ForgotPasswordUrl"), QLatin1String("http:://www.google.com"));
+
+    WId id = this->window()->winId();
+    params.insert(QLatin1String("WindowId"), (quint32)id);
     m_identity->verifyUser(params);
 }
 }

@@ -424,7 +424,13 @@ bool SaslPlugin::check_and_fix_parameters(SaslData &input)
 
     //set default parameters
     if (input.Service().isEmpty()) input.setService(QByteArray("default"));
-    if (input.Fqdn().isEmpty()) input.setFqdn(QByteArray("default"));
+    if (input.Authname().isEmpty()) input.setAuthname(input.UserName());
+    if (input.Fqdn().isEmpty()) {
+        if (!input.Realm().isEmpty())
+            input.setFqdn(input.Realm());
+        else
+            input.setFqdn(QByteArray("default"));
+    }
     if (input.IpLocal().isEmpty()) input.setIpLocal(QByteArray("127.0.0.1"));
     if (input.IpRemote().isEmpty()) input.setIpRemote(QByteArray("127.0.0.1"));
 

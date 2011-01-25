@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+/*!
+ * @copyright Copyright (C) 2009-2011 Nokia Corporation.
+ * @license LGPL
+ */
 
 /*!
  * @todo move this to a common includes folder.
@@ -203,6 +207,12 @@ public:
      * To be used when a remote service does not reply in a reasonable amount of time.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
+
+    /*!
+     * Declare property WindowId setter and getter
+     * This is to be used for setting signon-ui dialog application modal.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(quint32, WindowId)
 
 protected:
     QVariantMap m_data;

@@ -19,6 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+/*!
+ * @copyright Copyright (C) 2009-2011 Nokia Corporation.
+ * @license LGPL
+ */
+
 #ifndef UISESSIONDATA_H
 #define UISESSIONDATA_H
 
@@ -82,10 +87,11 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(int, QueryErrorCode)
 
     /*!
-     * Declare property QueryMessage setter and getter.
-     * QueryMessage is used to show given message to user.
-     * Empty message is discarded.
-     * @warning This string is shown to user as it is, plugin is responsible for localization.
+     * Declare property Caption setter and getter.
+     * Caption is used to set dialog title.
+     * Empty caption is discarded.
+     * @warning This string is shown to user as it is,
+     * plugin is responsible for localization.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
 
@@ -101,7 +107,8 @@ public:
      * Declare property QueryMessage setter and getter.
      * QueryMessage is used to show given message to user.
      * Empty message is discarded.
-     * @warning This string is shown to user as it is, plugin is responsible for localization.
+     * @warning This string is shown to user as it is,
+     * plugin is responsible for localization.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, QueryMessage)
 
@@ -170,7 +177,7 @@ public:
 
     /*!
      * Declare property ForgotPassword setter and getter
-     * ForgotPassword string is shown as s link to user.
+     * ForgotPassword string is shown as link to user.
      * @see ForgotPasswordUrl
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPassword)

@@ -40,6 +40,12 @@ public:
      * Declare property Params setter and getter
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Params);
+
+    /*!
+     * Declare property Tos setter and getter
+     * Can be used to set Terms of Service message
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, Tos);
 };
 
 #endif // EXAMPLEDATA_H

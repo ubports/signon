@@ -32,7 +32,7 @@ namespace ExamplePluginNS {
     : AuthPluginInterface(parent)
     {
         TRACE();
-
+        m_showTos = false;
     }
 
     ExamplePlugin::~ExamplePlugin()
@@ -76,30 +76,30 @@ namespace ExamplePluginNS {
         TRACE() << "User: " << inData.UserName() ;
         TRACE() << "Example" << input.Example();
 
-        if ( inData.UserName() == QLatin1String("Example" ) ) {
+        if (input.Params() == QLatin1String("Example")) {
             qDebug() << inData.UserName();
             response.setExample(QLatin1String("authenticated"));
             emit result(response);
             return;
         }
 
-        if ( inData.UserName() == QLatin1String("error" ) ) {
+        if (input.Params() == QLatin1String("error")) {
             emit error(Error::NotAuthorized);
             return;
         }
 
-        if ( inData.UserName() == QLatin1String("toserror" ) ) {
+        if (input.Params() == QLatin1String("toserror")) {
             emit error(Error::TOSNotAccepted);
             return;
         }
 
-        if ( inData.UserName() == QLatin1String("store" ) ) {
+        if (input.Params() == QLatin1String("store")) {
             ExampleData storeData;
-            storeData.setExample(QLatin1String("store:")+input.Example());
+            storeData.setExample(QLatin1String("store:") + input.Example());
             emit store(storeData);
         }
 
-        if ( inData.UserName() == QLatin1String("url" ) ) {
+        if (input.Params() == QLatin1String("url")) {
             SignOn::UiSessionData data;
             data.setOpenUrl(input.Example());
             data.setNetworkProxy(inData.NetworkProxy());
@@ -107,6 +107,41 @@ namespace ExamplePluginNS {
 
             return;
         }
+
+        if (input.Params() == QLatin1String("ui")) {
+            SignOn::UiSessionData data;
+            data.setQueryPassword(true);
+            data.setQueryUserName(true);
+            emit userActionRequired(data);
+
+            return;
+        }
+
+        if (input.Params() == QLatin1String("captcha")) {
+            SignOn::UiSessionData data;
+            data.setCaptchaUrl(input.Example());
+            data.setNetworkProxy(inData.NetworkProxy());
+            emit userActionRequired(data);
+
+            return;
+        }
+
+        if (!input.Tos().isEmpty()) {
+            SignOn::UiSessionData data;
+            //% "Click here to see TOS update"
+            /*
+            QString tos("Terms of service has changed. Click <a href=\"%1\">"
+                        "here " "! </a> to see changes.");
+            */
+            QString tos = input.Tos();
+            data.setQueryMessage(tos.arg(input.Example()));
+            data.setOpenUrl(input.Example());
+            m_showTos = true;
+            emit userActionRequired(data);
+
+            return;
+        }
+
         response.setExample(QLatin1String("authenticated"));
         TRACE() << "Emitting results";
 
@@ -121,7 +156,15 @@ namespace ExamplePluginNS {
         Q_UNUSED(data);
         ExampleData response;
         TRACE();
-        response.setExample(QLatin1String("url shown"));
+        if (m_showTos) {
+            m_showTos = false;
+            if (data.QueryErrorCode() != QUERY_ERROR_NONE) {
+                emit error(Error::TOSNotAccepted);
+                return;
+            }
+        }
+
+        response.setExample(QLatin1String("signon-ui shown"));
         emit result(response);
 
     }

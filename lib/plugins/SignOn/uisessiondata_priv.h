@@ -22,6 +22,7 @@
 #ifndef UISESSIONDATA_PRIV_H
 #define UISESSIONDATA_PRIV_H
 
+#define SSOUI_KEY_ERROR           QLatin1String("QueryErrorCode")
 #define SSOUI_KEY_CAPTION         QLatin1String("Caption")
 #define SSOUI_KEY_MESSAGEID       QLatin1String("QueryMessageId")
 #define SSOUI_KEY_MESSAGE         QLatin1String("QueryMessage")
@@ -29,6 +30,7 @@
 #define SSOUI_KEY_USERNAME        QLatin1String("UserName")
 #define SSOUI_KEY_QUERYPASSWORD   QLatin1String("QueryPassword")
 #define SSOUI_KEY_PASSWORD        QLatin1String("Secret")
+#define SSOUI_KEY_REMEMBER        QLatin1String("RememberPassword")
 #define SSOUI_KEY_SHOWREALM       QLatin1String("ShowRealm")
 #define SSOUI_KEY_REALM           QLatin1String("Realm")
 #define SSOUI_KEY_NETWORKPROXY    QLatin1String("NetworkProxy")
@@ -38,17 +40,18 @@
 #define SSOUI_KEY_CAPTCHAURL      QLatin1String("CaptchaUrl")
 #define SSOUI_KEY_CAPTCHAIMG      QLatin1String("CaptchaImage") //QByteArray !!!
 #define SSOUI_KEY_CAPTCHARESP     QLatin1String("CaptchaResponse")
-#define SSOUI_KEY_ERROR           QLatin1String("QueryErrorCode")
-#define SSOUI_KEY_REMEMBER        QLatin1String("Remember")
 #define SSOUI_KEY_REQUESTID       QLatin1String("requestId") //id of request, used for cancellation
 #define SSOUI_KEY_REFRESH         QLatin1String("refreshRequired") //id of request, used for cancellation
 #define SSOUI_KEY_WATCHDOG        QLatin1String("watchdog")         // automatic behavior of dialog
 #define SSOUI_KEY_STORED_IDENTITY QLatin1String("StoredIdentity") /* flag whether
                                                                      the credentials are stored or not */
+#define SSOUI_KEY_FORGOTPASSWORD    QLatin1String("ForgotPassword")
+#define SSOUI_KEY_FORGOTPASSWORDURL QLatin1String("ForgotPasswordUrl")
+#define SSOUI_KEY_REPLYCOOKIES      QLatin1String("ReplyCookies")
+#define SSOUI_KEY_WINDOWID          QLatin1String("WindowId")
 
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
 #define SSOUI_KEY_SLOT_REFRESH "refresh"
-
 
 #endif /* UISESSIONDATA_PRIV_H */
