@@ -76,30 +76,30 @@ namespace ExamplePluginNS {
         TRACE() << "User: " << inData.UserName() ;
         TRACE() << "Example" << input.Example();
 
-        if ( input.Params() == QLatin1String("Example" ) ) {
+        if (input.Params() == QLatin1String("Example")) {
             qDebug() << inData.UserName();
             response.setExample(QLatin1String("authenticated"));
             emit result(response);
             return;
         }
 
-        if ( input.Params() == QLatin1String("error" ) ) {
+        if (input.Params() == QLatin1String("error")) {
             emit error(Error::NotAuthorized);
             return;
         }
 
-        if ( input.Params() == QLatin1String("toserror" ) ) {
+        if (input.Params() == QLatin1String("toserror")) {
             emit error(Error::TOSNotAccepted);
             return;
         }
 
-        if ( input.Params() == QLatin1String("store" ) ) {
+        if (input.Params() == QLatin1String("store")) {
             ExampleData storeData;
             storeData.setExample(QLatin1String("store:") + input.Example());
             emit store(storeData);
         }
 
-        if ( input.Params() == QLatin1String("url" ) ) {
+        if (input.Params() == QLatin1String("url")) {
             SignOn::UiSessionData data;
             data.setOpenUrl(input.Example());
             data.setNetworkProxy(inData.NetworkProxy());
@@ -108,7 +108,25 @@ namespace ExamplePluginNS {
             return;
         }
 
-        if ( !input.Tos().isEmpty() ) {
+        if (input.Params() == QLatin1String("ui")) {
+            SignOn::UiSessionData data;
+            data.setQueryPassword(true);
+            data.setQueryUserName(true);
+            emit userActionRequired(data);
+
+            return;
+        }
+
+        if (input.Params() == QLatin1String("captcha")) {
+            SignOn::UiSessionData data;
+            data.setCaptchaUrl(input.Example());
+            data.setNetworkProxy(inData.NetworkProxy());
+            emit userActionRequired(data);
+
+            return;
+        }
+
+        if (!input.Tos().isEmpty()) {
             SignOn::UiSessionData data;
             //% "Click here to see TOS update"
             /*

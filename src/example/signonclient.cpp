@@ -195,7 +195,7 @@ void SignonClient::on_challenge_clicked()
                               "blah blaah blah hah haa"
                               "blah blaah blah hah haa"
                               "blah blaah blah hah haa"
-                              "Click <a href=\"%1\">"
+                              "<br>Click <a href=\"%1\">"
                               "here" "! </a> to see changes."
                               ));
 
@@ -265,6 +265,8 @@ void SignonClient::on_verify_clicked()
 
     //params.insert(QLatin1String("ForgotPasswordUrl"), QLatin1String("http:://www.google.com"));
 
+    WId id = this->window()->winId();
+    params.insert(QLatin1String("WindowId"), (quint32)id);
     m_identity->verifyUser(params);
 }
 }

@@ -87,10 +87,11 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(int, QueryErrorCode)
 
     /*!
-     * Declare property QueryMessage setter and getter.
-     * QueryMessage is used to show given message to user.
-     * Empty message is discarded.
-     * @warning This string is shown to user as it is, plugin is responsible for localization.
+     * Declare property Caption setter and getter.
+     * Caption is used to set dialog title.
+     * Empty caption is discarded.
+     * @warning This string is shown to user as it is,
+     * plugin is responsible for localization.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
 
@@ -106,7 +107,8 @@ public:
      * Declare property QueryMessage setter and getter.
      * QueryMessage is used to show given message to user.
      * Empty message is discarded.
-     * @warning This string is shown to user as it is, plugin is responsible for localization.
+     * @warning This string is shown to user as it is,
+     * plugin is responsible for localization.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, QueryMessage)
 

@@ -208,6 +208,12 @@ public:
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
 
+    /*!
+     * Declare property WindowId setter and getter
+     * This is to be used for setting signon-ui dialog application modal.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(quint32, WindowId)
+
 protected:
     QVariantMap m_data;
 };
