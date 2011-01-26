@@ -41,9 +41,6 @@
  */
 #include "SignOn/authpluginif.h"
 
-
-using namespace SignOn;
-
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
 #define PLUGINPROCESS_START_TIMEOUT 5000
@@ -51,39 +48,7 @@ using namespace SignOn;
 
 namespace SignonDaemonNS {
 
-    // TODO - move these 2 helper functions to a common lib
-    //        Hint: will do so when all auth plugins will become standalone execs
-
-    QByteArray variantMapToByteArray(const QVariantMap &map)
-    {
-        QBuffer buffer;
-        if (!buffer.open(QIODevice::WriteOnly))
-            BLAME() << "Buffer opening failed.";
-
-        QDataStream stream(&buffer);
-        stream << map;
-        buffer.close();
-
-        TRACE() << "Buffer size:" << buffer.data().size();
-        return buffer.data();
-    }
-
-    QVariantMap byteArrayToVariantMap(const QByteArray &array)
-    {
-        QByteArray nonConst = array;
-        QBuffer buffer(&nonConst);
-        if (!buffer.open(QIODevice::ReadOnly))
-            BLAME() << "Buffer opening failed.";
-
-        buffer.reset();
-        QDataStream stream(&buffer);
-        QVariantMap map;
-        stream >> map;
-        buffer.close();
-
-        TRACE() << "Buffer size:" << buffer.data().size();
-        return map;
-    }
+    /* ---------------------- PluginProcess ---------------------- */
 
     PluginProcess::PluginProcess(QObject *parent) : QProcess(parent)
     {
@@ -119,6 +84,8 @@ namespace SignonDaemonNS {
  #endif
     }
 
+    /* ---------------------- PluginProxy ---------------------- */
+
     PluginProxy::PluginProxy(QString type, QObject *parent)
             : QObject(parent)
     {
@@ -126,6 +93,8 @@ namespace SignonDaemonNS {
 
         m_type = type;
         m_isProcessing = false;
+        m_isResultObtained = false;
+        m_currentResultOperation = -1;
         m_process = new PluginProcess(this);
 
         connect(m_process, SIGNAL(readyReadStandardError()), this, SLOT(onReadStandardError()));
@@ -136,6 +105,19 @@ namespace SignonDaemonNS {
          * */
         connect(m_process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(onExit(int, QProcess::ExitStatus)));
         connect(m_process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(onError(QProcess::ProcessError)));
+
+        m_blobIOHandler = new BlobIOHandler(m_process, m_process, this);
+
+        connect(m_blobIOHandler,
+                SIGNAL(dataReceived(const QVariantMap &)),
+                this,
+                SLOT(sessionDataReceived(const QVariantMap &)));
+
+        QSocketNotifier *readNotifier =
+            new QSocketNotifier(STDIN_FILENO, QSocketNotifier::Read, this);
+
+        readNotifier->setEnabled(false);
+        m_blobIOHandler->setReadChannelSocketNotifier(readNotifier);
     }
 
     PluginProxy::~PluginProxy()
@@ -188,7 +170,7 @@ namespace SignonDaemonNS {
         pp->m_type = pp->queryType();
         pp->m_mechanisms = pp->queryMechanisms();
 
-        connect(pp->m_process, SIGNAL(readyReadStandardOutput()), pp, SLOT(onReadStandardOutput()));
+        connect(pp->m_process, SIGNAL(readyRead()), pp, SLOT(onReadStandardOutput()));
 
         TRACE() << "The process is started";
         return pp;
@@ -196,20 +178,19 @@ namespace SignonDaemonNS {
 
    bool PluginProxy::process(const QString &cancelKey, const QVariantMap &inData, const QString &mechanism)
    {
-        TRACE();
         if (!restartIfRequired())
             return false;
 
+        m_isResultObtained = false;
         m_cancelKey = cancelKey;
         QVariant value = inData.value(SSOUI_KEY_UIPOLICY);
         m_uiPolicy = value.toInt();
 
         QDataStream in(m_process);
         in << (quint32)PLUGIN_OP_PROCESS;
+        in << mechanism;
 
-        QByteArray ba = variantMapToByteArray(inData);
-        in << ba;
-        in << QVariant(mechanism);
+        m_blobIOHandler->sendData(inData);
 
         m_isProcessing = true;
         return true;
@@ -228,8 +209,7 @@ namespace SignonDaemonNS {
 
         in << (quint32)PLUGIN_OP_PROCESS_UI;
 
-        QByteArray ba = variantMapToByteArray(inData);
-        in << ba;
+        m_blobIOHandler->sendData(inData);
 
         m_isProcessing = true;
 
@@ -249,8 +229,7 @@ namespace SignonDaemonNS {
 
         in << (quint32)PLUGIN_OP_REFRESH;
 
-        QByteArray ba = variantMapToByteArray(inData);
-        in << ba;
+        m_blobIOHandler->sendData(inData);
 
         m_isProcessing = true;
 
@@ -291,14 +270,22 @@ namespace SignonDaemonNS {
         return m_isProcessing;
     }
 
+    void PluginProxy::blobIOError()
+    {
+        TRACE();
+        disconnect(m_blobIOHandler, SIGNAL(error()), this, SLOT(blobIOError()));
+        stop();
+
+        connect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
+        emit processError(
+            m_cancelKey,
+            (int)Error::InternalServer,
+            QLatin1String("Failed to I/O session data to/from the authentication plugin."));
+    }
+
     void PluginProxy::onReadStandardOutput()
     {
-        disconnect(m_process, SIGNAL(readyReadStandardOutput()), this, SLOT(onReadStandardOutput()));
-
-        QByteArray token;
-
-        QVariant infoVa;
-        QVariantMap info;
+        disconnect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
 
         if (!m_process->bytesAvailable()) {
             qCritical() << "No information available on process";
@@ -307,132 +294,127 @@ namespace SignonDaemonNS {
             return;
         }
 
-        QByteArray buffer;
+        QDataStream reader(m_process);
+        reader >> m_currentResultOperation;
 
-        while (m_process->bytesAvailable())
-            buffer += m_process->readAllStandardOutput();
+        if (m_currentResultOperation != PLUGIN_RESPONSE_SIGNAL
+            && m_currentResultOperation != PLUGIN_RESPONSE_ERROR) {
 
-        /*
-         * we need to analyze the whole buffer
-         * and if it contains error then emit only error
-         * otherwise process/emit the incoming information
-         * one by one
-         * */
-        QDataStream out(buffer);
-        bool isResultObtained = false;
+            connect(m_blobIOHandler, SIGNAL(error()),
+                    this, SLOT(blobIOError()));
 
-        while (out.status() == QDataStream::Ok) {
-            quint32 opres;
-            out >> opres; //result of operation: error code
+            int expectedDataSize = 0;
+            reader >> expectedDataSize;
+            m_blobIOHandler->receiveData(expectedDataSize);
+        } else {
+            handlePluginResponse(m_currentResultOperation);
+        }
+    }
 
-            TRACE() << opres;
+    void PluginProxy::sessionDataReceived(const QVariantMap &map)
+    {
+        handlePluginResponse(m_currentResultOperation, map);
+    }
 
-            if (opres == PLUGIN_RESPONSE_RESULT) {
-                TRACE() << "PLUGIN_RESPONSE_RESULT";
+    void PluginProxy::handlePluginResponse(const quint32 resultOperation,
+                                           const QVariantMap &sessionDataMap)
+    {
+        TRACE() << resultOperation;
 
-                QByteArray ba;
-                out >> ba;
-                info = byteArrayToVariantMap(ba);
+        if (resultOperation == PLUGIN_RESPONSE_RESULT) {
+            TRACE() << "PLUGIN_RESPONSE_RESULT";
 
-                m_isProcessing = false;
+            m_isProcessing = false;
 
-                if (!isResultObtained)
-                    emit processResultReply(m_cancelKey, info);
-                else
-                    BLAME() << "Unexpected plugin response: " << info;
+            if (!m_isResultObtained)
+                emit processResultReply(m_cancelKey, sessionDataMap);
+            else
+                BLAME() << "Unexpected plugin response: " << sessionDataMap;
 
-                isResultObtained = true;
-            } else if (opres == PLUGIN_RESPONSE_STORE) {
-                TRACE() << "PLUGIN_RESPONSE_STORE";
+            m_isResultObtained = true;
+        } else if (resultOperation == PLUGIN_RESPONSE_STORE) {
+            TRACE() << "PLUGIN_RESPONSE_STORE";
 
-                QByteArray ba;
-                out >> ba;
-                info = byteArrayToVariantMap(ba);
+            if (!m_isResultObtained)
+                emit processStore(m_cancelKey, sessionDataMap);
+            else
+                BLAME() << "Unexpected plugin store: " << sessionDataMap;
 
-                if (!isResultObtained)
-                    emit processStore(m_cancelKey, info);
-                else
-                    BLAME() << "Unexpected plugin store: " << info;
+        } else if (resultOperation == PLUGIN_RESPONSE_UI) {
+            TRACE() << "PLUGIN_RESPONSE_UI";
 
-            } else if (opres == PLUGIN_RESPONSE_UI) {
-                TRACE() << "PLUGIN_RESPONSE_UI";
+            if (!m_isResultObtained) {
+                bool allowed = true;
 
-                QByteArray ba;
-                out >> ba;
-                info = byteArrayToVariantMap(ba);
+                if (m_uiPolicy == NoUserInteractionPolicy)
+                    allowed = false;
 
-                if (!isResultObtained) {
-                    bool allowed = true;
+                if (m_uiPolicy == ValidationPolicy) {
+                    bool credentialsQueried =
+                        (sessionDataMap.contains(SSOUI_KEY_QUERYUSERNAME)
+                        || sessionDataMap.contains(SSOUI_KEY_QUERYPASSWORD));
 
-                    if (m_uiPolicy == NoUserInteractionPolicy)
+                    bool captchaQueried  =
+                        (sessionDataMap.contains(SSOUI_KEY_CAPTCHAIMG)
+                         || sessionDataMap.contains(SSOUI_KEY_CAPTCHAURL));
+
+                    if (credentialsQueried && !captchaQueried)
                         allowed = false;
-
-                    if (m_uiPolicy == ValidationPolicy) {
-                        bool credentialsQueried =
-                            (info.contains(SSOUI_KEY_QUERYUSERNAME)
-                            || info.contains(SSOUI_KEY_QUERYPASSWORD));
-
-                        bool captchaQueried  =
-                            (info.contains(SSOUI_KEY_CAPTCHAIMG)
-                             || info.contains(SSOUI_KEY_CAPTCHAURL));
-
-                        if (credentialsQueried && !captchaQueried)
-                            allowed = false;
-                    }
-
-                    if (!allowed) {
-                        //set error and return;
-                        TRACE() << "ui policy prevented ui launch";
-                        info.insert(SSOUI_KEY_ERROR, QUERY_ERROR_FORBIDDEN);
-                        processUi(m_cancelKey, info);
-                    } else {
-                        TRACE() << "open ui";
-                        emit processUiRequest(m_cancelKey, info);
-                    }
-                } else {
-                    BLAME() << "Unexpected plugin ui response: " << info;
                 }
-            } else if (opres == PLUGIN_RESPONSE_REFRESHED) {
-                TRACE() << "PLUGIN_RESPONSE_REFRESHED";
 
-                QByteArray ba;
-                out >> ba;
-                info = byteArrayToVariantMap(ba);
+                if (!allowed) {
+                    //set error and return;
+                    TRACE() << "ui policy prevented ui launch";
 
-                if (!isResultObtained)
-                    emit processRefreshRequest(m_cancelKey, info);
-                else
-                    BLAME() << "Unexpected plugin ui response: " << info;
-            } else if (opres == PLUGIN_RESPONSE_ERROR) {
-                TRACE() << "PLUGIN_RESPONSE_ERROR";
-                quint32 err;
-                QString errorMessage;
-                out >> err;
-                out >> errorMessage;
-                m_isProcessing = false;
-
-                if (!isResultObtained)
-                    emit processError(m_cancelKey, (int)err, errorMessage);
-                else
-                    BLAME() << "Unexpected plugin error: " << errorMessage;
-
-                isResultObtained = true;
-            } else if (opres == PLUGIN_RESPONSE_SIGNAL) {
-                TRACE() << "PLUGIN_RESPONSE_SIGNAL";
-                quint32 state;
-                QString message;
-
-                out >> state;
-                out >> message;
-
-                if (!isResultObtained)
-                    emit stateChanged(m_cancelKey, (int)state, message);
-                else
-                    BLAME() << "Unexpected plugin signal: " << state << " " << message;
+                    QVariantMap nonConstMap = sessionDataMap;
+                    nonConstMap.insert(SSOUI_KEY_ERROR, QUERY_ERROR_FORBIDDEN);
+                    processUi(m_cancelKey, nonConstMap);
+                } else {
+                    TRACE() << "open ui";
+                    emit processUiRequest(m_cancelKey, sessionDataMap);
+                }
+            } else {
+                BLAME() << "Unexpected plugin ui response: " << sessionDataMap;
             }
+        } else if (resultOperation == PLUGIN_RESPONSE_REFRESHED) {
+            TRACE() << "PLUGIN_RESPONSE_REFRESHED";
+
+            if (!m_isResultObtained)
+                emit processRefreshRequest(m_cancelKey, sessionDataMap);
+            else
+                BLAME() << "Unexpected plugin ui response: " << sessionDataMap;
+        } else if (resultOperation == PLUGIN_RESPONSE_ERROR) {
+            TRACE() << "PLUGIN_RESPONSE_ERROR";
+            quint32 err;
+            QString errorMessage;
+
+            QDataStream stream(m_process);
+            stream >> err;
+            stream >> errorMessage;
+            m_isProcessing = false;
+
+            if (!m_isResultObtained)
+                emit processError(m_cancelKey, (int)err, errorMessage);
+            else
+                BLAME() << "Unexpected plugin error: " << errorMessage;
+
+            m_isResultObtained = true;
+        } else if (resultOperation == PLUGIN_RESPONSE_SIGNAL) {
+            TRACE() << "PLUGIN_RESPONSE_SIGNAL";
+            quint32 state;
+            QString message;
+
+            QDataStream stream(m_process);
+            stream >> state;
+            stream >> message;
+
+            if (!m_isResultObtained)
+                emit stateChanged(m_cancelKey, (int)state, message);
+            else
+                BLAME() << "Unexpected plugin signal: " << state << message;
         }
 
-        connect(m_process, SIGNAL(readyReadStandardOutput()), this, SLOT(onReadStandardOutput()));
+        connect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
     }
 
     void PluginProxy::onReadStandardError()
