@@ -26,6 +26,7 @@
 #define PLUGINPROXY_EXTERNAL_INCLUDED_
 
 #include "pluginproxy.cpp"
+#include "blobiohandler.cpp"
 
 #endif //_EXTERNAL_INCLUDED_
 

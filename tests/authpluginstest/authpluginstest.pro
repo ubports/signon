@@ -8,13 +8,16 @@ CONFIG += qtestlib \
 
 SOURCES += authpluginstest.cpp \
     authpluginspool.cpp \
-    $${TOP_SRC_DIR}/src/signond/pluginproxy.cpp
+    $${TOP_SRC_DIR}/src/signond/pluginproxy.cpp \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.cpp
 
 HEADERS += authpluginstest.h \
     $${TOP_SRC_DIR}/src/signond/pluginproxy.h \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h \
     authpluginspool.h
 INCLUDEPATH += $${TOP_SRC_DIR}/src/signond \
     $${TOP_SRC_DIR}/lib/plugins \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_SRC_DIR}/src/plugins
 
 QMAKE_CXXFLAGS += -fno-exceptions \
