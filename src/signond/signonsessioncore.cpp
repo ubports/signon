@@ -241,8 +241,6 @@ void SignonSessionCore::process(const QDBusConnection &connection,
                                  const QString &mechanism,
                                  const QString &cancelKey)
 {
-    TRACE();
-
     keepInUse();
     if (m_encryptor->isVariantMapEncrypted(sessionDataVa)) {
         pid_t pid = pidOfContext(connection, message);
@@ -255,18 +253,18 @@ void SignonSessionCore::process(const QDBusConnection &connection,
                        QString::fromLatin1("Failed to decrypt incoming message"));
             return;
         }
-
         m_listOfRequests.enqueue(RequestData(connection,
                                              message,
                                              decodedData,
                                              mechanism,
                                              cancelKey));
-    } else
+    } else {
         m_listOfRequests.enqueue(RequestData(connection,
                                              message,
                                              sessionDataVa,
                                              mechanism,
                                              cancelKey));
+    }
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
@@ -338,6 +336,7 @@ void SignonSessionCore::setId(quint32 id)
 
 void SignonSessionCore::startProcess()
 {
+
     TRACE() << "the number of requests is : " << m_listOfRequests.length();
 
     keepInUse();
@@ -372,7 +371,9 @@ void SignonSessionCore::startProcess()
         && parameters[SSOUI_KEY_UIPOLICY] == RequestPasswordPolicy) {
         parameters.remove(SSO_KEY_PASSWORD);
     }
-    TRACE() << "all params: " << parameters;
+
+    TRACE() << "Process mech:" << data.m_mechanism
+            << ". Process data:" << parameters;
 
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
