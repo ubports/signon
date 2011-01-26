@@ -59,6 +59,10 @@ extern "C" {
     #define SIGNON_PLUGIN_SUFFIX "plugin.so"
 #endif
 
+#include "SignOn/blobiohandler.h"
+
+using namespace SignOn;
+
 namespace RemotePluginProcessNS {
 
 /*!
@@ -101,26 +105,26 @@ class RemotePluginProcess : public QObject
         bool setupDataStreams();
         bool setupProxySettings();
 
-        void challenge(QDataStream &in, QDataStream &out);
-
     public Q_SLOTS:
         void startTask();
+        void sessionDataReceived(const QVariantMap &sessionDataMap);
 
     private:
         AuthPluginInterface *m_plugin;
 
         QFile m_infile;
+        QFile m_outfile;
+
         QSocketNotifier *m_readnotifier;
         QSocketNotifier *m_errnotifier;
 
-        QFile m_outfile;
+        BlobIOHandler *m_blobIOHandler;
 
-        QSocketNotifier *sn;
+        //Requiered for async session data reading
+        quint32 m_currentOperation;
+        QString m_currentMechanism;
 
-//        //current arguments for process
-//        SignOn::SessionData m_data;
-//        QString m_mechanism;
-
+    private:
         QString getPluginName(const QString &type);
         void type();
         void mechanism();
@@ -140,6 +144,7 @@ class RemotePluginProcess : public QObject
         void userActionRequired(const SignOn::UiSessionData &data);
         void refreshed(const SignOn::UiSessionData &data);
         void statusChanged(const AuthPluginState state, const QString &message);
+        void blobIOError();
 
     Q_SIGNALS :
         void processStopped();

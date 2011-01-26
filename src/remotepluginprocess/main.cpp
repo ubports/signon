@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     QString type = app.arguments().at(1); TRACE() << type;
 
     fcntl(fileno(stdin), F_SETFL, fcntl(fileno(stdin), F_GETFL, 0) | O_NONBLOCK);
-    fcntl(fileno(stdout), F_SETFL, fcntl(fileno(stdout), F_GETFL, 0) | O_NONBLOCK);
 
     process = RemotePluginProcess::createRemotePluginProcess(type, &app);
 
