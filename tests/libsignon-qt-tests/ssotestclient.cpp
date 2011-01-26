@@ -182,6 +182,7 @@ void SsoTestClient::runAuthSessionTests()
     process_with_nonexisting_method();
     process_many_times_after_auth();
     process_many_times_before_auth();
+    process_with_big_session_data();
 
     cancel_immidiately();
     cancel_with_delay();
@@ -972,7 +973,7 @@ void SsoTestClient::initAuthServiceTest()
     m_expectedNumberOfMethods = (QDir("/usr/lib/signon")).entryList(
             QStringList() << "*.so", QDir::Files).count();
     if(!m_expectedMechanisms.length())
-        m_expectedMechanisms << "mech1" << "mech2" << "mech3";
+        m_expectedMechanisms << "mech1" << "mech2" << "mech3" << "BLOB";
 
     m_methodToQueryMechanisms = "ssotest";
 
@@ -1478,6 +1479,13 @@ void SsoTestClient::process_many_times_before_auth()
 {
     TEST_START
     testAuthSession.process_many_times_before_auth();
+    TEST_DONE
+}
+
+void SsoTestClient::process_with_big_session_data()
+{
+    TEST_START
+    testAuthSession.process_with_big_session_data();
     TEST_DONE
 }
 
