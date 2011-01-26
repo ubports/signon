@@ -41,6 +41,7 @@ namespace SsoTestPluginNS {
         m_mechanisms = QStringList(QLatin1String("mech1"));
         m_mechanisms += QLatin1String("mech2");
         m_mechanisms += QLatin1String("mech3");
+        m_mechanisms += QLatin1String("BLOB");
 
         qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
     }
@@ -92,6 +93,11 @@ namespace SsoTestPluginNS {
             QMutexLocker locker(&mutex);
             is_canceled = false;
             emit error(Error(Error::SessionCanceled, QLatin1String("The operation is canceled")));
+            return;
+        }
+
+        if (mechanism == QLatin1String("BLOB")) {
+            emit result(outData);
             return;
         }
 
