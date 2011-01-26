@@ -54,13 +54,16 @@ SOURCES += \
     backupifadaptor.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_SRC_DIR}/lib/signond \
     $${TOP_SRC_DIR}/lib/sim-dlc
 
 CONFIG += build_all \
     link_pkgconfig
 
-PKGCONFIG += libsignoncrypto-qt
+PKGCONFIG += \
+    libsignoncrypto-qt \
+    signon-plugins-common
     
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
@@ -69,7 +72,8 @@ DEFINES += QT_NO_CAST_TO_ASCII \
 #Trace defines can be overruled by signond's configuration file `LoggingLevel`
 DEFINES += SIGNOND_TRACE
 LIBS += -lcreds \
-    -lcryptsetup
+    -lcryptsetup \
+    -lsignon-plugins-common
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h

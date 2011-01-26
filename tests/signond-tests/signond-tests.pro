@@ -22,8 +22,10 @@ HEADERS += \
     $$TOP_SRC_DIR/src/signond/pluginproxy.h \
     $$TOP_SRC_DIR/tests/pluginproxytest/testpluginproxy.h \
     backuptest.h \
-    databasetest.h\
-           $$TOP_SRC_DIR/src/signond/credentialsdb.h
+    databasetest.h \
+    $$TOP_SRC_DIR/src/signond/credentialsdb.h \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h
+
 SOURCES = \
     signond-tests.cpp \
     timeouts.cpp \
@@ -54,6 +56,8 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
     $$TOP_SRC_DIR/tests/pluginproxytest \
     $$TOP_SRC_DIR/src/signond \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn \
     $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server
 
 DEFINES += SSO_CI_TESTMANAGEMENT

@@ -1,0 +1,2 @@
+INCLUDEPATH += /usr/include/signon-plugins
+LIBS += -lsignon-plugins-common

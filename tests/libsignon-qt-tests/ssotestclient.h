@@ -103,6 +103,7 @@ private:
     void process_with_nonexisting_method();
     void process_many_times_after_auth();
     void process_many_times_before_auth();
+    void process_with_big_session_data();
 
     void cancel_immidiately();
     void cancel_with_delay();

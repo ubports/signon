@@ -31,45 +31,12 @@
 #endif
 
 #include "remotepluginprocess.h"
-using namespace SignOn;
 
 namespace RemotePluginProcessNS {
 
     static CancelEventThread *cancelThread = NULL;
 
-    // TODO - move these 2 helper functions to a common lib
-    //        Hint: will do so when all auth plugins will become standalone execs
-
-    QByteArray variantMapToByteArray(const QVariantMap &map)
-    {
-        QBuffer buffer;
-        if (!buffer.open(QIODevice::WriteOnly))
-            BLAME() << "Buffer opening failed.";
-
-        QDataStream stream(&buffer);
-        stream << map;
-        buffer.close();
-
-        TRACE() << "Buffer size:" << buffer.data().size();
-        return buffer.data();
-    }
-
-    QVariantMap byteArrayToVariantMap(const QByteArray &array)
-    {
-        QByteArray nonConst = array;
-        QBuffer buffer(&nonConst);
-        if (!buffer.open(QIODevice::ReadOnly))
-            BLAME() << "Buffer opening failed.";
-
-        buffer.reset();
-        QDataStream stream(&buffer);
-        QVariantMap map;
-        stream >> map;
-        buffer.close();
-
-        TRACE() << "Buffer size:" << buffer.data().size();
-        return map;
-    }
+    /* ---------------------- RemotePluginProcess ---------------------- */
 
     RemotePluginProcess::RemotePluginProcess(QObject *parent) : QObject(parent)
     {
@@ -92,7 +59,6 @@ namespace RemotePluginProcessNS {
             cancelThread->wait();
             delete cancelThread;
         }
-
     }
 
     RemotePluginProcess* RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
@@ -185,6 +151,20 @@ namespace RemotePluginProcessNS {
         connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
         connect(m_errnotifier, SIGNAL(activated(int)), this, SIGNAL(processStopped()));
 
+        m_blobIOHandler = new BlobIOHandler(&m_infile, &m_outfile, this);
+
+        connect(m_blobIOHandler,
+                SIGNAL(dataReceived(const QVariantMap &)),
+                this,
+                SLOT(sessionDataReceived(const QVariantMap &)));
+
+        connect(m_blobIOHandler,
+                SIGNAL(error()),
+                this,
+                SLOT(blobIOError()));
+
+        m_blobIOHandler->setReadChannelSocketNotifier(m_readnotifier);
+
         return true;
     }
 
@@ -228,10 +208,16 @@ namespace RemotePluginProcessNS {
         return true;
     }
 
+    void RemotePluginProcess::blobIOError()
+    {
+        error(
+            Error(Error::InternalServer,
+            QLatin1String("Failed to I/O session data to/from the signon daemon.")));
+        connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+    }
+
     void RemotePluginProcess::result(const SignOn::SessionData &data)
     {
-        TRACE();
-
         disableCancelThread();
         QDataStream out(&m_outfile);
         QVariantMap resultDataMap;
@@ -241,15 +227,13 @@ namespace RemotePluginProcessNS {
 
         out << (quint32)PLUGIN_RESPONSE_RESULT;
 
-        QByteArray ba = variantMapToByteArray(resultDataMap);
-        out << ba;
+        m_blobIOHandler->sendData(resultDataMap);
+
         m_outfile.flush();
     }
 
     void RemotePluginProcess::store(const SignOn::SessionData &data)
     {
-        TRACE();
-
         QDataStream out(&m_outfile);
         QVariantMap storeDataMap;
 
@@ -257,8 +241,9 @@ namespace RemotePluginProcessNS {
             storeDataMap[key] = data.getProperty(key);
 
         out << (quint32)PLUGIN_RESPONSE_STORE;
-        QByteArray ba = variantMapToByteArray(storeDataMap);
-        out << ba;
+
+        m_blobIOHandler->sendData(storeDataMap);
+
         m_outfile.flush();
     }
 
@@ -288,8 +273,7 @@ namespace RemotePluginProcessNS {
             resultDataMap[key] = data.getProperty(key);
 
         out << (quint32)PLUGIN_RESPONSE_UI;
-        QByteArray ba = variantMapToByteArray(resultDataMap);
-        out << ba;
+        m_blobIOHandler->sendData(resultDataMap);
         m_outfile.flush();
     }
 
@@ -307,8 +291,9 @@ namespace RemotePluginProcessNS {
         m_readnotifier->setEnabled(true);
 
         out << (quint32)PLUGIN_RESPONSE_REFRESHED;
-        QByteArray ba = variantMapToByteArray(resultDataMap);
-        out << ba;
+
+        m_blobIOHandler->sendData(resultDataMap);
+
         m_outfile.flush();
     }
 
@@ -355,52 +340,67 @@ namespace RemotePluginProcessNS {
     {
         QDataStream in(&m_infile);
 
-        QVariant mechanismVa;
-        QVariantMap sessionDataMap;
+        in >> m_currentMechanism;
 
-        QByteArray ba;
-        in >> ba;
-        sessionDataMap = byteArrayToVariantMap(ba);
+        int processBlobSize = -1;
+        in >> processBlobSize;
 
-        in >> mechanismVa;
+        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
 
-        SessionData inData(sessionDataMap);
-        QString mechanism(mechanismVa.toString());
-
-        enableCancelThread();
-        TRACE() << "The cancel thread is started";
-
-        m_plugin->process(inData, mechanism);
+        m_currentOperation = PLUGIN_OP_PROCESS;
+        m_blobIOHandler->receiveData(processBlobSize);
     }
 
     void RemotePluginProcess::userActionFinished()
     {
         QDataStream in(&m_infile);
-        QVariantMap infoMap;
+        int processBlobSize = -1;
+        in >> processBlobSize;
 
-        QByteArray ba;
-        in >> ba;
-        infoMap = byteArrayToVariantMap(ba);
+        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
 
-        UiSessionData inData(infoMap);
-
-        enableCancelThread();
-        m_plugin->userActionFinished(inData);
+        m_currentOperation = PLUGIN_OP_PROCESS_UI;
+        m_blobIOHandler->receiveData(processBlobSize);
     }
 
     void RemotePluginProcess::refresh()
     {
         QDataStream in(&m_infile);
-        QVariantMap infoMap;
+        int processBlobSize = -1;
+        in >> processBlobSize;
 
-        QByteArray ba;
-        in >> ba;
-        infoMap = byteArrayToVariantMap(ba);
+        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
 
-        UiSessionData inData(infoMap);
+        m_currentOperation = PLUGIN_OP_REFRESH;
+        m_blobIOHandler->receiveData(processBlobSize);
+    }
 
+    void RemotePluginProcess::sessionDataReceived(const QVariantMap &sessionDataMap)
+    {
         enableCancelThread();
-        m_plugin->refresh(inData);
+        TRACE() << "The cancel thread is started";
+
+        if (m_currentOperation == PLUGIN_OP_PROCESS) {
+            SessionData inData(sessionDataMap);
+            m_plugin->process(inData, m_currentMechanism);
+            m_currentMechanism.clear();
+
+        } else if(m_currentOperation == PLUGIN_OP_PROCESS_UI) {
+            UiSessionData inData(sessionDataMap);
+            m_plugin->userActionFinished(inData);
+
+        } else if(m_currentOperation == PLUGIN_OP_REFRESH) {
+            UiSessionData inData(sessionDataMap);
+            m_plugin->refresh(inData);
+
+        } else {
+            TRACE() << "Wrong operation code.";
+            error(Error(Error::InternalServer,
+                        QLatin1String("Plugin process - invalid operation code.")));
+        }
+
+        m_currentOperation = PLUGIN_OP_STOP;
+        connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
     }
 
     void RemotePluginProcess::enableCancelThread()
@@ -420,6 +420,9 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::disableCancelThread()
     {
+        if (!cancelThread->isRunning())
+            return;
+
         /**
          * Sort of terrible workaround which
          * I do not know how to fix: the thread

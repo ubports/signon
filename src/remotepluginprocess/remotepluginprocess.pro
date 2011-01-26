@@ -13,6 +13,7 @@ SOURCES += main.cpp \
 INCLUDEPATH += . \
                $$TOP_SRC_DIR/src \
                $$TOP_SRC_DIR/src/plugins \
+               $$TOP_SRC_DIR/src/plugins/signon-plugins-common \
                $$TOP_SRC_DIR/src/signond \
                $$TOP_SRC_DIR/lib/plugins
 
@@ -24,6 +25,10 @@ system(pkg-config --exists gq-gconf) {
     PKGCONFIG += gq-gconf
     DEFINES += HAVE_GCONF
 }
+
+LIBS += -lsignon-plugins-common
+
+PKGCONFIG += signon-plugins-common
 
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti

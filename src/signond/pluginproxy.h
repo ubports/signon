@@ -27,6 +27,10 @@
 #include <QDBusMessage>
 #include <QtCore>
 
+#include "SignOn/blobiohandler.h"
+
+using namespace SignOn;
+
 namespace SignonDaemonNS {
 
     /*!
@@ -90,23 +94,30 @@ namespace SignonDaemonNS {
 
         bool readOnReady(QByteArray &buffer, int timeout);
 
+        void handlePluginResponse(const quint32 resultOperation,
+                                  const QVariantMap &sessionDataMap = QVariantMap());
+
     private Q_SLOTS:
         void onReadStandardOutput();
         void onReadStandardError();
         void onExit(int exitCode, QProcess::ExitStatus exitStatus);
         void onError(QProcess::ProcessError err);
+        void sessionDataReceived(const QVariantMap &map);
+        void blobIOError();
 
     private:
         PluginProxy(QString type, QObject *parent = NULL);
 
-
         bool m_isProcessing;
+        bool m_isResultObtained;
         QString m_type;
         QString m_cancelKey;
         QStringList m_mechanisms;
         int m_uiPolicy;
+        int m_currentResultOperation;
 
         PluginProcess *m_process;
+        BlobIOHandler *m_blobIOHandler;
     };
 } //namespace SignonDaemonNS
 

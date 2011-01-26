@@ -36,6 +36,8 @@
 
 static AuthSession *g_currentSession = NULL;
 static QStringList g_processReplyRealmsList;
+static int g_bigStringSize = 50000;
+static int g_bigStringReplySize = 0;
 
 void TestAuthSession::initTestCase()
 {
@@ -71,7 +73,7 @@ void TestAuthSession::queryMechanisms_existing_method()
 
     QCOMPARE(spy.count(), 1);
     QStringList result = spy.at(0).at(0).toStringList();
-    QCOMPARE(result.size(), 3);
+    QCOMPARE(result.size(), 4);
 
     wantedMechs += "mech1";
 
@@ -199,7 +201,6 @@ void TestAuthSession::queryMechanisms_existing_method()
      QVERIFY(g_processReplyRealmsList.at(1) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(2) == "testRealm_after_test");
      QVERIFY(g_processReplyRealmsList.at(3) == "testRealm_after_test");
-
  }
 
  void TestAuthSession::process_with_existing_identity()
@@ -414,6 +415,38 @@ void TestAuthSession::queryMechanisms_existing_method()
      QCOMPARE(spyResponse.count(), 1);
  }
 
+
+ void TestAuthSession::process_with_big_session_data()
+ {
+     AuthSession *as;
+     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
+
+     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData&)));
+     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
+     QEventLoop loop;
+
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)),
+                      this, SLOT(response(const SignOn::SessionData&)));
+     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)), &loop, SLOT(quit()));
+     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
+
+     SessionData inData;
+
+     inData.setSecret("testSecret");
+
+     QString bigString;
+     bigString.fill(QChar('A'), g_bigStringSize);
+     inData.setCaption(bigString);
+
+     as->process(inData, "BLOB");
+
+     loop.exec();
+
+     QCOMPARE(spyError.count(), 0);
+     QCOMPARE(spyResponse.count(), 1);
+     QCOMPARE(g_bigStringReplySize, g_bigStringSize);
+ }
+
  void TestAuthSession::cancel_immidiately()
  {
      AuthSession *as;
@@ -586,7 +619,7 @@ void TestAuthSession::queryMechanisms_existing_method()
 
      QCOMPARE(spy.count(), 1);
      QStringList result = spy.at(0).at(0).toStringList();
-     QCOMPARE(result.size(), 3);
+     QCOMPARE(result.size(), 4);
  }
 
  void TestAuthSession::multi_thread_test()
@@ -609,6 +642,7 @@ void TestAuthSession::queryMechanisms_existing_method()
  void TestAuthSession::response(const SignOn::SessionData &data)
  {
      g_processReplyRealmsList << data.Realm();
+     g_bigStringReplySize = data.Caption().size();
  }
 
 
