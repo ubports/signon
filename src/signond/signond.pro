@@ -65,6 +65,9 @@ PKGCONFIG += \
     libsignoncrypto-qt \
     signon-plugins-common
     
+QMAKE_LIBDIR += \
+    $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common
+
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII \

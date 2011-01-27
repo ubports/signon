@@ -26,6 +26,9 @@ system(pkg-config --exists gq-gconf) {
     DEFINES += HAVE_GCONF
 }
 
+QMAKE_LIBDIR += \
+    $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common
+
 LIBS += -lsignon-plugins-common
 
 PKGCONFIG += signon-plugins-common
