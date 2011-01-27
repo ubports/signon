@@ -13,8 +13,8 @@ SOURCES += main.cpp \
 INCLUDEPATH += . \
                $$TOP_SRC_DIR/src \
                $$TOP_SRC_DIR/src/plugins \
-               $$TOP_SRC_DIR/src/plugins/signon-plugins-common \
                $$TOP_SRC_DIR/src/signond \
+               $$TOP_SRC_DIR/lib/plugins/signon-plugins-common \
                $$TOP_SRC_DIR/lib/plugins
 
 CONFIG += \
