@@ -26,6 +26,8 @@
 #include "signonidentity.h"
 #include "signonauthsessionadaptor.h"
 #include "signonui_interface.h"
+#include "accesscontrolmanager.h"
+
 #include <SignOn/uisessiondata_priv.h>
 #include <SignOn/authpluginif.h>
 #include <SignOn/Error>
@@ -349,13 +351,22 @@ void SignonSessionCore::startProcess()
         if (db != NULL) {
             SignonIdentityInfo info = db->credentials(m_id);
             if (info.id() != SIGNOND_NEW_IDENTITY) {
-                /* TODO: SSO_ACCESS_CONTROL_TOKENS to be added */
                 if (!parameters.contains(SSO_KEY_PASSWORD))
                     parameters[SSO_KEY_PASSWORD] = info.password();
                 //database overrules over sessiondata for validated username,
                 //so that identity cannot be misused
                 if (info.validated() || !parameters.contains(SSO_KEY_USERNAME))
                     parameters[SSO_KEY_USERNAME] = info.userName();
+
+                pid_t pid = pidOfContext(data.m_conn, data.m_msg);
+                QSet<QString> clientTokenSet = AccessControlManager::accessTokens(pid).toSet();
+                QSet<QString> identityAclTokenSet = info.accessControlList().toSet();
+                QSet<QString> paramsTokenSet = clientTokenSet.intersect(identityAclTokenSet);
+
+                if (!paramsTokenSet.isEmpty()) {
+                    QStringList tokenList = paramsTokenSet.toList();
+                    parameters[SSO_ACCESS_CONTROL_TOKENS] = tokenList;
+                }
             } else {
                 BLAME() << "Error occurred while getting data from credentials database.";
                 //credentials not available, so authentication probably fails
@@ -579,6 +590,8 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
         data2.remove(SSO_KEY_PASSWORD);
     if (data2.contains(SSO_KEY_USERNAME))
         data2.remove(SSO_KEY_USERNAME);
+    if (data2.contains(SSO_ACCESS_CONTROL_TOKENS))
+        data2.remove(SSO_ACCESS_CONTROL_TOKENS);
 
     //store data into db
     CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
