@@ -104,6 +104,11 @@ namespace SsoTestPluginNS {
         foreach(QString key, outData.propertyNames())
             TRACE() << key << ": " << outData.getProperty(key);
 
+        if (mechanism == QLatin1String("mech1")) {
+            emit result(outData);
+            return;
+        }
+
         if (mechanism == QLatin1String("mech2")) {
             SignOn::UiSessionData data;
             data.setQueryPassword(true);

@@ -85,6 +85,7 @@ private:
     void queryMethods();
     void queryMechanisms();
     void queryIdentities();
+    void queryAuthPluginACL();
     void clear();
     void clearAuthServiceTest();
 
@@ -141,7 +142,11 @@ public Q_SLOTS:
 Q_SIGNALS:
     void done();
 
+private Q_SLOTS:
+    void response(const SignOn::SessionData &data);
+
 private:
+    QStringList m_tokenList;
     int m_expectedNumberOfMethods;
     QStringList m_expectedMechanisms;
     int m_numberOfInsertedCredentials;

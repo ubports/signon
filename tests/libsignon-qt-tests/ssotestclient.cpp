@@ -90,6 +90,14 @@ int finishedClients = 0;
 
 #endif
 
+//Aegis Tokens for the queryAuthPluginACL test
+#define AEGIS_TOKEN_0 "token_0"
+#define AEGIS_TOKEN_1 "token_1"
+#define AEGIS_TOKEN_2 "signond::libsignon-qt-tests"
+#define AEGIS_TOKEN_3 "token_3"
+#define AEGIS_TOKEN_4 "token_4"
+#define AEGIS_TOKEN_5 "AID::libsignon-qt-tests-id."
+
 SsoTestClient::SsoTestClient()
 {
     qDebug() << "PROCESS ID OF TEST CLIENT: " << getpid();
@@ -175,6 +183,7 @@ void SsoTestClient::runAuthSessionTests()
     initAuthSessionTest();
     queryMechanisms_existing_method();
     queryMechanisms_nonexisting_method();
+    queryAuthPluginACL();
 
     process_with_new_identity();
     process_with_existing_identity();
@@ -1195,6 +1204,89 @@ void SsoTestClient::queryIdentities()
     }
 
     TEST_DONE
+}
+
+void SsoTestClient::queryAuthPluginACL()
+{
+    TEST_START
+
+    QEventLoop loop;
+
+    //inserting some credentials
+    QMap<MethodName, MechanismsList> methods;
+    methods.insert("method1", QStringList() << "mech1" << "mech2");
+    methods.insert("method2", QStringList() << "mech1" << "mech2" << "mech3");
+    IdentityInfo info("test_caption_1",
+                      "test_username_1",
+                      methods);
+    info.setSecret("test_password_1");
+    info.setAccessControlList(QStringList() << AEGIS_TOKEN_0 << AEGIS_TOKEN_1 << AEGIS_TOKEN_2
+                                            << AEGIS_TOKEN_3 << AEGIS_TOKEN_4 << AEGIS_TOKEN_5);
+
+    Identity *id = Identity::newIdentity(info, this);
+
+    connect(id,
+            SIGNAL(credentialsStored(quint32)),
+            &m_identityResult,
+            SLOT(credentialsStored(quint32)));
+    connect(id,
+            SIGNAL(error(const SignOn::Error &)),
+            &m_identityResult,
+            SLOT(error(const SignOn::Error &)));
+
+    connect(&m_identityResult,
+            SIGNAL(testCompleted()),
+            &loop,
+            SLOT(quit()));
+
+    id->storeCredentials();
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    if (m_identityResult.m_responseReceived != TestIdentityResult::NormalResp) {
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
+        QFAIL("Store identity failed.");
+    }
+
+    AuthSession *as = id->createSession(QLatin1String("ssotest"));
+    connect(as,
+            SIGNAL(response(const SignOn::SessionData &)),
+            this,
+            SLOT(response(const SignOn::SessionData &)));
+
+    QSignalSpy errorSpy(as, SIGNAL(error(const SignOn::Error &)));
+    QSignalSpy responseSpy(as, SIGNAL(response(const SignOn::SessionData &)));
+
+    QObject::connect(as,
+                     SIGNAL(response(const SignOn::SessionData &)),
+                     &loop,
+                     SLOT(quit()), Qt::QueuedConnection);
+    QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()));
+    QTimer::singleShot(10*1000, &loop, SLOT(quit()));
+
+    SessionData inData;
+    inData.setSecret("testSecret");
+    inData.setUserName("testUsername");
+
+    as->process(inData, "mech1");
+
+    if (!errorSpy.count())
+        loop.exec();
+
+    QVERIFY(errorSpy.count() == 0);
+    QVERIFY(responseSpy.count() == 1);
+
+    QVERIFY(m_tokenList.count() == 2);
+    QVERIFY(m_tokenList.contains(AEGIS_TOKEN_2));
+    QVERIFY(m_tokenList.contains(AEGIS_TOKEN_5));
+
+    TEST_DONE
+}
+
+void SsoTestClient::response(const SignOn::SessionData &data)
+{
+    m_tokenList = data.getAccessControlTokens();
 }
 
 void SsoTestClient::clear()
