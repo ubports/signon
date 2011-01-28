@@ -133,6 +133,18 @@ namespace SignonDaemonNS {
         */
         static pid_t pidOfPeer(const QDBusContext &peerContext);
 
+        /*!
+            @param peerId, the id of the process for which to retrieve the tokens list
+            @returns A list with the Aegis Access Control tokens of the process.
+        */
+        static QStringList accessTokens(const pid_t peerPid);
+        /*!
+            @overload accessTokens(const pid_t peerPid
+            @param peerContext, the peer for which to retrieve the tokens list
+            @returns A list with the Aegis Access Control tokens of the process.
+        */
+        static QStringList accessTokens(const QDBusContext &peerContext);
+
     private:
         /*!
             Checks if a specific peer has a set of Aegis Access Control tokens.
@@ -157,18 +169,6 @@ namespace SignonDaemonNS {
             @returns true, if the peer has the tokens, false otherwise.
         */
         static bool peerHasToken(const QDBusContext &context, const QString &token);
-
-        /*!
-            @param peerId, the id of the process for which to retrieve the tokens list
-            @returns A list with the Aegis Access Control tokens of the process.
-        */
-        static QStringList accessTokens(const pid_t peerPid);
-        /*!
-            @overload accessTokens(const pid_t peerPid
-            @param peerContext, the peer for which to retrieve the tokens list
-            @returns A list with the Aegis Access Control tokens of the process.
-        */
-        static QStringList accessTokens(const QDBusContext &peerContext);
 
         static void listCredentials(QIODevice *device, creds_t creds, const QString &ownerInfo = 0);
 
