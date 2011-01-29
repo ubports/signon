@@ -139,7 +139,7 @@ namespace SignonDaemonNS {
         */
         static QStringList accessTokens(const pid_t peerPid);
         /*!
-            @overload accessTokens(const pid_t peerPid
+            @overload accessTokens(const pid_t peerPid)
             @param peerContext, the peer for which to retrieve the tokens list
             @returns A list with the Aegis Access Control tokens of the process.
         */

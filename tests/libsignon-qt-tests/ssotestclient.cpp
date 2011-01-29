@@ -93,10 +93,10 @@ int finishedClients = 0;
 //Aegis Tokens for the queryAuthPluginACL test
 #define AEGIS_TOKEN_0 "token_0"
 #define AEGIS_TOKEN_1 "token_1"
-#define AEGIS_TOKEN_2 "signond::libsignon-qt-tests"
+#define AEGIS_TOKEN_2 "libsignon-qt-tests::sso-encryption-token"
 #define AEGIS_TOKEN_3 "token_3"
 #define AEGIS_TOKEN_4 "token_4"
-#define AEGIS_TOKEN_5 "AID::libsignon-qt-tests-id."
+#define AEGIS_TOKEN_5 "AID::com.nokia.maemo.libsignon-qt-tests.libsignon-qt-tests-id"
 
 SsoTestClient::SsoTestClient()
 {
