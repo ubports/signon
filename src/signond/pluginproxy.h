@@ -97,6 +97,8 @@ namespace SignonDaemonNS {
         void handlePluginResponse(const quint32 resultOperation,
                                   const QVariantMap &sessionDataMap = QVariantMap());
 
+        bool isResultOperationCodeValid(const int opCode) const;
+
     private Q_SLOTS:
         void onReadStandardOutput();
         void onReadStandardError();

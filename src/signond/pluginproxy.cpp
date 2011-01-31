@@ -283,6 +283,18 @@ namespace SignonDaemonNS {
             QLatin1String("Failed to I/O session data to/from the authentication plugin."));
     }
 
+    bool PluginProxy::isResultOperationCodeValid(const int opCode) const
+    {
+        if (opCode == PLUGIN_RESPONSE_RESULT
+            || opCode == PLUGIN_RESPONSE_STORE
+            || opCode == PLUGIN_RESPONSE_ERROR
+            || opCode == PLUGIN_RESPONSE_SIGNAL
+            || opCode == PLUGIN_RESPONSE_UI
+            || opCode == PLUGIN_RESPONSE_REFRESHED) return true;
+
+        return false;
+    }
+
     void PluginProxy::onReadStandardOutput()
     {
         disconnect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
@@ -297,6 +309,18 @@ namespace SignonDaemonNS {
         QDataStream reader(m_process);
         reader >> m_currentResultOperation;
 
+        TRACE() << "PROXY RESULT OPERATION:" << m_currentResultOperation;
+
+        if (!isResultOperationCodeValid(m_currentResultOperation)) {
+            TRACE() << "Unknown operation code - skipping.";
+
+            //flushing the stdin channel
+            Q_UNUSED(m_process->readAllStandardOutput());
+
+            connect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
+            return;
+        }
+
         if (m_currentResultOperation != PLUGIN_RESPONSE_SIGNAL
             && m_currentResultOperation != PLUGIN_RESPONSE_ERROR) {
 
@@ -305,6 +329,8 @@ namespace SignonDaemonNS {
 
             int expectedDataSize = 0;
             reader >> expectedDataSize;
+            TRACE() << "PROXY EXPECTED DATA SIZE:" << expectedDataSize;
+
             m_blobIOHandler->receiveData(expectedDataSize);
         } else {
             handlePluginResponse(m_currentResultOperation);
