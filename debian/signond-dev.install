@@ -1,5 +1,0 @@
-usr/lib/pkgconfig/signond.pc
-usr/include/signond/signoncommon.h
-usr/share/dbus-1/interfaces/com.nokia.SingleSignOn.AuthService.xml
-usr/share/dbus-1/interfaces/com.nokia.SingleSignOn.Identity.xml
-usr/share/dbus-1/interfaces/com.nokia.SingleSignOn.AuthSession.xml

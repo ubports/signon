@@ -1,9 +1,0 @@
-usr/lib/pkgconfig/signon-plugins.pc
-usr/lib/libsignon-plugins.a
-usr/include/signon-plugins/SignOn/AuthPluginInterface
-usr/include/signon-plugins/SignOn/authpluginif.h
-usr/include/signon-plugins/SignOn/UiSessionData
-usr/include/signon-plugins/SignOn/uisessiondata.h
-usr/include/signon-plugins/SignOn/uisessiondata_priv.h
-usr/share/doc/signon-plugins-dev/example/*
-usr/share/qt4/mkspecs/features/signon-plugins.prf

@@ -10,24 +10,11 @@ moc_*
 builddir
 core
 *.moc
-debian/tmp
 
 *pro.user
 build-stamp
 configure-stamp
-debian/files
-debian/*.postinst.debhelper
-debian/*.postrm.debhelper
-debian/*.substvars
-debian/*.debhelper.log
-
-debian/*-doc
-debian/*-tests
-debian/*-dbg
-debian/*-dev
-debian/*[0-9]
-
-debian/signon-plugins
+debian
 
 doc/html
 doc/qch
