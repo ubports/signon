@@ -223,6 +223,9 @@ namespace SignOn {
         checkConnection();
 
         switch (m_state) {
+            case Removed:
+                updateState(NeedsRegistration);
+                // --Fallthrough-here--
             case NeedsRegistration:
                 {
                 IdentityInfo localInfo =
@@ -243,8 +246,6 @@ namespace SignOn {
                                         QList<QGenericArgument *>() << (new Q_ARG(SignOn::IdentityInfo, localInfo)));
                 return;
                 }
-            case Removed:
-                break;
             case NeedsUpdate:
                 break;
             case Ready:
@@ -335,7 +336,7 @@ namespace SignOn {
             }
         } else {
             emit m_parent->error(
-                    Error(Error::Unknown,
+                    Error(Error::IdentityNotFound,
                           QLatin1String("Remove request failed. The identity is not stored")));
         }
     }
@@ -619,16 +620,16 @@ namespace SignOn {
 
     void IdentityImpl::storeCredentialsReply(const quint32 id)
     {
-        if (id != this->id()) {
-            m_identityInfo->setId(id);
-            foreach (AuthSession *session, m_authSessions)
-                session->impl->setId(id);
-        }
-
         if (m_tmpIdentityInfo) {
             *m_identityInfo = *m_tmpIdentityInfo;
             delete m_tmpIdentityInfo;
             m_tmpIdentityInfo = NULL;
+        }
+
+        if (id != this->id()) {
+            m_identityInfo->setId(id);
+            foreach (AuthSession *session, m_authSessions)
+                session->impl->setId(id);
         }
         emit m_parent->credentialsStored(id);
     }

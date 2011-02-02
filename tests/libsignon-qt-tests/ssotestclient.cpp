@@ -162,6 +162,8 @@ void SsoTestClient::runIdentityTests()
     remove();
     storeCredentialsWithoutAuthMethodsTest();
     sessionTest();
+    multipleRemove();
+    removeStoreRemove();
 
     QTime endTime = QTime::currentTime();QTest::qWait(pause_time);
 
@@ -531,6 +533,214 @@ void SsoTestClient::sessionTest()
     id->destroySession(session5);
 
     delete id;
+
+    TEST_DONE
+}
+
+void SsoTestClient::removeStoreRemove()
+{
+    TEST_START
+    m_identityResult.reset();
+
+    //inserting some credentials
+    QMap<MethodName, MechanismsList> methods;
+    methods.insert("method1", QStringList() << "mech1" << "mech2");
+    methods.insert("method2", QStringList() << "mech1" << "mech2" << "mech3");
+    IdentityInfo info("TEST_CAPTION_1",
+                      "TEST_USERNAME_1",
+                      methods);
+    info.setSecret("TEST_PASSWORD_1");
+    info.setAccessControlList(QStringList() << "test_token");
+
+    if(!storeCredentialsPrivate(info))
+        QFAIL("Failed to initialize test for removing identity.");
+
+    Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
+    if(identity == NULL)
+        QFAIL("Could not create existing identity. '0' ID provided?");
+
+    QEventLoop loop;
+
+    connect(
+            identity,
+            SIGNAL(removed()),
+            &m_identityResult,
+            SLOT(removed()));
+    connect(identity, SIGNAL(error(const SignOn::Error &)),
+            &m_identityResult, SLOT(error(const SignOn::Error &)));
+
+    connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
+    m_identityResult.reset();
+    identity->remove();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+             "A response was not received.");
+
+    END_IDENTITY_TEST_IF_UNTRUSTED;
+
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+    {
+        QVERIFY(m_identityResult.m_removed);
+        m_identityResult.reset();
+
+        qDebug() << "Checking for removed identity ID : " << identity->id();;
+        connect(identity, SIGNAL(credentialsStored(const quint32)),
+                &m_identityResult, SLOT(credentialsStored(const quint32)));
+
+        QMap<MethodName, MechanismsList> methods;
+        methods.insert("method4", QStringList() << "mech10" << "mech20");
+        methods.insert("method5", QStringList() << "mech10" << "mech20" << "mech30");
+        IdentityInfo updateInfo("TEST_CAPTION_10",
+                          "TEST_USERNAME_10",
+                          methods);
+        updateInfo.setSecret("TEST_PASSWORD_10");
+        updateInfo.setAccessControlList(QStringList() << "test_token_1");
+
+        m_identityResult.m_responseReceived = TestIdentityResult::InexistentResp;
+        identity->storeCredentials(updateInfo);
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+        {
+            m_storedIdentityInfo = info;
+            m_storedIdentityId = identity->id();
+            qDebug() << "Identity ID = " << m_storedIdentityId;
+        }
+        else
+        {
+            qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                     << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
+            QFAIL("Failed to store the credentials");
+        }
+
+        connect(
+            identity,
+            SIGNAL(info(const SignOn::IdentityInfo &)),
+            &m_identityResult,
+            SLOT(info(const SignOn::IdentityInfo &)));
+
+        qDebug() << "Checking if the identity info is updated in identity";
+        m_identityResult.reset();
+        identity->queryInfo();
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
+        if(!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo, updateInfo))
+        {
+            QFAIL("Compared identity infos are not the same.");
+        }
+
+        qDebug() << "Removing after store";
+        m_identityResult.reset();
+        identity->remove();
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+                 "A response was not received.");
+        QVERIFY(m_identityResult.m_removed);
+
+        qDebug() << "Removing again";
+        m_identityResult.reset();
+        identity->remove();
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
+        QVERIFY(m_identityResult.m_error == Error::IdentityNotFound);
+    }
+    else
+    {
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nError code: " << codeStr;
+
+        QFAIL("Should not have received error reply");
+    }
+
+    delete identity;
+
+    TEST_DONE
+}
+
+void SsoTestClient::multipleRemove()
+{
+    TEST_START
+    m_identityResult.reset();
+
+    //inserting some credentials
+    QMap<MethodName, MechanismsList> methods;
+    methods.insert("method1", QStringList() << "mech1" << "mech2");
+    methods.insert("method2", QStringList() << "mech1" << "mech2" << "mech3");
+    IdentityInfo info("TEST_CAPTION_1",
+                      "TEST_USERNAME_1",
+                      methods);
+    info.setSecret("TEST_PASSWORD_1");
+    info.setAccessControlList(QStringList() << "test_token");
+
+    if(!storeCredentialsPrivate(info))
+        QFAIL("Failed to initialize test for removing identity.");
+
+    Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
+    if(identity == NULL)
+        QFAIL("Could not create existing identity. '0' ID provided?");
+
+    QEventLoop loop;
+
+    connect(
+            identity,
+            SIGNAL(removed()),
+            &m_identityResult,
+            SLOT(removed()));
+    connect(identity, SIGNAL(error(const SignOn::Error &)),
+            &m_identityResult, SLOT(error(const SignOn::Error &)));
+
+    connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
+    identity->remove();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+             "A response was not received.");
+
+    END_IDENTITY_TEST_IF_UNTRUSTED;
+
+    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+    {
+        QVERIFY(m_identityResult.m_removed);
+
+        qDebug() << "Removing again";
+        m_identityResult.reset();
+        identity->remove();
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
+        QVERIFY(m_identityResult.m_error == Error::IdentityNotFound);
+    }
+    else
+    {
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_identityResult.m_errMsg
+                 << ".\nError code: " << codeStr;
+
+        QFAIL("Should not have received error reply");
+    }
+
+    delete identity;
 
     TEST_DONE
 }

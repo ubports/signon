@@ -72,6 +72,8 @@ private:
     void requestCredentialsUpdate();
 
     void remove();
+    void multipleRemove();
+    void removeStoreRemove();
     void sessionTest();
     void storeCredentialsWithoutAuthMethodsTest();
 
