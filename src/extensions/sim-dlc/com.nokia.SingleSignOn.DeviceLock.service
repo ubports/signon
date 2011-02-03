@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=com.nokia.SingleSignOn.DeviceLock
-Exec=/usr/bin/signond

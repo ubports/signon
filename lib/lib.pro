@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = signond SignOn plugins sim-dlc
+SUBDIRS = signond SignOn plugins
 

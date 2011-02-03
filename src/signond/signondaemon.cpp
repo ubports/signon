@@ -36,8 +36,6 @@ extern "C" {
 #include <SignOn/AbstractKeyManager>
 #include <SignOn/ExtensionInterface>
 
-#include <sim-dlc.h>
-
 #include "signondaemon.h"
 #include "signond-common.h"
 #include "signontrace.h"
@@ -688,22 +686,9 @@ bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
      * should disappear once the harmattan System-ui starts using the new
      * interface in the sim-dlc library.
      */
-    TRACE() << "Forwarding to new interface. New:" << lockCode <<
-        "Old: " << oldLockCode;
-
-    QDBusConnection connection = QDBusConnection::sessionBus();
-
-    QDBusMessage msg =
-        QDBusMessage::createMethodCall(SIMDLC_SERVICE_S,
-                                       SIMDLC_PATH_S,
-                                       SIMDLC_INTERFACE_S,
-                                       QLatin1String("setDeviceLockCode"));
-    QList<QVariant> args;
-    args << lockCode;
-    args << oldLockCode;
-    msg.setArguments(args);
-    // Since it's just a hack, we don't care about the result
-    connection.asyncCall(msg);
+    BLAME() << "This method is deprecated";
+    Q_UNUSED(lockCode);
+    Q_UNUSED(oldLockCode);
     return true;
 }
 

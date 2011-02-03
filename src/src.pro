@@ -5,6 +5,5 @@ SUBDIRS = \
     plugins \
     remotepluginprocess \
     example \
-    extensions \
-    signon-utils
+    extensions
 
