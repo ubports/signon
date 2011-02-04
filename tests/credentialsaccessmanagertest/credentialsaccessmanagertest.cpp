@@ -45,7 +45,7 @@ void CredentialsAccessManagerTest::initTestCase()
     //otherwise using currrent default configuration
     CAMConfiguration config;
     config.m_useEncryption = false;
-    config.m_dbFileSystemPath = QDir::homePath() + QDir::separator() +
+    config.m_storagePath = QDir::tempPath() + QDir::separator() +
         QLatin1String("camtest-signonfs");
     config.m_encryptionPassphrase = "1234";
 
