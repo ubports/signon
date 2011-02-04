@@ -170,6 +170,7 @@ namespace SignOn {
          *
          * @param filter show only identities specified in filter - filtering not implemented for the moment.
          * if default parameter is passed, all the identities are returned.
+         * @credential keychain-access key-chain application can access list of identities.
          */
         void queryIdentities(const IdentityFilter &filter = IdentityFilter());
 
@@ -179,6 +180,7 @@ namespace SignOn {
          * @see AuthService::cleared()
          * Error is reported by emitting signal error().
          * @see AuthService::error()
+         * @credential keychain-access key-chain application can clear database.
          */
         void clear();
 
