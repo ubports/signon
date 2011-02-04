@@ -61,9 +61,19 @@ struct CAMConfiguration
     */
     void serialize(QIODevice *device);
 
+    /*!
+     * Returns the path to the metadata DB.
+     */
+    QString metadataDBPath() const;
+
+    /*!
+     * Returns the path of the encrypted FS.
+     */
+    QString encryptedFSPath() const;
+
+    QString m_storagePath;      /*!< The base directory for storage. */
     QString m_dbName;           /*!< The database file name. */
     bool m_useEncryption;       /*!< Flag for encryption use, enables/disables all of the bellow. */
-    QString m_dbFileSystemPath; /*!< The path of the encrypted file system. */
     QString m_fileSystemType;   /*!< The encrypted file system type (ext2, ext3, ext4). */
     quint32 m_fileSystemSize;   /*!< The encrypted file system size. */
     QByteArray m_encryptionPassphrase; /*!< Passphrase used for opening encrypted FS. */

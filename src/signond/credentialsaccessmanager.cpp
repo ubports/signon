@@ -45,12 +45,9 @@ using namespace SignonDaemonNS;
 /* ---------------------- CAMConfiguration ---------------------- */
 
 CAMConfiguration::CAMConfiguration()
-        : m_dbName(QLatin1String(signonDefaultDbName)),
+        : m_storagePath(QLatin1String(signonDefaultStoragePath)),
+          m_dbName(QLatin1String(signonDefaultDbName)),
           m_useEncryption(signonDefaultUseEncryption),
-          m_dbFileSystemPath(
-                QLatin1String(signonDefaultStoragePath)
-                + QDir::separator()
-                + QLatin1String(signonDefaultFileSystemName)),
           m_fileSystemType(QLatin1String(signonDefaultFileSystemType)),
           m_fileSystemSize(signonMinumumDbSize),
           m_encryptionPassphrase(QByteArray())
@@ -68,7 +65,7 @@ void CAMConfiguration::serialize(QIODevice *device)
     QString buffer;
     QTextStream stream(&buffer);
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
-    stream << "File system mount name " << m_dbFileSystemPath << '\n';
+    stream << "File system mount name " << encryptedFSPath() << '\n';
     stream << "File system format: " << m_fileSystemType << '\n';
     stream << "File system size:" << m_fileSystemSize << "megabytes\n";
 
@@ -78,6 +75,18 @@ void CAMConfiguration::serialize(QIODevice *device)
     stream << "======================================================\n\n";
     device->write(buffer.toUtf8());
     device->close();
+}
+
+QString CAMConfiguration::metadataDBPath() const
+{
+    return m_storagePath + QDir::separator() + m_dbName;
+}
+
+QString CAMConfiguration::encryptedFSPath() const
+{
+    return m_storagePath +
+        QDir::separator() +
+        QLatin1String(signonDefaultFileSystemName);
 }
 
 /* ---------------------- CredentialsAccessManager ---------------------- */
@@ -142,7 +151,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
         m_pCryptoFileSystemManager = new CryptoManager(this);
-        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.m_dbFileSystemPath);
+        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
 
@@ -199,17 +208,7 @@ bool CredentialsAccessManager::openSecretsDB()
             }
         }
     } else {
-        QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
-        QDir storageDir = fInfo.dir();
-        if (!storageDir.exists()) {
-            if (!storageDir.mkpath(storageDir.path()))
-                BLAME() << "Could not create storage directory!!!";
-        }
-
-        dbPath = storageDir.path()
-                 + QDir::separator()
-                 + m_CAMConfiguration.m_dbName
-                 + QLatin1String(".creds");
+        dbPath = m_CAMConfiguration.metadataDBPath() + QLatin1String(".creds");
     }
 
     TRACE() << "Database name: [" << dbPath << "]";
@@ -242,9 +241,10 @@ bool CredentialsAccessManager::closeSecretsDB()
 
 bool CredentialsAccessManager::openMetaDataDB()
 {
-    QFileInfo fInfo(m_CAMConfiguration.m_dbFileSystemPath);
-    QDir storageDir = fInfo.dir();
-    if (!storageDir.exists()) {
+    QString dbPath = m_CAMConfiguration.metadataDBPath();
+    QFileInfo fileInfo(dbPath);
+    if (!fileInfo.exists()) {
+        QDir storageDir(fileInfo.dir());
         if (!storageDir.mkpath(storageDir.path())) {
             BLAME() << "Could not create storage directory:" <<
                 storageDir.path();
@@ -253,9 +253,6 @@ bool CredentialsAccessManager::openMetaDataDB()
         }
     }
 
-    QString dbPath = storageDir.path()
-             + QDir::separator()
-             + m_CAMConfiguration.m_dbName;
     m_pCredentialsDB = new CredentialsDB(dbPath);
 
     if (!m_pCredentialsDB->init()) {

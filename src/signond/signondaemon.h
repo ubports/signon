@@ -64,30 +64,23 @@ public:
     SignonDaemonConfiguration();
     ~SignonDaemonConfiguration();
 
+    const CAMConfiguration &camConfiguration() const { return m_camConfiguration; }
+    void setEncryptionPassphrase(const QByteArray &passphrase)
+        { m_camConfiguration.m_encryptionPassphrase = passphrase; }
+
     void load();
     bool loadedFromFile() const { return m_loadedFromFile; }
-    bool useSecureStorage() const { return m_useSecureStorage; }
-
-    uint storageSize() const { return m_storageSize; }
-    const QString storageFileSystemType() const
-        { return m_storageFileSystemType; }
-    const QString storagePath() const { return m_storagePath; }
-    const QString storageFileSystemName() const
-        { return m_storageFileSystemName; }
+    bool useSecureStorage() const
+        { return m_camConfiguration.m_useEncryption; }
 
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
 
 private:
     bool m_loadedFromFile;
-    //storage related
-    bool m_useSecureStorage;
 
-    //valid only if secure storage is enabled.
-    uint m_storageSize;
-    QString m_storageFileSystemType;
-    QString m_storagePath;
-    QString m_storageFileSystemName;
+    // storage configuration
+    CAMConfiguration m_camConfiguration;
 
     //object timeouts
     uint m_identityTimeout;

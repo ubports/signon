@@ -66,11 +66,7 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration()
     : m_loadedFromFile(false),
-      m_useSecureStorage(signonDefaultUseEncryption),
-      m_storageSize(signonMinumumDbSize),
-      m_storageFileSystemType(QLatin1String(signonDefaultFileSystemType)),
-      m_storagePath(QLatin1String(signonDefaultStoragePath)),
-      m_storageFileSystemName(QLatin1String(signonDefaultFileSystemName)),
+      m_camConfiguration(),
       m_identityTimeout(300),//secs
       m_authSessionTimeout(300)//secs
 {}
@@ -110,36 +106,36 @@ void SignonDaemonConfiguration::load()
 
         loggingLevel = settings.value(QLatin1String("LoggingLevel"), 1).toUInt();
 
-        m_storagePath =
+        QString storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-
-        if (m_storagePath.startsWith(QLatin1Char('~')))
-            m_storagePath.replace(0, 1, QDir::homePath());
+        if (storagePath.startsWith(QLatin1Char('~')))
+            storagePath.replace(0, 1, QDir::homePath());
+        m_camConfiguration.m_storagePath = storagePath;
 
         //Secure storage
         QString useSecureStorage =
             settings.value(QLatin1String("UseSecureStorage")).toString();
 
         if (!useSecureStorage.isEmpty())
-            m_useSecureStorage =
+            m_camConfiguration.m_useEncryption =
                 (useSecureStorage == QLatin1String("yes")
                 || useSecureStorage == QLatin1String("true"));
 
-        if (m_useSecureStorage) {
+        if (m_camConfiguration.m_useEncryption) {
             settings.beginGroup(QLatin1String("SecureStorage"));
 
             bool isOk = false;
-            m_storageSize = settings.value(QLatin1String("Size")).toUInt(&isOk);
-            if (!isOk || m_storageSize < signonMinumumDbSize) {
-                m_storageSize = signonMinumumDbSize;
+            quint32 storageSize =
+                settings.value(QLatin1String("Size")).toUInt(&isOk);
+            if (!isOk || storageSize < signonMinumumDbSize) {
+                storageSize = signonMinumumDbSize;
                 TRACE() << "Less than minimum possible storage size configured."
                         << "Setting to the minimum of:" << signonMinumumDbSize << "Mb";
             }
+            m_camConfiguration.m_fileSystemSize = storageSize;
 
-            m_storageFileSystemType = settings.value(
+            m_camConfiguration.m_fileSystemType = settings.value(
                 QLatin1String("FileSystemType")).toString();
-
-            m_storageFileSystemName = settings.value(QLatin1String("FileSystemName")).toString();
 
             settings.endGroup();
         }
@@ -444,21 +440,9 @@ bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
     if (!m_pCAMManager->credentialsSystemOpened()) {
         m_pCAMManager->finalize();
 
-        CAMConfiguration config;
+        m_configuration->setEncryptionPassphrase(lockCode);
 
-        //Use the Signon configuration file if it exists
-        if (m_configuration->loadedFromFile()) {
-            config.m_useEncryption = m_configuration->useSecureStorage();
-            config.m_fileSystemSize = m_configuration->storageSize();
-            config.m_fileSystemType = m_configuration->storageFileSystemType();
-            config.m_dbFileSystemPath = m_configuration->storagePath()
-                                        + QDir::separator()
-                                        + m_configuration->storageFileSystemName();
-        }
-
-        config.m_encryptionPassphrase = lockCode;
-
-        if (!m_pCAMManager->init(config)) {
+        if (!m_pCAMManager->init(m_configuration->camConfiguration())) {
             qCritical("Signond: Cannot set proper configuration of CAM");
             return false;
         }
@@ -725,13 +709,15 @@ uchar SignonDaemon::backupStarts()
     }
 
     //do backup copy
-    CAMConfiguration config;
-    QString source;
-    if (config.m_useEncryption)
-        source = config.m_dbFileSystemPath;
-    else
-        source = QDir::homePath() + QDir::separator() + QLatin1String(".signon")
-             + QDir::separator() + config.m_dbName;
+
+    /* If the password DB is not encrypted, we won't back it up. So, in that
+     * case just start the backup now.
+     */
+    if (!m_configuration->useSecureStorage())
+        return 0;
+
+    const CAMConfiguration config = m_configuration->camConfiguration();
+    QString source = config.encryptedFSPath();
 
     QDir target;
     if (!target.mkpath(QLatin1String("/home/user/.signon/")))
@@ -802,39 +788,38 @@ uchar SignonDaemon::restoreFinished()
     }
 
     //do restore
-    //TODO add checking if encryption status has changed
-    CAMConfiguration config;
-    QString target;
-    if (config.m_useEncryption)
-        target = config.m_dbFileSystemPath;
-    else
-        target = QDir::homePath() + QDir::separator()
-                 + QLatin1String(".signon")+ QDir::separator() + config.m_dbName;
+    if (m_configuration->useSecureStorage()) {
+        const CAMConfiguration config = m_configuration->camConfiguration();
+        QString target = config.encryptedFSPath();
 
-    if (!QFile::remove(target+QLatin1String(".bak")))
-    {
-        qCritical() << "Cannot remove backup copy of database";
+        if (!QFile::remove(target+QLatin1String(".bak")))
+        {
+            qCritical() << "Cannot remove backup copy of database";
+        }
+
+        if (!QFile::rename(target, target+QLatin1String(".bak")))
+        {
+            qCritical() << "Cannot make backup copy of database";
+        }
+
+        if (!QFile::rename(backupCopyFilename(), target))
+        {
+            qCritical() << "Cannot copy database";
+
+            if (!QFile::rename(target+QLatin1String(".bak"), target))
+                qCritical() << "Cannot restore backup copy of database";
+
+            m_pCAMManager->openCredentialsSystem();
+            return 2;
+        }
+
+        //try to remove backup database
+        if (!QFile::remove(target+QLatin1String(".bak")))
+            qCritical() << "Cannot remove backup copy of database";
+    } else {
+        /* Nothing to restore. Remove the backup file, if it exists. */
+        QFile::remove(backupCopyFilename());
     }
-
-    if (!QFile::rename(target, target+QLatin1String(".bak")))
-    {
-        qCritical() << "Cannot make backup copy of database";
-    }
-
-    if (!QFile::rename(backupCopyFilename(), target))
-    {
-        qCritical() << "Cannot copy database";
-
-        if (!QFile::rename(target+QLatin1String(".bak"), target))
-            qCritical() << "Cannot restore backup copy of database";
-
-        m_pCAMManager->openCredentialsSystem();
-        return 2;
-    }
-
-    //try to remove backup database
-    if (!QFile::remove(target+QLatin1String(".bak")))
-        qCritical() << "Cannot remove backup copy of database";
 
     //TODO check database integrity
     if (!m_backup)
