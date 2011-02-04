@@ -155,6 +155,10 @@ private:
     void setupSignalHandlers();
     void listDBusInterfaces();
 
+    void eraseBackupDir() const;
+    bool copyToBackupDir(const QStringList &fileNames) const;
+    bool copyFromBackupDir(const QStringList &fileNames) const;
+
 private:
     /*
      * The list of created SignonIdentities

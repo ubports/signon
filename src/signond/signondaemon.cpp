@@ -54,6 +54,9 @@ extern "C" {
         }                               \
     } while(0)
 
+#define BACKUP_DIR_NAME() \
+    (QDir::separator() + QLatin1String("backup"))
+
 using namespace SignOn;
 
 /* Global variable used by the logging system:
@@ -684,15 +687,115 @@ bool SignonDaemon::remoteLock(const QByteArray &lockCode)
     return false;
 }
 
-/*
- * backup/restore
- * TODO move fixed strings into config
- */
-
-static QString &backupCopyFilename()
+void SignonDaemon::eraseBackupDir() const
 {
-    static QString name(QLatin1String("/home/user/.signon/signondb.bin"));
-    return name;
+    const CAMConfiguration config = m_configuration->camConfiguration();
+    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
+
+    QDir target(backupRoot);
+    if (!target.exists()) return;
+
+    QStringList targetEntries = target.entryList(QDir::Files);
+    foreach (QString entry, targetEntries) {
+        target.remove(entry);
+    }
+
+    target.rmdir(backupRoot);
+}
+
+bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
+{
+    const CAMConfiguration config = m_configuration->camConfiguration();
+    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
+
+    QDir target(backupRoot);
+    if (!target.exists() && !target.mkpath(backupRoot)) {
+        qCritical() << "Cannot create target directory";
+        return false;
+    }
+
+    /* Now copy the files to be backed up */
+    bool ok = true;
+    foreach (QString fileName, fileNames) {
+        /* Remove the target file, if it exists */
+        if (target.exists(fileName))
+            target.remove(fileName);
+
+        /* Copy the source into the target directory */
+        QString source = config.m_storagePath + QDir::separator() + fileName;
+        QString destination = backupRoot + QDir::separator() + fileName;
+        ok = QFile::copy(source, destination);
+        if (!ok) break;
+    }
+
+    return ok;
+}
+
+bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
+{
+    const CAMConfiguration config = m_configuration->camConfiguration();
+    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
+
+    QDir sourceDir(backupRoot);
+    if (!sourceDir.exists()) {
+        qCritical() << "Backup directory does not exist!";
+        return false;
+    }
+
+    if (!sourceDir.exists(config.m_dbName)) {
+        qCritical() << "Backup does not contain DB:" << config.m_dbName;
+        return false;
+    }
+
+    /* Now restore the files from the backup */
+    bool ok = true;
+    QDir target(config.m_storagePath);
+    QStringList movedFiles, copiedFiles;
+    foreach (QString fileName, fileNames) {
+        /* Remove the target file, if it exists */
+        if (target.exists(fileName)) {
+            if (target.rename(fileName, fileName + QLatin1String(".bak")))
+                movedFiles += fileName;
+        }
+
+        /* Copy the source into the target directory */
+        QString source = backupRoot + QDir::separator() + fileName;
+        if (!QFile::exists(source)) {
+            TRACE() << "Ignoring file not present in backup:" << source;
+            continue;
+        }
+
+        QString destination =
+            config.m_storagePath + QDir::separator() + fileName;
+
+        ok = QFile::copy(source, destination);
+        if (ok) {
+            copiedFiles << fileName;
+        } else {
+            qWarning() << "Copy failed for:" << source;
+            break;
+        }
+    }
+
+    if (!ok) {
+        qWarning() << "Restore failed, recovering previous DB";
+
+        foreach (QString fileName, copiedFiles) {
+            target.remove(fileName);
+        }
+
+        foreach (QString fileName, movedFiles) {
+            if (!target.rename(fileName + QLatin1String(".bak"), fileName)) {
+                qCritical() << "Could not recover:" << fileName;
+            }
+        }
+    } else {
+        /* delete ".bak" files */
+        foreach (QString fileName, movedFiles) {
+            target.remove(fileName + QLatin1String(".bak"));
+        }
+    }
+    return ok;
 }
 
 uchar SignonDaemon::backupStarts()
@@ -708,27 +811,17 @@ uchar SignonDaemon::backupStarts()
         }
     }
 
-    //do backup copy
-
-    /* If the password DB is not encrypted, we won't back it up. So, in that
-     * case just start the backup now.
-     */
-    if (!m_configuration->useSecureStorage())
-        return 0;
-
     const CAMConfiguration config = m_configuration->camConfiguration();
-    QString source = config.encryptedFSPath();
 
-    QDir target;
-    if (!target.mkpath(QLatin1String("/home/user/.signon/")))
-    {
-        qCritical() << "Cannot create target directory";
-        m_pCAMManager->openCredentialsSystem();
-        return 2;
-    }
+    /* do backup copy: prepare the list of files to be backed up */
+    QStringList backupFiles;
+    backupFiles << config.m_dbName;
+    if (m_configuration->useSecureStorage())
+        backupFiles << QLatin1String(signonDefaultFileSystemName);
 
-    if (!QFile::copy(source, backupCopyFilename()))
-    {
+    /* perform the copy */
+    eraseBackupDir();
+    if (!copyToBackupDir(backupFiles)) {
         qCritical() << "Cannot copy database";
         m_pCAMManager->openCredentialsSystem();
         return 2;
@@ -749,10 +842,7 @@ uchar SignonDaemon::backupFinished()
 {
     TRACE() << "close";
 
-    QFile copy(backupCopyFilename());
-
-    if (copy.exists())
-        QFile::remove(backupCopyFilename());
+    eraseBackupDir();
 
     if (m_backup)
     {
@@ -787,39 +877,21 @@ uchar SignonDaemon::restoreFinished()
         }
     }
 
-    //do restore
-    if (m_configuration->useSecureStorage()) {
-        const CAMConfiguration config = m_configuration->camConfiguration();
-        QString target = config.encryptedFSPath();
+    const CAMConfiguration config = m_configuration->camConfiguration();
 
-        if (!QFile::remove(target+QLatin1String(".bak")))
-        {
-            qCritical() << "Cannot remove backup copy of database";
-        }
+    QStringList backupFiles;
+    backupFiles << config.m_dbName;
+    if (m_configuration->useSecureStorage())
+        backupFiles << QLatin1String(signonDefaultFileSystemName);
 
-        if (!QFile::rename(target, target+QLatin1String(".bak")))
-        {
-            qCritical() << "Cannot make backup copy of database";
-        }
-
-        if (!QFile::rename(backupCopyFilename(), target))
-        {
-            qCritical() << "Cannot copy database";
-
-            if (!QFile::rename(target+QLatin1String(".bak"), target))
-                qCritical() << "Cannot restore backup copy of database";
-
-            m_pCAMManager->openCredentialsSystem();
-            return 2;
-        }
-
-        //try to remove backup database
-        if (!QFile::remove(target+QLatin1String(".bak")))
-            qCritical() << "Cannot remove backup copy of database";
-    } else {
-        /* Nothing to restore. Remove the backup file, if it exists. */
-        QFile::remove(backupCopyFilename());
+    /* perform the copy */
+    if (!copyFromBackupDir(backupFiles)) {
+        qCritical() << "Cannot copy database";
+        m_pCAMManager->openCredentialsSystem();
+        return 2;
     }
+
+    eraseBackupDir();
 
     //TODO check database integrity
     if (!m_backup)
