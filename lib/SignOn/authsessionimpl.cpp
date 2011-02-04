@@ -448,7 +448,8 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
     }
 
     m_isAuthInProcessing = false;
-    m_operationQueueHandler.clearOperationsQueue();
+    if (m_operationQueueHandler.queuedOperationsCount() > 0)
+        m_operationQueueHandler.clearOperationsQueue();
 }
 
 void AuthSessionImpl::mechanismsAvailableSlot(const QStringList& mechanisms)
