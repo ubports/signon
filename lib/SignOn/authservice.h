@@ -57,8 +57,7 @@ namespace SignOn {
         /*!
          * @enum ServiceError
          * Codes for errors that may be reported by AuthService objects.
-         * @see AuthService::error()
-         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
+         * @deprecated This enum is deprecated. Replaced by Error::ErrorType.
          */
         enum ServiceError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -85,7 +84,8 @@ namespace SignOn {
 
         /*!
          * @class IdentityRegExp
-         * The class represents a regular expression. Is used for filtering identity querying.
+         * The class represents a regular expression.
+         * It is used for filtering identity querying.
          * @see queryIdentities()
          */
         class IdentityRegExp
@@ -110,7 +110,7 @@ namespace SignOn {
             bool isValid() const;
 
             /*!
-              * Return pattern of regular expression as string.
+             * Return pattern of regular expression as string.
              * @return the pattern of this regular expression as string.
              */
             QString pattern() const;
@@ -141,8 +141,9 @@ namespace SignOn {
          * Request information on available authentication methods.
          * The list of service types retrieved
          * is emitted with signal methodsAvailable().
-         * @see AuthService::methodsAvailable()
          * Error is reported by emitting signal error().
+         *
+         * @see AuthService::methodsAvailable()
          * @see AuthService::error()
          */
         void queryMethods();
@@ -152,10 +153,12 @@ namespace SignOn {
          * for certain authentication type.
          * The list of mechanisms retrieved from the service
          * is emitted with signal mechanismsAvailable().
-         * @see AuthService::mechanismsAvailable()
          * Error is reported by emitting signal error().
-         * @see AuthService::error()
+         * If method is not a valid method, Error::type() is
+         * Error::MethodNotKnown.
          *
+         * @see AuthService::mechanismsAvailable()
+         * @see AuthService::error()
          * @param method authetication method name
          */
         void queryMechanisms(const QString &method);
@@ -164,10 +167,14 @@ namespace SignOn {
          * Request information on identities that are stored.
          * The list of identities retrieved from the service
          * is emitted with signal identities().
-         * @see AuthService::identities()
          * Error is reported by emitting signal error().
-         * @see AuthService::error()
+         * If filter is not valid, Error::type() is
+         * Error::InvalidQuery.
+         * If the application does not have keychain-access credential,
+         * Error::type() is Error::PermissionDenied.
          *
+         * @see AuthService::identities()
+         * @see AuthService::error()
          * @param filter show only identities specified in filter - filtering not implemented for the moment.
          * if default parameter is passed, all the identities are returned.
          * @credential keychain-access key-chain application can access list of identities.
@@ -177,8 +184,11 @@ namespace SignOn {
         /*!
          * Clear credentials database. All identity entries are removed from database.
          * Signal cleared() is emitted when operation is completed.
-         * @see AuthService::cleared()
          * Error is reported by emitting signal error().
+         * If the application does not have keychain-access credential,
+         * Error::type() is Error::PermissionDenied.
+         *
+         * @see AuthService::cleared()
          * @see AuthService::error()
          * @credential keychain-access key-chain application can clear database.
          */
@@ -187,9 +197,13 @@ namespace SignOn {
     Q_SIGNALS:
 
         /*!
-         * Emitted when an error occurs while using the AuthService connection.
+         * Emitted when an error occurs while using the AuthService.
+         * Typical error types are generic errors, where
+         * Error::type() < Error::AuthServiceErr and
+         * AuthService specific, where
+         * Error::AuthServiceErr < Error::type() < Error::IdentityErr
          * @see SignOn::Error
-         *
+         * @see SignOn::Error::ErrorType
          * @param err The error object
          */
         void error(const SignOn::Error &err);
