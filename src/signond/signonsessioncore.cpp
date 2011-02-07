@@ -378,13 +378,11 @@ void SignonSessionCore::startProcess()
             BLAME() << "Null database handler object.";
         }
     }
+
     if (parameters.contains(SSOUI_KEY_UIPOLICY)
         && parameters[SSOUI_KEY_UIPOLICY] == RequestPasswordPolicy) {
         parameters.remove(SSO_KEY_PASSWORD);
     }
-
-    TRACE() << "Process mech:" << data.m_mechanism
-            << ". Process data:" << parameters;
 
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
