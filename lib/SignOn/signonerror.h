@@ -97,7 +97,7 @@ namespace SignOn {
                                             mechanism implementation. */
             NoConnection,              /**< No Network connetion. */
             Network,                   /**< Network connetion failed. */
-            Ssl,                       /**< Ssl connetion failed. */
+            Ssl,                       /**< Ssl connection failed. */
             Runtime,                   /**< Casting SessionData into subclass failed */
             SessionCanceled,           /**< Challenge was canceled. */
             TimedOut,                  /**< Challenge was timed out. */

@@ -60,8 +60,7 @@ namespace SignOn {
         /*!
          * @enum AuthSessionError
          * Codes for errors that may be reported by AuthSession objects
-         * @see AuthSession::error()
-         * @deprecated This enum is deprecated. Will be replaced by SignOn::Error::ErrorType.
+         * @deprecated This enum is deprecated. Replaced by Error::ErrorType.
          */
         enum AuthSessionError {
             UnknownError = 1,               /**< Catch-all for errors not distinguished by another code. */
@@ -100,7 +99,7 @@ namespace SignOn {
             ProcessPending,                 /**< Waiting another process to start. */
             SessionStarted,                 /**< Authentication session is started. */
             ProcessCanceling,               /**< Canceling.current process: is this really needed??? */
-            ProcessDone,                    /** < ???? Is this really needed > */
+            ProcessDone,                    /**< Authentication completed. > */
             CustomState,                    /**< Custom message. */
             MaxState,
         };
@@ -121,11 +120,13 @@ namespace SignOn {
         const QString name() const;
 
         /*!
-         * Query list of available mechanisms. If wantedMechanisms list is provided,
-         * only mechanisms available on that list are reported. List is returned by emitting
-         * signal mechanismsAvailable(). If the operation fails, the error()
-         * signal is emitted. @see mechanismsAvailable().
+         * Query list of available mechanisms. If wantedMechanisms list is
+         * provided, only mechanisms available on that list are reported.
+         * List is returned by emitting signal mechanismsAvailable().
+         * If the operation fails, the error() signal is emitted.
          *
+         * @see AuthSession::mechanismsAvailable()
+         * @see AuthSession::error()
          * @param wantedMechanisms list of mechanisms that the client would like to use
          */
          void queryAvailableMechanisms(const QStringList &wantedMechanisms = QStringList());
@@ -133,8 +134,8 @@ namespace SignOn {
         /*!
          * Process sessionData in the authentication service.
          * The service processes the data and generates a response that
-         * is emitted with response() signal. If the operation fails, the error()
-         * signal is emitted.
+         * is emitted with response() signal.
+         * If the operation fails, the error() signal is emitted.
          *
          * The format and interpretation of the data is
          * mechanism-specific. The client usually obtains the data
@@ -151,50 +152,58 @@ namespace SignOn {
          * with Identity::storeCredentials, then username is overriden from database.
          * Stored secret is used as a default value.
          *
+         * @see AuthSession::response()
+         * @see AuthSession::error()
          * @param sessionData information for authentication session.
          * @param mechanism mechanism to use for authentication.
          *
          * @see IdentityInfo
-         * @see PluginInterface
+         * @see AuthPluginInterface
          */
         void process(const SessionData &sessionData,
-                     const QString &mechanism = 0);
+                     const QString &mechanism = QString());
 
         /*!
          * Send a challenge to the authentication service.
          * The service processes the challenge and generates a response token that
-         * is emitted with response() signal. If the operation fails, the error()
-         * signal is emitted.
+         * is emitted with response() signal.
+         * If the operation fails, the error() signal is emitted.
          *
          * This is actually a call to process. @see process
          *
+         * @see AuthSession::response()
+         * @see AuthSession::error()
          * @param sessionData information for authentication session.
          * @param mechanism mechanism to use for authentication.
          */
-        void challenge(const SessionData& sessionData, const QString &mechanism = 0) {
+        void challenge(const SessionData& sessionData, const QString &mechanism = QString()) {
             process(sessionData, mechanism);
         }
 
         /*!
          * Send a request to the authentication service.
          * The service processes the request and generates a response token that
-         * is emitted with response() signal. If the operation fails, the error()
-         * signal is emitted.
+         * is emitted with response() signal.
+         * If the operation fails, the error() signal is emitted.
          *
          * This is actually a call to process. @see process
          *
+         * @see AuthSession::response()
+         * @see AuthSession::error()
          * @param sessionData information for authentication session.
          * @param mechanism mechanism to use for authentication.
          */
-        void request(const SessionData &sessionData, const QString &mechanism = 0) {
+        void request(const SessionData &sessionData, const QString &mechanism = QString()) {
             process(sessionData, mechanism);
         }
 
         /*!
          * Cancel ongoing challenge.
-         * Signal error() is emitted with argument CanceledError when canceled
-         * challenge is procecced. If there is no challenge to cancel, error with
-         * argument WrongStateError is emitted.
+         * Signal error() is emitted with Error::type() Error::SessionCanceled when
+         * process is canceled.
+         * If there is no challenge to cancel, Error::type() is Error::WrongState.
+         * If the operation fails, the error() signal is emitted.
+         * @see AuthSession::error()
          */
         void cancel();
 
@@ -206,7 +215,7 @@ namespace SignOn {
          *
          * @deprecated
          */
-        void signMessage(const SessionData &params, const QString &mechanism = 0) {
+        void signMessage(const SessionData &params, const QString &mechanism = QString()) {
             process(params, mechanism);
         }
 
@@ -214,9 +223,13 @@ namespace SignOn {
 
         /*!
          * Emitted when an error occurs while performing an operation.
-         * @see SignOn::Error.
-         *
-         * @param err The error object.
+         * Typical error types are generic errors, where
+         * Error::type() < Error::AuthServiceErr and
+         * AuthSession specific, where
+         * Error::AuthSessionErr < Error::type() < Error::UserErr
+         * @see SignOn::Error
+         * @see SignOn::Error::ErrorType
+         * @param err The error object
          */
         void error(const SignOn::Error &err);
 
@@ -230,7 +243,7 @@ namespace SignOn {
 
         /*!
          * Authentication response generated by the authentication service.
-         * It is sent after a challenge() call sends a challenge token for
+         * It is sent after a process() call sends a challenge token for
          * authentication is used to request an authentication
          * token, with the response token and accompanying non-opaque information
          * produced by the service.
