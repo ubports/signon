@@ -214,6 +214,15 @@ public:
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, WindowId)
 
+    /*!
+     * Declare property RenewToken setter and getter
+     * This is used by a signon plugin to check whether
+     * the access token has to be renewed. When this
+     * property is set , the signon plugin will remove the
+     * old set of access tokens and get a new set.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(bool, RenewToken)
+
 protected:
     QVariantMap m_data;
 };
