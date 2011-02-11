@@ -352,6 +352,7 @@ namespace SignonDaemonNS {
             replyError(SIGNOND_REMOVE_FAILED_ERR_NAME,
                        SIGNOND_REMOVE_FAILED_ERR_STR +
                        QLatin1String("Database error occurred."));
+            return;
         }
         emit infoUpdated((int)SignOn::IdentityRemoved);
         keepInUse();
