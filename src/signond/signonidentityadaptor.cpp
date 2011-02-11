@@ -66,11 +66,6 @@ namespace SignonDaemonNS {
             return 0;
         }
 
-        QDBusMessage m_message = parentDBusContext().message();
-        m_message.setDelayedReply(true);
-        QDBusMessage delayReply = m_message.createReply();
-        SIGNOND_BUS.send(delayReply);
-
         return m_parent->requestCredentialsUpdate(msg);
     }
 
@@ -127,11 +122,6 @@ namespace SignonDaemonNS {
             securityErrorReply(__func__);
             return false;
         }
-
-        QDBusMessage m_message = parentDBusContext().message();
-        m_message.setDelayedReply(true);
-        QDBusMessage delayReply = m_message.createReply();
-        SIGNOND_BUS.send(delayReply);
 
         return m_parent->verifyUser(params);
     }
