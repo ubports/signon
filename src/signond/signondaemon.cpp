@@ -723,6 +723,8 @@ bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
 
         /* Copy the source into the target directory */
         QString source = config.m_storagePath + QDir::separator() + fileName;
+        if (!QFile::exists(source)) continue;
+
         QString destination = backupRoot + QDir::separator() + fileName;
         ok = QFile::copy(source, destination);
         if (!ok) break;
@@ -738,13 +740,11 @@ bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
 
     QDir sourceDir(backupRoot);
     if (!sourceDir.exists()) {
-        qCritical() << "Backup directory does not exist!";
-        return false;
+        TRACE() << "Backup directory does not exist!";
     }
 
     if (!sourceDir.exists(config.m_dbName)) {
-        qCritical() << "Backup does not contain DB:" << config.m_dbName;
-        return false;
+        TRACE() << "Backup does not contain DB:" << config.m_dbName;
     }
 
     /* Now restore the files from the backup */
@@ -832,7 +832,6 @@ uchar SignonDaemon::backupStarts()
         //mount file system back
         if (!m_pCAMManager->openCredentialsSystem()) {
             qCritical() << "Cannot reopen database";
-            return 2;
         }
     }
     return 0;
