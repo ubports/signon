@@ -478,11 +478,12 @@ namespace SignonDaemonNS {
         TRACE();
         setAutoDestruct(true);
 
-        if (call)
-            call->deleteLater();
-
         QDBusMessage errReply;
-        QDBusPendingReply<QVariantMap> reply = *call;
+        QDBusPendingReply<QVariantMap> reply;
+        if (call != NULL) {
+            reply = *call;
+            call->deleteLater();
+        }
         QVariantMap resultParameters;
         if (!reply.isError() && reply.count()) {
             resultParameters = reply.argumentAt<0>();
@@ -557,11 +558,12 @@ namespace SignonDaemonNS {
         TRACE();
         setAutoDestruct(true);
 
-        if (call)
-            call->deleteLater();
-
         QDBusMessage errReply;
-        QDBusPendingReply<QVariantMap> reply = *call;
+        QDBusPendingReply<QVariantMap> reply;
+        if (call != NULL) {
+            reply = *call;
+            call->deleteLater();
+        }
         QVariantMap resultParameters;
         if (!reply.isError() && reply.count()) {
             resultParameters = reply.argumentAt<0>();
