@@ -329,27 +329,6 @@ void AuthSessionImpl::cancel()
 void AuthSessionImpl::errorSlot(const QDBusError &err)
 {
     TRACE() << err;
-    /*
-     * If DBus was unable to start daemon or to recognize interface
-     * then this case is definitely a problematic:
-     * we disable the whole object and reply errors on each delayed operation
-     * */
-    if (m_isAuthInProcessing) {
-        qCritical() << "Cannot connect to SignonDaemon: " << err;
-
-        m_isValid = false;
-        m_isAuthInProcessing = false;
-
-        int numberOfErrorReplies = m_operationQueueHandler.queuedOperationsCount();
-        for (int i = 0; i < numberOfErrorReplies; i++) {
-
-            emit m_parent->error(
-                    Error(Error::InternalCommunication,
-                          SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
-        }
-
-        return;
-    }
 
     m_isBusy = false;
     int errCode = Error::Unknown;
@@ -385,6 +364,10 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errCode = Error::WrongState;
     } else if (err.name() == SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME) {
         errCode = Error::MechanismNotAvailable;
+    } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {        
+        m_isValid = false;
+        m_isAuthInProcessing = false;
+        errCode = Error::MethodNotAvailable;
     } else if (err.name() == SIGNOND_MISSING_DATA_ERR_NAME) {
          errCode = Error::MissingData;
     } else if (err.name() == SIGNOND_RUNTIME_ERR_NAME) {
@@ -412,6 +395,18 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errMessage = err.message().section(QLatin1Char(':'), 1, 1);
         if (!ok)
             errCode = Error::Unknown;
+    } else {
+        if (m_isAuthInProcessing) {
+            qCritical() << "Cannot connect to SignonDaemon: " << err;
+
+            m_isValid = false;
+            m_isAuthInProcessing = false;
+
+            emit m_parent->error(
+                    Error(Error::InternalCommunication,
+                          SIGNOND_AUTHSESSION_CONNECTION_PROBLEM));
+            return;
+        }
     }
 
     if (errMessage.isEmpty())

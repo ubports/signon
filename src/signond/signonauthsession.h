@@ -52,7 +52,8 @@ namespace SignonDaemonNS {
             return static_cast<SignonSessionCore *>(QObject::parent());
         }
 
-        static QString getAuthSessionObjectPath(const quint32 id, const QString &method, SignonDaemon *parent);
+        static QString getAuthSessionObjectPath(const quint32 id, const QString &method,
+                                                SignonDaemon *parent, bool &supportsAuthMethod);
         static void stopAllAuthSessions();
         quint32 id() const;
         void objectRegistered();

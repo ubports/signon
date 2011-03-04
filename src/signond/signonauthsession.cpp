@@ -53,10 +53,11 @@ SignonAuthSession::~SignonAuthSession()
     }
 }
 
-QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
-                                                    const QString &method, SignonDaemon *parent)
+QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id, const QString &method,
+                                                    SignonDaemon *parent, bool &supportsAuthMethod)
 {
     TRACE();
+    supportsAuthMethod = true;
     SignonAuthSession* sas = new SignonAuthSession(id, method);
 
     QDBusConnection connection(SIGNOND_BUS);
@@ -77,6 +78,7 @@ QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
     SignonSessionCore *core = SignonSessionCore::sessionCore(id, method, parent);
     if (!core) {
         TRACE() << "Cannot retrieve proper tasks queue";
+        supportsAuthMethod = false;
         delete sas;
         return QString();
     }

@@ -663,7 +663,16 @@ bool SignonDaemon::clear()
 
 QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString type)
 {
-    return SignonAuthSession::getAuthSessionObjectPath(id, type, this);
+    bool supportsAuthMethod = false;
+    QString objectPath = SignonAuthSession::getAuthSessionObjectPath(id, type, this, supportsAuthMethod);
+    if (objectPath.isEmpty() && !supportsAuthMethod) {
+        QDBusMessage errReply = message().createErrorReply(
+                                                SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                                                SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
+        SIGNOND_BUS.send(errReply);
+        return QString();
+    }
+    return objectPath;
 }
 
 bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
