@@ -41,7 +41,7 @@ namespace SignOn {
 
     /*!
      * @class AuthServiceImpl
-     * AuthService class implementation.
+     * AuthService class implementation
      * @sa AuthService
      */
     class AuthServiceImpl : public QObject

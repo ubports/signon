@@ -77,7 +77,7 @@ enum AuthPluginState {
 
 /*!
  * @class AuthPluginInterface.
- * Interface definition for authentication plugins.
+ * Interface definition for authentication plugins
  */
 class AuthPluginInterface : public QObject
 {
@@ -88,26 +88,26 @@ public:
         { qRegisterMetaType<SignOn::Error>("SignOn::Error"); }
 
     /*!
-     * Destructor.
+     * Destructor
      */
     virtual ~AuthPluginInterface() {}
 
     /*!
-     * Get type of plugin.
+     * Gets the type of the plugin
      *
-     * @return plugin type.
+     * @return Plugin type
      */
     virtual QString type() const = 0;
 
     /*!
-     * Get list of supported mechanisms.
+     * Gets the list of supported mechanisms.
      *
-     * @return list of mechanisms.
+     * @return List of mechanisms
      */
     virtual QStringList mechanisms() const = 0;
 
     /*!
-     * Request to cancel process.
+     * Requests to cancel the process.
      * Process is terminated after this call.
      * Reimplement this in order to execute specific instructions before
      * the effective cancel occurres.
@@ -115,7 +115,7 @@ public:
     virtual void cancel() {}
 
     /*!
-     * Request to abort process.
+     * Requests to abort the process.
      * Process is terminated after this call.
      * Reimplement this in order to execute specific instructions before
      * process is killed.
@@ -132,8 +132,8 @@ public:
      * @see result
      * @see error
      *
-     * @param inData input data for authentication.
-     * @param mechanism mechanism to use to do authentication.
+     * @param inData Input data for authentication
+     * @param mechanism Mechanism to use to do authentication
      */
     virtual void process(const SignOn::SessionData &inData,
                          const QString &mechanism = QString()) = 0;
@@ -143,7 +143,7 @@ Q_SIGNALS:
      * Emitted when authentication process has been completed for given data
      * and there are no errors.
      *
-     * @param data resulting SessionData, need to be returned to client.
+     * @param data Resulting SessionData, need to be returned to client
      */
     void result(const SignOn::SessionData &data);
 
@@ -155,7 +155,7 @@ Q_SIGNALS:
      * @note This is shared within same identity using same method only.
      * @note There can be storage size limitation for data that can be stored.
      *
-     * @param data resulting SessionData, need to be returned to client.
+     * @param data Resulting SessionData, need to be returned to client
      */
     void store(const SignOn::SessionData &data);
 
@@ -163,8 +163,8 @@ Q_SIGNALS:
      * Emitted when authentication process has been completed for given data
      * and resulting an error.
      *
-     * @param err The error object.
-     * @param errorMessage resulting error message.
+     * @param err The error object
+     * @param errorMessage Resulting error message
      */
     void error(const SignOn::Error &err);
 
@@ -178,7 +178,7 @@ Q_SIGNALS:
      * @see SignOn::UiSessionData
      * @note slot userActionFinished() should be reimplemented to get result.
      *
-     * @param data ui session data to be filled within user interaction.
+     * @param data Ui session data to be filled within user interaction
      */
     void userActionRequired(const SignOn::UiSessionData &data);
 
@@ -187,7 +187,7 @@ Q_SIGNALS:
      * Plugin must emit signal refreshed() to response to refresh() call.
      * @see refreshed
      *
-     * @param data refreshed ui session data.
+     * @param data Refreshed ui session data
      */
     void refreshed(const SignOn::UiSessionData &data);
 
@@ -195,8 +195,8 @@ Q_SIGNALS:
      * Emitted to report status of authentication process to signond for
      * informing client application.
      *
-     * @param state plugin process state @see AuthPluginState.
-     * @param message optional message for client application.
+     * @param state Plugin process state @see AuthPluginState
+     * @param message Optional message for client application
      */
     void statusChanged(const AuthPluginState state,
                        const QString &message = QString());
@@ -204,29 +204,29 @@ Q_SIGNALS:
 public Q_SLOTS:
     /*!
      * User interaction completed.
-     * Signond uses this slot to notice end of ui session.
-     * This is response to userActionRequired() signal.
-     * This must be reimplemented to get response from user interaction.
+     * Signond uses this slot to notice the end of ui session.
+     * This is a response to userActionRequired() signal.
+     * This must be reimplemented to get the response from the user interaction.
      * @see UiSessionData
      * @see userActionRequired
      *
-     * @param data user completed ui session data.
+     * @param data User completed ui session data
      */
     virtual void userActionFinished(const SignOn::UiSessionData &data) {
         Q_UNUSED(data);
     }
 
     /*!
-     * Refresh given session.
+     * Refreshes given session.
      * Signond uses this slot to refresh data in given ui session.
-     * Mostly used to refresh captcha images during user interaction.
+     * Mostly used to refresh a captcha images during the user interaction.
      * Signal refreshed() or error() must be emitted when refresh is completed.
-     * This must be reimplemented to refresh captcha image.
+     * This must be reimplemented to refresh the captcha image.
      * @see UiSessionData
      * @see refreshed
      * @note emitting signal userActionRequired() is not allowed to use before ui session is finished.
      *
-     * @param data ui session data to be refreshed.
+     * @param data Ui session data to be refreshed
      */
     virtual void refresh(const SignOn::UiSessionData &data) {
         emit refreshed(data);

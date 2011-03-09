@@ -42,7 +42,7 @@ namespace SignOn {
      * @class AuthService
      * @headerfile authservice.h SignOn/AuthService
      *
-     * Represents signond for client application.
+     * Represents signon for client application.
      * The class is for managing identities.
      * Most applications can use this by using widgets from libSignOnUI.
      */
@@ -92,26 +92,26 @@ namespace SignOn {
         {
         public:
             /*!
-             * Contructor creates an IdentityRegExp, as specified by pattern.
-             * @param pattern the regular expression as string.
+             * Constructor creates an IdentityRegExp, as a specified by pattern.
+             * @param pattern The regular expression as a string
              */
             IdentityRegExp(const QString &pattern);
 
             /*!
-             * Copy contructor, creates a copy of src.
-             * @param src the IdentityRegExp to be copied.
+             * Copy constructor, creates a copy of src.
+             * @param src The IdentityRegExp to be copied
              */
             IdentityRegExp(const IdentityRegExp &src);
 
             /*!
-             * Return validity of regular expression.
-             * @return true if the regular expression is valid, false otherwise.
+             * Returns the validity of regular expression.
+             * @return True if the regular expression is valid, false otherwise.
              */
             bool isValid() const;
 
             /*!
-             * Return pattern of regular expression as string.
-             * @return the pattern of this regular expression as string.
+             * Returns the pattern of regular expression as string.
+             * @return The pattern of this regular expression as string.
              */
             QString pattern() const;
 
@@ -127,18 +127,18 @@ namespace SignOn {
         typedef QMap<IdentityFilterCriteria, IdentityRegExp> IdentityFilter;
 
         /*!
-         * Basic Constructor.
-         * @param parent Parent object.
+         * Basic constructor
+         * @param parent Parent object
          */
         AuthService(QObject *parent = 0);
 
         /*!
-         * Destructor.
+         * Destructor
          */
         ~AuthService();
 
         /*!
-         * Request information on available authentication methods.
+         * Requests the information on available authentication methods.
          * The list of service types retrieved
          * is emitted with signal methodsAvailable().
          * Error is reported by emitting signal error().
@@ -149,7 +149,7 @@ namespace SignOn {
         void queryMethods();
 
         /*!
-         * Request information on mechanisms that are available
+         * Requests the information on mechanisms which are available
          * for certain authentication type.
          * The list of mechanisms retrieved from the service
          * is emitted with signal mechanismsAvailable().
@@ -164,7 +164,7 @@ namespace SignOn {
         void queryMechanisms(const QString &method);
 
         /*!
-         * Request information on identities that are stored.
+         * Requests information on identities which are stored.
          * The list of identities retrieved from the service
          * is emitted with signal identities().
          * Error is reported by emitting signal error().
@@ -175,14 +175,14 @@ namespace SignOn {
          *
          * @see AuthService::identities()
          * @see AuthService::error()
-         * @param filter show only identities specified in filter - filtering not implemented for the moment.
-         * if default parameter is passed, all the identities are returned.
+         * @param filter Shows only identities specified in filter - filtering not implemented for the moment.
+         * If default parameter is passed, all the identities are returned.
          * @credential keychain-access key-chain application can access list of identities.
          */
         void queryIdentities(const IdentityFilter &filter = IdentityFilter());
 
         /*!
-         * Clear credentials database. All identity entries are removed from database.
+         * Clears credentials database. All identity entries are removed from database.
          * Signal cleared() is emitted when operation is completed.
          * Error is reported by emitting signal error().
          * If the application does not have keychain-access credential,
@@ -212,7 +212,7 @@ namespace SignOn {
          * Emitted when the list of available authentication methods have been obtained
          * from the service.
          *
-         * @param methods a list of available authentication method names
+         * @param methods List of available authentication method names
          */
         void methodsAvailable(const QStringList &methods);
 
@@ -220,8 +220,8 @@ namespace SignOn {
          * Emitted when the list of available mechanisms have been obtained
          * from the service.
          *
-         * @param method name of authentication method that was queried.
-         * @param mechanisms a list of available mechanisms
+         * @param method Name of authentication method that was queried
+         * @param mechanisms List of available mechanisms
          */
         void mechanismsAvailable(const QString &method, const QStringList &mechanisms);
 
@@ -234,7 +234,7 @@ namespace SignOn {
         void identities(const QList<SignOn::IdentityInfo> &identityList);
 
         /*!
-         * Database was cleared and resetted to initial state.
+         * Database is cleared and reset to initial state.
          * This signal is emitted in response to clear().
          */
         void cleared();

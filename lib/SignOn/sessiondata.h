@@ -42,12 +42,12 @@
 namespace SignOn {
 
 /*!
- * Macro to create declarations for parameter setter and getter.
- * This supports same types as QVariant @see QVariant.
+ * A macro to create declarations for parameter setter and getter.
+ * This supports the same types as @see QVariant.
  * For user specified types @see QMetaType.
  *
- * @param type_ type of parameter
- * @param name_ of property
+ * @param type_ Type of parameter
+ * @param name_ Name of property
  */
 #define SIGNON_SESSION_DECLARE_PROPERTY(type_, name_) \
           void set##name_(const type_ &value ) { m_data.insert(QLatin1String(#name_), value); } \
@@ -61,9 +61,9 @@ namespace SignOn {
 
 /*!
  * @enum SignonUiPolicy
- * Policy to define how plugin should interact with user.
- * This is hint for plugin how to handle user interaction.
- * NoUserInteractionPolicy do not allow any ui interaction to happen
+ * Policy to define how the plugin interacts with the user.
+ * This is a hint for plugin how to handle user interaction.
+ * NoUserInteractionPolicy does not allow any ui interaction to happen
  * and plugin will get error reply QUERY_ERROR_FORBIDDEN.
  * @see UiPolicy
  */
@@ -91,7 +91,7 @@ class SIGNON_EXPORT SessionData
 public:
     /*!
      * Constructor. Creates a SessionData with data 'data'.
-     * @param data The data to be contained by the SessionData.
+     * @param data The data to be contained by the SessionData
      * @attention internal use only recommended. As a SSO client application developer
      *            use setters/gettters for specific SessionData properties.
      */
@@ -99,14 +99,14 @@ public:
 
     /*!
      * Copy constructor.
-     * @param other SessionData object to be copyed to this instance.
+     * @param other SessionData object to be copied to this instance
      */
     SessionData(const SessionData &other) { m_data = other.m_data; }
 
     /*!
      * Assignment operator
-     * @param other SessionData object to be assigned to this instance.
-     * @returns reference to this object
+     * @param other SessionData object to be assigned to this instance
+     * @return Reference to this object
      */
     SessionData &operator=(const SessionData &other) {
         m_data = other.m_data;
@@ -116,7 +116,7 @@ public:
     /*!
      * Addition operator
      * @param other SessionData object to be added to this instance.
-     * @returns reference to this object
+     * @return reference to this object
      */
     SessionData &operator+=(const SessionData &other) {
         m_data.unite(other.m_data);
@@ -124,17 +124,17 @@ public:
     }
 
     /*!
-     * Access the list of runtime existing properties of the SessionData
-     * @returns a string list containing the property names.
+     * Access the list of runtime existing properties of the SessionData.
+     * @return String list containing the property names
      */
     const QStringList propertyNames() const {
         return m_data.keys();
     }
 
     /*!
-     * Access the list of runtime existing properties of the SessionData
+     * Access the list of runtime existing properties of the SessionData.
      * @param propertyName Name of the property to be accessed
-     * @returns a variant containing the property value of propertyName, or an empty variant if
+     * @return Variant containing the property value of propertyName, or an empty variant if
      *          property does not exist at runtime.
      */
     const QVariant getProperty(const QString &propertyName) const {
@@ -152,7 +152,7 @@ public:
     /*!
      * Creates an instance of type T, which must be derived from SessionData.
      * The instance will contain the data of this instance.
-     * @returns an instance of type T, containing the data of this instance.
+     * @return Instance of type T, containing the data of this instance.
      */
     template <class T> T data() const {
         T dataImpl;
@@ -161,38 +161,38 @@ public:
     }
 
     /*!
-     * Declare property Secret setter and getter.
+     * Declares the property Secret setter and getter.
      * setSecret(const QString secret);
      * const QString Secret() const;
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Secret)
 
     /*!
-     * Declare property UserName setter and getter.
+     * Declares the property UserName setter and getter.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, UserName)
 
     /*!
-     * Declare property Realm setter and getter
+     * Declares the property Realm setter and getter.
      * Realm that is used for authentication.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Realm)
 
     /*!
-     * Declare property NetworkProxy setter and getter
+     * Declares the property NetworkProxy setter and getter.
      * Network proxy to be used instead of system default.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, NetworkProxy)
 
     /*!
-     * Declare property UiPolicy setter and getter
-     * Use UiPolicy to define how plugin should interact with user
+     * Declares the property UiPolicy setter and getter.
+     * Use UiPolicy to define how plugin interacts with the user.
      * @see SignonUiPolicy
      */
     SIGNON_SESSION_DECLARE_PROPERTY(int, UiPolicy)
 
     /*!
-     * Declare property Caption setter and getter.
+     * Declares the property Caption setter and getter.
      * Caption is to tell user which application/credentials/provider is
      * requesting signon-ui.
      *
@@ -202,23 +202,23 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
 
     /*!
-     * Declare property NetworkTimeout setter and getter
-     * Sets the timeout for network related operations in miliseconds.
+     * Declares the property NetworkTimeout setter and getter.
+     * Sets the timeout for network related operations in milliseconds.
      * To be used when a remote service does not reply in a reasonable amount of time.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
 
     /*!
-     * Declare property WindowId setter and getter
+     * Declares the property WindowId setter and getter.
      * This is to be used for setting signon-ui dialog application modal.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, WindowId)
 
     /*!
-     * Declare property RenewToken setter and getter
+     * Declares the property RenewToken setter and getter.
      * This is used by a signon plugin to check whether
      * the access token has to be renewed. When this
-     * property is set , the signon plugin will remove the
+     * property is set, the signon plugin will remove the
      * old set of access tokens and get a new set.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(bool, RenewToken)

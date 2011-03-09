@@ -81,7 +81,7 @@ namespace SignOn {
             RemoveFailed,              /**< Removing credentials failed. */
             SignOutFailed,             /**< SignOut failed. */
             IdentityOperationCanceled, /**< Identity operation was canceled by user. */
-            CredentialsNotAvailable,   /**< Query fails. */
+            CredentialsNotAvailable,   /**< Query failed. */
             ReferenceNotFound,         /**< Trying to remove nonexistent reference. */
             AuthSessionErr = 300,      /* Placeholder to rearrange enumeration
                                              - AuthSession/AuthPluginInterface specific */
@@ -99,7 +99,7 @@ namespace SignOn {
             Network,                   /**< Network connetion failed. */
             Ssl,                       /**< Ssl connection failed. */
             Runtime,                   /**< Casting SessionData into subclass failed */
-            SessionCanceled,           /**< Challenge was canceled. */
+            SessionCanceled,           /**< Challenge was cancelled. */
             TimedOut,                  /**< Challenge was timed out. */
             UserInteraction,           /**< User interaction dialog failed */
             OperationFailed,           /**< Temporary failure in authentication. */
@@ -111,13 +111,13 @@ namespace SignOn {
         };
 
         /*!
-         * Basic constructor.
+         * Constructor
          */
         Error() : m_type((int)Unknown), m_message(QString()) { registerType(); }
 
         /*!
          * Copy constructor
-         * @param src Error object to be copied.
+         * @param src Error object to be copied
          */
 
         Error(const Error &src) :
@@ -127,47 +127,47 @@ namespace SignOn {
             m_type(src.type()), m_message(src.message()) {}
 
         /*!
-         * For convenience constructor.
-         * @param type The error's type.
-         * @param message The error's message.
+         * For convenience constructor
+         * @param type Type of the error
+         * @param message Error message
          */
         Error(int type, const QString &message = QString()) : m_type(type), m_message(message)
             { registerType(); }
 
         /*!
-         * Assignment operator.
-         * @param src The error object to be assigned to this instance.
+         * Assignment operator
+         * @param src Error object to be assigned to this instance
          */
         Error &operator=(const Error &src)
             { m_type = src.type(); m_message = src.message(); return *this; }
 
         /*!
-         * Destructor.
+         * Destructor
          */
         virtual ~Error() {}
 
         /*!
-         * Sets the error's type.
+         * Sets the type of the error.
          * The 'type' parameter is an integer and values beyond Error::ErrorType can be used
          * for customized error reporting.
          * @see Error::ErrorType.
-         * @param type The type to be set.
+         * @param type The type to be set
          */
         void setType(int type) { m_type = type; }
 
         /*!
-         * Sets the error's message.
-         * @param message The message to be set.
+         * Sets the error message.
+         * @param message The message to be set
          */
         void setMessage(const QString &message) { m_message = message; }
 
         /*!
-         * @return the error's type.
+         * @return Type of the error
          */
         int type() const { return m_type; }
 
         /*!
-         * @return the error's message.
+         * @return Error message
          */
         QString message() const { return m_message; }
 

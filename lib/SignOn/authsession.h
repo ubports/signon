@@ -115,7 +115,7 @@ namespace SignOn {
         /*!
          * Name of method for session
          *
-         * @return name of authentication method.
+         * @return Name of authentication method.
          */
         const QString name() const;
 
@@ -127,12 +127,12 @@ namespace SignOn {
          *
          * @see AuthSession::mechanismsAvailable()
          * @see AuthSession::error()
-         * @param wantedMechanisms list of mechanisms that the client would like to use
+         * @param wantedMechanisms List of mechanisms that the client would like to use
          */
          void queryAvailableMechanisms(const QStringList &wantedMechanisms = QStringList());
 
         /*!
-         * Process sessionData in the authentication service.
+         * Processes sessionData in the authentication service.
          * The service processes the data and generates a response that
          * is emitted with response() signal.
          * If the operation fails, the error() signal is emitted.
@@ -143,19 +143,19 @@ namespace SignOn {
          * the mechanism implies generation of the authentication token without
          * a challenge, this method should be called with an empty parameters.
          *
-         * Params are key value pairs, and they are given for authentication
+         * Parameters are key value pairs, and they are given for authentication
          * plugin. For example it can contain server name, realm, client key, etc.
          * If the Identity objected that created this AuthSession object was itself created
          * using a IdentityInfo object having the username and secret set, that data
          * is going to be added to the params map before it is passed to a specific
          * authentication plugin implementation. If credentials have been stored
-         * with Identity::storeCredentials, then username is overriden from database.
+         * with Identity::storeCredentials, then the username is overriden from database.
          * Stored secret is used as a default value.
          *
          * @see AuthSession::response()
          * @see AuthSession::error()
-         * @param sessionData information for authentication session.
-         * @param mechanism mechanism to use for authentication.
+         * @param sessionData Information for authentication session
+         * @param mechanism Mechanism to use for authentication
          *
          * @see IdentityInfo
          * @see AuthPluginInterface
@@ -164,7 +164,7 @@ namespace SignOn {
                      const QString &mechanism = QString());
 
         /*!
-         * Send a challenge to the authentication service.
+         * Sends a challenge to the authentication service.
          * The service processes the challenge and generates a response token that
          * is emitted with response() signal.
          * If the operation fails, the error() signal is emitted.
@@ -173,15 +173,15 @@ namespace SignOn {
          *
          * @see AuthSession::response()
          * @see AuthSession::error()
-         * @param sessionData information for authentication session.
-         * @param mechanism mechanism to use for authentication.
+         * @param sessionData Information for authentication session
+         * @param mechanism Mechanism to use for authentication
          */
         void challenge(const SessionData& sessionData, const QString &mechanism = QString()) {
             process(sessionData, mechanism);
         }
 
         /*!
-         * Send a request to the authentication service.
+         * Sends a request to the authentication service.
          * The service processes the request and generates a response token that
          * is emitted with response() signal.
          * If the operation fails, the error() signal is emitted.
@@ -190,15 +190,15 @@ namespace SignOn {
          *
          * @see AuthSession::response()
          * @see AuthSession::error()
-         * @param sessionData information for authentication session.
-         * @param mechanism mechanism to use for authentication.
+         * @param sessionData Information for authentication session
+         * @param mechanism Mechanism to use for authentication
          */
         void request(const SessionData &sessionData, const QString &mechanism = QString()) {
             process(sessionData, mechanism);
         }
 
         /*!
-         * Cancel ongoing challenge.
+         * Cancels the ongoing challenge.
          * Signal error() is emitted with Error::type() Error::SessionCanceled when
          * process is canceled.
          * If there is no challenge to cancel, Error::type() is Error::WrongState.
@@ -208,10 +208,10 @@ namespace SignOn {
         void cancel();
 
         /*!
-         * Sign message by using secret stored into identity.
-         * This convenience interface to do special challenge to signature service.
-         * @param params extra information for signing.
-         * @param mechanism mechanism to use for signing.
+         * Signs message by using secret stored into identity.
+         * This convenience interface is to do special challenge to signature service.
+         * @param params Extra information for signing
+         * @param mechanism Mechanism to use for signing
          *
          * @deprecated
          */
@@ -237,7 +237,7 @@ namespace SignOn {
          * Emitted when the list of available mechanisms have been obtained
          * for identity.
          *
-         * @param mechanisms a list of available mechanisms
+         * @param mechanisms List of available mechanisms
          */
         void mechanismsAvailable(const QStringList &mechanisms);
 
@@ -251,15 +251,15 @@ namespace SignOn {
          * The format and interpretation of the response, as well as
          * names and types of the information parameters, are mechanism-specific.
          *
-         * @param sessionData parameters with the authentication token.
+         * @param sessionData Parameters with the authentication token
          */
         void response(const SignOn::SessionData &sessionData);
 
         /*!
-         * Provides information about the state of the authentication
+         * Provides the information about the state of the authentication
          * request.
-         * @param state is the current state of the authentication request.
-         * @param message a textual description of the state.
+         * @param state Current state of the authentication request
+         * @param message Textual description of the state
          */
         void stateChanged(AuthSession::AuthSessionState state, const QString &message);
 

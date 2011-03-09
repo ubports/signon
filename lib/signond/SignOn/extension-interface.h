@@ -44,9 +44,9 @@ public:
     virtual ~ExtensionInterface() {}
 
     /*!
-     * Get the KeyManager object.
+     * Gets the KeyManager object.
      *
-     * @return A key manager object, or 0 if none is provided by this plugin.
+     * @return A key manager object, or 0 if none is provided by this plugin
      */
     virtual AbstractKeyManager *keyManager(QObject *parent = 0) const = 0;
 };

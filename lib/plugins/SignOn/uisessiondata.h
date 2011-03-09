@@ -72,14 +72,14 @@ class UiSessionData : public SessionData
 public:
     /*!
      * Constructor. Creates a UiSessionData with data 'data'.
-     * @param data The data to be contained by the UiSessionData.
+     * @param data The data to be contained by the UiSessionData
      * @attention internal use only recommended. As a SSO client application developer
      *            use setters/gettters for specific SessionData properties.
      */
     UiSessionData(const QVariantMap &data = QVariantMap()) { m_data = data; }
 
     /*!
-     * Declare property QueryError setter and getter.
+     * Declares the property QueryError setter and getter.
      * QueryError is used to report errors in ui interaction
      * that is shown to user.
      * @see QueryError
@@ -87,7 +87,7 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(int, QueryErrorCode)
 
     /*!
-     * Declare property Caption setter and getter.
+     * Declare the property Caption setter and getter.
      * Caption is used to set dialog title.
      * Empty caption is discarded.
      * @warning This string is shown to user as it is,
@@ -96,7 +96,7 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
 
     /*!
-     * Declare property QueryMessageId setter and getter.
+     * Declares the property QueryMessageId setter and getter.
      * QueryMessageId is used to select predefined localized message
      * that is shown to user.
      * @see QueryMessageId
@@ -104,7 +104,7 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(int, QueryMessageId)
 
     /*!
-     * Declare property QueryMessage setter and getter.
+     * Declares the property QueryMessage setter and getter.
      * QueryMessage is used to show given message to user.
      * Empty message is discarded.
      * @warning This string is shown to user as it is,
@@ -113,62 +113,62 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(QString, QueryMessage)
 
     /*!
-     * Declare property QueryUserName setter and getter.
+     * Declares the property QueryUserName setter and getter.
      * QueryUserName is used to enable username input in signon-ui.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(bool, QueryUserName)
 
     /*!
-     * Declare property QueryPassword setter and getter.
+     * Declares the property QueryPassword setter and getter.
      * QueryPassword is used to enable password input in signon-ui.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(bool, QueryPassword)
 
     /*!
-     * Declare property RememberPassword setter and getter.
+     * Declares the property RememberPassword setter and getter.
      * RememberPassword is used to enable password storing signond.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(bool, RememberPassword)
 
     /*!
-     * Declare property ShowRealm setter and getter.
+     * Declares the property ShowRealm setter and getter.
      * ShowRealm is used to show realm in signon-ui.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(bool, ShowRealm)
 
     /*!
-     * Declare property OpenUrl setter and getter.
+     * Declares the property OpenUrl setter and getter.
      * This url is passed to signon-ui to be opened and shown to user.
-     * Empty url do not open url view.
+     * Empty url does not open the url view.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, OpenUrl)
 
     /*!
-     * Declare property UrlResponse setter and getter.
+     * Declares the property UrlResponse setter and getter.
      * Response from signon-ui for OpenUrl request.
      * After completion UrlResponse contains redirect target url, if there was redirection.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, UrlResponse)
 
     /*!
-     * Declare property CaptchaUrl setter and getter.
-     * CaptchaUrl contains url to captcha image to be verified by user.
-     * CaptchaUrl is used in signon-ui when plugin requires captcha verification from user.
+     * Declares the property CaptchaUrl setter and getter.
+     * CaptchaUrl contains url to the captcha image to be verified by user.
+     * CaptchaUrl is used in signon-ui when plugin requires the captcha verification from user.
      * If this is empty, captcha query is not shown, unless CaptchaImage contain valid image.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, CaptchaUrl)
 
     /*!
-     * Declare property CaptchaImage setter and getter.
-     * CaptchaImage contains captcha image to be verified by user.
-     * CaptchaImage is passed to signon-ui when plugin requires captcha verification from user.
+     * Declares the property CaptchaImage setter and getter.
+     * CaptchaImage contains the captcha image to be verified by user.
+     * CaptchaImage is passed to signon-ui when plugin requires the captcha verification from user.
      * If this is empty, captcha query is not shown, unless CaptchaUrl point to valid image.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QByteArray, CaptchaImage)
 
     /*!
-     * Declare property CaptchaResponse setter and getter
-     * CaptchaResponse is passed to plugin after signon-ui has processed captcha query.
+     * Declares the property CaptchaResponse setter and getter
+     * CaptchaResponse is passed to plugin after signon-ui has processed the captcha query.
      * It contains user input for captcha query.
      * @see CaptchaUrl
      * @see CaptchaImage.
@@ -176,14 +176,14 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(QString, CaptchaResponse)
 
     /*!
-     * Declare property ForgotPassword setter and getter
-     * ForgotPassword string is shown as link to user.
+     * Declares the property ForgotPassword setter and getter
+     * ForgotPassword string is shown as a link to user.
      * @see ForgotPasswordUrl
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPassword)
 
     /*!
-     * Declare property ForgotPasswordUrl setter and getter
+     * Declares the property ForgotPasswordUrl setter and getter
      * ForgotPasswordUrl is shown to user if ForgotPassword link is pressed.
      * @see ForgotPassword
      */

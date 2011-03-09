@@ -51,8 +51,8 @@ namespace SignOn {
      * @class Identity
      * @headerfile identity.h SignOn/Identity
      *
-     * Represents an database entry for a single identity.
-     * Identity is client side presentation of a credential.
+     * Represents a database entry for a single identity.
+     * Identity is a client side presentation of a credential.
      */
     class SIGNON_EXPORT Identity : public QObject
     {
@@ -91,36 +91,36 @@ namespace SignOn {
 
     public:
         /*!
-         * Construct a new identity object.
+         * Constructs a new identity object.
          *
          * Can return NULL if client is untrusted.
          *
-         * @param info the identity information.
-         * @param parent the parent object of the identity
-         * @return pointer to new identity object or NULL if it fails to create.
+         * @param info Identity information
+         * @param parent Parent object of the identity
+         * @return Pointer to new identity object or NULL if it fails to create.
          */
         static Identity *newIdentity(const IdentityInfo &info = IdentityInfo(), QObject *parent = 0);
 
         /*!
-         * Construct an identity object associated with an existing identity record.
+         * Constructs an identity object associated with an existing identity record.
          *
          * Can return NULL if client is untrusted.
          *
-         * @param id identity ID on the service.
-         * @param parent the parent object of the identity
-         * @return pointer to identity object or NULL if it fails to create.
+         * @param id Identity ID on the service
+         * @param parent Parent object of the identity
+         * @return Pointer to identity object or NULL if it fails to create.
          */
         static Identity *existingIdentity(const quint32 id, QObject *parent = 0);
 
         /*!
-         * Destructor.
+         * Destructor
          */
         virtual ~Identity();
 
         /*!
          * Unique id of given identity
          *
-         * @return  identity ID of the identity. For new identity which is not
+         * @return  Identity ID of the identity. For new identity which is not
          * stored, NEW_IDENTITY is returned.
          */
         quint32 id() const;
@@ -138,24 +138,24 @@ namespace SignOn {
         void queryAvailableMethods();
 
         /*!
-         * Create new session for authentication. This will create connection
+         * Creates a new session for authentication. This creates a connection
          * to authentication plugin.
          * The Identity object is parent and owner of all created authentication sessions.
          *
-         * @param methodName name of authentication method to use
-         * @return new Authentication session or NULL if not able to create
+         * @param methodName Name of authentication method to use
+         * @return New authentication session or NULL if not able to create
          */
         AuthSessionP createSession(const QString &methodName);
 
         /*!
          * Destroys an authentication session.
          *
-         * @param session the session to be destroyed
+         * @param session Session to be destroyed
          */
         void destroySession(const AuthSessionP &session);
 
         /*!
-         * Request user to give new secret into database.
+         * Requests the user to give a new secret into database.
          * Client can use requestCredentialsUpdate() to launch external
          * dialog for asking new secret, that will be stored into database.
          * On success, a signal credentialsStored() is emitted.
@@ -167,12 +167,12 @@ namespace SignOn {
          *
          * @see credentialsStored()
          * @see Identity::error()
-         * @param message message to be shown for the user
+         * @param message Message to be shown for the user
          */
         void requestCredentialsUpdate(const QString &message = QString());
 
         /*!
-         * Store credential parameters for this authentication identity.
+         * Stores credential parameters for this authentication identity.
          * IdentityInfo contains restrictions on methods and mechanisms
          * for given Identity. @see IdentityInfo
          * On success, a signal credentialsStored() is emitted.
@@ -189,12 +189,12 @@ namespace SignOn {
          *
          * @see credentialsStored()
          * @see Identity::error()
-         * @param info the credentials to store
+         * @param info Credentials to store
          */
         void storeCredentials(const IdentityInfo &info = IdentityInfo());
 
         /*!
-         * Remove this identity from database.
+         * Removes this identity from database.
          * On success, a signal removed() is emitted
          * If the operation fails, a signal error() is emitted.
          * If removing fails, Error::type() is
@@ -208,7 +208,7 @@ namespace SignOn {
         void remove();
 
         /*!
-         * Add named reference to identity into database.
+         * Adds the named reference to identity into the database.
          * On success, a signal referenceAdded() is emitted
          * If the operation fails, a signal error() is emitted.
          * If referencing fails, Error::type() is
@@ -222,7 +222,7 @@ namespace SignOn {
         void addReference(const QString &reference = QString());
 
         /*!
-         * Remove named reference to identity from database.
+         * Removes a named reference to identity from the database.
          * On success, a signal referenceRemoved() is emitted
          * If the operation fails, a signal error() is emitted.
          * If dereferencing fails, Error::type() is
@@ -251,8 +251,8 @@ namespace SignOn {
         void queryInfo();
 
         /*!
-         * Get secret verification from user and compare it to stored secret.
-         * This will launch external dialog for asking secret.
+         * Gets a secret verification from the user and compares it to the stored secret.
+         * This launchs an external dialog for asking secret.
          * When verification is completed, signal userVerified() is emitted.
          * If the operation fails, a signal error() is emitted.
          * If user selects "Forgot Password"-sequence, Error::type() is
@@ -260,13 +260,13 @@ namespace SignOn {
          *
          * @see userVerified()
          * @see Identity::error()
-         * @param message message to be shown for the user
+         * @param message Message to be shown for the user
          */
         void verifyUser(const QString &message = QString());
 
         /*!
-         * Get secret verification from user and compare it to stored secret.
-         * This will launch external dialog for asking secret.
+         * Gets a secret verification from the user and compares it to the stored secret.
+         * This launchs an external dialog for asking secret.
          * When verification is completed, signal userVerified() is emitted.
          * If the operation fails, a signal error() is emitted.
          * If user selects "Forgot Password"-sequence, Error::type() is
@@ -274,25 +274,25 @@ namespace SignOn {
          *
          * @see userVerified()
          * @see Identity::error()
-         * @param params dialog customization parameters
+         * @param params Dialog customization parameters
          */
         void verifyUser(const QVariantMap &params);
 
         /*!
-         * Verify if given secret match stored secret.
-         * When verification is completed, signal secretVerified() is emitted.
+         * Verifies if the given secret match the stored secret.
+         * When verification is completed, a signal secretVerified() is emitted.
          * If the operation fails, a signal error() is emitted.
-         * If credentials are not stored, Error::type() is
+         * If the credentials are not stored, Error::type() is
          * Error::CredentialsNotAvailable.
          *
          * @see secretVerified()
          * @see Identity::error()
-         * @param secret string to be verified
+         * @param secret String to be verified
          */
         void verifySecret(const QString &secret);
 
          /*!
-         * Sign out Identity from all services. All authentication sessions using this Identity
+         * Signs out Identity from all services. All authentication sessions using this Identity
          * will be invalidated and all tokens cleared from cache.
          * When sign out is completed, signal signedOut() is emitted.
          * If the operation fails, a signal error() is emitted.
@@ -323,14 +323,14 @@ namespace SignOn {
          * Emitted when the list of available mechanisms has been obtained
          * for identity.
          *
-         * @param methods a list of available methods
+         * @param methods List of available methods
          */
         void methodsAvailable(const QStringList &methods);
 
         /*!
          * Emitted when credentials passed by storeCredentials() method
          * have been successfully stored on the service.
-         * @param id identifier of the credentials that has been stored
+         * @param id Identifier of the credentials that has been stored
          */
         void credentialsStored(const quint32 id);
 
@@ -350,29 +350,29 @@ namespace SignOn {
 
         /*!
          * Emitted when credentials passed by queryInfo() method
-         * @param info the credentials as have been stored on the service
+         * @param info Credentials as have been stored on the service
          */
         void info(const SignOn::IdentityInfo &info);
 
         /*!
-         * Emitted when user verification is completed.
-         * @param valid is given secret same as stored
+         * Emitted when the user verification is completed.
+         * @param valid Is the given secret same as stored
          */
         void userVerified(const bool valid);
 
         /*!
          * Emitted when secret verification is completed.
-         * @param valid is given secret same as stored
+         * @param valid Is the given secret same as stored
          */
         void secretVerified(const bool valid);
 
         /*!
-         * Emitted when identity is signed out.
+         * Emitted when the identity is signed out.
          */
         void signedOut();
 
         /*!
-         * Emitted when identity is removed.
+         * Emitted when the identity is removed.
          */
         void removed();
 

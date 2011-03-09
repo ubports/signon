@@ -75,65 +75,65 @@ namespace SignOn {
 
     public:
         /*!
-         * Create new empty IdentityInfo object.
+         * Creates a new empty IdentityInfo object.
          */
         IdentityInfo();
 
         /*!
-         * Copy constructor.
+         * Copy constructor
          */
         IdentityInfo(const IdentityInfo &other);
 
         /*!
-         * Assignment operator.
+         * Assignment operator
          */
         IdentityInfo &operator=(const IdentityInfo &other);
 
         /*!
-         * Create new IdentityInfo object with given values.
+         * Creates a new IdentityInfo object with given values.
          * @param caption Description of identity
-         * @param userName username
-         * @param methods allowed methods for identity
+         * @param userName Username
+         * @param methods Allowed methods for identity
          */
         IdentityInfo(const QString &caption, const QString &userName,
                      const QMap<MethodName,MechanismsList> &methods);
 
         /*!
-         * Destructor.
+         * Destructor
          */
         ~IdentityInfo();
 
         /*!
-          * Returns identity identifier.
-          * @return identifier for the identity.
+          * Returns the identity identifier.
+          * @return Identifier for the identity
           */
         quint32 id() const;
 
         /*!
-         * Sets the secret. When performing a challeng on the owner Identity object,
+         * Sets the secret. When performing a challenge on the owner Identity object,
          * if the secret is set on its corresponding IdentityInfo, it will be added
          * to the parameter list that is passed to the corresponding authentication plugin
          * challenge implementation. By default a newly created IdentityInfo does not contain
          * a secret and has a policy of not storing any. If the secret is set the default policy
-         * will be to store it. This behaviour can also be set with IdentityInfo::setStoreSecret()
+         * will be to store it. This behaviour can also be set with IdentityInfo::setStoreSecret().
          *
          * @see PluginInterface::secretKey
          * @see PluginInterface::challenge
          * @param secret
-         * @param storeSecret sets whether the secret is stored or not
+         * @param storeSecret Whether the secret is stored or not
          *
          */
         void setSecret(const QString &secret, const bool storeSecret = true);
 
         /*!
-          * Return whether secret is to be stored.
-         * @return true whether the secret is being stored or not.
+          * Returns whether secret is to be stored.
+         * @return true Whether the secret is being stored or not.
          */
         bool isStoringSecret() const;
 
         /*!
          * Sets whether the secret is stored or not.
-         * @param storeSecret whether the secret must be stored in the DB.
+         * @param storeSecret Whether the secret must be stored in the DB.
          */
         void setStoreSecret(const bool storeSecret);
 
@@ -141,25 +141,25 @@ namespace SignOn {
          * Sets the username.
          *
          * @see userNameKey
-         * @param userName
+         * @param userName Username
          */
         void setUserName(const QString &userName);
 
         /*!
-          * Return username.
-         * @return username for the identity.
+          * Returns the username.
+         * @return Username for the identity
          */
         const QString userName() const;
 
         /*!
-         * Set human readable caption of the identity
-         * @param caption
+         * Sets a human readable caption of the identity
+         * @param caption Caption
          */
         void setCaption(const QString &caption);
 
         /*!
-          * Return human-readable representation of the identity.
-         * @return human-readable representation of the identity.
+          * Returns a human-readable representation of the identity.
+         * @return Human-readable representation of the identity.
          */
         const QString caption() const;
 
@@ -167,7 +167,7 @@ namespace SignOn {
          * Sets the realms, e.g. URL's with which the Identity using this IdentityInfo
          * shall work with.
          *
-         * @param realms the list of the realms to be set.
+         * @param realms List of the realms to be set.
          */
         void setRealms(const QStringList &realms);
 
@@ -175,7 +175,7 @@ namespace SignOn {
          * Gets the realms, e.g. URL's with which the Identity using this IdentityInfo
          * works with.
          *
-         * @returns the list of supported realms.
+         * @return List of supported realms.
          */
         QStringList realms() const;
 
@@ -183,10 +183,10 @@ namespace SignOn {
          * Sets the list of access control application tokens, by this defining the applications
          * that will be able to access this specific set of credentials
          *
-         * @attention this list is to be set by the 1st application that stores the credentials
+         * @attention This list is to be set by the 1st application that stores the credentials
          * and will be editable by only the same application. Applications own token will be added into ACL automatically.
          *
-         * @param accessControlList list of access control tokens.
+         * @param accessControlList List of access control tokens
          */
         void setAccessControlList(const QStringList &accessControlList);
 
@@ -194,72 +194,72 @@ namespace SignOn {
          * Gets the list of access control application tokens defining the applications
          * that are able to access this specific set of credentials
          *
-         * @attention this is accessible only to the owner application.
+         * @attention This is accessible only to the owner application.
          *
-         * @returns the access control tokens which defines the applications allowed to access this set
+         * @return The access control tokens which defines the applications allowed to access this set
          * of credentials.
          */
         QStringList accessControlList() const;
 
         /*!
-         * Set method into identity info.
-         * If given method is not included, new will be added. If it is already set,
-         * then mechanism list assosiated to it is updated. Empty list will clear mechanisms.
-         * These values are used to limit Identity to use specified methods and mechanisms.
-         * @param method method name to change.
-         * @param mechanismsList list of mechanisms that are allowed.
+         * Sets the method into identity info.
+         * If the given method is not included, a new one will be added. If it is already set,
+         * the mechanism list assosiated to it is updated. an empty list will clear the mechanisms.
+         * These values are used to limit Identity to use the specified methods and mechanisms.
+         * @param method Method name to change
+         * @param mechanismsList list of mechanisms that are allowed
          */
         void setMethod(const MethodName &method, const MechanismsList &mechanismsList);
 
         /*!
-         * Remove method from identity info.
-         * @param method method name to remove.
+         * Removes a method from identity info.
+         * @param method Method name to remove
          */
         void removeMethod(const MethodName &method);
 
         /*!
-         * Set type into identity info.
+         * Sets the type into identity info.
          * The type is used to generically identify where this identity is being used.
          *
-         * @attention if this method is not called, the IdentityInfo type will default
-         * to SignOn::OtherIdentity
+         * @attention If this method is not called, the IdentityInfo type will default
+         * to SignOn::OtherIdentity.
          *
-         * @param type the type we want to assign to this IdentityInfo
+         * @param type Type we want to assign to this IdentityInfo
          */
         void setType(CredentialsType type);
 
         /*!
-         * Retrieve identity type from identity info.
-         * @returns the identity type for this IdentityInfo.
+         * Retrieves the identity type from identity info.
+         * @return The identity type for this IdentityInfo
          */
         CredentialsType type() const;
 
         /*!
-         * List all methods in identity info
-         * @return param method method name to remove.
+         * Lists all methods in identity info.
+         * @return Param method method name to remove.
          */
         QList<MethodName> methods() const;
 
         /*!
-         * List all mechanisms for certain method in identity info.
-         * @param method method name to list mechanisms.
-         * @return list of mechanisms.
+         * Lists the all mechanisms for certain method in identity info.
+         * @param method Method name to list mechanisms
+         * @return List of mechanisms
          */
         MechanismsList mechanisms(const MethodName &method) const;
 
         /*!
-         * Set refcount into identity info.
+         * Sets the refcount into identity info.
          * The type is used to generically identify where this identity is being used.
          *
          * @note Server can restrict changes to differ +-1 from previous.
          *
-         * @param refCount set refcount
+         * @param refCount Set refcount
          */
         void setRefCount(qint32 refCount);
 
         /*!
-         * Retrieve refcount from identity info.
-         * @returns the refcount for this IdentityInfo.
+         * Retrieves the refcount from identity info.
+         * @return Refcount for this IdentityInfo
          */
         qint32 refCount() const;
 
