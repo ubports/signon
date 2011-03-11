@@ -79,32 +79,32 @@ namespace RemotePluginProcessNS {
 
     bool RemotePluginProcess::loadPlugin(QString &type)
     {
-        TRACE() << __TIME__ << " loading auth library for " << type;
+        TRACE() << " loading auth library for " << type;
 
         QLibrary lib(getPluginName(type));
 
         if (!lib.load()) {
-            qCritical() << __TIME__ << QString("Failed to load %1 (reason: %2)")
+            qCritical() << QString("Failed to load %1 (reason: %2)")
                 .arg(getPluginName(type)).arg(lib.errorString());
             return false;
         }
 
-        TRACE() << __TIME__ <<  "library loaded";
+        TRACE() << "library loaded";
 
         typedef AuthPluginInterface* (*SsoAuthPluginInstanceF)();
         SsoAuthPluginInstanceF instance = (SsoAuthPluginInstanceF)lib.resolve("auth_plugin_instance");
         if (!instance) {
-            qCritical() << __TIME__ << QString("Failed to resolve init function in %1 (reason: %2)")
+            qCritical() << QString("Failed to resolve init function in %1 (reason: %2)")
                 .arg(getPluginName(type)).arg(lib.errorString());
             return false;
         }
 
-        TRACE() << __TIME__ << "constructor resolved";
+        TRACE() << "constructor resolved";
 
         m_plugin = qobject_cast<AuthPluginInterface *>(instance());
 
         if (!m_plugin) {
-            qCritical() << __TIME__ << QString("Failed to cast object for %1 type")
+            qCritical() << QString("Failed to cast object for %1 type")
                 .arg(type);
             return false;
         }
@@ -112,7 +112,7 @@ namespace RemotePluginProcessNS {
         if (!cancelThread)
             cancelThread = new CancelEventThread(m_plugin);
 
-        TRACE() << __TIME__ <<  "cancel thread started";
+        TRACE() << "cancel thread started";
 
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
@@ -134,7 +134,7 @@ namespace RemotePluginProcessNS {
 
         m_plugin->setParent(this);
 
-        TRACE() << __TIME__ << "plugin is fully initialized";
+        TRACE() << "plugin is fully initialized";
         return true;
     }
 
