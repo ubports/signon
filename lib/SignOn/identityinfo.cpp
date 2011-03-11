@@ -127,8 +127,6 @@ namespace SignOn {
         QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::*"));
         while ((index = impl->m_accessControlList.indexOf(aegisIdTokenPrefixRegExp, index)) != -1)
             impl->m_accessControlList.removeAt(index);
-
-        TRACE() << "Access control list set:" << impl->m_accessControlList;
     }
 
     QStringList IdentityInfo::accessControlList() const

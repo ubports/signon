@@ -281,8 +281,6 @@ namespace SignOn {
              << QVariant(info.accessControlList())
              << info.type();
 
-        TRACE() << args;
-
         bool result = sendRequest(__func__, args,
                                   SLOT(storeCredentialsReply(const quint32)));
         if (!result) {
@@ -500,7 +498,7 @@ namespace SignOn {
 
     void IdentityImpl::verifySecret(const QString &secret)
     {
-        TRACE() << "Verifying secret." << secret;
+        TRACE();
         checkConnection();
 
         switch (m_state) {

@@ -554,7 +554,6 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         } else {
             arguments << encodedData;
             rd.m_conn.send(rd.m_msg.createReply(arguments));
-            TRACE() << "sending reply: " << arguments;
         }
 
         m_canceled = QString();
@@ -736,8 +735,6 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
     } else {
         m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR, (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
     }
-
-    TRACE() << m_listOfRequests.head().m_params;
 
     if (m_listOfRequests.head().m_cancelKey != m_canceled) {
         if (isRequestToRefresh) {

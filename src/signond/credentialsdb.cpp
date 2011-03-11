@@ -593,14 +593,12 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
             "WHERE ACL.identity_id = '%1'").arg(id);
     query = exec(query_str);
     while (query.next()) {
-        TRACE() << query.value(0);
         QStringList mechanisms = queryList(
                 QString::fromLatin1("SELECT DISTINCT MECHANISMS.mechanism FROM "
                         "( MECHANISMS JOIN ACL "
                         "ON ACL.mechanism_id = MECHANISMS.id ) "
                         "WHERE ACL.method_id = '%1' AND ACL.identity_id = '%2' ")
                         .arg(query.value(0).toInt()).arg(id));
-            TRACE() << mechanisms; //TODO HERE
             methods.insert(query.value(1).toString(), mechanisms);
     }
     query.clear();
@@ -1186,7 +1184,6 @@ QVariantMap SecretsDB::loadData(quint32 id, quint32 method)
         QVariant data;
         stream >> data;
         result.insert(q.value(0).toString(), data);
-        TRACE() << "insert" << q.value(0).toString() << ", " << data ;
     }
     return result;
 }
@@ -1470,7 +1467,7 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
 bool CredentialsDB::storeData(const quint32 id, const QString &method,
                               const QVariantMap &data)
 {
-    TRACE() << "Storing:" << id << "," << method << "," << data;
+    TRACE() << "Storing:" << id << "," << method;
 
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(false);

@@ -259,7 +259,6 @@ namespace SignonDaemonNS {
         bool ok;
         SignonIdentityInfo info = queryInfo(ok, false);
 
-        TRACE() << info.serialize();
         if (!ok) {
             TRACE();
             replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
@@ -275,7 +274,6 @@ namespace SignonDaemonNS {
             return QList<QVariant>();
         }
 
-        TRACE() << "INFO as variant list:" << info.toVariantList();
         keepInUse();
         return info.toVariantList();
     }
@@ -348,7 +346,7 @@ namespace SignonDaemonNS {
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         if ((db == 0) || !db->removeCredentials(m_id)) {
-            TRACE() << "Error occurred while inserting/updating credemtials.";
+            TRACE() << "Error occurred while inserting/updating credentials.";
             replyError(SIGNOND_REMOVE_FAILED_ERR_NAME,
                        SIGNOND_REMOVE_FAILED_ERR_STR +
                        QLatin1String("Database error occurred."));
@@ -430,7 +428,6 @@ namespace SignonDaemonNS {
             m_pInfo->setType(type);
         }
 
-        TRACE() << m_pInfo->serialize();
         storeCredentials(*m_pInfo, storeSecret);
 
         if (m_id == SIGNOND_NEW_IDENTITY) {
@@ -493,8 +490,6 @@ namespace SignonDaemonNS {
             SIGNOND_BUS.send(errReply);
             return;
         }
-
-        TRACE() << resultParameters;
 
         if (!resultParameters.contains(SSOUI_KEY_ERROR)) {
             //no reply code
@@ -573,8 +568,6 @@ namespace SignonDaemonNS {
             SIGNOND_BUS.send(errReply);
             return;
         }
-
-        TRACE() << resultParameters;
 
         if (!resultParameters.contains(SSOUI_KEY_ERROR)) {
             //no reply code

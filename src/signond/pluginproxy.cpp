@@ -198,7 +198,7 @@ namespace SignonDaemonNS {
 
    bool PluginProxy::processUi(const QString &cancelKey, const QVariantMap &inData)
    {
-        TRACE() << inData;
+        TRACE();
 
         if (!restartIfRequired())
             return false;
@@ -218,7 +218,7 @@ namespace SignonDaemonNS {
 
    bool PluginProxy::processRefresh(const QString &cancelKey, const QVariantMap &inData)
    {
-        TRACE() << inData;
+        TRACE();
 
         if (!restartIfRequired())
             return false;
@@ -355,7 +355,7 @@ namespace SignonDaemonNS {
             if (!m_isResultObtained)
                 emit processResultReply(m_cancelKey, sessionDataMap);
             else
-                BLAME() << "Unexpected plugin response: " << sessionDataMap;
+                BLAME() << "Unexpected plugin response: ";
 
             m_isResultObtained = true;
         } else if (resultOperation == PLUGIN_RESPONSE_STORE) {
@@ -364,7 +364,7 @@ namespace SignonDaemonNS {
             if (!m_isResultObtained)
                 emit processStore(m_cancelKey, sessionDataMap);
             else
-                BLAME() << "Unexpected plugin store: " << sessionDataMap;
+                BLAME() << "Unexpected plugin store: ";
 
         } else if (resultOperation == PLUGIN_RESPONSE_UI) {
             TRACE() << "PLUGIN_RESPONSE_UI";
@@ -400,7 +400,7 @@ namespace SignonDaemonNS {
                     emit processUiRequest(m_cancelKey, sessionDataMap);
                 }
             } else {
-                BLAME() << "Unexpected plugin ui response: " << sessionDataMap;
+                BLAME() << "Unexpected plugin ui response: ";
             }
         } else if (resultOperation == PLUGIN_RESPONSE_REFRESHED) {
             TRACE() << "PLUGIN_RESPONSE_REFRESHED";
@@ -408,7 +408,7 @@ namespace SignonDaemonNS {
             if (!m_isResultObtained)
                 emit processRefreshRequest(m_cancelKey, sessionDataMap);
             else
-                BLAME() << "Unexpected plugin ui response: " << sessionDataMap;
+                BLAME() << "Unexpected plugin ui response: ";
         } else if (resultOperation == PLUGIN_RESPONSE_ERROR) {
             TRACE() << "PLUGIN_RESPONSE_ERROR";
             quint32 err;
@@ -446,7 +446,6 @@ namespace SignonDaemonNS {
     void PluginProxy::onReadStandardError()
     {
         QString ba = QString::fromLatin1(m_process->readAllStandardError());
-        TRACE() << ba;
     }
 
     void PluginProxy::onExit(int exitCode, QProcess::ExitStatus exitStatus)
