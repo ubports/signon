@@ -1487,8 +1487,8 @@ void SsoTestClient::queryAuthPluginACL()
     QVERIFY(errorSpy.count() == 0);
     QVERIFY(responseSpy.count() == 1);
 
-    QVERIFY(m_tokenList.count() == 2);
-    QVERIFY(m_tokenList.contains(AEGIS_TOKEN_2));
+    //AEGIS_TOKEN_5  is the only common token set between testclient and the tokens inserted in db
+    QVERIFY(m_tokenList.count() == 1);
     QVERIFY(m_tokenList.contains(AEGIS_TOKEN_5));
 
     TEST_DONE

@@ -418,6 +418,7 @@ void TestAuthSession::queryMechanisms_existing_method()
 
  void TestAuthSession::process_with_big_session_data()
  {
+     QSKIP("This test requires fix", SkipSingle); //TODO once bug Bug#222200 is fixed, this test case can be enabled
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
 

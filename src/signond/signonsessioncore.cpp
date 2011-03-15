@@ -363,6 +363,10 @@ void SignonSessionCore::startProcess()
                 QSet<QString> identityAclTokenSet = info.accessControlList().toSet();
                 QSet<QString> paramsTokenSet = clientTokenSet.intersect(identityAclTokenSet);
 
+                TRACE() << "client Token set" << clientTokenSet
+                        << "Info Acccess token set" << identityAclTokenSet
+                        << "Intersection token set" << paramsTokenSet;
+
                 if (!paramsTokenSet.isEmpty()) {
                     QStringList tokenList = paramsTokenSet.toList();
                     parameters[SSO_ACCESS_CONTROL_TOKENS] = tokenList;
