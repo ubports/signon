@@ -90,7 +90,7 @@ namespace SignonDaemonNS {
         if (db->errorOccurred())
             return ApplicationIsNotOwner;
 
-        if (!ownerToken.isNull())
+        if (ownerToken.isNull())
             return IdentityDoesNotHaveOwner;
 
         QStringList acl = accessTokens(peerContext);
