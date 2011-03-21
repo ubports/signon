@@ -129,15 +129,6 @@ public Q_SLOTS:
     QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
     bool clear();
 
-    /* Delayed reply calls */
-
-    // Interface method to set the device lock code
-    bool setDeviceLockCode(const QByteArray &lockCode,
-                           const QByteArray &oldLockCode);
-
-    // Interface method to drop the database
-    bool remoteLock(const QByteArray &lockCode);
-
 public Q_SLOTS: // backup METHODS
     uchar backupStarts();
     uchar backupFinished();
@@ -183,9 +174,7 @@ private:
      * */
 public:
     static void signalHandler(int signal);
-
-public Q_SLOTS:
-    void handleUnixSignal();
+    Q_INVOKABLE void handleUnixSignal();
 
 private:
     QSocketNotifier *m_sigSn;

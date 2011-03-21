@@ -55,13 +55,6 @@ namespace SignonDaemonNS {
         QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
         bool clear();
 
-        // Interface method to set the device lock code
-        bool setDeviceLockCode(const QByteArray &lockCode,
-                               const QByteArray &oldLockCode);
-
-        // Interface method to remote lock the database
-        bool remoteLock(const QByteArray &lockCode);
-
     private:
         void securityErrorReply(const char *failedMethodName);
 

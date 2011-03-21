@@ -675,27 +675,6 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString t
     return objectPath;
 }
 
-bool SignonDaemon::setDeviceLockCode(const QByteArray &lockCode,
-                                     const QByteArray &oldLockCode)
-{
-    /* TODO: remove this: it is just a temporary solution. The whole method
-     * should disappear once the harmattan System-ui starts using the new
-     * interface in the sim-dlc library.
-     */
-    BLAME() << "This method is deprecated";
-    Q_UNUSED(lockCode);
-    Q_UNUSED(oldLockCode);
-    return true;
-}
-
-bool SignonDaemon::remoteLock(const QByteArray &lockCode)
-{
-    Q_UNUSED(lockCode)
-    // TODO - implement this, research how to.
-    TRACE() << "remoteDrop:   lockCode = " << lockCode;
-    return false;
-}
-
 void SignonDaemon::eraseBackupDir() const
 {
     const CAMConfiguration config = m_configuration->camConfiguration();

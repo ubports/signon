@@ -29,14 +29,17 @@
     <method name="clear">
       <arg type="b" direction="out"/>
     </method>
-    <method name="setDeviceLockCode">
-      <arg type="b" direction="out"/>
-      <arg name="lockCode" type="ay" direction="in"/>
-      <arg name="oldLockCode" type="ay" direction="in"/>
+    <method name="backupStarts">
+      <arg type="y" direction="out"/>
     </method>
-    <method name="remoteLock">
-      <arg type="b" direction="out"/>
-      <arg name="lockCode" type="ay" direction="in"/>
+    <method name="backupFinished">
+      <arg type="y" direction="out"/>
+    </method>
+    <method name="restoreStarts">
+      <arg type="y" direction="out"/>
+    </method>
+    <method name="restoreFinished">
+      <arg type="y" direction="out"/>
     </method>
   </interface>
 </node>
