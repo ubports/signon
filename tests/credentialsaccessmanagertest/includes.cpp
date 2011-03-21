@@ -29,5 +29,6 @@
 #include "cryptohandlers.cpp"
 #include "cryptomanager.cpp"
 #include "signonidentityinfo.cpp"
+#include "signonui_interface.cpp"
 
 #endif //_EXTERNAL_INCLUDED_
