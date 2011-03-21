@@ -33,15 +33,61 @@
 
 #include "credentialsdb.h"
 #include "cryptomanager.h"
+#include "signonui_interface.h"
 
 #include <QObject>
+#include <QPointer>
 #include <SignOn/AbstractKeyManager>
 
+/*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
+    Use this event type to signal the CAM when the secure storage is
+    not available. CAM can also reply with a event of this type
+    if it doesn't manage to resolve the secure storage access.
+    @sa SecureStorageEvent
+*/
+#define SIGNON_SECURE_STORAGE_NOT_AVAILABLE (QEvent::User + 1001)
+
+/*! @def SIGNON_SECURE_STORAGE_AVAILABLE
+    The CAM will reply with an event of this type when
+    the secure storage access will be successfully resolved.
+    @sa SecureStorageEvent
+*/
+#define SIGNON_SECURE_STORAGE_AVAILABLE (QEvent::User + 1002)
+
 /**
- * Manager access to the Credentials DB - synchronized singletone available everywhere in
+ * Manager access to the Credentials DB - synchronized singleton available everywhere in
  * the Authentication Core module.
  */
 namespace SignonDaemonNS {
+
+/*!
+    @typedef EventSender Guarded pointer for event sending objects.
+ */
+typedef QPointer<QObject> EventSender;
+
+/*!
+    @class SecureStorageEvent
+    Any object in the signon framework that needs the
+    CredentialsAccessManager - CAM -  secure storage in order
+    to function properly can signal this event to the CAM.
+    The object posting this event should reimplement the
+    QObject::customEvent(QEvent *event) method and handle response
+    events of the same type coming from the CAM upon success/failure
+    in resolving access to the secure storage.
+    @sa SIGNON_SECURE_STORAGE_NOT_AVAILABLE
+    @sa SIGNON_SECURE_STORAGE_AVAILABLE
+ */
+class SecureStorageEvent : public QEvent
+{
+public:
+
+    SecureStorageEvent(QEvent::Type type)
+        : QEvent(type),
+          m_sender(0)
+    {}
+
+    EventSender m_sender;    /*! << The sender object of the event. */
+};
 
 /*!
     @class CAMConfiguration
@@ -127,6 +173,28 @@ class CredentialsAccessManager : public QObject
     */
     CredentialsAccessManager(QObject *parent = 0);
 
+    /*!
+       @enum KeySwapAuthorizingMech
+       Core key authorization is performed through key swapping mechanisms.
+       This feature becomes available when the number of inserted authorized keys
+       reaches `0`.
+       - If the mechanism is `Disabled`, signon core will attemp authorizing keys
+       only through available AbstractKeyManager implementations that support
+       key authorization.
+       - If the mechanism is `AuthorizedKeyRemovedFirst`, signon core will attempt
+       authorization of a newly inserted key using its internal already authorized
+       keys collection.
+       - If the mechanism is `UnauthorizedKeyRemovedFirst`, signon core will attempt
+       authorization of a previously disabled unauthorized key, if the last physically
+       inserted key is already authorized. In this case the disabled unauthorized
+       key was cached when disabled, prior to its authorization.
+     */
+    enum KeySwapAuthorizingMech {
+        Disabled = 0,               /**< Signon core does not authorize keys. */
+        AuthorizedKeyRemovedFirst,  /**< The key swap order is as suggested. */
+        UnauthorizedKeyRemovedFirst /**< The key swap order is as suggested. */
+    };
+
 public:
 
     /*!
@@ -198,12 +266,19 @@ public:
     */
     bool deleteCredentialsSystem();
 
-
     /*!
       For convenience method.
       @returns true if the credentials system is opened, false otherwise.
     */
     bool credentialsSystemOpened() const { return m_systemOpened; }
+
+    /*!
+      The creadentials system is ready when all of the subscribed key managers
+      have successfully reported all of the inserted keys. The credentials
+      system can be ready while at the same time the secure storage is not opened.
+      @returns true if the credentials system is ready, false otherwise.
+    */
+    bool credentialsSystemReady() const { return m_systemReady; }
 
     /*!
       @returns the credentials database object.
@@ -222,42 +297,28 @@ public:
     CredentialsAccessError lastError() const { return m_error; }
 
     /*!
-      Add an encryption key to one of the available keyslots for the encrypted storage.
-      @param key The key to be added.
-      @param existingKey An already existing key.
-      @returns true, if succeeded, false otherwise.
+      The CAM manages the encryption keys collection.
+      For convenience method.
+      @returns whether the CAM detected any encryption keys or not.
     */
-    bool setMasterEncryptionKey(const QByteArray &newKey,
-                                const QByteArray &existingKey);
+    bool keysAvailable() const;
 
+Q_SIGNALS:
     /*!
-      Checks if a slave encryption key is being buffered.
-      This usually happens while the Signon daemon is querying
-      the user for the master key.
-      @return true if a slave encryption key is being buffered, false otherwise.
+      Is emitted when the credentials system becomes ready.
     */
-    bool encryptionKeyPendingAddition() const;
-
-    /*!
-      Stores the buffered slave encryption key.
-      @param masterKey The master key of the encrypted partition header.
-      @returns true if the storing is successful, false otherwise.
-    */
-    bool storeEncryptionKey(const QByteArray &masterKey);
-
-    /*!
-      Locks the secure storage.
-      @param lockKey The key for locking the secure storage.
-      @todo Figure this out.
-      @returns true, if succeeded, false otherwise.
-    */
-    bool lockSecureStorage(const QByteArray &lockKey);
+    void credentialsSystemReadySignal();
 
 private Q_SLOTS:
     void onKeyInserted(const SignOn::Key key);
     void onKeyDisabled(const SignOn::Key key);
     void onKeyRemoved(const SignOn::Key key);
     void onKeyAuthorized(const SignOn::Key key, bool authorized);
+    void onClearPasswordsStorage();
+    void onSecureStorageUiClosed();
+
+protected:
+    void customEvent(QEvent *event);
 
 private:
     // 1st time start - deploys the database.
@@ -268,27 +329,77 @@ private:
     bool openMetaDataDB();
     void closeMetaDataDB();
     bool fileSystemDeployed();
-    bool fetchAccessCode(uint timeout = 30);
+    void queryEncryptionKeys();
+    void replyToSecureStorageEventNotifiers();
+    bool processSecureStorageEvent();
 
     /*!
-     * Checks if the key can mount the file system. If it can, the file system
-     * is also mounted.
+     * Checks if the key can open the secure storage. If it can, the file system
+     * is also mounted and the secrets' storage is opened.
      */
-    bool encryptionKeyCanMountFS(const QByteArray &key);
+    bool encryptionKeyCanOpenStorage(const QByteArray &key);
+
+    /*!
+      Checks if core ecryption key authorizing is enabled using a specific
+      key swap authorizing mechanism.
+      @param mech The mechanism to be checked.
+      @returns true if the specific mechanism is enabled, false if otherwise
+               or no mechanism is enabled at all. This method will always return
+               false if `mech` is `KeySwapAuthorizingMech::Disabled`.
+    */
+    bool coreKeyAuthorizingEnabled(const KeySwapAuthorizingMech mech) const;
+
+    /*!
+      Sets the core encryption key authorization mechanism.
+      @param mech The authorization mechanism.
+    */
+    void setCoreKeyAuthorizationMech(const KeySwapAuthorizingMech mech);
 
 private:
     static CredentialsAccessManager *m_pInstance;
 
     bool m_isInitialized;
-    bool m_accessCodeFetched;
     bool m_systemOpened;
+    /* Flag indicating whether the system is ready or not.
+     * Currently the system is ready when all of the key managers have
+     * successfully reported all of the inserted keys. */
+    bool m_systemReady;
     mutable CredentialsAccessError m_error;
     QList<SignOn::AbstractKeyManager *> keyManagers;
-    QList<SignOn::Key> authorizedKeys;
 
-    CredentialsDB *m_pCredentialsDB; // make this a QSharedPointer
+    /* Counter for the key managers that are ready
+     * - have signaled at least one key (can be empty).
+     * This helps in computing when the CAM is ready;
+     * see also credentialsSystemReady(). */
+    int readyKeyManagersCounter;
+
+    /* Collection of authorized keys, gathered through the lifetime of the
+     * signond process. */
+    QList<SignOn::Key> authorizedKeys;
+    /* Collection of physically inserted keys at a specific runtime moment. */
+    QList<SignOn::Key> insertedKeys;
+
+    /* Flag indicating if the CAM is in the middle of processing
+     * a secure storage event. */
+    bool processingSecureStorageEvent;
+    /* This member will cache the lastly disabled unauthorized
+     * key. The cached key will be cleared if any secure storage UI
+     * disaplyed at its removal time is closed by the user.
+     * Check the KeySwapAuthorizingMech::UnauthorizedKeyRemovedFirst
+     * documentation for additional details. */
+    QByteArray cachedUnauthorizedKey;
+
+    /* Check the KeySwapAuthorizingMech definitions' documentation. */
+    KeySwapAuthorizingMech keySwapAuthorizingMechanism;
+
+    CredentialsDB *m_pCredentialsDB;
     CryptoManager *m_pCryptoFileSystemManager;
     CAMConfiguration m_CAMConfiguration;
+
+    /* List of all the senders of a SecureStorageEvent. */
+    QList<EventSender> m_secureStorageEventNotifiers;
+
+    SignonSecureStorageUiAdaptor *m_secureStorageUiAdaptor;
 };
 
 } //namespace SignonDaemonNS

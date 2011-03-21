@@ -96,13 +96,17 @@ CredentialsAccessManager *CredentialsAccessManager::m_pInstance = NULL;
 CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
         : QObject(parent),
           m_isInitialized(false),
-          m_accessCodeFetched(false),
           m_systemOpened(false),
+          m_systemReady(false),
           m_error(NoError),
           keyManagers(),
+          readyKeyManagersCounter(0),
+          processingSecureStorageEvent(false),
+          keySwapAuthorizingMechanism(Disabled),
           m_pCredentialsDB(NULL),
           m_pCryptoFileSystemManager(NULL),
-          m_CAMConfiguration(CAMConfiguration())
+          m_CAMConfiguration(CAMConfiguration()),
+          m_secureStorageUiAdaptor(NULL)
 {
 }
 
@@ -129,7 +133,10 @@ void CredentialsAccessManager::finalize()
     if (m_pCryptoFileSystemManager)
         delete m_pCryptoFileSystemManager;
 
-    m_accessCodeFetched = false;
+    // Disconnect all key managers
+    foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
+        keyManager->disconnect();
+
     m_isInitialized = false;
     m_error = NoError;
 }
@@ -166,9 +173,11 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
             connect(keyManager,
                     SIGNAL(keyRemoved(const SignOn::Key)),
                     SLOT(onKeyRemoved(const SignOn::Key)));
-            connect(keyManager,
-                    SIGNAL(keyAuthorized(const SignOn::Key, bool)),
-                    SLOT(onKeyAuthorized(const SignOn::Key, bool)));
+            if (keyManager->supportsKeyAuthorization()) {
+                connect(keyManager,
+                        SIGNAL(keyAuthorized(const SignOn::Key, bool)),
+                        SLOT(onKeyAuthorized(const SignOn::Key, bool)));
+            }
             keyManager->setup();
         }
     }
@@ -297,8 +306,9 @@ bool CredentialsAccessManager::closeCredentialsSystem()
     if (!credentialsSystemOpened())
         return true;
 
-    if (!closeSecretsDB())
+    if (isSecretsDBOpen() && !closeSecretsDB())
         return false;
+
     closeMetaDataDB();
 
     m_error = NoError;
@@ -331,43 +341,6 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
     return m_error == NoError;
 }
 
-bool CredentialsAccessManager::setMasterEncryptionKey(const QByteArray &newKey,
-                                                      const QByteArray &existingKey)
-{
-    if (!m_CAMConfiguration.m_useEncryption)
-        return false;
-
-    /* Clear this for security reasons - SIM data must not be stored
-       using an deprecated master key
-    */
-    m_CAMConfiguration.m_encryptionPassphrase.clear();
-
-    if (!encryptionKeyCanMountFS(existingKey)) {
-        BLAME() << "Existing lock code check failed.";
-        return false;
-    }
-
-    if (!m_pCryptoFileSystemManager->addEncryptionKey(
-            newKey, existingKey)) {
-        BLAME() << "Failed to add new device lock code.";
-        return false;
-    }
-
-    if (!m_pCryptoFileSystemManager->removeEncryptionKey(existingKey, newKey)) {
-        BLAME() << "Failed to remove old device lock code.";
-        return false;
-    }
-
-    return true;
-}
-
-bool CredentialsAccessManager::lockSecureStorage(const QByteArray &lockData)
-{
-    // TODO - implement this, research how to.
-    Q_UNUSED(lockData)
-    return false;
-}
-
 CredentialsDB *CredentialsAccessManager::credentialsDB() const
 {
     RETURN_IF_NOT_INITIALIZED(NULL);
@@ -391,96 +364,153 @@ bool CredentialsAccessManager::fileSystemDeployed()
     return QFile::exists(m_pCryptoFileSystemManager->fileSystemPath());
 }
 
-bool CredentialsAccessManager::encryptionKeyCanMountFS(const QByteArray &key)
+bool CredentialsAccessManager::encryptionKeyCanOpenStorage(const QByteArray &key)
 {
     if (!fileSystemDeployed()) {
-        TRACE() << "Secure FS not deployed";
-        return false;
+        TRACE() << "Secure FS not deployed, deploying now...";
+        m_pCryptoFileSystemManager->setEncryptionKey(key);
+
+        if (!deployCredentialsSystem()) {
+            BLAME() << "Could not deploy encrypted file system.";
+            return false;
+        }
     }
 
     if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
-        TRACE() << "SIM data already in use.";
-        if (m_pCryptoFileSystemManager->fileSystemMounted()) {
-
-            m_pCryptoFileSystemManager->setEncryptionKey(key);
-
-            if (!isSecretsDBOpen()) {
-                if (openSecretsDB()) {
-                    TRACE() << "Credentials system opened.";
-                } else {
-                    BLAME() << "Failed to open credentials system.";
-                }
+        TRACE() << "Key already in use.";
+        if (!isSecretsDBOpen()) {
+            if (openSecretsDB()) {
+                TRACE() << "Secrets DB opened.";
             } else {
-                TRACE() << "Credentials system already opened.";
+                BLAME() << "Failed to open secrets DB.";
             }
+        } else {
+            TRACE() << "Secrets DB already opened.";
         }
+
         return true;
-    } else {
-        return false;
     }
+
+    return false;
 }
 
 void CredentialsAccessManager::onKeyInserted(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key.toHex();
+    TRACE() << "Key inserted.";
+
+    if (!m_systemReady) {
+        /* Check that at least one non empty key was signaled or if not so,
+         * that all key managers have signaled at least one key. */
+        ++readyKeyManagersCounter;
+        if (!key.isEmpty() || (readyKeyManagersCounter == keyManagers.count())) {
+            m_systemReady = true;
+            emit credentialsSystemReadySignal();
+        }
+    }
 
     if (key.isEmpty()) return;
+
+    //Close the secure storage UI 1st
+    if (m_secureStorageUiAdaptor)
+        m_secureStorageUiAdaptor->closeUi();
+
+    insertedKeys.append(key);
 
     /* The `key in use` check will attempt to mount using the new key if
        the file system is not already mounted
     */
-    if (encryptionKeyCanMountFS(key)) {
-        TRACE() << "SIM data already in use.";
-        authorizedKeys << key;
+    if (encryptionKeyCanOpenStorage(key)) {
+        TRACE() << "Key already in use.";
+        if (!authorizedKeys.contains(key))
+            authorizedKeys << key;
+
+        if (coreKeyAuthorizingEnabled(UnauthorizedKeyRemovedFirst))
+            onKeyAuthorized(cachedUnauthorizedKey, true);
+
         return;
     }
 
-    /* We got here because the inserted key is totally new to the CAM.
-     * Let's see if any key manager wants to authorize it: we call
-     * authorizeKey() on each of them, and continue processing the key when
-     * the keyAuthorized() signal comes.
-     */
-    foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
-        keyManager->authorizeKey(key);
+    if (coreKeyAuthorizingEnabled(AuthorizedKeyRemovedFirst)) {
+        onKeyAuthorized(key, true);
+    } else {
+        /* We got here because the inserted key is totally new to the CAM
+         * and the core key authizing mechanisms were disabled.
+         * Let's see if any key manager wants to authorize it: we call
+         * authorizeKey() on each of the key mangers that support
+         * authorizing keys, and continue processing the key when
+         * the keyAuthorized() signal comes.
+         */
+        foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
+            if (keyManager->supportsKeyAuthorization())
+                keyManager->authorizeKey(key);
+        }
     }
 }
 
 void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key.toHex();
+    TRACE() << "Key disabled.";
 
-    if (authorizedKeys.removeAll(key) == 0) {
-        TRACE() << "Key was already disabled";
-        return;
-    }
+    insertedKeys.removeAll(key);
 
-    if (authorizedKeys.isEmpty()) {
-        TRACE() << "All keys removed, closing secure storage.";
-        if (isSecretsDBOpen())
+    /* If no inserted keys left, enable the suitable core key authorizing
+     * mechanism and close the secure storage. */
+    if (insertedKeys.isEmpty()) {
+        if (processingSecureStorageEvent) {
+            /* If while processing a secure storage event, cache the disabled
+             * key if it was unauthorized and enable the
+             * `UnauthorizedKeyRemovedFirst` mechanism. */
+            if (!authorizedKeys.contains(key)) {
+                setCoreKeyAuthorizationMech(UnauthorizedKeyRemovedFirst);
+                cachedUnauthorizedKey = key;
+            }
+        } else  if (authorizedKeys.contains(key)) {
+            /* If the last disabled key was an authorized one enable the
+               `AuthorizedKeyRemovedFirst` mechanism and notify the user. */
+            TRACE() << "All inserted keys disabled, notifying user.";
+            if (m_secureStorageUiAdaptor == 0) {
+                m_secureStorageUiAdaptor =
+                    new SignonSecureStorageUiAdaptor(
+                        SIGNON_UI_SERVICE,
+                        SIGNON_UI_DAEMON_OBJECTPATH,
+                        SIGNOND_BUS);
+            }
+
+            connect(m_secureStorageUiAdaptor,
+                    SIGNAL(uiClosed()),
+                    SLOT(onSecureStorageUiClosed()));
+            connect(m_secureStorageUiAdaptor,
+                    SIGNAL(error()),
+                    SLOT(onSecureStorageUiClosed()));
+
+            m_secureStorageUiAdaptor->notifyNoKeyPresent();
+            setCoreKeyAuthorizationMech(AuthorizedKeyRemovedFirst);
+        }
+
+        TRACE() << "All keys disabled. Closing secure storage.";
+        if (isSecretsDBOpen() || m_pCryptoFileSystemManager->fileSystemMounted())
             if (!closeSecretsDB())
                 BLAME() << "Error occurred while closing secure storage.";
 
         TRACE() << "Querying for keys.";
-        foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
-            keyManager->queryKeys();
-        }
+        queryEncryptionKeys();
     }
 }
 
 void CredentialsAccessManager::onKeyRemoved(const SignOn::Key key)
 {
-    TRACE() << "Key:" << key.toHex();
+    TRACE() << "Key removed.";
 
     // Make sure the key is disabled:
     onKeyDisabled(key);
 
-    if (!encryptionKeyCanMountFS(key)) {
-        TRACE() << "Key is not known to the CryptoManager.";
+    if (authorizedKeys.isEmpty()) {
+        BLAME() << "Cannot remove key: no authorized keys";
         return;
     }
 
-    if (authorizedKeys.isEmpty()) {
-        BLAME() << "Cannot remove key: no authorized keys";
+    if (!encryptionKeyCanOpenStorage(key)) {
+        TRACE() << "Key is not known to the CryptoManager.";
         return;
     }
 
@@ -495,14 +525,29 @@ void CredentialsAccessManager::onKeyRemoved(const SignOn::Key key)
 void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
                                                bool authorized)
 {
-    TRACE() << "Key:" << key.toHex() << "Authorized:" << authorized;
+    TRACE() << "Key authorized:" << authorized;
 
-    if (!authorized) return;
+    if (!authorized || key.isEmpty()) return;
 
-    if (encryptionKeyCanMountFS(key)) {
+    if (encryptionKeyCanOpenStorage(key)) {
         TRACE() << "Encryption key already in use.";
-        authorizedKeys << key;
+        if (!authorizedKeys.contains(key))
+            authorizedKeys << key;
+
         return;
+    }
+
+    /* Make sure that the secure file system is mounted, so that the key `key`
+     * can be successfully authorized by the encryption backend.
+     */
+    if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
+
+        m_pCryptoFileSystemManager->setEncryptionKey(authorizedKeys.first());
+        if (openSecretsDB()) {
+            TRACE() << "Secrets DB opened.";
+        } else {
+            BLAME() << "Failed to open secrets DB.";
+        }
     }
 
     if (m_pCryptoFileSystemManager->fileSystemMounted()) {
@@ -520,18 +565,226 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
         } else {
             BLAME() << "Could not store encryption key.";
         }
+
+        /* If the key was authorized through the `UnauthorizedKeyRemovedFirst`
+         * mechanism notify the user. */
+        if (coreKeyAuthorizingEnabled(UnauthorizedKeyRemovedFirst)) {
+            //Notify only if indeed key was authorized
+            if (m_secureStorageUiAdaptor && authorizedKeys.contains(key))
+                m_secureStorageUiAdaptor->notifyKeyAuthorized();
+
+            //reset secure storage ui related data
+            onSecureStorageUiClosed();
+        }
     } else if (!fileSystemDeployed()) {
         /* if the secure FS does not exist, create it and use this new key to
          * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);
-        m_accessCodeFetched = true;
-        if (openSecretsDB()) {
+        if (openSecretsDB() && !authorizedKeys.contains(key)) {
             authorizedKeys << key;
         } else {
             BLAME() << "Couldn't create the secure FS";
         }
-    } else {
-        BLAME() << "Secure FS already created with another set of keys";
+    } else  {
+        TRACE() << "Secure FS already created with another set of keys.";
     }
 }
 
+void CredentialsAccessManager::queryEncryptionKeys()
+{
+    /* TODO extend the KeyManager interface to specify if querying or authorizing
+     *      keys implies the usage of a UI, and implement a Publish/subscribe
+     *      serialized/chained pattern to remove the possibility of displaying
+     *      multiple UIs at once. */
+    foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
+        keyManager->queryKeys();
+}
+
+bool CredentialsAccessManager::keysAvailable() const
+{
+    return insertedKeys.count() > 0;
+}
+
+void
+CredentialsAccessManager::setCoreKeyAuthorizationMech(
+    const KeySwapAuthorizingMech mech)
+{
+    keySwapAuthorizingMechanism = mech;
+}
+
+bool
+CredentialsAccessManager::coreKeyAuthorizingEnabled(
+    const KeySwapAuthorizingMech mech) const
+{
+    /* All flags/values checked in this method are subject to
+     * change based on secure storage UI user actions, or based
+     * on physically inserting/removing keys without any prior
+     * secure storage UI user actions. */
+
+    /* Always return false if the internal mechanism is disabled. */
+    if (keySwapAuthorizingMechanism == Disabled)
+        return false;
+
+    /* If key swapping is:
+     *      1) Remove authorized key
+     *      2) Insert unauthorized key */
+    if (mech == AuthorizedKeyRemovedFirst)
+        return keySwapAuthorizingMechanism == AuthorizedKeyRemovedFirst;
+
+    /* If key swapping is:
+     *      1) Remove unauthorized key
+     *      2) Insert authorized key */
+    if (mech == UnauthorizedKeyRemovedFirst)
+        return (keySwapAuthorizingMechanism == UnauthorizedKeyRemovedFirst)
+               && (!cachedUnauthorizedKey.isEmpty());
+}
+
+void CredentialsAccessManager::onClearPasswordsStorage()
+{
+    if (insertedKeys.isEmpty()) {
+        TRACE() << "No keys available. The reformatting of the secure storage skipped.";
+        onSecureStorageUiClosed();
+        return;
+    }
+
+    TRACE() << "Reformatting secure storage.";
+
+    /* Here we use the 1st inserted unauthorized key for storage reformatting.
+     * This key was present before the emitting of the secure storage event that
+     * lead to the UI decision to reformat the passwords storage. */
+    m_pCryptoFileSystemManager->setEncryptionKey(insertedKeys.first());
+    if (m_pCryptoFileSystemManager->setupFileSystem()) {
+        authorizedKeys.clear();
+        authorizedKeys << insertedKeys.first();
+
+        if (!openSecretsDB())
+            BLAME() << "Couldn't open secreds DB.";
+
+        if (m_secureStorageUiAdaptor) {
+            m_secureStorageUiAdaptor->notifyStorageCleared();
+        }
+
+    } else {
+        BLAME() << "Failed to reformat secure storage file system.";
+    }
+
+    onSecureStorageUiClosed();
+}
+
+void CredentialsAccessManager::onSecureStorageUiClosed()
+{
+    TRACE();
+    cachedUnauthorizedKey.clear();
+    setCoreKeyAuthorizationMech(Disabled);
+
+    if (m_secureStorageUiAdaptor) {
+        delete m_secureStorageUiAdaptor;
+        m_secureStorageUiAdaptor = 0;
+    }
+
+    if (processingSecureStorageEvent) {
+        processingSecureStorageEvent = false;
+        replyToSecureStorageEventNotifiers();
+    }
+}
+
+void CredentialsAccessManager::replyToSecureStorageEventNotifiers()
+{
+    TRACE();
+    //Notify secure storage notifiers if any.
+    int eventType = SIGNON_SECURE_STORAGE_NOT_AVAILABLE;
+    if (m_pCredentialsDB->isSecretsDBOpen())
+        eventType = SIGNON_SECURE_STORAGE_AVAILABLE;
+
+    // Signal objects that posted secure storage not available events
+    foreach (EventSender object, m_secureStorageEventNotifiers) {
+        if (object.isNull())
+            continue;
+
+        SecureStorageEvent *secureStorageEvent =
+            new SecureStorageEvent((QEvent::Type)eventType);
+
+        QCoreApplication::postEvent(
+            object.data(),
+            secureStorageEvent,
+            Qt::HighEventPriority);
+    }
+
+    m_secureStorageEventNotifiers.clear();
+}
+
+bool CredentialsAccessManager::processSecureStorageEvent()
+{
+    /* If keys have been inserted but none authorized notify the signon UI.
+     * If keys are not present at all - the scenario is not handled
+     * by this event hander, as Signon UI was already informed about
+     * this in the creadentials query dilog display context. */
+    if (!insertedKeys.isEmpty()) {
+        TRACE() << "Secure Storage not available notifying user.";
+        if (m_secureStorageUiAdaptor == 0) {
+            m_secureStorageUiAdaptor =
+                new SignonSecureStorageUiAdaptor(
+                    SIGNON_UI_SERVICE,
+                    SIGNON_UI_DAEMON_OBJECTPATH,
+                    SIGNOND_BUS);
+        }
+
+        connect(m_secureStorageUiAdaptor,
+                SIGNAL(clearPasswordsStorage()),
+                SLOT(onClearPasswordsStorage()));
+        connect(m_secureStorageUiAdaptor,
+                SIGNAL(uiClosed()),
+                SLOT(onSecureStorageUiClosed()));
+        connect(m_secureStorageUiAdaptor,
+                SIGNAL(error()),
+                SLOT(onSecureStorageUiClosed()));
+
+        m_secureStorageUiAdaptor->notifyNoAuthorizedKeyPresent();
+        processingSecureStorageEvent = true;
+        return true;
+    }
+    return false;
+}
+
+
+void CredentialsAccessManager::customEvent(QEvent *event)
+{
+    TRACE() << "Custom event received.";
+    if (event->type() != SIGNON_SECURE_STORAGE_NOT_AVAILABLE) {
+        QObject::customEvent(event);
+        return;
+    }
+
+    SecureStorageEvent *localEvent =
+        static_cast<SecureStorageEvent *>(event);
+
+    /* All senders of this event will receive a reply when
+     * the secure storage becomes available or an error occurs. */
+    m_secureStorageEventNotifiers.append(localEvent->m_sender);
+
+    TRACE() << "Processing secure storage not available event.";
+    if ((localEvent == 0) || (m_pCredentialsDB == 0)) {
+        replyToSecureStorageEventNotifiers();
+        QObject::customEvent(event);
+        return;
+    }
+
+    //Double check if the secrets DB is indeed unavailable
+    if (m_pCredentialsDB->isSecretsDBOpen()) {
+        replyToSecureStorageEventNotifiers();
+        QObject::customEvent(event);
+        return;
+    }
+
+    if (!processingSecureStorageEvent) {
+        if (!processSecureStorageEvent()) {
+            /* If by any chance the event wasn't properly processed
+             * reply immediately. */
+            replyToSecureStorageEventNotifiers();
+        }
+    } else {
+        TRACE() << "Already processing a secure storage not available event.";
+    }
+
+    QObject::customEvent(event);
+}
