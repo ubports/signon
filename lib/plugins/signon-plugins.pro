@@ -9,7 +9,8 @@ CONFIG += static
 HEADERS = \
     SignOn/authpluginif.h \
     SignOn/uisessiondata.h \
-    SignOn/uisessiondata_priv.h
+    SignOn/uisessiondata_priv.h \
+    SignOn/securestorageui.h
 
 headers.files = \
     SignOn/AuthPluginInterface \
@@ -17,7 +18,8 @@ headers.files = \
     SignOn/signonplugincommon.h \
     SignOn/UiSessionData \
     SignOn/uisessiondata.h \
-    SignOn/uisessiondata_priv.h
+    SignOn/uisessiondata_priv.h \
+    SignOn/securestorageui.h
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
