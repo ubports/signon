@@ -32,7 +32,8 @@ HEADERS += \
     signonidentityinfo.h \
     signonui_interface.h \
     signonidentityadaptor.h \
-    backupifadaptor.h
+    backupifadaptor.h \
+    signonsessioncoretools.h
 SOURCES += \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
@@ -51,7 +52,8 @@ SOURCES += \
     signondaemon.cpp \
     signonidentityinfo.cpp \
     signonidentityadaptor.cpp \
-    backupifadaptor.cpp
+    backupifadaptor.cpp \
+    signonsessioncoretools.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
@@ -76,7 +78,8 @@ DEFINES += QT_NO_CAST_TO_ASCII \
 DEFINES += SIGNOND_TRACE
 LIBS += -lcreds \
     -lcryptsetup \
-    -lsignon-plugins-common
+    -lsignon-plugins-common \
+    -lsignon-extension
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h
