@@ -54,4 +54,11 @@
 #define SSOUI_KEY_SLOT_REJECT  "reject"
 #define SSOUI_KEY_SLOT_REFRESH "refresh"
 
+#define SSOUI_KEY_STORAGE_KEYS_UNAVAILABLE \
+    QLatin1String("SecStorageKeysUnavailable")
+
+#define SSOUI_KEY_UNABLE_TO_QUERY_STORAGE_KEYS \
+    QLatin1String("SecStorageUnableQueryKeys")
+
+
 #endif /* UISESSIONDATA_PRIV_H */
