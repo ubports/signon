@@ -276,7 +276,6 @@ namespace SignonDaemonNS {
         options.icb = &cmd_icb;
 
         TRACE() << "Device: [" << options.device << "]";
-        TRACE() << "Key:" << key;
         TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksFormat(&options);
@@ -334,7 +333,6 @@ namespace SignonDaemonNS {
 
         TRACE() << "Device [" << options.device << "]";
         TRACE() << "Map name [" << options.name << "]";
-        TRACE() << "Key:" << key.toHex();
         TRACE() << "Key size:" << key.length();
 
         int ret = crypt_luksOpen(&options);
@@ -464,9 +462,6 @@ namespace SignonDaemonNS {
         cmd_icb.yesDialog = yesDialog;
         cmd_icb.log = cmdLineLog;
         options.icb = &cmd_icb;
-
-        TRACE() << "Key to be deleted:" << key.toHex()
-                << ", Remaining key:" << remainingKey.toHex();
 
         int ret = crypt_luksRemoveKey(&options);
 

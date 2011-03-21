@@ -123,7 +123,7 @@ namespace SignonDaemonNS {
         }
 
         if (m_accessCode.isEmpty()) {
-            TRACE() << "No access code set";
+            TRACE() << "No access code set. Stopping mount process.";
             return false;
         }
 
@@ -196,6 +196,11 @@ namespace SignonDaemonNS {
     {
         if (m_mountState == Mounted) {
             TRACE() << "Ecrypyted file system already mounted.";
+            return false;
+        }
+
+        if (m_accessCode.isEmpty()) {
+            TRACE() << "No access code set. Stopping mount process.";
             return false;
         }
 
