@@ -139,7 +139,7 @@ private:
     SignonDaemon(QObject *parent);
     void initExtensions();
     void initExtension(const QString &filePath);
-    bool initSecureStorage(const QByteArray &lockCode);
+    bool initStorage();
 
     void unregisterIdentity(SignonIdentity *identity);
     void identityStored(SignonIdentity *identity);

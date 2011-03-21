@@ -389,8 +389,10 @@ void SignonDaemon::init()
 
     initExtensions();
 
-    if (!initSecureStorage(QByteArray()))
-        qFatal("Signond: Cannot initialize credentials secure storage.");
+    if (!initStorage())
+        BLAME() << "Signond: Cannot initialize credentials storage.";
+
+    Q_UNUSED(AuthCoreCache::instance(this));
 
     TRACE() << "Signond SUCCESSFULLY initialized.";
 }
@@ -438,12 +440,10 @@ void SignonDaemon::initExtension(const QString &filePath)
     }
 }
 
-bool SignonDaemon::initSecureStorage(const QByteArray &lockCode)
+bool SignonDaemon::initStorage()
 {
     if (!m_pCAMManager->credentialsSystemOpened()) {
         m_pCAMManager->finalize();
-
-        m_configuration->setEncryptionPassphrase(lockCode);
 
         if (!m_pCAMManager->init(m_configuration->camConfiguration())) {
             qCritical("Signond: Cannot set proper configuration of CAM");
