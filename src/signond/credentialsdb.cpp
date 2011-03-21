@@ -1080,7 +1080,18 @@ bool SecretsDB::updateCredentials(const quint32 id,
     if (info.storePassword())
         password = info.password();
 
-    if (!info.isNew()) {
+
+    /* The identity might not be new and have no secret info stored at
+     * the same time - e.g. if the secrets db has been deleted */
+    bool hasSecretInfoStored = false;
+    QString queryStr = QString::fromLatin1(
+        "SELECT id FROM credentials WHERE id = %1").arg(info.id());
+
+    QSqlQuery selectQuery = exec(queryStr);
+    if (selectQuery.first())
+        hasSecretInfoStored = true;
+
+    if (!info.isNew() && hasSecretInfoStored) {
         TRACE() << "UPDATE:" << id;
         query.prepare(S("UPDATE CREDENTIALS SET username = :username, "
                         "password = :password "
@@ -1360,11 +1371,12 @@ bool CredentialsDB::isSecretsDBOpen()
 
 void CredentialsDB::closeSecretsDB()
 {
-    TRACE();
-    QString connectionName = secretsDB->connectionName();
-    delete secretsDB;
-    QSqlDatabase::removeDatabase(connectionName);
-    secretsDB = 0;
+    if (secretsDB != 0) {
+        QString connectionName = secretsDB->connectionName();
+        delete secretsDB;
+        QSqlDatabase::removeDatabase(connectionName);
+        secretsDB = 0;
+    }
 }
 
 CredentialsDBError CredentialsDB::lastError() const
