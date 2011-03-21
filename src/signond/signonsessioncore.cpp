@@ -79,13 +79,13 @@ static pid_t pidOfContext(const QDBusConnection &connection, const QDBusMessage 
 SignonSessionCore::SignonSessionCore(quint32 id,
                                      const QString &method,
                                      int timeout,
-                                     SignonDaemon *parent) :
-                                     SignonDisposable(timeout, parent),
-                                     m_id(id),
-                                     m_method(method),
-                                     m_passwordUpdate(QString())
+                                     SignonDaemon *parent)
+    : SignonDisposable(timeout, parent),
+      m_id(id),
+      m_method(method),
+      m_passwordUpdate(QString()),
+      m_queryCredsUiDisplayed(false)
 {
-    TRACE();
     m_signonui = NULL;
     m_watcher = NULL;
 
@@ -96,11 +96,17 @@ SignonSessionCore::SignonSessionCore(quint32 id,
                                     SIGNON_UI_SERVICE,
                                     SIGNON_UI_DAEMON_OBJECTPATH,
                                     QDBusConnection::sessionBus());
+
+
+    connect(CredentialsAccessManager::instance(),
+            SIGNAL(credentialsSystemReadySignal()),
+            SLOT(credentialsSystemReady()));
 }
 
 SignonSessionCore::~SignonSessionCore()
 {
-    TRACE();
+    AuthCoreCache::instance()->authSessionDestroyed(
+        AuthCoreCache::CacheId(m_id, m_method));
 
     delete m_plugin;
     delete m_watcher;
@@ -114,7 +120,6 @@ SignonSessionCore::~SignonSessionCore()
 
 SignonSessionCore *SignonSessionCore::sessionCore(const quint32 id, const QString &method, SignonDaemon *parent)
 {
-    TRACE();
     QString objectName;
     QString key = sessionName(id, method);
 
@@ -267,7 +272,9 @@ void SignonSessionCore::process(const QDBusConnection &connection,
                                              mechanism,
                                              cancelKey));
     }
-    QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+
+    if (CredentialsAccessManager::instance()->credentialsSystemReady())
+        QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
 void SignonSessionCore::cancel(const QString &cancelKey)
@@ -348,45 +355,68 @@ void SignonSessionCore::startProcess()
 
     if (m_id) {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        if (db != NULL) {
-            SignonIdentityInfo info = db->credentials(m_id);
-            if (info.id() != SIGNOND_NEW_IDENTITY) {
-                if (!parameters.contains(SSO_KEY_PASSWORD))
+        Q_ASSERT(db != 0);
+
+        SignonIdentityInfo info = db->credentials(m_id);
+        if (info.id() != SIGNOND_NEW_IDENTITY) {
+            if (!parameters.contains(SSO_KEY_PASSWORD)) {
+                //If secrets db not available attempt loading data from cache
+                if (db->isSecretsDBOpen()) {
                     parameters[SSO_KEY_PASSWORD] = info.password();
-                //database overrules over sessiondata for validated username,
-                //so that identity cannot be misused
-                if (info.validated() || !parameters.contains(SSO_KEY_USERNAME))
-                    parameters[SSO_KEY_USERNAME] = info.userName();
-
-                pid_t pid = pidOfContext(data.m_conn, data.m_msg);
-                QSet<QString> clientTokenSet = AccessControlManager::accessTokens(pid).toSet();
-                QSet<QString> identityAclTokenSet = info.accessControlList().toSet();
-                QSet<QString> paramsTokenSet = clientTokenSet.intersect(identityAclTokenSet);
-
-                TRACE() << "client Token set" << clientTokenSet
-                        << "Info Acccess token set" << identityAclTokenSet
-                        << "Intersection token set" << paramsTokenSet;
-
-                if (!paramsTokenSet.isEmpty()) {
-                    QStringList tokenList = paramsTokenSet.toList();
-                    parameters[SSO_ACCESS_CONTROL_TOKENS] = tokenList;
+                } else {
+                    AuthCache *cache = AuthCoreCache::instance()->data(info.id());
+                    if (cache != 0) {
+                        TRACE() << "Using cached secret.";
+                        parameters[SSO_KEY_PASSWORD] = cache->password();
+                    } else {
+                        TRACE() << "Secrets storage not available and authetication"
+                                << "cache is empty - SSO auth will fail.";
+                    }
                 }
-            } else {
-                BLAME() << "Error occurred while getting data from credentials database.";
-                //credentials not available, so authentication probably fails
             }
-            QVariantMap storedParams = db->loadData(m_id, m_method);
-            //TODO unite might generate multiple entries
-            parameters.unite(storedParams);
+            //database overrules over sessiondata for validated username,
+            //so that identity cannot be misused
+            if (info.validated() || !parameters.contains(SSO_KEY_USERNAME)) {
+                parameters[SSO_KEY_USERNAME] = info.userName();
+            }
+
+            pid_t pid = pidOfContext(data.m_conn, data.m_msg);
+            QSet<QString> clientTokenSet = AccessControlManager::accessTokens(pid).toSet();
+            QSet<QString> identityAclTokenSet = info.accessControlList().toSet();
+            QSet<QString> paramsTokenSet = clientTokenSet.intersect(identityAclTokenSet);
+
+            if (!paramsTokenSet.isEmpty()) {
+                QStringList tokenList = paramsTokenSet.toList();
+                parameters[SSO_ACCESS_CONTROL_TOKENS] = tokenList;
+            }
         } else {
-            BLAME() << "Null database handler object.";
+            BLAME() << "Error occurred while getting data from credentials database.";
         }
+
+        QVariantMap storedParams;
+        if (db->isSecretsDBOpen()) {
+            storedParams = db->loadData(m_id, m_method);
+        } else {
+            AuthCache *cache = AuthCoreCache::instance()->data(info.id());
+            if (cache != 0) {
+                TRACE() << "Using cached BLOB data.";
+                storedParams = cache->blobData();
+            }
+        }
+
+        //TODO unite might generate multiple entries
+        parameters.unite(storedParams);
     }
 
     if (parameters.contains(SSOUI_KEY_UIPOLICY)
         && parameters[SSOUI_KEY_UIPOLICY] == RequestPasswordPolicy) {
         parameters.remove(SSO_KEY_PASSWORD);
     }
+
+    /* Temporary caching, if credentials are valid
+     * this data will be effectively cached */
+    m_tmpUsername = parameters[SSO_KEY_USERNAME].toString();
+    m_tmpPassword = parameters[SSO_KEY_PASSWORD].toString();
 
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
         QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
@@ -505,6 +535,46 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
     conn.send(errReply);
 }
 
+void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
+{
+    TRACE() << "Processing store operation.";
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    Q_ASSERT(db != 0);
+
+    SignonIdentityInfo info = operation.m_info;
+
+    QVariantMap data = operation.m_credsData;
+
+    //allow update only for not validated username
+    if (!info.validated()
+            && data.contains(SSO_KEY_USERNAME)
+            && !data[SSO_KEY_USERNAME].toString().isEmpty())
+        info.setUserName(data[SSO_KEY_USERNAME].toString());
+
+    if (!m_passwordUpdate.isEmpty())
+        info.setPassword(m_passwordUpdate);
+
+    if (data.contains(SSO_KEY_PASSWORD)
+        && !data[SSO_KEY_PASSWORD].toString().isEmpty())
+        info.setPassword(data[SSO_KEY_PASSWORD].toString());
+
+    info.setValidated(true);
+
+    if (!(db->updateCredentials(info))) {
+        BLAME() << "Error occured while updating credentials.";
+    }
+
+    if (operation.m_storeType == StoreOperation::Blob) {
+        TRACE() << "Processing --- StoreOperation::Blob";
+
+        if(!db->storeData(m_id,
+                          operation.m_authMethod,
+                          operation.m_blobData)) {
+            BLAME() << "Error occured while storing data.";
+        }
+    }
+}
+
 void SignonSessionCore::processResultReply(const QString &cancelKey, const QVariantMap &data)
 {
     TRACE();
@@ -518,44 +588,74 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
 
     if (cancelKey != m_canceled) {
         QVariantList arguments;
-        QVariantMap data2 = filterVariantMap(data);
+        QVariantMap filteredData = filterVariantMap(data);
+
+        CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
+        CredentialsDB *db = camManager->credentialsDB();
+        Q_ASSERT(db != 0);
 
         //update database entry
         if (m_id != SIGNOND_NEW_IDENTITY) {
-            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-            if (db != NULL) {
-                SignonIdentityInfo info = db->credentials(m_id);
-                //allow update only for not validated username
-                if (!info.validated()
-                        && data2.contains(SSO_KEY_USERNAME)
-                        && !data2[SSO_KEY_USERNAME].toString().isEmpty())
-                    info.setUserName(data2[SSO_KEY_USERNAME].toString());
-                if (!m_passwordUpdate.isEmpty())
-                    info.setPassword(m_passwordUpdate);
-                if (data2.contains(SSO_KEY_PASSWORD)
-                        && !data2[SSO_KEY_PASSWORD].toString().isEmpty())
-                    info.setPassword(data2[SSO_KEY_PASSWORD].toString());
-                info.setValidated(true);
-                if (!(db->updateCredentials(info)))
-                    BLAME() << "Error occured while updating credentials.";
+            SignonIdentityInfo info = db->credentials(m_id);
+
+            StoreOperation storeOp(StoreOperation::Credentials);
+            storeOp.m_credsData = filteredData;
+            storeOp.m_info = info;
+
+            /* If the credentials are validated, the secrets db is not available and
+             * not authorized keys are available inform the CAM about the situation. */
+            if (info.validated() && !db->isSecretsDBOpen()) {
+                /* Send the storage not available event only if the curent result
+                 * processing is following a previous signon UI query. This is
+                 * to avoid unexpected UI pop-ups.
+                 */
+                if (m_queryCredsUiDisplayed) {
+                    m_storeQueue.enqueue(storeOp);
+
+                    SecureStorageEvent *event =
+                        new SecureStorageEvent(
+                            (QEvent::Type)SIGNON_SECURE_STORAGE_NOT_AVAILABLE);
+
+                    event->m_sender = static_cast<QObject *>(this);
+
+                    QCoreApplication::postEvent(
+                        CredentialsAccessManager::instance(),
+                        event,
+                        Qt::HighEventPriority);
+                }
             } else {
-                BLAME() << "Error occured while updating credentials. Null database handler object.";
+                processStoreOperation(storeOp);
             }
         }
 
+        /* If secrets db not available cache credentials for this session core.
+         * Avoid creating an invalid caching record - cache only if the password
+         * is not empty. */
+        if (!db->isSecretsDBOpen() && !m_tmpPassword.isEmpty()) {
+            AuthCache *cache = new AuthCache;
+            cache->setUsername(m_tmpUsername);
+            cache->setPassword(m_tmpPassword);
+            m_tmpUsername.clear();
+            m_tmpPassword.clear();
+            AuthCoreCache::instance()->insert(
+                AuthCoreCache::CacheId(m_id, m_method), cache);
+        }
+
         //remove secret field from output
-        if (m_method != QLatin1String("password") && data2.contains(SSO_KEY_PASSWORD))
-            data2.remove(SSO_KEY_PASSWORD);
+        if (m_method != QLatin1String("password")
+            && filteredData.contains(SSO_KEY_PASSWORD))
+            filteredData.remove(SSO_KEY_PASSWORD);
 
         pid_t pid = pidOfContext(rd.m_conn, rd.m_msg);
         QVariantMap encodedData(m_encryptor->
-                                encodeVariantMap(data2, pid));
+                                encodeVariantMap(filteredData, pid));
         if (m_encryptor->status() != Encryptor::Ok) {
             replyError(rd.m_conn,
                        rd.m_msg,
                        Error::EncryptionFailure,
                        QString::fromLatin1("Failed to encrypt outgoing message"));
         } else {
+            encodedData = filterVariantMap(encodedData);
             arguments << encodedData;
             rd.m_conn.send(rd.m_msg.createReply(arguments));
         }
@@ -567,8 +667,8 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             delete m_watcher;
             m_watcher = 0;
         }
+        m_queryCredsUiDisplayed = false;
     }
-
     m_canceled = QString();
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
@@ -579,30 +679,63 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
     TRACE();
 
     keepInUse();
-    qint32 id = m_id;
-    m_passwordUpdate = QString();
-    if (id == SIGNOND_NEW_IDENTITY) {
+    m_passwordUpdate.clear();
+    if (m_id == SIGNOND_NEW_IDENTITY) {
         BLAME() << "Cannot store without identity";
         return;
     }
-    QVariantMap data2 = data;
+    QVariantMap filteredData = data;
     //do not store username or password
-    if (data2.contains(SSO_KEY_PASSWORD))
-        data2.remove(SSO_KEY_PASSWORD);
-    if (data2.contains(SSO_KEY_USERNAME))
-        data2.remove(SSO_KEY_USERNAME);
-    if (data2.contains(SSO_ACCESS_CONTROL_TOKENS))
-        data2.remove(SSO_ACCESS_CONTROL_TOKENS);
+    filteredData.remove(SSO_KEY_PASSWORD);
+    filteredData.remove(SSO_KEY_USERNAME);
+    filteredData.remove(SSO_ACCESS_CONTROL_TOKENS);
 
     //store data into db
     CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-    if (db != NULL) {
-        if(!db->storeData(id, m_method, data2)) {
-            BLAME() << "Error occured while storing data.";
+    Q_ASSERT(db != NULL);
+
+    StoreOperation storeOp(StoreOperation::Blob);
+    storeOp.m_blobData = filteredData;
+    storeOp.m_authMethod = m_method;
+
+    /* If the credentials are validated, the secrets db is not available and
+     * not authorized keys are available inform the CAM about the situation. */
+    SignonIdentityInfo info = db->credentials(m_id);
+    if (info.validated() && !db->isSecretsDBOpen()) {
+        /* Send the storage not available event only if the curent store
+         * processing is following a previous signon UI query. This is to avoid
+         * unexpected UI pop-ups.
+         */
+        if (m_queryCredsUiDisplayed) {
+            TRACE() << "Secure storage not available. Queueing store operations.";
+            m_storeQueue.enqueue(storeOp);
+
+            SecureStorageEvent *event =
+                new SecureStorageEvent(
+                    (QEvent::Type)SIGNON_SECURE_STORAGE_NOT_AVAILABLE);
+            event->m_sender = static_cast<QObject *>(this);
+
+            QCoreApplication::postEvent(
+                CredentialsAccessManager::instance(),
+                event,
+                Qt::HighEventPriority);
         }
     } else {
-        BLAME() << "Error occured while storing data. Null database handler object.";
+        processStoreOperation(storeOp);
     }
+
+    /* If secrets db not available cache credentials for this session core.
+     * Avoid creating an invalid caching record - cache only if the BLOB data
+     * is not empty. */
+    if (!db->isSecretsDBOpen() && !data.isEmpty()) {
+        TRACE() << "Caching BLOB authentication data.";
+        AuthCache *cache = new AuthCache;
+        cache->setBlobData(data);
+        AuthCoreCache::instance()->insert(
+            AuthCoreCache::CacheId(m_id, m_method), cache);
+    }
+    m_queryCredsUiDisplayed = false;
+
     return;
 }
 
@@ -631,23 +764,35 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
         else
             m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
 
+        CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
+        CredentialsDB *db = camManager->credentialsDB();
+        Q_ASSERT(db != 0);
+
         //check that we have caption
         if (!data.contains(SSO_KEY_CAPTION)) {
             TRACE() << "Caption missing";
             if (m_id != SIGNOND_NEW_IDENTITY) {
-                CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-                if (db != NULL) {
-                    SignonIdentityInfo info = db->credentials(m_id);
-                    m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.caption());
-                    TRACE() << "Got caption: " << info.caption();
-                }
+                SignonIdentityInfo info = db->credentials(m_id);
+                m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.caption());
+                TRACE() << "Got caption: " << info.caption();
             }
         }
 
-        //TODO: figure out how we going to synchronize
-        //different login dialogs in order not to show
-        //multiple login dialogs for the same credentials
-        //data2["CredentialsId"] = m_id;
+        /*
+         * Check the secure storage status, if any issues are encountered signal
+         * this to the signon ui. */
+        if (!db->isSecretsDBOpen()) {
+            TRACE();
+
+            //If there are no keys available
+            if (!camManager->keysAvailable()) {
+                TRACE() << "Secrets DB not available."
+                        << "CAM has no keys available. Informing signon-ui.";
+                m_listOfRequests.head().m_params[
+                    SSOUI_KEY_STORAGE_KEYS_UNAVAILABLE] = true;
+            }
+        }
+
         m_watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(m_listOfRequests.head().m_params),
                                                 this);
         connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
@@ -682,6 +827,8 @@ void SignonSessionCore::processError(const QString &cancelKey, int err, const QS
 {
     TRACE();
     keepInUse();
+    m_tmpUsername.clear();
+    m_tmpPassword.clear();
 
     if (!m_listOfRequests.size())
         return;
@@ -720,6 +867,26 @@ void SignonSessionCore::childEvent(QChildEvent *ce)
         SignonDisposable::destroyUnused();
 }
 
+void SignonSessionCore::customEvent(QEvent *event)
+{
+    TRACE() << "Custom event received.";
+    if (event->type() == SIGNON_SECURE_STORAGE_AVAILABLE) {
+        TRACE() << "Secure storage is available.";
+        AuthCoreCache::instance()->clear();
+
+        TRACE() << "Processing queued stored operations.";
+        while (!m_storeQueue.empty()) {
+            processStoreOperation(m_storeQueue.dequeue());
+        }
+    } else if (event->type() == SIGNON_SECURE_STORAGE_NOT_AVAILABLE) {
+        TRACE() << "Secure storage still not available. "
+                   "Clearing storage operation queue.";
+        m_storeQueue.clear();
+    }
+
+    QObject::customEvent(event);
+}
+
 void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
 {
     keepInUse();
@@ -736,11 +903,28 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
         }
 
         m_listOfRequests.head().m_params = resultParameters;
+
+        /* If the query ui was canceled or any other error occurred
+         * do not set this flag to true. */
+        if (resultParameters.contains(SSOUI_KEY_ERROR)
+            && (resultParameters[SSOUI_KEY_ERROR] == QUERY_ERROR_CANCELED)) {
+
+            m_queryCredsUiDisplayed = false;
+        } else {
+            m_queryCredsUiDisplayed = true;
+        }
     } else {
         m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR, (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
     }
 
     if (m_listOfRequests.head().m_cancelKey != m_canceled) {
+        /* Temporary caching, if credentials are valid
+         * this data will be effectively cached */
+        m_tmpUsername = m_listOfRequests.head().m_params.value(
+            SSO_KEY_USERNAME, QVariant()).toString();
+        m_tmpPassword = m_listOfRequests.head().m_params.value(
+            SSO_KEY_PASSWORD, QVariant()).toString();
+
         if (isRequestToRefresh) {
             TRACE() << "REFRESH IS REQUIRED";
 
@@ -800,4 +984,9 @@ void SignonSessionCore::destroy()
 
     emit destroyed();
     deleteLater();
+}
+
+void SignonSessionCore::credentialsSystemReady()
+{
+    QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
