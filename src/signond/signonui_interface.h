@@ -42,6 +42,9 @@
 class SignonUiAdaptor: public QDBusAbstractInterface
 {
     Q_OBJECT
+
+    friend class SignonSecureStorageUiAdaptor;
+
 public:
     static inline const char *staticInterfaceName()
     { return "com.nokia.singlesignonui"; }
@@ -58,11 +61,44 @@ public Q_SLOTS: // METHODS
 
     void cancelUiRequest(const QString &requestId);
 
-private:
-    QDBusPendingCall callWithArgumentListAndBigTimeout(const QString &method,
-                                                             const QList<QVariant> &args);
+protected:
+    QDBusPendingCall callWithArgumentListAndBigTimeout(
+        const QString &method,
+        const QList<QVariant> &args = QList<QVariant>());
+};
 
-Q_SIGNALS: // SIGNALS
+class SignonSecureStorageUiAdaptor : public QObject
+{
+    Q_OBJECT
+
+public:
+    SignonSecureStorageUiAdaptor(const QString &service,
+                                 const QString &path,
+                                 const QDBusConnection &connection,
+                                 QObject *parent = 0);
+    ~SignonSecureStorageUiAdaptor();
+
+    void notifyNoKeyPresent();
+    void notifyNoAuthorizedKeyPresent();
+    void notifyKeyAuthorized();
+    void notifyStorageCleared();
+    void closeUi();
+
+Q_SIGNALS:
+    void clearPasswordsStorage();
+    void uiClosed();
+    void error();
+
+private Q_SLOTS:
+    //Reimplemented slot - not to be declared as a Qt slot.
+    void callFinished(QDBusPendingCallWatcher *call);
+
+private:
+    void displaySecureStorageUi(const QVariantMap &params);
+
+private:
+    SignonUiAdaptor *uiAdaptor;
+    bool isBusy;
 };
 
 namespace com {

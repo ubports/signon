@@ -21,6 +21,8 @@
  */
 
 #include "signonui_interface.h"
+#include "uisessiondata_priv.h"
+#include "securestorageui.h"
 
 /*
  * Implementation of interface class SignonUiAdaptor
@@ -75,6 +77,132 @@ QDBusPendingCall SignonUiAdaptor::callWithArgumentListAndBigTimeout(const QStrin
                                                       path(),
                                                       interface(),
                                                       method);
-    msg.setArguments(args);
+    if (!args.isEmpty())
+        msg.setArguments(args);
     return connection().asyncCall(msg, SIGNOND_MAX_TIMEOUT);
+}
+
+/* -------------- SignonSecureStorageUiAdaptor -------------- */
+
+SignonSecureStorageUiAdaptor::SignonSecureStorageUiAdaptor(
+    const QString &service,
+    const QString &path,
+    const QDBusConnection &connection,
+    QObject *parent)
+        : QObject(parent),
+          uiAdaptor(new SignonUiAdaptor(service, path, connection, this)),
+          isBusy(false)
+{
+}
+
+SignonSecureStorageUiAdaptor::~SignonSecureStorageUiAdaptor()
+{
+}
+
+
+void SignonSecureStorageUiAdaptor::displaySecureStorageUi(const QVariantMap &parameters)
+{
+    if (isBusy) {
+        TRACE() << "Adaptor busy with ongoing call.";
+        return;
+    }
+
+    TRACE() << "Calling signon-ui - display storage notification";
+
+    QLatin1String method("displaySecureStorageUi");
+
+    QList<QVariant> argumentList;
+    argumentList << parameters;
+
+    QDBusPendingCall call = uiAdaptor->callWithArgumentListAndBigTimeout(
+        method, argumentList);
+
+    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(call);
+    connect(watcher,
+            SIGNAL(finished(QDBusPendingCallWatcher *)),
+            SLOT(callFinished(QDBusPendingCallWatcher *)));
+    isBusy = true;
+}
+
+void SignonSecureStorageUiAdaptor::notifyNoKeyPresent()
+{
+    QVariantMap parameters;
+    parameters[SSOUI_SECURE_STORAGE_REQUEST_TYPE] = SignOn::NoKeyPresent;
+    parameters[SSOUI_KEY_REQUESTID] = SSOUI_SECURE_STORAGE_REQUEST_ID;
+    displaySecureStorageUi(parameters);
+}
+
+void SignonSecureStorageUiAdaptor::notifyNoAuthorizedKeyPresent()
+{
+    QVariantMap parameters;
+    parameters[SSOUI_SECURE_STORAGE_REQUEST_TYPE] = SignOn::NoAuthorizedKeyPresent;
+    parameters[SSOUI_KEY_REQUESTID] = SSOUI_SECURE_STORAGE_REQUEST_ID;
+    displaySecureStorageUi(parameters);
+}
+
+void SignonSecureStorageUiAdaptor::notifyKeyAuthorized()
+{
+    QVariantMap parameters;
+    parameters[SSOUI_SECURE_STORAGE_REQUEST_TYPE] = SignOn::KeyAuthorized;
+    parameters[SSOUI_KEY_REQUESTID] = SSOUI_SECURE_STORAGE_REQUEST_ID;
+    displaySecureStorageUi(parameters);
+}
+
+void SignonSecureStorageUiAdaptor::notifyStorageCleared()
+{
+    QVariantMap parameters;
+    parameters[SSOUI_SECURE_STORAGE_REQUEST_TYPE] = SignOn::StorageCleared;
+    parameters[SSOUI_KEY_REQUESTID] = SSOUI_SECURE_STORAGE_REQUEST_ID;
+    displaySecureStorageUi(parameters);
+}
+
+void SignonSecureStorageUiAdaptor::closeUi()
+{
+    TRACE() << "Closing secure storage UI.";
+    uiAdaptor->cancelUiRequest(SSOUI_SECURE_STORAGE_REQUEST_ID);
+    isBusy = false;
+}
+
+void SignonSecureStorageUiAdaptor::callFinished(QDBusPendingCallWatcher *call)
+{
+    isBusy = false;
+    QDBusPendingReply<QVariantMap> reply = *call;
+    delete call;
+    call = 0;
+
+    TRACE() << reply.isError() << reply.count();
+
+    if (reply.isError() || (reply.count() == 0)) {
+        TRACE();
+        emit error();
+        return;
+    }
+
+    QVariantMap resultParameters = reply.argumentAt<0>();
+    if (!resultParameters.contains(SSOUI_SECURE_STORAGE_REPLY_TYPE)) {
+        emit error();
+        return;
+    }
+
+    bool isOk = false;
+    SignOn::UiReplyType replyType = static_cast<SignOn::UiReplyType>(
+        resultParameters[SSOUI_SECURE_STORAGE_REPLY_TYPE].toInt(&isOk));
+
+    if (!isOk) {
+        TRACE() << "Integer cast failed.";
+        emit error();
+        return;
+    }
+
+    switch (replyType) {
+        case SignOn::ClearPasswordsStorage:
+            emit clearPasswordsStorage();
+            break;
+        case SignOn::UiRejected:
+            emit uiClosed();
+            break;
+        default:
+            emit error();
+            break;
+    }
 }
