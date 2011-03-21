@@ -34,6 +34,8 @@
 
 namespace SignOn {
 
+class AbstractKeyManagerPrivate;
+
 typedef QByteArray Key;
 
 /*!
@@ -79,7 +81,7 @@ public:
      * implementation of this method just emits the keyAuthorized() signal
      * denying the authorization, but specific implementations could delegate
      * the authorization to the user.
-     * @param key The key that needs authorization
+     * @param key The key that needs authorization.
      * @param message An optional message that might be shown to the user.
      */
     virtual void authorizeKey(const Key &key,
@@ -101,6 +103,12 @@ public:
      * identify the key
      */
     virtual QString describeKey(const Key &key);
+
+    /*!
+     * @returns Whether the extension is able to authorize keys or not.
+     * The default implementation just returns false.
+     */
+    virtual bool supportsKeyAuthorization() const;
 
 Q_SIGNALS:
     /*!
@@ -137,9 +145,11 @@ Q_SIGNALS:
      * @param authorized The result of the authorization
      */
     void keyAuthorized(const SignOn::Key key, bool authorized);
+
+private:
+    AbstractKeyManagerPrivate *d;
 };
 
 } // namespace
 
 #endif // SIGNON_ABSTRACT_KEY_MANAGER_H
-

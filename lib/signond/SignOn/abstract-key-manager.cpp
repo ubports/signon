@@ -33,7 +33,8 @@ AbstractKeyManager::~AbstractKeyManager()
 {
 }
 
-void AbstractKeyManager::authorizeKey(const Key &key, const QString &message)
+void AbstractKeyManager::authorizeKey(const Key &key,
+                                      const QString &message)
 {
     Q_UNUSED(message);
     emit keyAuthorized(key, false);
@@ -50,3 +51,7 @@ QString AbstractKeyManager::describeKey(const Key &key)
     return QString();
 }
 
+bool AbstractKeyManager::supportsKeyAuthorization() const
+{
+    return false;
+}
