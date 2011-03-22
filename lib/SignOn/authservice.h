@@ -116,7 +116,7 @@ namespace SignOn {
             QString pattern() const;
 
         private:
-            const QString m_pattern;
+            QString m_pattern;
         };
 
     public:

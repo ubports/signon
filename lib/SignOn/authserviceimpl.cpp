@@ -123,6 +123,9 @@ namespace SignOn {
 
     void AuthServiceImpl::queryIdentities(const AuthService::IdentityFilter &filter)
     {
+        if (!filter.isEmpty())
+            TRACE() << "Querying identities with filter not implemented.";
+
         QList<QVariant> args;
         QMap<QString, QVariant> filterMap;
         if (!filter.empty()) {
