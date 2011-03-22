@@ -369,8 +369,9 @@ void SignonSessionCore::startProcess()
                         TRACE() << "Using cached secret.";
                         parameters[SSO_KEY_PASSWORD] = cache->password();
                     } else {
-                        TRACE() << "Secrets storage not available and authetication"
-                                << "cache is empty - SSO auth will fail.";
+                        TRACE() << "Secrets storage not available and authentication "
+                                   "cache is empty - if SSO requires a password, "
+                                   "auth. will fail.";
                     }
                 }
             }

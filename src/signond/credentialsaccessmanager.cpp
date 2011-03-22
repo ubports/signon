@@ -306,14 +306,15 @@ bool CredentialsAccessManager::closeCredentialsSystem()
     if (!credentialsSystemOpened())
         return true;
 
+    bool allClosed = true;
     if (isSecretsDBOpen() && !closeSecretsDB())
-        return false;
+        allClosed = false;
 
     closeMetaDataDB();
 
     m_error = NoError;
     m_systemOpened = false;
-    return true;
+    return allClosed;
 }
 
 bool CredentialsAccessManager::deleteCredentialsSystem()
@@ -637,6 +638,8 @@ CredentialsAccessManager::coreKeyAuthorizingEnabled(
     if (mech == UnauthorizedKeyRemovedFirst)
         return (keySwapAuthorizingMechanism == UnauthorizedKeyRemovedFirst)
                && (!cachedUnauthorizedKey.isEmpty());
+
+    return false;
 }
 
 void CredentialsAccessManager::onClearPasswordsStorage()
