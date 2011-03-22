@@ -22,8 +22,8 @@
 
 #include "signonui_interface.h"
 
-#include <uisessiondata_priv.h>
-#include <securestorageui.h>
+#include <SignOn/uisessiondata_priv.h>
+#include <SignOn/securestorageui.h>
 
 /*
  * Implementation of interface class SignonUiAdaptor

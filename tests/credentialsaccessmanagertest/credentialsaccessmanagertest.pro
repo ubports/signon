@@ -25,6 +25,7 @@ HEADERS += \
 
 INCLUDEPATH += \
     $$TOP_SRC_DIR/lib/plugins/SignOn \
+    $$TOP_SRC_DIR/lib/plugins \
     $$TOP_SRC_DIR/lib/signond \
     $$TOP_SRC_DIR/src/signond \
     $$TOP_SRC_DIR/include
