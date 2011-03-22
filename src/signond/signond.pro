@@ -68,7 +68,8 @@ PKGCONFIG += \
     signon-plugins-common
     
 QMAKE_LIBDIR += \
-    $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common
+    $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common \
+    $${TOP_BUILD_DIR}/lib/signond/SignOn
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
