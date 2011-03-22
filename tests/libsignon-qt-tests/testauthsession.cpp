@@ -589,6 +589,7 @@ void TestAuthSession::queryMechanisms_existing_method()
 
  void TestAuthSession::handle_destroyed_signal()
  {
+     QSKIP("testing in sb", SkipSingle);
      AuthSession *as;
      SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest");
      g_currentSession = as;

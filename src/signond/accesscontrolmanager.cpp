@@ -141,14 +141,6 @@ namespace SignonDaemonNS {
                 return true;
 
         BLAME() << "given peer does not have needed permissions";
-
-
-        /*
-         * TODO: remove this later, as soon as NB#196033 will be resolved
-         * */
-        if (1)
-            return true;
-
         return false;
     }
 

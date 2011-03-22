@@ -3,6 +3,10 @@
   <suite name="libsignon-qt-tests" domain="Accounts and SSO">
     <description>Signon Qt Client Library Tests</description>
     <set name="trusted-client-libsignon-qt-tests" feature="SSO API">
+      <case name="libsignon-qt-tests-AuthSessionTests" type="Functional" level="Component" timeout="600">
+	<description>Authentication-Session-Tests</description>
+	<step>/usr/bin/libsignon-qt-tests runAuthSessionTests</step>
+      </case>
       <case name="libsignon-qt-tests-AuthServiceTests" type="Functional" level="Component">
 	<description>Authentication-Service-Tests</description>
 	<step>/usr/bin/libsignon-qt-tests runAuthServiceTests</step>
@@ -11,16 +15,16 @@
 	<description>Identity-Tests</description>
 	<step>/usr/bin/libsignon-qt-tests runIdentityTests</step>
       </case>
-      <case name="libsignon-qt-tests-AuthSessionTests" type="Functional" level="Component" timeout="600">
-	<description>Authentication-Session-Tests</description>
-	<step>/usr/bin/libsignon-qt-tests runAuthSessionTests</step>
-      </case>
       <environments>
 	<scratchbox>true</scratchbox>
 	<hardware>true</hardware>
       </environments>
     </set>
     <set name="untrusted-client-libsignon-qt-tests" feature="SSO API">
+      <case name="libsignon-qt-untrusted-tests-AuthSessionTests" type="Security" level="Component" timeout = "600">
+	<description>Authentication-Session-Tests</description>
+	<step>/usr/bin/libsignon-qt-untrusted-tests runAuthSessionTests</step>
+      </case>
       <case name="libsignon-qt-untrusted-tests-AuthServiceTests" type="Security" level="Component">
 	<description>Authentication-Service-Tests</description>
 	<step>/usr/bin/libsignon-qt-untrusted-tests runAuthServiceTests</step>
@@ -28,10 +32,6 @@
       <case name="libsignon-qt-untrusted-tests-IdentityTests" type="Security" level="Component">
 	<description>Identity-Tests</description>
 	<step>/usr/bin/libsignon-qt-untrusted-tests runIdentityTests</step>
-      </case>
-      <case name="libsignon-qt-untrusted-tests-AuthSessionTests" type="Security" level="Component" timeout = "600">
-	<description>Authentication-Session-Tests</description>
-	<step>/usr/bin/libsignon-qt-untrusted-tests runAuthSessionTests</step>
       </case>
       <environments>
 	<scratchbox>false</scratchbox>

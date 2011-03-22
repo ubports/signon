@@ -48,7 +48,6 @@ int finishedClients = 0;
     #define END_SERVICE_TEST_IF_UNTRUSTED  \
         do {                                                    \
             qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
-            /* todo - remove first condition 1 moth after new err mgmnt release. */ \
             QVERIFY(m_serviceResult.m_error == Error::PermissionDenied);     \
             QVERIFY(m_serviceResult.m_errMsg.contains(SIGNOND_PERMISSION_DENIED_ERR_STR)); \
             TEST_DONE                                                                  \
@@ -85,8 +84,8 @@ int finishedClients = 0;
 
 #ifdef SSOTESTCLIENT_USES_AUTHSESSION
 
-    #include "testauthsession.h"
-    static TestAuthSession testAuthSession;
+    //#include "testauthsession.h"
+    //static TestAuthSession testAuthSession;
 
 #endif
 
@@ -410,15 +409,7 @@ void SsoTestClient::requestCredentialsUpdate()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
-        QFAIL("Currently not implemented should have failed.");
-    }
-    else
-    {
-        QVERIFY(m_identityResult.m_error == Error::Unknown);
-        QCOMPARE(m_identityResult.m_errMsg, QString("Not implemented."));
-    }
+    QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
     TEST_DONE
 }
 
@@ -954,6 +945,7 @@ void SsoTestClient::removeReference()
 void SsoTestClient::verifyUser()
 {
     TEST_START
+    QSKIP("This tests requires user interactiojn... so skipping", SkipSingle);
     m_identityResult.reset();
 
     //inserting some credentials
@@ -996,16 +988,7 @@ void SsoTestClient::verifyUser()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
-        QFAIL("Currently not implemented should have failed.");
-    }
-    else
-    {
-        QCOMPARE(m_identityResult.m_error, Error::Unknown);
-        QCOMPARE(m_identityResult.m_errMsg, QString("Not implemented."));
-    }
-
+    QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
     TEST_DONE
 }
 
@@ -1419,7 +1402,6 @@ void SsoTestClient::queryIdentities()
 void SsoTestClient::queryAuthPluginACL()
 {
     TEST_START
-
     QEventLoop loop;
 
     //inserting some credentials
@@ -1459,6 +1441,7 @@ void SsoTestClient::queryAuthPluginACL()
         QFAIL("Store identity failed.");
     }
 
+
     AuthSession *as = id->createSession(QLatin1String("ssotest"));
     connect(as,
             SIGNAL(response(const SignOn::SessionData &)),
@@ -1484,12 +1467,15 @@ void SsoTestClient::queryAuthPluginACL()
     if (!errorSpy.count())
         loop.exec();
 
+
+    #ifndef SSO_TESTS_RUNNING_AS_UNTRUSTED
     QVERIFY(errorSpy.count() == 0);
     QVERIFY(responseSpy.count() == 1);
 
     //AEGIS_TOKEN_5  is the only common token set between testclient and the tokens inserted in db
     QVERIFY(m_tokenList.count() == 1);
     QVERIFY(m_tokenList.contains(AEGIS_TOKEN_5));
+    #endif
 
     TEST_DONE
 }
