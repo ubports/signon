@@ -88,6 +88,7 @@ private:
     void queryMethods();
     void queryMechanisms();
     void queryIdentities();
+    void queryIdentitiesWithFilter();
     void queryAuthPluginACL();
     void clear();
     void clearAuthServiceTest();

@@ -1399,6 +1399,88 @@ void SsoTestClient::queryIdentities()
     TEST_DONE
 }
 
+void SsoTestClient::queryIdentitiesWithFilter()
+{
+    QSKIP("Test requires the implementation of the filtering feature.",
+          SkipSingle);
+
+    TEST_START
+    m_serviceResult.reset();
+    int filteredIdentitiesCount = 2;
+
+    IdentityInfo info(QLatin1String("CAPTION"),
+                      QLatin1String("TEST_FILTER_USERNAME"),
+                      QMap<MethodName, MechanismsList>());
+    QVERIFY(storeCredentialsPrivate(info));
+    info.setRealms(QStringList() << QLatin1String("www.realm-filter.com"));
+    QVERIFY(storeCredentialsPrivate(info));
+
+    AuthService service;
+
+    QEventLoop loop;
+
+    connect(&service,
+            SIGNAL(identities(const QList<SignOn::IdentityInfo> &)),
+            &m_serviceResult,
+            SLOT(identities(const QList<SignOn::IdentityInfo> &)));
+    connect(&service, SIGNAL(error(const SignOn::Error &)),
+            &m_serviceResult, SLOT(error(const SignOn::Error &)));
+
+    connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
+    QString userPattern = QString::fromLatin1("TEST_FILTER");
+    QString realmPattern = QString::fromLatin1("*realm_filter*");
+    AuthService::IdentityRegExp userRegexp(userPattern);
+    AuthService::IdentityRegExp realmRegexp(realmPattern);
+
+    QVERIFY(userPattern == userRegexp.pattern());
+    QVERIFY(realmPattern == realmRegexp.pattern());
+    QString patternCopy = realmRegexp.pattern();
+
+    AuthService::IdentityFilter filter;
+    filter.insert(AuthService::Username, userRegexp);
+    filter.insert(AuthService::Realm, realmRegexp);
+    service.queryIdentities(filter);
+
+    service.queryIdentities();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
+             "A response was not received.");
+
+    END_SERVICE_TEST_IF_UNTRUSTED;
+
+    if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
+    {
+        QListIterator<IdentityInfo> it(m_serviceResult.m_identities);
+        while(it.hasNext())
+        {
+            IdentityInfo info = it.next();
+            qDebug() << "Identity record: "
+                    << "id:" << info.id()
+                    << " username: " << info.userName()
+                    << " caption: " << info.caption()
+                    << " methods:";
+
+            foreach (QString method, info.methods())
+                qDebug() << QPair<QString, QStringList>(method, info.mechanisms(method));
+
+        }
+        QCOMPARE(m_serviceResult.m_identities.count(), filteredIdentitiesCount);
+    }
+    else
+    {
+        QString codeStr = errCodeAsStr(m_serviceResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nError code: " << codeStr;
+        QFAIL("Should not have received error reply");
+    }
+
+    TEST_DONE
+}
+
 void SsoTestClient::queryAuthPluginACL()
 {
     TEST_START
