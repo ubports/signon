@@ -6,7 +6,8 @@ TARGET = signon-extension
 
 HEADERS = \
     abstract-key-manager.h \
-    extension-interface.h
+    extension-interface.h \
+    secure-storage-ui.h
 
 INCLUDEPATH += \
     ..
@@ -28,7 +29,9 @@ headers.files = \
     AbstractKeyManager \
     abstract-key-manager.h \
     ExtensionInterface \
-    extension-interface.h
+    extension-interface.h \
+    SecureStorageUI \
+    secure-storage-ui.h
 headers.path = $${INSTALL_PREFIX}/include/$${TARGET}/SignOn
 INSTALLS += headers
 

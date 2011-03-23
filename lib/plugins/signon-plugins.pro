@@ -18,8 +18,7 @@ headers.files = \
     SignOn/signonplugincommon.h \
     SignOn/UiSessionData \
     SignOn/uisessiondata.h \
-    SignOn/uisessiondata_priv.h \
-    SignOn/securestorageui.h
+    SignOn/uisessiondata_priv.h
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
