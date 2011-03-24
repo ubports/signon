@@ -87,6 +87,7 @@ namespace SignOn {
          * The class represents a regular expression.
          * It is used for filtering identity querying.
          * @see queryIdentities()
+         * @note This is for internal use only.
          */
         class IdentityRegExp
         {
@@ -105,7 +106,7 @@ namespace SignOn {
 
             /*!
              * Returns the validity of regular expression.
-             * @return True if the regular expression is valid, false otherwise.
+             * @return Always false, validity check not implemented.
              */
             bool isValid() const;
 
