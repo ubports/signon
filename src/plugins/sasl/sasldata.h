@@ -33,23 +33,64 @@ namespace SaslPluginNS {
 class SaslData : public SignOn::SessionData
 {
 public:
+    /*!
+     * @enum SaslData::State
+     * State of the authentication process.
+     */
     enum State {
-        DONE,
-        CONTINUE,
+        DONE,           /*!< Authentication is finished */
+        CONTINUE,       /*!< Authentication in progress */
     };
 
     /*!
-     * Declare property Example setter and getter
+     * The challenge received from the remote server.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QByteArray, Challenge);
+
+    /*!
+     * The response computed by the SASL plugin.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QByteArray, Response);
+
+    /*!
+     * SASL authentication name.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Authname);
+
+    /*!
+     * SASL realm.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Realm);
+
+    /*!
+     * SASL service.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Service);
+
+    /*!
+     * SASL FQDN (Fully Qualified Domain Name).
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Fqdn);
+
+    /*!
+     * SASL local IP address.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, IpLocal);
+
+    /*!
+     * SASL remote IP address.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, IpRemote);
+
+    /*!
+     * Mechanism chosen after the SASL mechanism negotiation.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, ChosenMechanism);
+
+    /*!
+     * State of the authentication.
+     * @sa SaslPluginNS::SaslData::State.
+     */
     SIGNON_SESSION_DECLARE_PROPERTY(qint32, state);
 };
 

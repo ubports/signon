@@ -1,0 +1,19 @@
+/*! \mainpage SignOn SASL plugin
+
+@section intro Introduction
+
+The SASL authentication plugin provides client applications with a way to
+perform SASL-based authentication via the Single Sign On framework.  The API to
+be used is the one provided by the libsignon-qt or libsignon-glib libraries;
+this documentation just lists the parameters supported by the SASL
+authentication plugin and the data it returns to the client applications.
+
+
+@section classlist List of classes in SASL plugin
+
+<table>
+  <tr><td>SaslPluginNS::SaslData</td><td>Defines the dictionary of parameters
+accepted by the plugin.</td></tr>
+</table>
+
+*/

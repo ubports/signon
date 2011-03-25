@@ -15,3 +15,5 @@ INSTALLS += headers
 
 pkgconfig.files = signon-saslplugin.pc
 INSTALLS += pkgconfig
+
+include(doc/doc.pri)
