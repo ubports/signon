@@ -20,6 +20,7 @@ for( folder, DOC_FOLDERS ) {
 for( subdir, src) {
     DOC_INPUT += $${_PRO_FILE_PWD_}/$${subdir}
 }
+DOC_INPUT += doc/src
 
 # target for generating documentation
 doctarget.target     = docs
