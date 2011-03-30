@@ -41,10 +41,15 @@
  */
 #include "SignOn/authpluginif.h"
 
+// signon-plugins-common
+#include "SignOn/blobiohandler.h"
+
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
 #define PLUGINPROCESS_START_TIMEOUT 5000
 #define PLUGINPROCESS_STOP_TIMEOUT 1000
+
+using namespace SignOn;
 
 namespace SignonDaemonNS {
 

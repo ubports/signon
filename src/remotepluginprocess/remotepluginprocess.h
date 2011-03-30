@@ -59,9 +59,11 @@ extern "C" {
     #define SIGNON_PLUGIN_SUFFIX "plugin.so"
 #endif
 
-#include "SignOn/blobiohandler.h"
-
 using namespace SignOn;
+
+namespace SignOn {
+    class BlobIOHandler;
+};
 
 namespace RemotePluginProcessNS {
 

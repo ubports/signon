@@ -27,9 +27,9 @@
 #include <QDBusMessage>
 #include <QtCore>
 
-#include "SignOn/blobiohandler.h"
-
-using namespace SignOn;
+namespace SignOn {
+    class BlobIOHandler;
+};
 
 namespace SignonDaemonNS {
 
@@ -119,7 +119,7 @@ namespace SignonDaemonNS {
         int m_currentResultOperation;
 
         PluginProcess *m_process;
-        BlobIOHandler *m_blobIOHandler;
+        SignOn::BlobIOHandler *m_blobIOHandler;
     };
 } //namespace SignonDaemonNS
 

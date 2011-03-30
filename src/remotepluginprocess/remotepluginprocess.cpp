@@ -32,6 +32,9 @@
 
 #include "remotepluginprocess.h"
 
+// signon-plugins-common
+#include "SignOn/blobiohandler.h"
+
 namespace RemotePluginProcessNS {
 
     static CancelEventThread *cancelThread = NULL;
