@@ -30,6 +30,7 @@
 #include <gq/GConfItem>
 #endif
 
+#include "debug.h"
 #include "remotepluginprocess.h"
 
 // signon-plugins-common

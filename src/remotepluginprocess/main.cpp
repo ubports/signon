@@ -31,6 +31,7 @@ extern "C" {
 #include <syslog.h>
 }
 
+#include "debug.h"
 #include "remotepluginprocess.h"
 
 #include <QDebug>

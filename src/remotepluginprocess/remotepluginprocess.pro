@@ -5,10 +5,14 @@ TARGET = signonpluginprocess
 QT += core network
 QT -= gui
 
-HEADERS += remotepluginprocess.h
+HEADERS += \
+    debug.h \
+    remotepluginprocess.h
 
-SOURCES += main.cpp \
-           remotepluginprocess.cpp
+SOURCES += \
+    debug.cpp \
+    main.cpp \
+    remotepluginprocess.cpp
 
 INCLUDEPATH += . \
                $$TOP_SRC_DIR/src \
