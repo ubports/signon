@@ -6,6 +6,8 @@ QT += core \
 CONFIG += qtestlib \
     link_pkgconfig
 
+DEFINES += SIGNON_PLUGIN_TRACE
+
 SOURCES += passwordplugintest.cpp
 
 HEADERS += passwordplugintest.h \

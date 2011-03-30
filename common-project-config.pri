@@ -21,7 +21,7 @@ QMAKE_LIBDIR   += $${TOP_BUILD_DIR}/lib/SignOn
 INCLUDEPATH    += $${TOP_SRC_DIR}/lib
 
 #DEFINES += QT_NO_DEBUG_OUTPUT
-DEFINES += SIGNON_TRACE
+DEFINES += DEBUG_ENABLED
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 

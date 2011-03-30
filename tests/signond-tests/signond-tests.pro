@@ -17,6 +17,8 @@ LIBS += -L/usr/lib \
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
+DEFINES += TESTS_TRACE
+
 HEADERS += \
     timeouts.h \
     $$TOP_SRC_DIR/src/signond/pluginproxy.h \

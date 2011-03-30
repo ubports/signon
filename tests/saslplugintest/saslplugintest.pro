@@ -7,6 +7,8 @@ QT += core
 CONFIG += qtestlib \
     link_pkgconfig
 
+DEFINES += SIGNON_PLUGIN_TRACE
+
 SOURCES += saslplugintest.cpp
 
 HEADERS += saslplugintest.h \

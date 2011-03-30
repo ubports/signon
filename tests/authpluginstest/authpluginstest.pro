@@ -6,6 +6,9 @@ QT += core \
 CONFIG += qtestlib \
     link_pkgconfig
 
+DEFINES += TESTS_TRACE
+DEFINES += SIGNON_PLUGIN_TRACE
+
 SOURCES += authpluginstest.cpp \
     authpluginspool.cpp \
     $${TOP_SRC_DIR}/src/signond/pluginproxy.cpp \

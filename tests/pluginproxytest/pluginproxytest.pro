@@ -6,6 +6,8 @@ CONFIG += qtestlib
 QT += core dbus
 QT -= gui
 
+DEFINES += TESTS_TRACE
+
 SOURCES =  testpluginproxy.cpp \
                   include.cpp
 

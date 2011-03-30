@@ -9,6 +9,8 @@ QT -= gui
 
 CONFIG += qtestlib link_pkgconfig
 
+DEFINES += TESTS_TRACE
+
 LIBS += \
     -lcreds \
     -lcryptsetup

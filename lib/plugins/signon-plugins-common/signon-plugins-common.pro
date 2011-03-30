@@ -8,6 +8,7 @@ CONFIG += qt
 
 INCLUDEPATH += ../
 
+DEFINES += SIGNON_PLUGIN_TRACE
 
 SOURCES += \
     SignOn/blobiohandler.cpp

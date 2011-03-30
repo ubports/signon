@@ -14,6 +14,7 @@ CONFIG += \
     link_pkgconfig \
     thread
 
+DEFINES += SIGNON_PLUGIN_TRACE
 INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins
 LIBS += -lsignon-plugins

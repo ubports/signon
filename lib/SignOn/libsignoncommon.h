@@ -31,18 +31,18 @@
 #ifdef LIBSIGNON_TRACE
     #include <QDebug>
 
-    #ifdef TRACE
-        #undef TRACE
-    #endif
+    #ifdef DEBUG_ENABLED
+        #ifdef TRACE
+            #undef TRACE
+        #endif
 
-    #ifdef BLAME
-        #undef BLAME
-    #endif
+        #ifdef BLAME
+            #undef BLAME
+        #endif
 
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
-#else
-    #ifndef SIGNOND_TRACE
+        #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
+        #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
+    #else
         #define TRACE() while (0) qDebug()
         #define BLAME() while (0) qCritical()
     #endif
