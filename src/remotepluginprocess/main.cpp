@@ -28,16 +28,36 @@ extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/poll.h>
+#include <syslog.h>
 }
 
-#include <remotepluginprocess.h>
+#include "remotepluginprocess.h"
+
+#include <QDebug>
 
 using namespace RemotePluginProcessNS;
 
 RemotePluginProcess *process = NULL;
 
+static void messageHandler(QtMsgType type, const char *msg)
+{
+    int priority;
+    switch (type) {
+        case QtWarningMsg: priority = LOG_WARNING; break;
+        case QtCriticalMsg: priority = LOG_CRIT; break;
+        case QtFatalMsg: priority = LOG_EMERG; break;
+        case QtDebugMsg:
+                         /* fall through */
+        default: priority = LOG_INFO; break;
+    }
+
+    syslog(priority, msg);
+}
+
 int main(int argc, char *argv[])
 {
+    qInstallMsgHandler(messageHandler);
+
     TRACE();
 
 #ifndef NO_SIGNON_USER
