@@ -113,7 +113,7 @@ void TestPluginProxy::process_for_dummy()
 
     QVariantMap outData = spyResult.at(0).at(1).toMap();
 
-    TRACE() << outData;
+    qDebug() << outData;
 
     QVERIFY(outData.contains("UserName") && outData["UserName"] == "testUsername");
     QVERIFY(outData.contains("Realm") && outData["Realm"] == "testRealm_after_test");
@@ -168,8 +168,8 @@ void TestPluginProxy::processUi_for_dummy()
     int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
-    TRACE() << err;
-    TRACE() << errMsg;
+    qDebug() << err;
+    qDebug() << errMsg;
 
     QVERIFY(err == Error::NotAuthorized);
 
@@ -225,8 +225,8 @@ void TestPluginProxy::process_and_cancel_for_dummy()
     int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
-    TRACE() << err;
-    TRACE() << errMsg;
+    qDebug() << err;
+    qDebug() << errMsg;
 
     QVERIFY(key == cancelKey);
     QVERIFY(err == Error::SessionCanceled);
@@ -273,7 +273,7 @@ void TestPluginProxy::process_wrong_mech_for_dummy()
     int err = spyError.at(0).at(1).toInt();
     QString errMsg = spyError.at(0).at(2).toString();
 
-    TRACE() << err << " " << errMsg;
+    qDebug() << err << " " << errMsg;
 
     QVERIFY(key == cancelKey);
     QVERIFY(err == Error::MechanismNotAvailable);
