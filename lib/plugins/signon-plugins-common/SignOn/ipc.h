@@ -1,7 +1,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Nokia Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
  *
@@ -20,39 +20,33 @@
  * 02110-1301 USA
  */
 /*!
- * @copyright Copyright (C) 2009-2011 Nokia Corporation.
+ * @copyright Copyright (C) 2011 Nokia Corporation.
  * @license LGPL
  */
 
-#ifndef SIGNONPLUGIN_H
-#define SIGNONPLUGIN_H
+#ifndef SIGNON_PLUGINS_COMMON_IPC_H
+#define SIGNON_PLUGINS_COMMON_IPC_H
 
-#include <QtCore/qobject.h>
-#include <QtCore/qpointer.h>
-#include <QtCore/qplugin.h>
+enum PluginOperation {
+    PLUGIN_OP_TYPE = 1,
+    PLUGIN_OP_MECHANISMS,
+    PLUGIN_OP_PROCESS,
+    PLUGIN_OP_PROCESS_UI,
+    PLUGIN_OP_REFRESH,
+    PLUGIN_OP_CANCEL,
+    PLUGIN_OP_STOP,
+    PLUGIN_OP_LAST
+};
 
-#include <QVariantMap>
-#include "SignOn/sessiondata.h"
-#include "SignOn/uisessiondata.h"
+enum PluginResponse {
+    PLUGIN_RESPONSE_RESULT = 1,
+    PLUGIN_RESPONSE_STORE,
+    PLUGIN_RESPONSE_ERROR,
+    PLUGIN_RESPONSE_SIGNAL,
+    PLUGIN_RESPONSE_UI,
+    PLUGIN_RESPONSE_REFRESHED,
+    PLUGIN_RESPONSE_LAST
+};
 
-#ifdef SIGNON_PLUGIN_TRACE
-    #include <QDebug>
+#endif // SIGNON_PLUGINS_COMMON_IPC_H
 
-    #ifdef TRACE
-        #undef TRACE
-    #endif
-
-    #ifdef BLAME
-        #undef BLAME
-    #endif
-
-    #define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
-    #define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
-#else
-    #ifndef SIGNOND_TRACE
-        #define TRACE() while (0) qDebug()
-        #define BLAME() while (0) qCritical()
-    #endif
-#endif
-
-#endif // SIGNONPLUGIN_H

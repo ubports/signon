@@ -34,6 +34,7 @@
 
 // signon-plugins-common
 #include "SignOn/blobiohandler.h"
+#include "SignOn/ipc.h"
 
 namespace RemotePluginProcessNS {
 

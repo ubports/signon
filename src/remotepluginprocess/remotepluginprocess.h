@@ -39,7 +39,6 @@
 
 #include "SignOn/uisessiondata.h"
 #include "SignOn/authpluginif.h"
-#include "SignOn/signonplugincommon.h"
 
 extern "C" {
 #include <sys/types.h>

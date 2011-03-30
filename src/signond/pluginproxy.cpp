@@ -43,6 +43,7 @@
 
 // signon-plugins-common
 #include "SignOn/blobiohandler.h"
+#include "SignOn/ipc.h"
 
 //TODO get this from config
 #define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")

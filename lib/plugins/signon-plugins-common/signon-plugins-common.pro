@@ -8,10 +8,15 @@ CONFIG += qt
 
 INCLUDEPATH += ../
 
-SOURCES += SignOn/blobiohandler.cpp 
-HEADERS += SignOn/blobiohandler.h
 
-headers.files = $$HEADERS
+SOURCES += \
+    SignOn/blobiohandler.cpp
+HEADERS += \
+    SignOn/blobiohandler.h \
+    SignOn/ipc.h
+
+headers.files = \
+    SignOn/blobiohandler.h
 
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
