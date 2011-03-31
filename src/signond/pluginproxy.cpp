@@ -104,9 +104,10 @@ namespace SignonDaemonNS {
         m_process = new PluginProcess(this);
 
 #ifdef SIGNOND_TRACE
-        if (debugEnabled()) {
+        if (criticalsEnabled()) {
+            const char *level = debugEnabled() ? "2" : "1";
             QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-            env.insert(QLatin1String("SSO_DEBUG"), QLatin1String("1"));
+            env.insert(QLatin1String("SSO_DEBUG"), QLatin1String(level));
             m_process->setProcessEnvironment(env);
         }
 #endif

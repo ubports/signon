@@ -24,12 +24,12 @@
 #define REMOTEPLUGINPROCESS_DEBUG_H
 
 #ifdef DEBUG_ENABLED
-    extern int debugEnabled;
+    extern int debugLevel;
 
     #define TRACE() \
-        if (debugEnabled) qDebug() << __FILE__ << __LINE__ << __func__
+        if (debugLevel >= 2) qDebug() << __FILE__ << __LINE__ << __func__
     #define BLAME() \
-        qCritical() << __FILE__ << __LINE__ << __func__
+        if (debugLevel >= 1) qCritical() << __FILE__ << __LINE__ << __func__
 #else
     #define TRACE() while (0) qDebug()
     #define BLAME() while (0) qDebug()

@@ -24,13 +24,13 @@
 #include <QString>
 #include <QtGlobal>
 
-int debugEnabled = -1;
+int debugLevel = -1;
 
 void debugInit()
 {
-    if (debugEnabled >= 0) return;
+    if (debugLevel >= 0) return;
 
     QString ssoDebug(qgetenv("SSO_DEBUG"));
-    debugEnabled = ssoDebug.isEmpty() ? 0 : 1;
+    debugLevel = ssoDebug.toInt();
 }
 
