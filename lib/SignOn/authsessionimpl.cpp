@@ -20,7 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-#include <signond/signoncommon.h>
+#include "signond/signoncommon.h"
 
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
@@ -364,7 +364,7 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errCode = Error::WrongState;
     } else if (err.name() == SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME) {
         errCode = Error::MechanismNotAvailable;
-    } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {        
+    } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {
         m_isValid = false;
         m_isAuthInProcessing = false;
         errCode = Error::MethodNotAvailable;

@@ -26,7 +26,7 @@
 #include <QBuffer>
 #include <QDebug>
 
-#include <SignOn/signonplugincommon.h>
+#include "SignOn/signonplugincommon.h"
 
 #define SIGNON_IPC_BUFFER_PAGE_SIZE 16384
 

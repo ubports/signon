@@ -24,7 +24,7 @@
 #include <QDBusConnectionInterface>
 #include <QTimer>
 
-#include <signond/signoncommon.h>
+#include "signond/signoncommon.h"
 
 #include "libsignoncommon.h"
 #include "identityinfo.h"

@@ -26,7 +26,7 @@
 #include <QDBusArgument>
 #include <QTimer>
 
-#include <signond/signoncommon.h>
+#include "signond/signoncommon.h"
 
 #include "libsignoncommon.h"
 #include "identityimpl.h"

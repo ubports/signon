@@ -20,8 +20,8 @@
  * 02110-1301 USA
  */
 #include "backuptest.h"
-#include <signond/signoncommon.h>
- #include <QDBusMessage>
+#include "signond/signoncommon.h"
+#include <QDBusMessage>
 
 void TestBackup::initTestCase()
 {

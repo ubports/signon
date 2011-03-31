@@ -20,7 +20,7 @@
  * 02110-1301 USA
  */
 #include "databasetest.h"
-#include <signond/signoncommon.h>
+#include "signond/signoncommon.h"
 #include <QDBusMessage>
 
 #include "credentialsdb.h"

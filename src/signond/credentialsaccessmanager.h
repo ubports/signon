@@ -37,7 +37,7 @@
 
 #include <QObject>
 #include <QPointer>
-#include <SignOn/AbstractKeyManager>
+#include "SignOn/AbstractKeyManager"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
     Use this event type to signal the CAM when the secure storage is

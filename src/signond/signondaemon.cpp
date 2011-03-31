@@ -33,8 +33,8 @@ extern "C" {
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
 
-#include <SignOn/AbstractKeyManager>
-#include <SignOn/ExtensionInterface>
+#include "SignOn/AbstractKeyManager"
+#include "SignOn/ExtensionInterface"
 
 #include "signondaemon.h"
 #include "signond-common.h"

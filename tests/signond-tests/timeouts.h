@@ -23,7 +23,7 @@
 #ifndef TIMEOUTS_TEST_H
 #define TIMEOUTS_TEST_H
 
-#include <SignOn/Identity>
+#include "SignOn/identity.h"
 
 #include <QtTest/QtTest>
 #include <QtCore>

@@ -31,7 +31,7 @@
 #include "testidentityresult.h"
 #include "testauthserviceresult.h"
 
-#include <SignOn/signonerror.h>
+#include "SignOn/signonerror.h"
 
 #ifdef SSO_CI_TESTMANAGEMENT
     #define SSOTESTCLIENT_USES_AUTHSESSION

@@ -28,9 +28,9 @@
 #include "signonui_interface.h"
 #include "accesscontrolmanager.h"
 
-#include <SignOn/uisessiondata_priv.h>
-#include <SignOn/authpluginif.h>
-#include <SignOn/Error>
+#include "SignOn/uisessiondata_priv.h"
+#include "SignOn/authpluginif.h"
+#include "SignOn/signonerror.h"
 
 #define MAX_IDLE_TIME SIGNOND_MAX_IDLE_TIME
 /*

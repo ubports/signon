@@ -24,7 +24,7 @@
 
 #include "testthread.h"
 
-#include <SignOn/authservice.h>
+#include "SignOn/authservice.h"
 
 #include <QTimer>
 #include <QEventLoop>

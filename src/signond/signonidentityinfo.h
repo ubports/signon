@@ -27,7 +27,7 @@
 #include <QStringList>
 #include <QVariant>
 
-#include <signond/signoncommon.h>
+#include "signond/signoncommon.h"
 
 namespace SignonDaemonNS {
 
