@@ -42,7 +42,7 @@
 
         inline bool debugEnabled()
         {
-            return loggingLevel == 2;
+            return loggingLevel >= 2;
         }
 
         inline bool criticalsEnabled()
