@@ -47,14 +47,6 @@ QMAKE_EXTRA_TARGETS     += doccleantarget
 
 
 #-----------------------------------------------------------------------------
-# installation setup
-# NOTE: remember to set headers.files before this include to have the headers
-# properly setup.
-#-----------------------------------------------------------------------------
-include( ../../../common-installs-config.pri )
-
-
-#-----------------------------------------------------------------------------
 # Installation target setup for documentation
 #-----------------------------------------------------------------------------
 documentation.path = $${INSTALL_PREFIX}/share/doc/$${TARGET}
