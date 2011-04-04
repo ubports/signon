@@ -355,6 +355,11 @@ private:
     */
     void setCoreKeyAuthorizationMech(const KeySwapAuthorizingMech mech);
 
+    /*!
+      @returns the set of currently inserted authorized keys.
+    */
+    QSet<SignOn::Key> authorizedInsertedKeys() const;
+
 private:
     static CredentialsAccessManager *m_pInstance;
 

@@ -454,9 +454,9 @@ void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
 
     insertedKeys.removeAll(key);
 
-    /* If no inserted keys left, enable the suitable core key authorizing
-     * mechanism and close the secure storage. */
-    if (insertedKeys.isEmpty()) {
+    /* If no authorized inserted keys left, enable the suitable core key
+     * authorizing mechanism and close the secure storage. */
+    if (authorizedInsertedKeys().isEmpty()) {
         if (processingSecureStorageEvent) {
             /* If while processing a secure storage event, cache the disabled
              * key if it was unauthorized and enable the
@@ -640,6 +640,12 @@ CredentialsAccessManager::coreKeyAuthorizingEnabled(
                && (!cachedUnauthorizedKey.isEmpty());
 
     return false;
+}
+
+QSet<SignOn::Key> CredentialsAccessManager::authorizedInsertedKeys() const
+{
+    return insertedKeys.toSet().
+        intersect(authorizedKeys.toSet());
 }
 
 void CredentialsAccessManager::onClearPasswordsStorage()
