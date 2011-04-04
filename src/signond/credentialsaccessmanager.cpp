@@ -478,6 +478,9 @@ void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
             }
 
             connect(m_secureStorageUiAdaptor,
+                    SIGNAL(noKeyPresentAccepted()),
+                    SLOT(onNoKeyPresentAccepted()));
+            connect(m_secureStorageUiAdaptor,
                     SIGNAL(uiClosed()),
                     SLOT(onSecureStorageUiClosed()));
             connect(m_secureStorageUiAdaptor,
@@ -646,6 +649,12 @@ QSet<SignOn::Key> CredentialsAccessManager::authorizedInsertedKeys() const
 {
     return insertedKeys.toSet().
         intersect(authorizedKeys.toSet());
+}
+
+void CredentialsAccessManager::onNoKeyPresentAccepted()
+{
+    onSecureStorageUiClosed();
+    setCoreKeyAuthorizationMech(AuthorizedKeyRemovedFirst);
 }
 
 void CredentialsAccessManager::onClearPasswordsStorage()

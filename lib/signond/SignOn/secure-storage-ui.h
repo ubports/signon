@@ -58,9 +58,11 @@ enum UiInteractionType
 */
 enum UiReplyType
 {
-    ClearPasswordsStorage,  /**< User decides to clear the passwords'
-                               storage. */
-    UiRejected,             /**< Ui closed by user. */
+    ClearPasswordsStorage = 0,  /**< User decides to clear the passwords'
+                                     storage. */
+    NoKeyPresentAccepted,       /**< User has accepted the notification about
+                                     unavailability of storage keys. */
+    UiRejected,                 /**< Ui closed by user. */
 };
 
 } //namespace SignOn

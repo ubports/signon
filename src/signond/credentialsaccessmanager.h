@@ -316,6 +316,7 @@ private Q_SLOTS:
     void onKeyAuthorized(const SignOn::Key key, bool authorized);
     void onClearPasswordsStorage();
     void onSecureStorageUiClosed();
+    void onNoKeyPresentAccepted();
 
 protected:
     void customEvent(QEvent *event);

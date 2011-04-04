@@ -85,6 +85,7 @@ public:
     void closeUi();
 
 Q_SIGNALS:
+    void noKeyPresentAccepted();
     void clearPasswordsStorage();
     void uiClosed();
     void error();
