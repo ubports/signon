@@ -146,7 +146,7 @@ void AuthCoreCache::authSessionDestroyed(const CacheId &id)
         authMethods.removeOne(id.second);
         if (authMethods.isEmpty()) {
             delete m_cache.take(id.first);
-            Q_UNUSED(m_cachingSessionsMethods.take(id.first));
+            (void)m_cachingSessionsMethods.take(id.first);
         }
     }
 }
@@ -156,4 +156,6 @@ void AuthCoreCache::clear()
     QList<IdentityId> keys = m_cache.keys();
     foreach (IdentityId key, keys)
         delete m_cache.take(key);
+
+    m_cachingSessionsMethods.clear();
 }
