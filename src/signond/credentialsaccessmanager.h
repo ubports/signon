@@ -338,7 +338,7 @@ protected:
 
 private:
     // 1st time start - deploys the database.
-    bool initKeyManagers();
+    void initKeyManagers();
     bool deployCredentialsSystem();
     bool openSecretsDB();
     bool isSecretsDBOpen();

@@ -159,14 +159,13 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     m_systemReady = true;
 
     if (m_CAMConfiguration.m_useEncryption) {
-        if (initKeyManagers()) {
-            m_systemReady = false;
-            //Initialize CryptoManager
-            m_pCryptoFileSystemManager = new CryptoManager(this);
-            m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
-            m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
-            m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
-        }
+        //Initialize CryptoManager
+        m_pCryptoFileSystemManager = new CryptoManager(this);
+        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
+        m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
+        m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
+
+        initKeyManagers();
     }
 
     m_isInitialized = true;
@@ -176,9 +175,13 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     return true;
 }
 
-bool CredentialsAccessManager::initKeyManagers()
+void CredentialsAccessManager::initKeyManagers()
 {
-    if (keyManagers.isEmpty()) return false;
+    if (keyManagers.isEmpty()) {
+        BLAME() << "NO Key Manager was subscribed to the CAM.";
+        return;
+    }
+    m_systemReady = false;
 
     foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
         connect(keyManager,
@@ -197,8 +200,6 @@ bool CredentialsAccessManager::initKeyManagers()
         }
         keyManager->setup();
     }
-
-    return true;
 }
 
 void CredentialsAccessManager::addKeyManager(
