@@ -138,6 +138,7 @@ void CredentialsAccessManager::finalize()
         keyManager->disconnect();
 
     m_isInitialized = false;
+    m_systemReady = false;
     m_error = NoError;
 }
 
@@ -155,30 +156,16 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     m_CAMConfiguration.serialize(&config);
     TRACE() << "\n\nInitualizing CredentialsAccessManager with configuration: " << config.data();
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        //Initialize CryptoManager
-        m_pCryptoFileSystemManager = new CryptoManager(this);
-        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
-        m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
-        m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
+    m_systemReady = true;
 
-        // Initialize all key managers
-        foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
-            connect(keyManager,
-                    SIGNAL(keyInserted(const SignOn::Key)),
-                    SLOT(onKeyInserted(const SignOn::Key)));
-            connect(keyManager,
-                    SIGNAL(keyDisabled(const SignOn::Key)),
-                    SLOT(onKeyDisabled(const SignOn::Key)));
-            connect(keyManager,
-                    SIGNAL(keyRemoved(const SignOn::Key)),
-                    SLOT(onKeyRemoved(const SignOn::Key)));
-            if (keyManager->supportsKeyAuthorization()) {
-                connect(keyManager,
-                        SIGNAL(keyAuthorized(const SignOn::Key, bool)),
-                        SLOT(onKeyAuthorized(const SignOn::Key, bool)));
-            }
-            keyManager->setup();
+    if (m_CAMConfiguration.m_useEncryption) {
+        if (initKeyManagers()) {
+            m_systemReady = false;
+            //Initialize CryptoManager
+            m_pCryptoFileSystemManager = new CryptoManager(this);
+            m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
+            m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
+            m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
         }
     }
 
@@ -186,6 +173,31 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     m_error = NoError;
 
     TRACE() << "CredentialsAccessManager successfully initialized...";
+    return true;
+}
+
+bool CredentialsAccessManager::initKeyManagers()
+{
+    if (keyManagers.isEmpty()) return false;
+
+    foreach (SignOn::AbstractKeyManager *keyManager, keyManagers) {
+        connect(keyManager,
+                SIGNAL(keyInserted(const SignOn::Key)),
+                SLOT(onKeyInserted(const SignOn::Key)));
+        connect(keyManager,
+                SIGNAL(keyDisabled(const SignOn::Key)),
+                SLOT(onKeyDisabled(const SignOn::Key)));
+        connect(keyManager,
+                SIGNAL(keyRemoved(const SignOn::Key)),
+                SLOT(onKeyRemoved(const SignOn::Key)));
+        if (keyManager->supportsKeyAuthorization()) {
+            connect(keyManager,
+                    SIGNAL(keyAuthorized(const SignOn::Key, bool)),
+                    SLOT(onKeyAuthorized(const SignOn::Key, bool)));
+        }
+        keyManager->setup();
+    }
+
     return true;
 }
 
@@ -259,6 +271,16 @@ bool CredentialsAccessManager::openMetaDataDB()
                 storageDir.path();
             m_error = CredentialsDbSetupFailed;
             return false;
+        }
+        //Set the right permissions for the storage directory
+        QFile storageDirAsFile(storageDir.path());
+        QFile::Permissions permissions = storageDirAsFile.permissions();
+
+        if (!permissions.testFlag(QFile::WriteUser)
+            || !permissions.testFlag(QFile::ReadUser)) {
+
+            permissions |= QFile::WriteUser | QFile::ReadUser;
+            storageDirAsFile.setPermissions(permissions);
         }
     }
 
@@ -405,7 +427,7 @@ void CredentialsAccessManager::onKeyInserted(const SignOn::Key key)
         ++readyKeyManagersCounter;
         if (!key.isEmpty() || (readyKeyManagersCounter == keyManagers.count())) {
             m_systemReady = true;
-            emit credentialsSystemReadySignal();
+            emit credentialsSystemReady();
         }
     }
 
@@ -481,11 +503,11 @@ void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
                     SIGNAL(noKeyPresentAccepted()),
                     SLOT(onNoKeyPresentAccepted()));
             connect(m_secureStorageUiAdaptor,
-                    SIGNAL(uiClosed()),
-                    SLOT(onSecureStorageUiClosed()));
+                    SIGNAL(uiRejected()),
+                    SLOT(onSecureStorageUiRejected()));
             connect(m_secureStorageUiAdaptor,
                     SIGNAL(error()),
-                    SLOT(onSecureStorageUiClosed()));
+                    SLOT(onSecureStorageUiRejected()));
 
             m_secureStorageUiAdaptor->notifyNoKeyPresent();
             setCoreKeyAuthorizationMech(AuthorizedKeyRemovedFirst);
@@ -577,8 +599,8 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
             if (m_secureStorageUiAdaptor && authorizedKeys.contains(key))
                 m_secureStorageUiAdaptor->notifyKeyAuthorized();
 
-            //reset secure storage ui related data
-            onSecureStorageUiClosed();
+            //cleanup secure storage ui related data
+            onSecureStorageUiClosed(DisableCoreKeyAuthorization);
         }
     } else if (!fileSystemDeployed()) {
         /* if the secure FS does not exist, create it and use this new key to
@@ -654,6 +676,7 @@ QSet<SignOn::Key> CredentialsAccessManager::authorizedInsertedKeys() const
 void CredentialsAccessManager::onNoKeyPresentAccepted()
 {
     onSecureStorageUiClosed();
+    //enforce the setting of the core key authorization mechanism
     setCoreKeyAuthorizationMech(AuthorizedKeyRemovedFirst);
 }
 
@@ -661,7 +684,7 @@ void CredentialsAccessManager::onClearPasswordsStorage()
 {
     if (insertedKeys.isEmpty()) {
         TRACE() << "No keys available. The reformatting of the secure storage skipped.";
-        onSecureStorageUiClosed();
+        onSecureStorageUiClosed(DisableCoreKeyAuthorization);
         return;
     }
 
@@ -686,15 +709,13 @@ void CredentialsAccessManager::onClearPasswordsStorage()
         BLAME() << "Failed to reformat secure storage file system.";
     }
 
-    onSecureStorageUiClosed();
+    onSecureStorageUiClosed(DisableCoreKeyAuthorization);
 }
 
-void CredentialsAccessManager::onSecureStorageUiClosed()
+void
+CredentialsAccessManager::onSecureStorageUiClosed(
+    const StorageUiCleanupFlags options)
 {
-    TRACE();
-    cachedUnauthorizedKey.clear();
-    setCoreKeyAuthorizationMech(Disabled);
-
     if (m_secureStorageUiAdaptor) {
         delete m_secureStorageUiAdaptor;
         m_secureStorageUiAdaptor = 0;
@@ -704,6 +725,16 @@ void CredentialsAccessManager::onSecureStorageUiClosed()
         processingSecureStorageEvent = false;
         replyToSecureStorageEventNotifiers();
     }
+
+    if (options.testFlag(DisableCoreKeyAuthorization)) {
+        setCoreKeyAuthorizationMech(Disabled);
+        cachedUnauthorizedKey.clear();
+    }
+}
+
+void CredentialsAccessManager::onSecureStorageUiRejected()
+{
+    onSecureStorageUiClosed(DisableCoreKeyAuthorization);
 }
 
 void CredentialsAccessManager::replyToSecureStorageEventNotifiers()
@@ -751,11 +782,11 @@ bool CredentialsAccessManager::processSecureStorageEvent()
                 SIGNAL(clearPasswordsStorage()),
                 SLOT(onClearPasswordsStorage()));
         connect(m_secureStorageUiAdaptor,
-                SIGNAL(uiClosed()),
-                SLOT(onSecureStorageUiClosed()));
+                SIGNAL(uiRejected()),
+                SLOT(onSecureStorageUiRejected()));
         connect(m_secureStorageUiAdaptor,
                 SIGNAL(error()),
-                SLOT(onSecureStorageUiClosed()));
+                SLOT(onSecureStorageUiRejected()));
 
         m_secureStorageUiAdaptor->notifyNoAuthorizedKeyPresent();
         processingSecureStorageEvent = true;

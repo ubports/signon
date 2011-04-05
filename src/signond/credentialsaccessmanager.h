@@ -37,6 +37,8 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QFlags>
+
 #include "SignOn/AbstractKeyManager"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
@@ -195,6 +197,19 @@ class CredentialsAccessManager : public QObject
         UnauthorizedKeyRemovedFirst /**< The key swap order is as suggested. */
     };
 
+    /*!
+      @enum StorageUiCleanupFlag
+      Specific options for cleaning up resources upon secure storage UI closure.
+      @sa KeySwapAuthorizingMech
+     */
+    enum StorageUiCleanupFlag {
+        NoFlags = 0,                 /**< No flags. */
+        DisableCoreKeyAuthorization  /**< Disable any core key authorization mechanism
+                                          and clears any unauthorized cached key that is
+                                          not physically inserted into the device. */
+    };
+    Q_DECLARE_FLAGS(StorageUiCleanupFlags, StorageUiCleanupFlag)
+
 public:
 
     /*!
@@ -278,7 +293,7 @@ public:
       system can be ready while at the same time the secure storage is not opened.
       @returns true if the credentials system is ready, false otherwise.
     */
-    bool credentialsSystemReady() const { return m_systemReady; }
+    bool isCredentialsSystemReady() const { return m_systemReady; }
 
     /*!
       @returns the credentials database object.
@@ -307,7 +322,7 @@ Q_SIGNALS:
     /*!
       Is emitted when the credentials system becomes ready.
     */
-    void credentialsSystemReadySignal();
+    void credentialsSystemReady();
 
 private Q_SLOTS:
     void onKeyInserted(const SignOn::Key key);
@@ -315,7 +330,7 @@ private Q_SLOTS:
     void onKeyRemoved(const SignOn::Key key);
     void onKeyAuthorized(const SignOn::Key key, bool authorized);
     void onClearPasswordsStorage();
-    void onSecureStorageUiClosed();
+    void onSecureStorageUiRejected();
     void onNoKeyPresentAccepted();
 
 protected:
@@ -323,6 +338,7 @@ protected:
 
 private:
     // 1st time start - deploys the database.
+    bool initKeyManagers();
     bool deployCredentialsSystem();
     bool openSecretsDB();
     bool isSecretsDBOpen();
@@ -333,6 +349,8 @@ private:
     void queryEncryptionKeys();
     void replyToSecureStorageEventNotifiers();
     bool processSecureStorageEvent();
+
+    void onSecureStorageUiClosed(const StorageUiCleanupFlags flags = NoFlags);
 
     /*!
      * Checks if the key can open the secure storage. If it can, the file system
