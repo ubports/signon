@@ -99,7 +99,7 @@ SignonSessionCore::SignonSessionCore(quint32 id,
 
 
     connect(CredentialsAccessManager::instance(),
-            SIGNAL(credentialsSystemReadySignal()),
+            SIGNAL(credentialsSystemReady()),
             SLOT(credentialsSystemReady()));
 }
 
@@ -273,7 +273,7 @@ void SignonSessionCore::process(const QDBusConnection &connection,
                                              cancelKey));
     }
 
-    if (CredentialsAccessManager::instance()->credentialsSystemReady())
+    if (CredentialsAccessManager::instance()->isCredentialsSystemReady())
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
