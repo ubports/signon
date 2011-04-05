@@ -87,7 +87,7 @@ public:
 Q_SIGNALS:
     void noKeyPresentAccepted();
     void clearPasswordsStorage();
-    void uiClosed();
+    void uiRejected();
     void error();
 
 private Q_SLOTS:
