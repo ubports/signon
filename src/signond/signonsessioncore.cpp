@@ -405,8 +405,8 @@ void SignonSessionCore::startProcess()
             }
         }
 
-        //TODO unite might generate multiple entries
-        parameters.unite(storedParams);
+        //parameters will overwrite any common keys on stored params
+        parameters = mergeVariantMaps(storedParams, parameters);
     }
 
     if (parameters.contains(SSOUI_KEY_UIPOLICY)
