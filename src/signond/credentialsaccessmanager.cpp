@@ -276,13 +276,12 @@ bool CredentialsAccessManager::openMetaDataDB()
         //Set the right permissions for the storage directory
         QFile storageDirAsFile(storageDir.path());
         QFile::Permissions permissions = storageDirAsFile.permissions();
+        QFile::Permissions desiredPermissions = permissions
+            | QFile::WriteGroup | QFile::ReadGroup
+            | QFile::WriteOther | QFile::ReadOther;
 
-        if (!permissions.testFlag(QFile::WriteUser)
-            || !permissions.testFlag(QFile::ReadUser)) {
-
-            permissions |= QFile::WriteUser | QFile::ReadUser;
-            storageDirAsFile.setPermissions(permissions);
-        }
+        if (permissions != desiredPermissions)
+            storageDirAsFile.setPermissions(desiredPermissions);
     }
 
     m_pCredentialsDB = new CredentialsDB(dbPath);
