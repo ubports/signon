@@ -28,6 +28,24 @@
 
 using namespace SignonDaemonNS;
 
+
+QVariantMap SignonDaemonNS::mergeVariantMaps(const QVariantMap &map1, const QVariantMap &map2)
+{
+
+    if (map1.isEmpty()) return map2;
+    if (map2.isEmpty()) return map1;
+
+    QVariantMap map = map1;
+    //map2 values will overwrite map1 values for the same keys.
+    QMapIterator<QString, QVariant> it(map2);
+    while (it.hasNext()) {
+        it.next();
+        if (map.contains(it.key()))
+            map.remove(it.key());
+    }
+    return map.unite(map2);
+}
+
 /* --------------------- StoreOperation ---------------------- */
 
 StoreOperation::StoreOperation(const StoreType type) : m_storeType(type)
@@ -126,8 +144,8 @@ void AuthCoreCache::insert(const CacheId &id, AuthCache *cache)
             cache->m_username = data->m_username;
         if (cache->m_password.isEmpty())
             cache->m_password = data->m_password;
-        if (cache->m_blobData.isEmpty())
-            cache->m_blobData = data->m_blobData;
+
+        cache->m_blobData = mergeVariantMaps(data->m_blobData, cache->m_blobData);
 
         delete data;
         m_cache.insert(id.first, cache);
