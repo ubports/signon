@@ -121,12 +121,6 @@ namespace SignOn {
     void IdentityInfo::setAccessControlList(const QStringList &accessControlList)
     {
         impl->m_accessControlList = accessControlList;
-
-        //remove 'owner aegis tokens' if manually specified by the user
-        int index = 0;
-        QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::*"));
-        while ((index = impl->m_accessControlList.indexOf(aegisIdTokenPrefixRegExp, index)) != -1)
-            impl->m_accessControlList.removeAt(index);
     }
 
     QStringList IdentityInfo::accessControlList() const

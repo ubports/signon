@@ -411,8 +411,10 @@ namespace SignonDaemonNS {
         QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
 
         QStringList accessControlListLocal = accessControlList;
-        if (!aegisIdToken.isNull())
-            accessControlListLocal.prepend(aegisIdToken);
+
+//TODO: AID enforcement disabled until API has changed to support ownership
+//        if (!aegisIdToken.isNull())
+//            accessControlListLocal.prepend(aegisIdToken);
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
