@@ -184,7 +184,9 @@ namespace SignonDaemonNS {
         QString fileSystemMountPath() const;
 
         /*!
-            @attention if the file system is not mounted, this method will always return false.
+            @attention if the file system is not mounted and the encryption
+            key can access it, this method will cause the file system to be
+            mounted.
             @returns whether the key `key` is occupying a keyslot in the encrypted file system.
         */
         bool encryptionKeyInUse(const QByteArray &key);
