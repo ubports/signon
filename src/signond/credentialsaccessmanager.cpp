@@ -222,7 +222,7 @@ bool CredentialsAccessManager::openSecretsDB()
             + QDir::separator()
             + m_CAMConfiguration.m_dbName;
 
-        if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
+        if (!m_pCryptoFileSystemManager->fileSystemIsMounted()) {
             /* Do not attempt to mount the FS; we know that it will be mounted
              * automatically, as soon as some encryption keys are provided */
             m_error = CredentialsDbNotMounted;
@@ -381,14 +381,9 @@ bool CredentialsAccessManager::deployCredentialsSystem()
     return true;
 }
 
-bool CredentialsAccessManager::fileSystemDeployed()
-{
-    return QFile::exists(m_pCryptoFileSystemManager->fileSystemPath());
-}
-
 bool CredentialsAccessManager::encryptionKeyCanOpenStorage(const QByteArray &key)
 {
-    if (!fileSystemDeployed()) {
+    if (!m_pCryptoFileSystemManager->fileSystemIsSetup()) {
         TRACE() << "Secure FS not deployed, deploying now...";
         m_pCryptoFileSystemManager->setEncryptionKey(key);
 
@@ -503,7 +498,7 @@ void CredentialsAccessManager::onKeyDisabled(const SignOn::Key key)
         }
 
         TRACE() << "All keys disabled. Closing secure storage.";
-        if (isSecretsDBOpen() || m_pCryptoFileSystemManager->fileSystemMounted())
+        if (isSecretsDBOpen() || m_pCryptoFileSystemManager->fileSystemIsMounted())
             if (!closeSecretsDB())
                 BLAME() << "Error occurred while closing secure storage.";
 
@@ -555,12 +550,12 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
     /* Make sure that the secure file system is mounted, so that the key `key`
      * can be successfully authorized by the encryption backend.
      */
-    if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
+    if (!m_pCryptoFileSystemManager->fileSystemIsMounted()) {
 
         m_pCryptoFileSystemManager->setEncryptionKey(authorizedKeys.first());
     }
 
-    if (m_pCryptoFileSystemManager->fileSystemMounted()) {
+    if (m_pCryptoFileSystemManager->fileSystemIsMounted()) {
         /* if the secure FS is already mounted, add the new key to it */
         if (authorizedKeys.isEmpty()) {
             BLAME() << "No authorized keys: cannot add new key";
@@ -586,7 +581,7 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
             //cleanup secure storage ui related data
             onSecureStorageUiClosed(DisableCoreKeyAuthorization);
         }
-    } else if (!fileSystemDeployed()) {
+    } else if (!m_pCryptoFileSystemManager->fileSystemIsSetup()) {
         /* if the secure FS does not exist, create it and use this new key to
          * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);

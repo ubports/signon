@@ -326,10 +326,15 @@ namespace SignonDaemonNS {
         return false;
     }
 
+    bool CryptoManager::fileSystemIsSetup() const
+    {
+        return QFile::exists(fileSystemPath());
+    }
+
     //TODO - debug this method. Current test scenarios do no cover this one
     bool CryptoManager::fileSystemContainsFile(const QString &filePath)
     {
-        if (!fileSystemMounted()) {
+        if (!fileSystemIsMounted()) {
             TRACE() << "Ecrypyted file system not mounted.";
             return false;
         }
@@ -399,10 +404,10 @@ namespace SignonDaemonNS {
 
     bool CryptoManager::encryptionKeyInUse(const QByteArray &key)
     {
-        if (fileSystemMounted() && (m_accessCode == key))
+        if (fileSystemIsMounted() && (m_accessCode == key))
             return true;
 
-        if(!fileSystemMounted()) {
+        if(!fileSystemIsMounted()) {
            setEncryptionKey(key);
            return mountFileSystem();
         }

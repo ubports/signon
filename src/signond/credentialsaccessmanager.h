@@ -347,7 +347,6 @@ private:
     bool closeSecretsDB();
     bool openMetaDataDB();
     void closeMetaDataDB();
-    bool fileSystemDeployed();
     void queryEncryptionKeys();
     void replyToSecureStorageEventNotifiers();
     bool processSecureStorageEvent();

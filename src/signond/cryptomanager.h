@@ -168,9 +168,14 @@ namespace SignonDaemonNS {
         bool deleteFileSystem();
 
         /*!
-            @returns true, if the file system is mounted, false otherwise.
+            @returns true if the file system is mounted, false otherwise.
         */
-        bool fileSystemMounted() const { return m_mountState == Mounted; }
+        bool fileSystemIsMounted() const { return m_mountState == Mounted; }
+
+        /*!
+            @returns true if the file system is setup, false otherwise.
+        */
+        bool fileSystemIsSetup() const;
 
         /*!
             @returns true, if the file system contains a specific file.
