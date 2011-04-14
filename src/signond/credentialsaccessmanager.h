@@ -332,6 +332,8 @@ private Q_SLOTS:
     void onClearPasswordsStorage();
     void onSecureStorageUiRejected();
     void onNoKeyPresentAccepted();
+    void onEncryptedFSMounted();
+    void onEncryptedFSUnmounting();
 
 protected:
     void customEvent(QEvent *event);

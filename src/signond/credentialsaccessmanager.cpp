@@ -161,6 +161,10 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
         m_pCryptoFileSystemManager = new CryptoManager(this);
+        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemMounted()),
+                         this, SLOT(onEncryptedFSMounted()));
+        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemUnmounting()),
+                         this, SLOT(onEncryptedFSUnmounting()));
         m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
@@ -218,16 +222,11 @@ bool CredentialsAccessManager::openSecretsDB()
             + QDir::separator()
             + m_CAMConfiguration.m_dbName;
 
-        if (!fileSystemDeployed()) {
-            if (!deployCredentialsSystem())
-                return false;
-        }
-
         if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
-            if (!m_pCryptoFileSystemManager->mountFileSystem()) {
-                m_error = CredentialsDbMountFailed;
-                return false;
-            }
+            /* Do not attempt to mount the FS; we know that it will be mounted
+             * automatically, as soon as some encryption keys are provided */
+            m_error = CredentialsDbNotMounted;
+            return false;
         }
     } else {
         dbPath = m_CAMConfiguration.metadataDBPath() + QLatin1String(".creds");
@@ -401,16 +400,6 @@ bool CredentialsAccessManager::encryptionKeyCanOpenStorage(const QByteArray &key
 
     if (m_pCryptoFileSystemManager->encryptionKeyInUse(key)) {
         TRACE() << "Key already in use.";
-        if (!isSecretsDBOpen()) {
-            if (openSecretsDB()) {
-                TRACE() << "Secrets DB opened.";
-            } else {
-                BLAME() << "Failed to open secrets DB.";
-            }
-        } else {
-            TRACE() << "Secrets DB already opened.";
-        }
-
         return true;
     }
 
@@ -569,11 +558,6 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
     if (!m_pCryptoFileSystemManager->fileSystemMounted()) {
 
         m_pCryptoFileSystemManager->setEncryptionKey(authorizedKeys.first());
-        if (openSecretsDB()) {
-            TRACE() << "Secrets DB opened.";
-        } else {
-            BLAME() << "Failed to open secrets DB.";
-        }
     }
 
     if (m_pCryptoFileSystemManager->fileSystemMounted()) {
@@ -606,7 +590,7 @@ void CredentialsAccessManager::onKeyAuthorized(const SignOn::Key key,
         /* if the secure FS does not exist, create it and use this new key to
          * initialize it */
         m_pCryptoFileSystemManager->setEncryptionKey(key);
-        if (openSecretsDB() && !authorizedKeys.contains(key)) {
+        if (!authorizedKeys.contains(key)) {
             authorizedKeys << key;
         } else {
             BLAME() << "Couldn't create the secure FS";
@@ -697,9 +681,6 @@ void CredentialsAccessManager::onClearPasswordsStorage()
     if (m_pCryptoFileSystemManager->setupFileSystem()) {
         authorizedKeys.clear();
         authorizedKeys << insertedKeys.first();
-
-        if (!openSecretsDB())
-            BLAME() << "Couldn't open secreds DB.";
 
         if (m_secureStorageUiAdaptor) {
             m_secureStorageUiAdaptor->notifyStorageCleared();
@@ -837,3 +818,26 @@ void CredentialsAccessManager::customEvent(QEvent *event)
 
     QObject::customEvent(event);
 }
+
+void CredentialsAccessManager::onEncryptedFSMounted()
+{
+    TRACE();
+    if (!isSecretsDBOpen()) {
+        if (openSecretsDB()) {
+            TRACE() << "Secrets DB opened.";
+        } else {
+            BLAME() << "Failed to open secrets DB.";
+        }
+    } else {
+        BLAME() << "Secrets DB already opened?";
+    }
+}
+
+void CredentialsAccessManager::onEncryptedFSUnmounting()
+{
+    TRACE();
+    if (isSecretsDBOpen()) {
+        m_pCredentialsDB->closeSecretsDB();
+    }
+}
+
