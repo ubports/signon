@@ -210,6 +210,10 @@ namespace SignonDaemonNS {
         bool removeEncryptionKey(const QByteArray &key,
                                  const QByteArray &remainingKey);
 
+    Q_SIGNALS:
+        void fileSystemMounted();
+        void fileSystemUnmounting();
+
     private:
         void clearFileSystemResources();
         bool mountMappedDevice();

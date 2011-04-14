@@ -284,6 +284,7 @@ namespace SignonDaemonNS {
             return true;
         }
 
+        emit fileSystemUnmounting();
         bool isOk = true;
 
         if ((m_mountState >= Mounted)
@@ -345,7 +346,11 @@ namespace SignonDaemonNS {
     void CryptoManager::updateMountState(const FileSystemMountState state)
     {
         TRACE() << "Updating mount state:" << state;
+        if (state == m_mountState) return;
+
         m_mountState = state;
+        if (state == Mounted)
+            emit fileSystemMounted();
     }
 
     bool CryptoManager::mountMappedDevice()
