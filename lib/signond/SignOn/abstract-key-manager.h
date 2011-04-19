@@ -83,6 +83,9 @@ public:
      * the authorization to the user.
      * @param key The key that needs authorization.
      * @param message An optional message that might be shown to the user.
+     *
+     * @deprecated This method is deprecated and should not be
+     * used or implemented in subclasses.
      */
     virtual void authorizeKey(const Key &key,
                               const QString &message = QString::null);
@@ -107,6 +110,9 @@ public:
     /*!
      * @returns Whether the extension is able to authorize keys or not.
      * The default implementation just returns false.
+     *
+     * @deprecated This method is deprecated and should not be
+     * used or implemented in subclasses.
      */
     virtual bool supportsKeyAuthorization() const;
 
@@ -143,6 +149,9 @@ Q_SIGNALS:
      * with authorized set to true.
      * @param key The key which underwent the authorization step
      * @param authorized The result of the authorization
+     *
+     * @deprecated This signal is deprecated and should not be
+     * used or emitted in subclasses.
      */
     void keyAuthorized(const SignOn::Key key, bool authorized);
 
