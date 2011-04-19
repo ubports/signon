@@ -374,7 +374,14 @@ namespace SignonDaemonNS {
         //create mnt dir if not existant
         if (!QFile::exists(m_fileSystemMountPath)) {
             QDir dir;
-            dir.mkdir(m_fileSystemMountPath);
+            if (!dir.mkpath(m_fileSystemMountPath)) {
+                BLAME() << "Could not create target mount dir path.";
+                return false;
+            }
+
+            if (!setUserOwnership(m_fileSystemMountPath))
+                TRACE() << "Failed to set User ownership for "
+                           "the secure storage mount target.";
         }
 
         MountHandler::mount(m_fileSystemMapPath, m_fileSystemMountPath);

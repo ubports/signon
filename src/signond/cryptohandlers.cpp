@@ -37,6 +37,7 @@
 
 #include "cryptohandlers.h"
 #include "signond-common.h"
+#include "misc.h"
 
 
 #define SIGNON_LUKS_DEFAULT_HASH  "ripemd160"
