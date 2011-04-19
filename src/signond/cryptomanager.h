@@ -90,7 +90,7 @@ namespace SignonDaemonNS {
             Sets the encryption key.
             @param key, the encrypted file system key.
         */
-        void setEncryptionKey(const QByteArray &key) { m_accessCode = key; }
+        void setEncryptionKey(const QByteArray &key);
 
         /*!
             @return The in use encryption key.

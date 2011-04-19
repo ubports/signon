@@ -99,6 +99,16 @@ namespace SignonDaemonNS {
         return true;
     }
 
+    void CryptoManager::setEncryptionKey(const QByteArray &key)
+    {
+        if (fileSystemIsMounted()) {
+            BLAME() << "File system already mounted";
+            return;
+        }
+
+        m_accessCode = key;
+    }
+
     bool CryptoManager::setFileSystemType(const QString &type)
     {
         QString cmpBase = type.toLower();
