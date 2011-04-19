@@ -14,6 +14,7 @@ system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp 
     ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
 
 HEADERS += \
+    abstract-key-authorizer.h \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
@@ -36,6 +37,7 @@ HEADERS += \
     backupifadaptor.h \
     signonsessioncoretools.h
 SOURCES += \
+    abstract-key-authorizer.cpp \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
