@@ -36,7 +36,8 @@ HEADERS += \
     signonidentityadaptor.h \
     backupifadaptor.h \
     signonsessioncoretools.h \
-    ui-key-authorizer.h
+    ui-key-authorizer.h \
+    misc.h
 SOURCES += \
     abstract-key-authorizer.cpp \
     accesscontrolmanager.cpp \
@@ -59,7 +60,8 @@ SOURCES += \
     signonidentityadaptor.cpp \
     backupifadaptor.cpp \
     signonsessioncoretools.cpp \
-    ui-key-authorizer.cpp
+    ui-key-authorizer.cpp \
+    misc.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
