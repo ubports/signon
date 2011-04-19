@@ -31,8 +31,10 @@
 #ifndef CREDENTIALS_ACCESS_MANAGER_H
 #define CREDENTIALS_ACCESS_MANAGER_H
 
+#include "abstract-key-authorizer.h"
 #include "credentialsdb.h"
 #include "cryptomanager.h"
+#include "key-handler.h"
 #include "signonui_interface.h"
 
 #include <QObject>
@@ -293,7 +295,7 @@ public:
       system can be ready while at the same time the secure storage is not opened.
       @returns true if the credentials system is ready, false otherwise.
     */
-    bool isCredentialsSystemReady() const { return m_systemReady; }
+    bool isCredentialsSystemReady() const;
 
     /*!
       @returns the credentials database object.
@@ -326,12 +328,9 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onKeyInserted(const SignOn::Key key);
-    void onKeyDisabled(const SignOn::Key key);
+    void onLastAuthorizedKeyRemoved(const SignOn::Key key);
     void onKeyRemoved(const SignOn::Key key);
-    void onKeyAuthorized(const SignOn::Key key, bool authorized);
-    void onClearPasswordsStorage();
-    void onSecureStorageUiRejected();
-    void onNoKeyPresentAccepted();
+    void onKeyAuthorizationQueried(const SignOn::Key, int);
     void onEncryptedFSMounted();
     void onEncryptedFSUnmounting();
 
@@ -339,46 +338,12 @@ protected:
     void customEvent(QEvent *event);
 
 private:
-    // 1st time start - deploys the database.
-    void initKeyManagers();
-    bool deployCredentialsSystem();
     bool openSecretsDB();
     bool isSecretsDBOpen();
     bool closeSecretsDB();
     bool openMetaDataDB();
     void closeMetaDataDB();
-    void queryEncryptionKeys();
     void replyToSecureStorageEventNotifiers();
-    bool processSecureStorageEvent();
-
-    void onSecureStorageUiClosed(const StorageUiCleanupFlags flags = NoFlags);
-
-    /*!
-     * Checks if the key can open the secure storage. If it can, the file system
-     * is also mounted and the secrets' storage is opened.
-     */
-    bool encryptionKeyCanOpenStorage(const QByteArray &key);
-
-    /*!
-      Checks if core ecryption key authorizing is enabled using a specific
-      key swap authorizing mechanism.
-      @param mech The mechanism to be checked.
-      @returns true if the specific mechanism is enabled, false if otherwise
-               or no mechanism is enabled at all. This method will always return
-               false if `mech` is `KeySwapAuthorizingMech::Disabled`.
-    */
-    bool coreKeyAuthorizingEnabled(const KeySwapAuthorizingMech mech) const;
-
-    /*!
-      Sets the core encryption key authorization mechanism.
-      @param mech The authorization mechanism.
-    */
-    void setCoreKeyAuthorizationMech(const KeySwapAuthorizingMech mech);
-
-    /*!
-      @returns the set of currently inserted authorized keys.
-    */
-    QSet<SignOn::Key> authorizedInsertedKeys() const;
 
 private:
     static CredentialsAccessManager *m_pInstance;
@@ -388,43 +353,17 @@ private:
     /* Flag indicating whether the system is ready or not.
      * Currently the system is ready when all of the key managers have
      * successfully reported all of the inserted keys. */
-    bool m_systemReady;
     mutable CredentialsAccessError m_error;
     QList<SignOn::AbstractKeyManager *> keyManagers;
 
-    /* Counter for the key managers that are ready
-     * - have signaled at least one key (can be empty).
-     * This helps in computing when the CAM is ready;
-     * see also credentialsSystemReady(). */
-    int readyKeyManagersCounter;
-
-    /* Collection of authorized keys, gathered through the lifetime of the
-     * signond process. */
-    QList<SignOn::Key> authorizedKeys;
-    /* Collection of physically inserted keys at a specific runtime moment. */
-    QList<SignOn::Key> insertedKeys;
-
-    /* Flag indicating if the CAM is in the middle of processing
-     * a secure storage event. */
-    bool processingSecureStorageEvent;
-    /* This member will cache the lastly disabled unauthorized
-     * key. The cached key will be cleared if any secure storage UI
-     * disaplyed at its removal time is closed by the user.
-     * Check the KeySwapAuthorizingMech::UnauthorizedKeyRemovedFirst
-     * documentation for additional details. */
-    QByteArray cachedUnauthorizedKey;
-
-    /* Check the KeySwapAuthorizingMech definitions' documentation. */
-    KeySwapAuthorizingMech keySwapAuthorizingMechanism;
-
     CredentialsDB *m_pCredentialsDB;
     CryptoManager *m_pCryptoFileSystemManager;
+    KeyHandler *m_keyHandler;
+    AbstractKeyAuthorizer *m_keyAuthorizer;
     CAMConfiguration m_CAMConfiguration;
 
     /* List of all the senders of a SecureStorageEvent. */
     QList<EventSender> m_secureStorageEventNotifiers;
-
-    SignonSecureStorageUiAdaptor *m_secureStorageUiAdaptor;
 };
 
 } //namespace SignonDaemonNS
