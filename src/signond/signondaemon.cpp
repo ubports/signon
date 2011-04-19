@@ -43,6 +43,7 @@ extern "C" {
 #include "signonidentity.h"
 #include "signonauthsession.h"
 #include "backupifadaptor.h"
+#include "misc.h"
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
@@ -305,7 +306,7 @@ SignonDaemon *SignonDaemon::instance()
 void SignonDaemon::init()
 {
     if (!(m_configuration = new SignonDaemonConfiguration))
-        qWarning("SignonDaemon could not create the configuration object.") ;
+        qWarning("SignonDaemon could not create the configuration object.");
 
     m_configuration->load();
 
@@ -782,8 +783,61 @@ bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
         foreach (QString fileName, movedFiles) {
             target.remove(fileName + QLatin1String(".bak"));
         }
+
+        /* ensure restored files have the right permissions */
+        foreach (QString fileName, fileNames) {
+            QString filePath = target.absolutePath() + QDir::separator() + fileName;
+            if (!setFilePermissions(filePath, signonFilePermissions))
+                qCritical() << "Failed to set file permissions for restored file:"
+                            << filePath;
+            if (!setUserOwnership(filePath))
+                qCritical() << "Failed to set user ownership for restored file:"
+                        << filePath;
+        }
+
     }
     return ok;
+}
+
+bool SignonDaemon::createStorageFileTree(const QStringList &backupFiles) const
+{
+    QString storageDirPath = m_configuration->camConfiguration().m_storagePath;
+    QDir storageDir(storageDirPath);
+
+    if (!storageDir.exists()) {
+        if (!storageDir.mkpath(storageDirPath)) {
+            qCritical() << "Could not create storage dir for backup.";
+            return false;
+        }
+
+        if (!setFilePermissions(storageDirPath, signonFilePermissions))
+            qCritical() << "Failed to set file permissions for the storage dir:"
+                    << storageDirPath;
+        if (!setUserOwnership(storageDirPath))
+            TRACE() << "Failed to set user ownership for the storage dir:"
+                    << storageDirPath;
+    }
+
+    foreach (QString fileName, backupFiles) {
+        if (storageDir.exists(fileName)) continue;
+
+        QString filePath = storageDir.path() + QDir::separator() + fileName;
+        QFile file(filePath);
+        if (!file.open(QIODevice::WriteOnly)) {
+            qCritical() << "Failed to create empty file for backup:" << filePath;
+            return false;
+        } else {
+            file.close();
+            if (!setFilePermissions(filePath, signonFilePermissions)) {
+                qCritical() << "Failed to set file permissions for file:" << filePath;
+                return false;
+            }
+            if (!setUserOwnership(filePath))
+                TRACE() << "Failed to set user ownership for file:" << filePath;
+        }
+    }
+
+    return true;
 }
 
 uchar SignonDaemon::backupStarts()
@@ -806,6 +860,14 @@ uchar SignonDaemon::backupStarts()
     backupFiles << config.m_dbName;
     if (m_configuration->useSecureStorage())
         backupFiles << QLatin1String(signonDefaultFileSystemName);
+
+    /* make sure that all the backup files and storage directory exist:
+       create storage dir and empty files if not so, as backup/restore
+       operations must be consistent */
+    if (!createStorageFileTree(backupFiles)) {
+        qCritical() << "Cannot create backup file tree.";
+        return 2;
+    }
 
     /* perform the copy */
     eraseBackupDir();

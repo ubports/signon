@@ -149,6 +149,7 @@ private:
     void eraseBackupDir() const;
     bool copyToBackupDir(const QStringList &fileNames) const;
     bool copyFromBackupDir(const QStringList &fileNames) const;
+    bool createStorageFileTree(const QStringList &fileNames) const;
 
 private:
     /*
