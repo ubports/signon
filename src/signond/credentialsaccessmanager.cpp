@@ -27,6 +27,7 @@
 
 #include "signond-common.h"
 #include "ui-key-authorizer.h"
+#include "misc.h"
 
 #include <QFile>
 #include <QBuffer>
@@ -253,6 +254,7 @@ bool CredentialsAccessManager::closeSecretsDB()
 bool CredentialsAccessManager::openMetaDataDB()
 {
     QString dbPath = m_CAMConfiguration.metadataDBPath();
+
     QFileInfo fileInfo(dbPath);
     if (!fileInfo.exists()) {
         QDir storageDir(fileInfo.dir());
@@ -262,22 +264,27 @@ bool CredentialsAccessManager::openMetaDataDB()
             m_error = CredentialsDbSetupFailed;
             return false;
         }
-        //Set the right permissions for the storage directory
-        QFile storageDirAsFile(storageDir.path());
-        QFile::Permissions permissions = storageDirAsFile.permissions();
-        QFile::Permissions desiredPermissions = permissions
-            | QFile::WriteGroup | QFile::ReadGroup
-            | QFile::WriteOther | QFile::ReadOther;
+        if (!setFilePermissions(storageDir.path(), signonFilePermissions))
+            TRACE() << "Failed to set file permissions for the storage directory.";
 
-        if (permissions != desiredPermissions)
-            storageDirAsFile.setPermissions(desiredPermissions);
+        if (!setUserOwnership(storageDir.path()))
+            TRACE() << "Failed to set User ownership for the storage directory.";
     }
 
     m_pCredentialsDB = new CredentialsDB(dbPath);
 
+    bool dbFileExists = QFile::exists(dbPath);
     if (!m_pCredentialsDB->init()) {
         m_error = CredentialsDbConnectionError;
         return false;
+    }
+
+    if (!dbFileExists) {
+        if (!setFilePermissions(dbPath, signonFilePermissions))
+            TRACE() << "Failed to set file permissions for meta data db file.";
+
+        if (!setUserOwnership(dbPath))
+            TRACE() << "Failed to set User ownership for meta data db file.";
     }
 
     return true;
