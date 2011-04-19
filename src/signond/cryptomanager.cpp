@@ -26,6 +26,7 @@
 #include "cryptomanager.h"
 #include "cryptohandlers.h"
 #include "signond-common.h"
+#include "misc.h"
 
 #include <QFile>
 #include <QDir>

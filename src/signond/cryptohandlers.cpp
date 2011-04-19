@@ -108,22 +108,22 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::createPartitionFile(const QString &fileName, const quint32 fileSize)
     {
-        QFileInfo fileInfo(fileName);
-        QDir parentDir = fileInfo.dir();
-        if (!parentDir.exists()) {
-            if (!parentDir.mkpath(parentDir.path())) {
-                BLAME() << "Failed to create Signon storage directory.";
-                return false;
-            }
-        }
-
         SystemCommandLineCallHandler handler;
-        return handler.makeCall(
-                    QLatin1String("/bin/dd"),
-                    QStringList() << QLatin1String("if=/dev/urandom")
-                                  << QString::fromLatin1("of=%1").arg(fileName)
-                                  << QLatin1String("bs=1M")
-                                  << QString::fromLatin1("count=%1").arg(fileSize));
+        bool ret = handler.makeCall(
+            QLatin1String("/bin/dd"),
+            QStringList() << QLatin1String("if=/dev/urandom")
+                          << QString::fromLatin1("of=%1").arg(fileName)
+                          << QLatin1String("bs=1M")
+                          << QString::fromLatin1("count=%1").arg(fileSize));
+
+        if (!setFilePermissions(fileName, signonFilePermissions))
+            TRACE() << "Failed to set file permissions "
+                       "for the secure storage container.";
+
+        if (!setUserOwnership(fileName))
+            TRACE() << "Failed to set User ownership "
+                       "for the secure storage container.";
+        return ret;
     }
 
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
