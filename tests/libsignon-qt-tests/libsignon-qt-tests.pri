@@ -13,7 +13,6 @@ QT -= gui
 LIBS *= -lsignon-qt
 
 SOURCES += \
-    libsignon-qt-tests.cpp \
     testauthsession.cpp \
     testthread.cpp \
     ssotestclient.cpp \

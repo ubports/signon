@@ -97,122 +97,17 @@ int finishedClients = 0;
 #define AEGIS_TOKEN_4 "token_4"
 #define AEGIS_TOKEN_5 "AID::com.nokia.maemo.libsignon-qt-tests.libsignon-qt-tests-id"
 
-SsoTestClient::SsoTestClient()
+void SsoTestClient::initTestCase()
 {
-    qDebug() << "PROCESS ID OF TEST CLIENT: " << getpid();
-}
-
-void SsoTestClient::runAllTests()
-{
-    QTime startTime = QTime::currentTime();
-
-    runAuthSessionTests();
-    runAuthServiceTests();
-    runIdentityTests();
-
-    QTime endTime = QTime::currentTime();
-    QTest::qWait(pause_time);
-
-    int elapsed = startTime.secsTo(endTime);
-    QTest::qWait(pause_time);
-
-    qDebug() << QString("\n\nTIME --> Elapsed time: %1 seconds\n\n").arg(elapsed);
-    emit done();
-}
-
-void SsoTestClient::runAuthServiceTests()
-{
-    qDebug() << "PROCESS ID OF TEST CLIENT: " << getpid();
-
+    clearDB();
     initAuthServiceTest();
-
-    QTime startTime = QTime::currentTime();
-
-    queryIdentities();
-    queryMethods();
-    queryMechanisms();
-    clear();
-
-    QTime endTime = QTime::currentTime();
-
-    clearAuthServiceTest();
-
-    int elapsed = startTime.secsTo(endTime);
-
-    qDebug() << QString("\n\nTIME --> Elapsed time: %1 seconds\n\n").arg(elapsed);
-    emit done();
+    testAuthSession.initTestCase();
 }
 
-void SsoTestClient::runIdentityTests()
+void SsoTestClient::cleanupTestCase()
 {
-    initIdentityTest();
-
-    QTime startTime = QTime::currentTime();
-
-    queryAvailableMetods();
-    storeCredentials();
-    requestCredentialsUpdate();
-    queryInfo();
-    addReference();
-    removeReference();
-    verifyUser();
-    verifySecret();
-    signOut();
-    remove();
-    storeCredentialsWithoutAuthMethodsTest();
-    sessionTest();
-    multipleRemove();
-    removeStoreRemove();
-
-    QTime endTime = QTime::currentTime();QTest::qWait(pause_time);
-
-    clearIdentityTest();
-    int elapsed = startTime.secsTo(endTime);
-
-    qDebug() << QString("\n\nTIME --> Elapsed time: %1 seconds\n\n").arg(elapsed);
-    emit done();
-}
-
-void SsoTestClient::runAuthSessionTests()
-{
-#ifdef SSOTESTCLIENT_USES_AUTHSESSION
-    QTime startTime = QTime::currentTime();
-
-    //run the multi thread test prior to any other thest
-    multiThreadTest();
-
-    initAuthSessionTest();
-    queryMechanisms_existing_method();
-    queryMechanisms_nonexisting_method();
-    queryAuthPluginACL();
-
-    process_with_new_identity();
-    process_with_existing_identity();
-    process_with_nonexisting_type();
-    process_with_nonexisting_method();
-    process_many_times_after_auth();
-    process_many_times_before_auth();
-    process_with_big_session_data();
-
-    cancel_immidiately();
-    cancel_with_delay();
-    cancel_without_process();
-    handle_destroyed_signal();
-
-#ifdef SSOUI_TESTS_ENABLED
-//    processUi_with_existing_identity();
-//    processUi_and_cancel();
-#endif
-
-    clearAuthSessionTest();
-
-    QTime endTime = QTime::currentTime();
-    int elapsed = startTime.secsTo(endTime);
-
-    qDebug() << QString("\n\nTIME --> Elapsed time: %1 seconds\n\n").arg(elapsed);
-    qDebug() << QString("\n\nEnding thread %1.\n\n").arg(QThread::currentThreadId());
-    emit done();
-#endif
+    testAuthSession.cleanupTestCase();
+    clearDB();
 }
 
 QString SsoTestClient::errCodeAsStr(const Error::ErrorType err)
@@ -283,39 +178,6 @@ bool SsoTestClient::storeCredentialsPrivate(const SignOn::IdentityInfo &info)
     }
     delete identity;
     return ok;
-}
-
-void SsoTestClient::initIdentityTest()
-{
-    TEST_START
-
-#ifdef SSO_TESTS_RUNNING_AS_UNTRUSTED
-    TEST_DONE
-    return;
-#endif
-
-    //clearing DB
-    AuthService service;
-    QEventLoop loop;
-
-    connect(&service, SIGNAL(cleared()), &m_serviceResult, SLOT(cleared()));
-    connect(&service, SIGNAL(error(const SignOn::Error &)),
-            &m_serviceResult, SLOT(error(const SignOn::Error &)));
-
-    connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-
-    service.clear();
-
-    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-    loop.exec();
-
-    if(m_serviceResult.m_responseReceived != TestAuthServiceResult::NormalResp) {
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
-                 << ".\nError code: " << errCodeAsStr(m_serviceResult.m_error);
-        QFAIL("Failed to prepare IdentityTest suite.");
-    }
-
-    TEST_DONE
 }
 
 void SsoTestClient::queryAvailableMetods()
@@ -1159,17 +1021,14 @@ void SsoTestClient::signOut()
     TEST_DONE
 }
 
-void SsoTestClient::clearIdentityTest()
+void SsoTestClient::clearDB()
 {
-    TEST_START
     AuthService *service = new AuthService(this);
     service->clear();
-    TEST_DONE
 }
 
 void SsoTestClient::initAuthServiceTest()
 {
-    TEST_START
     //small params preparing
     m_numberOfInsertedCredentials = 5;
     m_expectedNumberOfMethods = (QDir("/usr/lib/signon")).entryList(
@@ -1180,7 +1039,6 @@ void SsoTestClient::initAuthServiceTest()
     m_methodToQueryMechanisms = "ssotest";
 
 #ifdef SSO_TESTS_RUNNING_AS_UNTRUSTED
-    TEST_DONE
     return;
 #endif
 
@@ -1243,7 +1101,6 @@ void SsoTestClient::initAuthServiceTest()
 
         delete identity;
     }
-    TEST_DONE
 }
 
 void SsoTestClient::queryMethods()
@@ -1619,12 +1476,6 @@ void SsoTestClient::clear()
     TEST_DONE
 }
 
-void SsoTestClient::clearAuthServiceTest()
-{
-    TEST_START
-    TEST_DONE
-}
-
 bool SsoTestClient::testAddingNewCredentials(bool addMethods)
 {
     m_identityResult.reset();
@@ -1775,20 +1626,6 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
 
 #ifdef SSOTESTCLIENT_USES_AUTHSESSION
 
-void SsoTestClient::initAuthSessionTest()
-{
-    TEST_START
-    testAuthSession.initTestCase();
-    TEST_DONE
-}
-
-void SsoTestClient::clearAuthSessionTest()
-{
-    TEST_START
-    testAuthSession.cleanupTestCase();
-    TEST_DONE
-}
-
 void SsoTestClient::multiThreadTest()
 {
     TEST_START
@@ -1902,3 +1739,5 @@ void SsoTestClient::processUi_and_cancel()
 #endif
 
 #endif
+
+QTEST_MAIN(SsoTestClient);

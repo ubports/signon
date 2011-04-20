@@ -41,67 +41,44 @@ class SsoTestClient : public QObject
 {
     Q_OBJECT
 
-public:
-    enum TestType
-    {
-        AllTests = 0,
-        QueryServices,
-        QueryIdentities,
-        IdentityStorage
-    };
+private Q_SLOTS:
+    void initTestCase();
+    void cleanupTestCase();
 
-    Q_DECLARE_FLAGS(TestTypes, TestType)
-
-    SsoTestClient();
-
-private:
     /*
-     * Identity API related test cases
-     * */
-    void initIdentityTest();
+     * AuthService tests
+     */
+    void queryIdentities();
+    void queryMethods();
+    void queryMechanisms();
+    void clear();
 
-    void storeCredentials();
+    /*
+     * Identity tests
+     */
     void queryAvailableMetods();
+    void storeCredentials();
+    void requestCredentialsUpdate();
     void queryInfo();
-
     void addReference();
     void removeReference();
-
     void verifyUser();
     void verifySecret();
     void signOut();
-    void requestCredentialsUpdate();
-
     void remove();
+    void storeCredentialsWithoutAuthMethodsTest();
+    void sessionTest();
     void multipleRemove();
     void removeStoreRemove();
-    void sessionTest();
-    void storeCredentialsWithoutAuthMethodsTest();
-
-    void clearIdentityTest();
-
-    /*
-     * AuthService API related test cases
-     * */
-    void initAuthServiceTest();
-
-    void queryMethods();
-    void queryMechanisms();
-    void queryIdentities();
-    void queryIdentitiesWithFilter();
-    void queryAuthPluginACL();
-    void clear();
-    void clearAuthServiceTest();
 
 #ifdef SSOTESTCLIENT_USES_AUTHSESSION
-    void initAuthSessionTest();
-    void clearAuthSessionTest();
-
+    /*
+     * AuthSession tests
+     */
     void multiThreadTest();
-
     void queryMechanisms_existing_method();
     void queryMechanisms_nonexisting_method();
-
+    void queryAuthPluginACL();
     void process_with_new_identity();
     void process_with_existing_identity();
     void process_with_nonexisting_type();
@@ -109,17 +86,22 @@ private:
     void process_many_times_after_auth();
     void process_many_times_before_auth();
     void process_with_big_session_data();
-
     void cancel_immidiately();
     void cancel_with_delay();
     void cancel_without_process();
-
     void handle_destroyed_signal();
+#endif
+
+private:
+    void clearDB();
+
+    void initAuthServiceTest();
+
+    void queryIdentitiesWithFilter();
 
 #ifdef SSOUI_TESTS_ENABLED
     void processUi_with_existing_identity();
     void processUi_and_cancel();
-#endif
 #endif
     /*
      * Subtests
@@ -137,16 +119,7 @@ private:
     static QString errCodeAsStr(const Error::ErrorType);
     bool storeCredentialsPrivate(const SignOn::IdentityInfo &info);
 
-public Q_SLOTS:
-    void runAllTests();
-    void runAuthServiceTests();
-    void runIdentityTests();
-    void runAuthSessionTests();
-
-Q_SIGNALS:
-    void done();
-
-private Q_SLOTS:
+protected Q_SLOTS:
     void response(const SignOn::SessionData &data);
 
 private:
@@ -163,7 +136,5 @@ private:
     TestIdentityResult m_identityResult;
     TestAuthServiceResult m_serviceResult;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(SsoTestClient::TestTypes)
 
 #endif // SSOTESTCLIENT_H
