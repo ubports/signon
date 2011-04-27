@@ -97,6 +97,8 @@ int finishedClients = 0;
 #define AEGIS_TOKEN_4 "token_4"
 #define AEGIS_TOKEN_5 "AID::com.nokia.maemo.libsignon-qt-tests.libsignon-qt-tests-id"
 
+#define TEST_AEGIS_TOKEN "libsignon-qt-tests::libsignon-qt-tests"
+
 void SsoTestClient::initTestCase()
 {
     clearDB();
@@ -192,7 +194,7 @@ void SsoTestClient::queryAvailableMetods()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying available methods.");
@@ -304,7 +306,7 @@ void SsoTestClient::remove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -403,7 +405,7 @@ void SsoTestClient::removeStoreRemove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -451,7 +453,7 @@ void SsoTestClient::removeStoreRemove()
                           "TEST_USERNAME_10",
                           methods);
         updateInfo.setSecret("TEST_PASSWORD_10");
-        updateInfo.setAccessControlList(QStringList() << "test_token_1");
+        updateInfo.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
         m_identityResult.m_responseReceived = TestIdentityResult::InexistentResp;
         identity->storeCredentials(updateInfo);
@@ -539,7 +541,7 @@ void SsoTestClient::multipleRemove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -628,7 +630,7 @@ void SsoTestClient::queryInfo()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -693,7 +695,7 @@ void SsoTestClient::addReference()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -754,7 +756,7 @@ void SsoTestClient::removeReference()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -818,7 +820,7 @@ void SsoTestClient::verifyUser()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying user.");
@@ -867,7 +869,7 @@ void SsoTestClient::verifySecret()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying secret.");
@@ -926,7 +928,7 @@ void SsoTestClient::signOut()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << "test_token");
+    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if(!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for signing out.");
