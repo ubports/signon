@@ -266,7 +266,7 @@
         <step>/usr/bin/libsignon-qt-untrusted-tests handle_destroyed_signal</step>
       </case>
       <environments>
-        <scratchbox>false</scratchbox>
+        <scratchbox>true</scratchbox>
         <hardware>true</hardware>
       </environments>
     </set>
