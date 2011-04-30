@@ -61,6 +61,7 @@ namespace SignonDaemonNS {
                                                 pid_t ownerPid);
         static void stopAllAuthSessions();
         quint32 id() const;
+        QString method() const;
         void objectRegistered();
         pid_t ownerPid() const;
 

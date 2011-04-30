@@ -107,6 +107,10 @@
         <description>libsignon-qt-tests-process_with_nonexisting_method</description>
         <step>/usr/bin/libsignon-qt-tests process_with_nonexisting_method</step>
       </case>
+      <case name="libsignon-qt-tests-process_with_unauthorized_method" type="Functional" level="Component">
+        <description>libsignon-qt-tests-process_with_unauthorized_method</description>
+        <step>/usr/bin/libsignon-qt-tests process_with_unauthorized_method</step>
+      </case>
       <case name="libsignon-qt-tests-process_from_other_process" type="Functional" level="Component">
         <description>libsignon-qt-tests-process_from_other_process</description>
         <step>/usr/bin/libsignon-qt-tests process_from_other_process</step>
@@ -244,6 +248,10 @@
       <case name="libsignon-qt-tests-process_with_nonexisting_method" type="Security" level="Component">
         <description>libsignon-qt-tests-process_with_nonexisting_method</description>
         <step>/usr/bin/libsignon-qt-untrusted-tests process_with_nonexisting_method</step>
+      </case>
+      <case name="libsignon-qt-tests-process_with_unauthorized_method" type="Security" level="Component">
+        <description>libsignon-qt-tests-process_with_unauthorized_method</description>
+        <step>/usr/bin/libsignon-qt-untrusted-tests process_with_unauthorized_method</step>
       </case>
       <case name="libsignon-qt-tests-process_from_other_process" type="Security" level="Component">
         <description>libsignon-qt-tests-process_from_other_process</description>

@@ -106,6 +106,7 @@ namespace SignOn {
             EncryptionFailed,          /**< @deprecated Failure during data encryption/decryption. */
             TOSNotAccepted,            /**< User declined Terms of Service. */
             ForgotPassword,            /**< User requested reset password sequence. */
+            MethodOrMechanismNotAllowed, /**< Method or mechanism not allowed for this identity. */
             UserErr = 400                   /* Placeholder to rearrange enumeration
                                              - User space specific */
         };

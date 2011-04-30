@@ -360,6 +360,8 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errCode = Error::OperationNotSupported;
     } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
         errCode = Error::PermissionDenied;
+    } else if (err.name() == SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_NAME) {
+        errCode = Error::MethodOrMechanismNotAllowed;
     } else if (err.name() == SIGNOND_WRONG_STATE_ERR_NAME) {
         errCode = Error::WrongState;
     } else if (err.name() == SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME) {

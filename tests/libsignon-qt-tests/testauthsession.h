@@ -98,6 +98,7 @@ class TestAuthSession: public QObject
      void process_with_existing_identity();
      void process_with_nonexisting_type();
      void process_with_nonexisting_method();
+     void process_with_unauthorized_method();
      void process_from_other_process();
      void process_many_times_after_auth();
      void process_many_times_before_auth();

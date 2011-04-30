@@ -1349,6 +1349,7 @@ void SsoTestClient::queryAuthPluginACL()
     QMap<MethodName, MechanismsList> methods;
     methods.insert("method1", QStringList() << "mech1" << "mech2");
     methods.insert("method2", QStringList() << "mech1" << "mech2" << "mech3");
+    methods.insert("ssotest", QStringList() << "mech1");
     IdentityInfo info("test_caption_1",
                       "test_username_1",
                       methods);
@@ -1674,6 +1675,13 @@ void SsoTestClient::process_with_nonexisting_method()
 {
     TEST_START
     testAuthSession.process_with_nonexisting_method();
+    TEST_DONE
+}
+
+void SsoTestClient::process_with_unauthorized_method()
+{
+    TEST_START
+    testAuthSession.process_with_unauthorized_method();
     TEST_DONE
 }
 

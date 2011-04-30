@@ -108,6 +108,11 @@ quint32 SignonAuthSession::id() const
     return m_id;
 }
 
+QString SignonAuthSession::method() const
+{
+    return m_method;
+}
+
 pid_t SignonAuthSession::ownerPid() const
 {
     return m_ownerPid;

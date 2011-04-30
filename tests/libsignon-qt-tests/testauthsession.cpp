@@ -334,6 +334,67 @@ void TestAuthSession::queryMechanisms_existing_method()
      QCOMPARE(stateCounter.count(), 8);
  }
 
+void TestAuthSession::process_with_unauthorized_method()
+{
+    MechanismsList mechs;
+    mechs.append("mech1");
+    QMap<MethodName,MechanismsList> methods;
+    methods.insert(QLatin1String("ssotest"), mechs);
+    IdentityInfo info("test_caption", "test_user_name", methods);
+    info.setSecret("test_secret");
+    Identity *id = Identity::newIdentity(info, this);
+
+    QSignalSpy spyResponseStoreCreds(id, SIGNAL(credentialsStored(const quint32)));
+    QSignalSpy spyErrorStoreCreds(id, SIGNAL(error(const SignOn::Error &)));
+
+    QEventLoop loopStoreCreds;
+
+    QObject::connect(id, SIGNAL(error(const SignOn::Error &)), &loopStoreCreds, SLOT(quit()),  Qt::QueuedConnection);
+    QObject::connect(id, SIGNAL(credentialsStored(const quint32)), &loopStoreCreds, SLOT(quit()));
+    QTimer::singleShot(10*1000, &loopStoreCreds, SLOT(quit()));
+
+    id->storeCredentials();
+    loopStoreCreds.exec();
+
+    QCOMPARE(spyResponseStoreCreds.count(), 1);
+    QCOMPARE(spyErrorStoreCreds.count(), 0);
+
+    AuthSession *as = id->createSession(QLatin1String("sasl"));
+
+    QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData &)));
+    QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
+    QEventLoop loop;
+
+    QObject::connect(as, SIGNAL(error(const SignOn::Error &)), &loop, SLOT(quit()),  Qt::QueuedConnection);
+    QObject::connect(as, SIGNAL(response(const SignOn::SessionData &)), &loop, SLOT(quit()));
+    QTimer::singleShot(10*1000, &loop, SLOT(quit()));
+
+    // SASL plain wants parameter named Authname or else it fails so
+    // declare new version of SessionData that allows specifying that
+    // value.
+    class SessionDataWithAuthname : public SessionData
+    {
+    public:
+        SIGNON_SESSION_DECLARE_PROPERTY(QString, Authname);
+    };
+    SessionDataWithAuthname inData;
+    inData.setAuthname("testAuthname");
+
+    as->process(inData, "plain");
+    loop.exec();
+
+    QCOMPARE(spyResponse.count(), 0);
+    QCOMPARE(spyError.count(), 1);
+    // Still make sure the error really was about bad auth method/mechanism
+    SignOn::Error::ErrorType errorType = SignOn::Error::Unknown;
+    QVariant var = spyError.at(0).at(0);
+    if (QLatin1String("SignOn::Error") == var.typeName()) {
+       SignOn::Error error = var.value<SignOn::Error>();
+       errorType = (SignOn::Error::ErrorType)error.type();
+    }
+    QCOMPARE(errorType, SignOn::Error::MethodOrMechanismNotAllowed);
+}
+
 void TestAuthSession::process_from_other_process()
 {
     // In order to try reusing same authentication session from

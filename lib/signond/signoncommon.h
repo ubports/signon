@@ -76,6 +76,9 @@
 #define SIGNOND_PERMISSION_DENIED_ERR_STR SIGNOND_STRING("Client has insuficient permissions to access the service.")
 #define SIGNOND_PERMISSION_DENIED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "PermissionDenied")
 
+#define SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_STR SIGNOND_STRING("Identity does not allow authentication using the selected method or mechanism.")
+#define SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "MethodOrMechanismNotAllowed")
+
 #define SIGNOND_ENCRYPTION_FAILED_ERR_STR SIGNOND_STRING("Failure in encoding/decoding of incoming data")
 #define SIGNOND_ENCRYPTION_FAILED_ERR_NAME SIGNOND_STRING(SIGNOND_ERR_PREFIX "EncryptionFailed")
 

@@ -22,6 +22,8 @@
 
 #include "signonauthsessionadaptor.h"
 #include "accesscontrolmanager.h"
+#include "credentialsaccessmanager.h"
+#include "credentialsdb.h"
 
 namespace SignonDaemonNS {
 
@@ -62,6 +64,39 @@ namespace SignonDaemonNS {
     QVariantMap SignonAuthSessionAdaptor::process(const QVariantMap &sessionDataVa, const QString &mechanism)
     {
         TRACE();
+        if (parent()->id() != SIGNOND_NEW_IDENTITY) {
+            CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+            if (db) {
+                SignonIdentityInfo identityInfo = db->credentials(parent()->id(), false);
+                QMap<MethodName, MechanismsList> methods = identityInfo.methods();
+                bool isAllowedMethodAndMechanism = true;
+                // If no methods have been specified for an identity assume anything goes
+                if (!methods.isEmpty()) {
+                    if (!methods.contains(parent()->method())) {
+                        isAllowedMethodAndMechanism = false;
+                    } else {
+                        MechanismsList mechs = methods[parent()->method()];
+                        // If no mechanisms have been specified for a method, assume anything goes
+                        if (!mechs.isEmpty()) {
+                            if (!mechs.contains(mechanism))
+                                isAllowedMethodAndMechanism = false;
+                        }
+                    }
+                }
+                if (!isAllowedMethodAndMechanism) {
+                    QString errMsg;
+                    QTextStream(&errMsg) << SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_STR
+                                         << " Method:"
+                                         << parent()->method()
+                                         << ", mechanism:"
+                                         << mechanism;
+                    errorReply(SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_NAME, errMsg);
+                    return QVariantMap();
+                }
+            } else {
+                BLAME() << "Null database handler object.";
+            }
+        }
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
         if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
