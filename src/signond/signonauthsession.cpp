@@ -27,10 +27,12 @@
 using namespace SignonDaemonNS;
 
 SignonAuthSession::SignonAuthSession(quint32 id,
-                                     const QString &method) :
+                                     const QString &method,
+                                     pid_t ownerPid) :
                                      m_id(id),
                                      m_method(method),
-                                     m_registered(false)
+                                     m_registered(false),
+                                     m_ownerPid(ownerPid)
 {
     TRACE();
 
@@ -53,12 +55,15 @@ SignonAuthSession::~SignonAuthSession()
     }
 }
 
-QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id, const QString &method,
-                                                    SignonDaemon *parent, bool &supportsAuthMethod)
+QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
+                                                    const QString &method,
+                                                    SignonDaemon *parent,
+                                                    bool &supportsAuthMethod,
+                                                    pid_t ownerPid)
 {
     TRACE();
     supportsAuthMethod = true;
-    SignonAuthSession* sas = new SignonAuthSession(id, method);
+    SignonAuthSession* sas = new SignonAuthSession(id, method, ownerPid);
 
     QDBusConnection connection(SIGNOND_BUS);
     if (!connection.isConnected()) {
@@ -101,6 +106,11 @@ void SignonAuthSession::stopAllAuthSessions()
 quint32 SignonAuthSession::id() const
 {
     return m_id;
+}
+
+pid_t SignonAuthSession::ownerPid() const
+{
+    return m_ownerPid;
 }
 
 QStringList SignonAuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)

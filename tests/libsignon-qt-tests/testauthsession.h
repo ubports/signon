@@ -98,6 +98,7 @@ class TestAuthSession: public QObject
      void process_with_existing_identity();
      void process_with_nonexisting_type();
      void process_with_nonexisting_method();
+     void process_from_other_process();
      void process_many_times_after_auth();
      void process_many_times_before_auth();
      void process_with_big_session_data();
@@ -118,5 +119,46 @@ class TestAuthSession: public QObject
         void cancel();
         void response(const SignOn::SessionData &data);
  };
+
+/**
+ * The SlotMachine class is used by process_from_other_process
+ * test to receive signals regarding the completion of D-Bus
+ * calls. The QSignalSpy classes cannot be used because the
+ * class for the D-Bus methods must have both response method
+ * and error method.
+ */
+class SlotMachine: public QObject
+{
+    Q_OBJECT
+public:
+    SlotMachine(): m_responseReceived(false) {}
+public Q_SLOTS:
+    void authenticationSlot(const QString &path) {
+        m_path = path;
+        emit done();
+    }
+
+    void errorSlot(const QDBusError &err) {
+        m_errorMessage = err.message();
+        m_errorName = err.name();
+        emit done();
+    }
+
+    void responseSlot(const QVariantMap &response) {
+        m_response = response;
+        m_responseReceived = true;
+        emit done();
+    }
+
+Q_SIGNALS:
+    void done();
+
+public:
+    QString m_path;
+    QString m_errorMessage;
+    QString m_errorName;
+    QVariantMap m_response;
+    bool m_responseReceived;
+};
 
 #endif

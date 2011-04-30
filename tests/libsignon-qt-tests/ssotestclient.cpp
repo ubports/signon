@@ -1677,6 +1677,13 @@ void SsoTestClient::process_with_nonexisting_method()
     TEST_DONE
 }
 
+void SsoTestClient::process_from_other_process()
+{
+    TEST_START
+    testAuthSession.process_from_other_process();
+    TEST_DONE
+}
+
 void SsoTestClient::process_many_times_after_auth()
 {
     TEST_START

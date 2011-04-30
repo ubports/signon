@@ -52,11 +52,17 @@ namespace SignonDaemonNS {
             return static_cast<SignonSessionCore *>(QObject::parent());
         }
 
-        static QString getAuthSessionObjectPath(const quint32 id, const QString &method,
-                                                SignonDaemon *parent, bool &supportsAuthMethod);
+        friend class SignonAuthSessionAdaptor;
+
+        static QString getAuthSessionObjectPath(const quint32 id,
+                                                const QString &method,
+                                                SignonDaemon *parent,
+                                                bool &supportsAuthMethod,
+                                                pid_t ownerPid);
         static void stopAllAuthSessions();
         quint32 id() const;
         void objectRegistered();
+        pid_t ownerPid() const;
 
     public Q_SLOTS:
         QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
@@ -73,13 +79,14 @@ namespace SignonDaemonNS {
         void stateChangedSlot(const QString &sessionKey, int state, const QString &message);
 
     protected:
-        SignonAuthSession(quint32 id, const QString &method);
+        SignonAuthSession(quint32 id, const QString &method, pid_t ownerPid);
         virtual ~SignonAuthSession();
 
     private:
         quint32 m_id;
         QString m_method;
         bool m_registered;
+        pid_t m_ownerPid;
 
     Q_DISABLE_COPY(SignonAuthSession)
 }; //class SignonDaemon

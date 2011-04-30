@@ -42,6 +42,7 @@ extern "C" {
 #include "signondaemonadaptor.h"
 #include "signonidentity.h"
 #include "signonauthsession.h"
+#include "accesscontrolmanager.h"
 #include "backupifadaptor.h"
 #include "misc.h"
 
@@ -665,7 +666,11 @@ bool SignonDaemon::clear()
 QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString type)
 {
     bool supportsAuthMethod = false;
-    QString objectPath = SignonAuthSession::getAuthSessionObjectPath(id, type, this, supportsAuthMethod);
+    pid_t ownerPid = AccessControlManager::pidOfPeer(*this);
+    QString objectPath =
+        SignonAuthSession::getAuthSessionObjectPath(id, type, this,
+                                                    supportsAuthMethod,
+                                                    ownerPid);
     if (objectPath.isEmpty() && !supportsAuthMethod) {
         QDBusMessage errReply = message().createErrorReply(
                                                 SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,

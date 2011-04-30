@@ -44,6 +44,9 @@ namespace SignonDaemonNS {
                 return static_cast<SignonAuthSession *>(QObject::parent());
             }
 
+    private:
+        void errorReply(const QString &name, const QString &message);
+
     public Q_SLOTS:
         QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
         QVariantMap process(const QVariantMap &sessionDataVa, const QString &mechanism);
