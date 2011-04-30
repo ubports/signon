@@ -417,12 +417,12 @@ namespace SignonDaemonNS {
 //            accessControlListLocal.prepend(aegisIdToken);
 
         if (m_pInfo == 0) {
-            m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
+            m_pInfo = new SignonIdentityInfo(id, userName, decodedSecret, storeSecret,
                                              methods, caption, realms,
                                              accessControlListLocal, type);
         } else {
             m_pInfo->setUserName(userName);
-            m_pInfo->setPassword(secret);
+            m_pInfo->setPassword(decodedSecret);
             m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
             m_pInfo->setCaption(caption);
             m_pInfo->setRealms(realms);
