@@ -40,7 +40,7 @@ using namespace RemotePluginProcessNS;
 
 RemotePluginProcess *process = NULL;
 
-static void messageHandler(QtMsgType type, const char *msg)
+void messageHandler(QtMsgType type, const char *msg)
 {
     int priority;
     switch (type) {
@@ -58,8 +58,9 @@ static void messageHandler(QtMsgType type, const char *msg)
 int main(int argc, char *argv[])
 {
     qInstallMsgHandler(messageHandler);
+    debugInit();
 
-    TRACE();
+    TRACE() << "handler:" << (void *)messageHandler;
 
 #ifndef NO_SIGNON_USER
     if (!::getuid()) {
