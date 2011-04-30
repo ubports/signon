@@ -88,7 +88,8 @@ DEFINES += SIGNOND_TRACE
 LIBS += -lcreds \
     -lcryptsetup \
     -lsignon-plugins-common \
-    -lsignon-extension
+    -lsignon-extension \
+    -lcrypto
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h

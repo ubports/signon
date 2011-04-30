@@ -21,6 +21,10 @@ INCLUDEPATH += . \
                $$TOP_SRC_DIR/lib/plugins/signon-plugins-common \
                $$TOP_SRC_DIR/lib/plugins
 
+LIBS += -lcrypto
+
+PKGCONFIG += libsignoncrypto-qt
+
 CONFIG += \
     build_all \
     link_pkgconfig

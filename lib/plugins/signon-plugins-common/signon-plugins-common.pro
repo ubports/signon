@@ -11,9 +11,11 @@ INCLUDEPATH += ../
 DEFINES += SIGNON_PLUGIN_TRACE
 
 SOURCES += \
-    SignOn/blobiohandler.cpp
+    SignOn/blobiohandler.cpp \
+    SignOn/encrypteddevice.cpp
 HEADERS += \
     SignOn/blobiohandler.h \
+    SignOn/encrypteddevice.h \
     SignOn/ipc.h
 
 headers.files = \

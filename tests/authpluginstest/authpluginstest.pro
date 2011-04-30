@@ -6,17 +6,25 @@ QT += core \
 CONFIG += qtestlib \
     link_pkgconfig
 
+PKGCONFIG += \
+    libsignoncrypto-qt
+
+LIBS += \
+    -lcrypto
+
 DEFINES += TESTS_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE
 
 SOURCES += authpluginstest.cpp \
     authpluginspool.cpp \
     $${TOP_SRC_DIR}/src/signond/pluginproxy.cpp \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.cpp
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.cpp \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.cpp
 
 HEADERS += authpluginstest.h \
     $${TOP_SRC_DIR}/src/signond/pluginproxy.h \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.h \
     authpluginspool.h
 INCLUDEPATH += $${TOP_SRC_DIR}/src/signond \
     $${TOP_SRC_DIR}/lib/plugins \

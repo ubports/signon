@@ -37,6 +37,9 @@
 #include "SignOn/blobiohandler.h"
 #include "SignOn/ipc.h"
 
+#include "SignOnCrypto/Encryptor"
+using namespace SignOn;
+
 namespace RemotePluginProcessNS {
 
     static CancelEventThread *cancelThread = NULL;
@@ -48,6 +51,8 @@ namespace RemotePluginProcessNS {
         m_plugin = NULL;
         m_readnotifier = NULL;
         m_errnotifier = NULL;
+        m_encryptedInDevice = NULL;
+        m_encryptedOutDevice = NULL;
 
         qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
         qRegisterMetaType<QString>("QString");
@@ -64,6 +69,11 @@ namespace RemotePluginProcessNS {
             cancelThread->wait();
             delete cancelThread;
         }
+
+        delete m_encryptedInDevice;
+        m_encryptedInDevice = NULL;
+        delete m_encryptedOutDevice;
+        m_encryptedOutDevice = NULL;
     }
 
     RemotePluginProcess* RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
@@ -114,11 +124,6 @@ namespace RemotePluginProcessNS {
             return false;
         }
 
-        if (!cancelThread)
-            cancelThread = new CancelEventThread(m_plugin);
-
-        TRACE() << "cancel thread started";
-
         connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
                   this, SLOT(result(const SignOn::SessionData&)));
 
@@ -156,7 +161,40 @@ namespace RemotePluginProcessNS {
         connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
         connect(m_errnotifier, SIGNAL(activated(int)), this, SIGNAL(processStopped()));
 
-        m_blobIOHandler = new BlobIOHandler(&m_infile, &m_outfile, this);
+        QDataStream in(&m_infile);
+        QString key_and_iv_enc;
+        in >> key_and_iv_enc;
+        if (key_and_iv_enc.isEmpty()) {
+            TRACE() << "Failed to read key and iv from stdin";
+            return false;
+        }
+        SignOnCrypto::Encryptor encryptor;
+        QString key_and_iv = encryptor.decodeString(key_and_iv_enc);
+        if (key_and_iv.isEmpty()) {
+            TRACE() << "Failed to decrypt key and iv";
+            return false;
+        }
+        QByteArray raw_key_and_iv = QByteArray::fromBase64(key_and_iv.toLatin1());
+        if (raw_key_and_iv.size() != 16 + AES_BLOCK_SIZE * 2) {
+            TRACE() << "Unexpected key or iv size";
+            return false;
+        }
+
+        unsigned char key[16] = {0};
+        unsigned char iv_in[AES_BLOCK_SIZE] = {0};
+        unsigned char iv_out[AES_BLOCK_SIZE] = {0};
+        memcpy(key, raw_key_and_iv.constData(), sizeof(key));
+        memcpy(iv_in, raw_key_and_iv.constData() + sizeof(key), sizeof(iv_in));
+        memcpy(iv_out, raw_key_and_iv.constData() + sizeof(key) + sizeof(iv_in), sizeof(iv_out));
+        m_encryptedInDevice = new EncryptedDevice(&m_infile, key, sizeof(key), iv_in, iv_out);
+        m_encryptedOutDevice = new EncryptedDevice(&m_outfile, key, sizeof(key), iv_in, iv_out);
+
+        if (!cancelThread)
+            cancelThread = new CancelEventThread(m_plugin, m_encryptedInDevice);
+
+        TRACE() << "cancel thread created";
+
+        m_blobIOHandler = new BlobIOHandler(m_encryptedInDevice, m_encryptedOutDevice, this);
 
         connect(m_blobIOHandler,
                 SIGNAL(dataReceived(const QVariantMap &)),
@@ -224,7 +262,7 @@ namespace RemotePluginProcessNS {
     void RemotePluginProcess::result(const SignOn::SessionData &data)
     {
         disableCancelThread();
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QVariantMap resultDataMap;
 
         foreach(QString key, data.propertyNames())
@@ -239,7 +277,7 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::store(const SignOn::SessionData &data)
     {
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QVariantMap storeDataMap;
 
         foreach(QString key, data.propertyNames())
@@ -256,7 +294,7 @@ namespace RemotePluginProcessNS {
     {
         disableCancelThread();
 
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
 
         out << (quint32)PLUGIN_RESPONSE_ERROR;
         out << (quint32)err.type();
@@ -271,7 +309,7 @@ namespace RemotePluginProcessNS {
         TRACE();
         disableCancelThread();
 
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QVariantMap resultDataMap;
 
         foreach(QString key, data.propertyNames())
@@ -287,7 +325,7 @@ namespace RemotePluginProcessNS {
         TRACE();
         disableCancelThread();
 
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QVariantMap resultDataMap;
 
         foreach(QString key, data.propertyNames())
@@ -305,7 +343,7 @@ namespace RemotePluginProcessNS {
     void RemotePluginProcess::statusChanged(const AuthPluginState state, const QString &message)
     {
         TRACE();
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
 
         out << (quint32)PLUGIN_RESPONSE_SIGNAL;
         out << (quint32)state;
@@ -327,7 +365,7 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::type()
     {
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QByteArray typeBa;
         typeBa.append(m_plugin->type());
         out << typeBa;
@@ -335,7 +373,7 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::mechanisms()
     {
-        QDataStream out(&m_outfile);
+        QDataStream out(m_encryptedOutDevice);
         QStringList mechanisms = m_plugin->mechanisms();
         QVariant mechsVar = mechanisms;
         out << mechsVar;
@@ -343,7 +381,8 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::process()
     {
-        QDataStream in(&m_infile);
+        QDataStream in(m_encryptedInDevice);
+
 
         in >> m_currentMechanism;
 
@@ -358,7 +397,7 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::userActionFinished()
     {
-        QDataStream in(&m_infile);
+        QDataStream in(m_encryptedInDevice);
         int processBlobSize = -1;
         in >> processBlobSize;
 
@@ -370,7 +409,7 @@ namespace RemotePluginProcessNS {
 
     void RemotePluginProcess::refresh()
     {
-        QDataStream in(&m_infile);
+        QDataStream in(m_encryptedInDevice);
         int processBlobSize = -1;
         in >> processBlobSize;
 
@@ -469,7 +508,7 @@ namespace RemotePluginProcessNS {
         quint32 opcode = PLUGIN_OP_STOP;
         bool is_stopped = false;
 
-        QDataStream in(&m_infile);
+        QDataStream in(m_encryptedInDevice);
         in >> opcode;
 
         switch (opcode) {
@@ -521,10 +560,11 @@ namespace RemotePluginProcessNS {
         }
     }
 
-    CancelEventThread::CancelEventThread(AuthPluginInterface *plugin)
+    CancelEventThread::CancelEventThread(AuthPluginInterface *plugin, EncryptedDevice *encryptedInDevice)
     {
         m_plugin = plugin;
         m_cancelNotifier = 0;
+        m_encryptedInDevice = encryptedInDevice;
     }
 
     CancelEventThread::~CancelEventThread()
@@ -558,9 +598,12 @@ namespace RemotePluginProcessNS {
         /*
          * Read the actual value of
          * */
+        QByteArray ba(buf, 4);
+        m_encryptedInDevice->setTemporaryDataSource(&ba);
         quint32 opcode;
-        QDataStream ds(QByteArray(buf, 4));
+        QDataStream ds(m_encryptedInDevice);
         ds >> opcode;
+        m_encryptedInDevice->clearTemporaryDataSource();
         if (opcode != PLUGIN_OP_CANCEL)
             qCritical() << "wrong operation code: breakage of remotepluginprocess threads synchronization: " << opcode;
 

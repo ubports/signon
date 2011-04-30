@@ -39,6 +39,7 @@
 
 #include "SignOn/uisessiondata.h"
 #include "SignOn/authpluginif.h"
+#include "SignOn/encrypteddevice.h"
 
 extern "C" {
 #include <sys/types.h>
@@ -75,7 +76,7 @@ namespace RemotePluginProcessNS {
     Q_OBJECT
 
     public:
-        CancelEventThread(AuthPluginInterface *plugin);
+        CancelEventThread(AuthPluginInterface *plugin, EncryptedDevice *encryptedInDevice);
         ~CancelEventThread();
 
         void run();
@@ -86,6 +87,7 @@ namespace RemotePluginProcessNS {
     private:
         AuthPluginInterface *m_plugin;
         QSocketNotifier *m_cancelNotifier;
+        EncryptedDevice *m_encryptedInDevice;
 };
 
 /*!
@@ -118,6 +120,8 @@ class RemotePluginProcess : public QObject
 
         QSocketNotifier *m_readnotifier;
         QSocketNotifier *m_errnotifier;
+        EncryptedDevice *m_encryptedInDevice;
+        EncryptedDevice *m_encryptedOutDevice;
 
         BlobIOHandler *m_blobIOHandler;
 

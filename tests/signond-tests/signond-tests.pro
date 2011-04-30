@@ -1,7 +1,10 @@
 include( ../../common-project-config.pri )
 include( $$TOP_SRC_DIR/common-vars.pri )
 
-CONFIG += qtestlib qdbus
+CONFIG += \
+    qtestlib \
+    qdbus \
+    link_pkgconfig
 
 QT += core \
     sql \
@@ -11,13 +14,18 @@ QT += core \
 
 QT -= gui
 
+PKGCONFIG += \
+    libsignoncrypto-qt
+
 LIBS += -L/usr/lib \
         -lcreds \
+        -lcrypto \
         -lsignon-qt
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
 DEFINES += TESTS_TRACE
+DEFINES += SIGNON_PLUGIN_TRACE
 
 HEADERS += \
     timeouts.h \
@@ -26,7 +34,8 @@ HEADERS += \
     backuptest.h \
     databasetest.h \
     $$TOP_SRC_DIR/src/signond/credentialsdb.h \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.h
 
 SOURCES = \
     signond-tests.cpp \
@@ -35,6 +44,7 @@ SOURCES = \
     $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp \
     backuptest.cpp \
     databasetest.cpp \
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.cpp \
            $$TOP_SRC_DIR/src/signond/credentialsdb.cpp
 
 contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
