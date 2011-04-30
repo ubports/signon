@@ -81,6 +81,8 @@ struct SignonIdentityInfo
     void setMethods(const QMap<MethodName, MechanismsList> &methods)
         { m_methods = methods; }
     QMap<MethodName, MechanismsList> methods() const { return m_methods; }
+    bool checkMethodAndMechanism(const QString &method,
+                                 const QString &mechanism);
 
     void setAccessControlList(const QStringList &acl)
         { m_accessControlList = acl; }

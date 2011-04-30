@@ -169,3 +169,24 @@ bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
             && (m_validated == other.m_validated);
 }
 
+bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
+                                                 const QString &mechanism)
+{
+    // If no methods have been specified for an identity assume anything goes
+    if (m_methods.isEmpty())
+        return true;
+
+    if (!m_methods.contains(method))
+        return false;
+
+    MechanismsList mechs = m_methods[method];
+    // If no mechanisms have been specified for a method, assume anything goes
+    if (mechs.isEmpty())
+        return true;
+
+    if (!mechs.contains(mechanism))
+        return false;
+
+    return true;
+}
+
