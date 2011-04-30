@@ -194,6 +194,7 @@ public:
 
 protected:
     QStringList queryList(const QString &query_str);
+    QStringList queryList(QSqlQuery &query);
 
 private:
     QSqlError m_lastError;

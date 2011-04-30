@@ -194,6 +194,7 @@ void TestDatabase::checkPasswordTest()
     QVERIFY(m_db->checkPassword(id, info.userName(), info.password()));
     QVERIFY(!m_db->checkPassword(id, info.userName(), QLatin1String("PassWd")));
     QVERIFY(!m_db->checkPassword(id, QLatin1String("User2"), info.password()));
+    QVERIFY(!m_db->checkPassword(id, info.userName(), "' or password like '%"));
 }
 
 void TestDatabase::credentialsTest()

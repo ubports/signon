@@ -233,8 +233,17 @@ QString SqlDatabase::errorInfo(const QSqlError &error)
 QStringList SqlDatabase::queryList(const QString &query_str)
 {
     TRACE();
+    QSqlQuery query(QString(), m_database);
+    if (!query.prepare(query_str))
+        TRACE() << "Query prepare warning: " << query.lastQuery();
+    return queryList(query);
+}
+
+QStringList SqlDatabase::queryList(QSqlQuery &q)
+{
+    TRACE();
     QStringList list;
-    QSqlQuery query = exec(query_str);
+    QSqlQuery query = exec(q);
     if (errorOccurred()) return list;
     while (query.next()) {
         list.append(query.value(0).toString());
@@ -521,13 +530,14 @@ QStringList MetaDataDB::methods(const quint32 id, const QString &securityToken)
                  );
         return list;
     }
-    list = queryList(
-                 QString::fromLatin1("SELECT DISTINCT METHODS.method FROM "
-                        "( ACL JOIN METHODS ON ACL.method_id = METHODS.id) "
-                        "WHERE ACL.identity_id = '%1 AND ACL.token_id = "
-                        "(SELECT id FROM TOKENS where token = '%2')'")
-                 .arg(id).arg(securityToken)
-                 );
+    QSqlQuery q = newQuery();
+    q.prepare(S("SELECT DISTINCT METHODS.method FROM "
+                "( ACL JOIN METHODS ON ACL.method_id = METHODS.id) "
+                "WHERE ACL.identity_id = :id AND ACL.token_id = "
+                "(SELECT id FROM TOKENS where token = :token)"));
+    q.bindValue(S(":id"), id);
+    q.bindValue(S(":token"), securityToken);
+    list = queryList(q);
 
     return list;
 }
@@ -664,28 +674,24 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
         return 0;
     }
 
-    QString queryStr;
-    QSqlQuery insertQuery;
-
     /* Security tokens insert */
     foreach (QString token, info.accessControlList()) {
-        queryStr = QString::fromLatin1(
-                    "INSERT OR IGNORE INTO TOKENS (token) "
-                    "VALUES ( '%1' )")
-                    .arg(token);
-        insertQuery = exec(queryStr);
+        QSqlQuery tokenInsert = newQuery();
+        tokenInsert.prepare(S("INSERT OR IGNORE INTO TOKENS (token) "
+                              "VALUES ( :token )"));
+        tokenInsert.bindValue(S(":token"), token);
+        exec(tokenInsert);
     }
-    insertQuery.clear();
 
     if (!info.isNew()) {
         //remove acl
-        queryStr = QString::fromLatin1(
+        QString queryStr = QString::fromLatin1(
                     "DELETE FROM ACL WHERE "
                     "identity_id = '%1'")
                     .arg(info.id());
-        insertQuery = exec(queryStr);
+        QSqlQuery insertQuery = exec(queryStr);
+        insertQuery.clear();
     }
-    insertQuery.clear();
 
     /* ACL insert, this will do basically identity level ACL */
     QMapIterator<QString, QStringList> it(info.methods());
@@ -694,66 +700,70 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
         if (!info.accessControlList().isEmpty()) {
             foreach (QString token, info.accessControlList()) {
                 foreach (QString mech, it.value()) {
-                    queryStr = QString::fromLatin1(
-                        "INSERT OR REPLACE INTO ACL "
-                        "(identity_id, method_id, mechanism_id, token_id) "
-                        "VALUES ( '%1', "
-                        "( SELECT id FROM METHODS WHERE method = '%2' ),"
-                        "( SELECT id FROM MECHANISMS WHERE mechanism= '%3' ), "
-                        "( SELECT id FROM TOKENS WHERE token = '%4' ))")
-                        .arg(id).arg(it.key()).arg(mech).arg(token);
-                    insertQuery = exec(queryStr);
-                    insertQuery.clear();
+                    QSqlQuery aclInsert = newQuery();
+                    aclInsert.prepare(S("INSERT OR REPLACE INTO ACL "
+                                        "(identity_id, method_id, mechanism_id, token_id) "
+                                        "VALUES ( :id, "
+                                        "( SELECT id FROM METHODS WHERE method = :method ),"
+                                        "( SELECT id FROM MECHANISMS WHERE mechanism= :mech ), "
+                                        "( SELECT id FROM TOKENS WHERE token = :token ))"));
+                    aclInsert.bindValue(S(":id"), id);
+                    aclInsert.bindValue(S(":method"), it.key());
+                    aclInsert.bindValue(S(":mech"), mech);
+                    aclInsert.bindValue(S(":token"), token);
+                    exec(aclInsert);
                 }
                 //insert entires for empty mechs list
                 if (it.value().isEmpty()) {
-                    queryStr = QString::fromLatin1(
-                        "INSERT OR REPLACE INTO ACL (identity_id, method_id, token_id) "
-                        "VALUES ( '%1', "
-                        "( SELECT id FROM METHODS WHERE method = '%2' ),"
-                        "( SELECT id FROM TOKENS WHERE token = '%3' ))")
-                        .arg(id).arg(it.key()).arg(token);
-                    insertQuery = exec(queryStr);
-                    insertQuery.clear();
+                    QSqlQuery aclInsert = newQuery();
+                    aclInsert.prepare(S("INSERT OR REPLACE INTO ACL (identity_id, method_id, token_id) "
+                                        "VALUES ( :id, "
+                                        "( SELECT id FROM METHODS WHERE method = :method ),"
+                                        "( SELECT id FROM TOKENS WHERE token = :token ))"));
+                    aclInsert.bindValue(S(":id"), id);
+                    aclInsert.bindValue(S(":method"), it.key());
+                    aclInsert.bindValue(S(":token"), token);
+                    exec(aclInsert);
                 }
             }
         } else {
             foreach (QString mech, it.value()) {
-                queryStr = QString::fromLatin1(
-                    "INSERT OR REPLACE INTO ACL "
-                    "(identity_id, method_id, mechanism_id) "
-                    "VALUES ( '%1', "
-                    "( SELECT id FROM METHODS WHERE method = '%2' ),"
-                    "( SELECT id FROM MECHANISMS WHERE mechanism= '%3' )"
-                    ")")
-                    .arg(id).arg(it.key()).arg(mech);
-                insertQuery = exec(queryStr);
-                insertQuery.clear();
+                QSqlQuery aclInsert = newQuery();
+                aclInsert.prepare(S("INSERT OR REPLACE INTO ACL "
+                                    "(identity_id, method_id, mechanism_id) "
+                                    "VALUES ( :id, "
+                                    "( SELECT id FROM METHODS WHERE method = :method ),"
+                                    "( SELECT id FROM MECHANISMS WHERE mechanism= :mech )"
+                                    ")"));
+                aclInsert.bindValue(S(":id"), id);
+                aclInsert.bindValue(S(":method"), it.key());
+                aclInsert.bindValue(S(":mech"), mech);
+                exec(aclInsert);
             }
             //insert entires for empty mechs list
             if (it.value().isEmpty()) {
-                queryStr = QString::fromLatin1(
-                    "INSERT OR REPLACE INTO ACL (identity_id, method_id) "
-                    "VALUES ( '%1', "
-                    "( SELECT id FROM METHODS WHERE method = '%2' )"
-                    ")")
-                    .arg(id).arg(it.key());
-                insertQuery = exec(queryStr);
-                insertQuery.clear();
+                QSqlQuery aclInsert = newQuery();
+                aclInsert.prepare(S("INSERT OR REPLACE INTO ACL (identity_id, method_id) "
+                                    "VALUES ( :id, "
+                                    "( SELECT id FROM METHODS WHERE method = :method )"
+                                    ")"));
+                aclInsert.bindValue(S(":id"), id);
+                aclInsert.bindValue(S(":method"), it.key());
+                exec(aclInsert);
             }
         }
     }
     //insert acl in case where methods are missing
     if (info.methods().isEmpty()) {
         foreach (QString token, info.accessControlList()) {
-            queryStr = QString::fromLatin1(
-                    "INSERT OR REPLACE INTO ACL "
-                    "(identity_id, token_id) "
-                    "VALUES ( '%1', "
-                    "( SELECT id FROM TOKENS WHERE token = '%2' ))")
-                    .arg(id).arg(token);
-            insertQuery = exec(queryStr);
-            insertQuery.clear();
+            QSqlQuery aclInsert = newQuery();
+            aclInsert.prepare(S("INSERT OR REPLACE INTO ACL "
+                                "(identity_id, token_id) "
+                                "VALUES ( :id, "
+                                "( SELECT id FROM TOKENS WHERE token = :token ))"));
+            aclInsert.bindValue(S(":id"), id);
+            aclInsert.bindValue(S(":token"), token);
+            exec(aclInsert);
         }
     }
 
@@ -815,30 +825,28 @@ bool MetaDataDB::addReference(const quint32 id, const QString &token, const QStr
     TRACE() << "Storing:" << id << ", " << token << ", " << reference;
     /* Data insert */
     bool allOk = true;
-    QString queryStr;
-    QSqlQuery query;
 
     /* Security token insert */
-    queryStr = QString::fromLatin1(
-                    "INSERT OR IGNORE INTO TOKENS (token) "
-                    "VALUES ( '%1' )")
-                    .arg(token);
-    query = exec(queryStr);
-    query.clear();
+    QSqlQuery tokenInsert = newQuery();
+    tokenInsert.prepare(S("INSERT OR IGNORE INTO TOKENS (token) "
+                          "VALUES ( :token )"));
+    tokenInsert.bindValue(S(":token"), token);
+    exec(tokenInsert);
     if (errorOccurred()) {
                 allOk = false;
     }
 
-    queryStr = QString::fromLatin1(
-                    "INSERT OR REPLACE INTO REFS "
-                    "(identity_id, token_id, ref) "
-                    "VALUES ( '%1', "
-                    "( SELECT id FROM TOKENS WHERE token = '%2' ),"
-                    "'%3'"
-                    ")")
-                    .arg(id).arg(token).arg(reference);
-    query = exec(queryStr);
-    query.clear();
+    QSqlQuery refsInsert = newQuery();
+    refsInsert.prepare(S("INSERT OR REPLACE INTO REFS "
+                         "(identity_id, token_id, ref) "
+                         "VALUES ( :id, "
+                         "( SELECT id FROM TOKENS WHERE token = :token ),"
+                         ":reference"
+                         ")"));
+    refsInsert.bindValue(S(":id"), id);
+    refsInsert.bindValue(S(":token"), token);
+    refsInsert.bindValue(S(":reference"), reference);
+    exec(refsInsert);
     if (errorOccurred()) {
                 allOk = false;
     }
@@ -868,25 +876,25 @@ bool MetaDataDB::removeReference(const quint32 id, const QString &token, const Q
     }
 
     bool allOk = true;
-    QString queryStr;
-    QSqlQuery query;
+    QSqlQuery refsDelete = newQuery();
 
-    if (reference.isEmpty())
-        queryStr = QString::fromLatin1(
-                    "DELETE FROM REFS "
-                    "WHERE identity_id = '%1' AND "
-                    "token_id = ( SELECT id FROM TOKENS WHERE token = '%2' )")
-                    .arg(id).arg(token);
-    else
-        queryStr = QString::fromLatin1(
-                    "DELETE FROM REFS "
-                    "WHERE identity_id = '%1' AND "
-                    "token_id = ( SELECT id FROM TOKENS WHERE token = '%2' ) "
-                    "AND ref ='%3'")
-                    .arg(id).arg(token).arg(reference);
+    if (reference.isEmpty()) {
+        refsDelete.prepare(S("DELETE FROM REFS "
+                             "WHERE identity_id = :id AND "
+                             "token_id = ( SELECT id FROM TOKENS WHERE token = :token )"));
+        refsDelete.bindValue(S(":id"), id);
+        refsDelete.bindValue(S(":token"), token);
+    } else {
+        refsDelete.prepare(S("DELETE FROM REFS "
+                             "WHERE identity_id = :id AND "
+                             "token_id = ( SELECT id FROM TOKENS WHERE token = :token ) "
+                             "AND ref = :ref"));
+        refsDelete.bindValue(S(":id"), id);
+        refsDelete.bindValue(S(":token"), token);
+        refsDelete.bindValue(S(":ref"), reference);
+    }
 
-    query = exec(queryStr);
-    query.clear();
+    exec(refsDelete);
     if (errorOccurred()) {
                 allOk = false;
     }
@@ -906,16 +914,17 @@ QStringList MetaDataDB::references(const quint32 id, const QString &token)
         return queryList(QString::fromLatin1("SELECT ref FROM REFS "
             "WHERE identity_id = '%1'")
             .arg(id));
-    return queryList(QString::fromLatin1("SELECT ref FROM REFS "
-            "WHERE identity_id = '%1' AND "
-            "token_id = (SELECT id FROM TOKENS WHERE token = '%2' )")
-            .arg(id).arg(token));
+    QSqlQuery q = newQuery();
+    q.prepare(S("SELECT ref FROM REFS "
+                "WHERE identity_id = :id AND "
+                "token_id = (SELECT id FROM TOKENS WHERE token = :token )"));
+    q.bindValue(S(":id"), id);
+    q.bindValue(S(":token"), token);
+    return queryList(q);
 }
 
 bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
 {
-    QString queryStr;
-    QSqlQuery insertQuery;
     bool allOk = true;
 
     if (methods.isEmpty()) return false;
@@ -923,22 +932,20 @@ bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
     QMapIterator<QString, QStringList> it(methods);
     while (it.hasNext()) {
         it.next();
-        queryStr = QString::fromLatin1(
-                    "INSERT OR IGNORE INTO METHODS (method) "
-                    "VALUES( '%1' )")
-                    .arg(it.key());
-        insertQuery = exec(queryStr);
-        insertQuery.clear();
+        QSqlQuery methodInsert = newQuery();
+        methodInsert.prepare(S("INSERT OR IGNORE INTO METHODS (method) "
+                               "VALUES( :method )"));
+        methodInsert.bindValue(S(":method"), it.key());
+        exec(methodInsert);
         if (errorOccurred()) allOk = false;
         //insert (unique) mechanism names
         foreach (QString mech, it.value()) {
-            queryStr = QString::fromLatin1(
-                        "INSERT OR IGNORE INTO MECHANISMS (mechanism) "
-                        "VALUES( '%1' )")
-                        .arg(mech);
-            insertQuery = exec(queryStr);
+            QSqlQuery mechInsert = newQuery();
+            mechInsert.prepare(S("INSERT OR IGNORE INTO MECHANISMS (mechanism) "
+                                 "VALUES( :mech )"));
+            mechInsert.bindValue(S(":mech"), mech);
+            exec(mechInsert);
             if (errorOccurred()) allOk = false;
-            insertQuery.clear();
         }
     }
     return allOk;
@@ -1158,18 +1165,22 @@ bool SecretsDB::checkPassword(const quint32 id,
                               const QString &username,
                               const QString &password)
 {
-    QSqlQuery query = exec(
-            QString::fromLatin1("SELECT id FROM CREDENTIALS "
-                    "WHERE id = '%1' AND username = '%2' AND password = '%3'")
-                    .arg(id).arg(username).arg(password));
+    QSqlQuery query = newQuery();
+    query.prepare(S("SELECT id FROM CREDENTIALS "
+                    "WHERE id = :id AND username = :username AND password = :password"));
+    query.bindValue(S(":id"), id);
+    query.bindValue(S(":username"), username);
+    query.bindValue(S(":password"), password);
+
+    QSqlQuery result = exec(query);
 
     if (errorOccurred()) {
         TRACE() << "Error occurred while checking password";
         return false;
     }
     bool valid = false;
-    valid = query.first();
-    query.clear();
+    valid = result.first();
+    result.clear();
 
     return valid;
 }
