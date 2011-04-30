@@ -98,6 +98,11 @@ namespace SignonDaemonNS {
             TRACE() << "setId called from peer that doesn't own the AuthSession object\n";
             return;
         }
+        if (!AccessControlManager::isPeerAllowedToUseIdentity(
+                                        dbusContext, id)) {
+            TRACE() << "setId called with an identifier the peer is not allowed to use";
+            return;
+        }
 
         parent()->setId(id);
     }
