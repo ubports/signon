@@ -526,7 +526,16 @@ namespace SignOn {
                 break;
         }
 
-        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(secret),
+        QString encryptedSecret(m_encryptor.encodeString(secret, 0));
+
+        if (m_encryptor.status() != Encryptor::Ok) {
+            emit m_parent->error(
+                Error(Error::EncryptionFailure,
+                      QLatin1String("Data encryption failed")));
+            return;
+        }
+
+        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(encryptedSecret),
                                   SLOT(verifySecretReply(const bool)));
         if (!result) {
             TRACE() << "Error occurred.";
