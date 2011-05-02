@@ -15,11 +15,11 @@ QT += core \
 QT -= gui
 
 PKGCONFIG += \
+    libcrypto \
     libsignoncrypto-qt
 
 LIBS += -L/usr/lib \
         -lcreds \
-        -lcrypto \
         -lsignon-qt
 
 #DEFINES += CAM_UNIT_TESTS_FIXED

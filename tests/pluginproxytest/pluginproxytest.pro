@@ -9,9 +9,8 @@ QT += core dbus
 QT -= gui
 
 PKGCONFIG += \
+    libcrypto \
     libsignoncrypto-qt
-
-LIBS += -lcrypto
 
 DEFINES += TESTS_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE

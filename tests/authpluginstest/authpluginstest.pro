@@ -7,10 +7,8 @@ CONFIG += qtestlib \
     link_pkgconfig
 
 PKGCONFIG += \
+    libcrypto \
     libsignoncrypto-qt
-
-LIBS += \
-    -lcrypto
 
 DEFINES += TESTS_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE

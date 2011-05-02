@@ -72,9 +72,10 @@ CONFIG += build_all \
     link_pkgconfig
 
 PKGCONFIG += \
+    libcrypto \
     libsignoncrypto-qt \
     signon-plugins-common
-    
+
 QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_BUILD_DIR}/lib/signond/SignOn
@@ -88,8 +89,7 @@ DEFINES += SIGNOND_TRACE
 LIBS += -lcreds \
     -lcryptsetup \
     -lsignon-plugins-common \
-    -lsignon-extension \
-    -lcrypto
+    -lsignon-extension
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h
