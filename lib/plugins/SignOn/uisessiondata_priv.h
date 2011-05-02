@@ -49,6 +49,8 @@
 #define SSOUI_KEY_FORGOTPASSWORDURL QLatin1String("ForgotPasswordUrl")
 #define SSOUI_KEY_REPLYCOOKIES      QLatin1String("ReplyCookies")
 #define SSOUI_KEY_WINDOWID          QLatin1String("WindowId")
+#define SSOUI_KEY_CONFIRM           QLatin1String("Confirm")
+#define SSOUI_KEY_ICON              QLatin1String("Icon")
 
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
@@ -59,6 +61,5 @@
 
 #define SSOUI_KEY_UNABLE_TO_QUERY_STORAGE_KEYS \
     QLatin1String("SecStorageUnableQueryKeys")
-
 
 #endif /* UISESSIONDATA_PRIV_H */

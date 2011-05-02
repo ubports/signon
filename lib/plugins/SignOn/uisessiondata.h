@@ -189,6 +189,20 @@ public:
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, ForgotPasswordUrl)
 
+    /*!
+     * Declares the property Confirm setter and getter
+     * This will set dialog to confirm password mode.
+     * @see ForgotPasswordUrl
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(bool, Confirm)
+
+    /*!
+     * Declares the property Icon setter and getter
+     * Icon is shown to user in signin dialog.
+     * @see ForgotPassword
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, Icon)
+
 };
 
 } //namespace SignOn
