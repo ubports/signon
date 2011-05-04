@@ -1026,7 +1026,17 @@ void SsoTestClient::signOut()
 void SsoTestClient::clearDB()
 {
     AuthService *service = new AuthService(this);
+    QEventLoop loop;
+
+    connect(service, SIGNAL(cleared()), &m_serviceResult, SLOT(cleared()));
+    connect(service, SIGNAL(error(const SignOn::Error &)),
+            &m_serviceResult, SLOT(error(const SignOn::Error &)));
+    connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
     service->clear();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
 }
 
 void SsoTestClient::initAuthServiceTest()
@@ -1044,19 +1054,22 @@ void SsoTestClient::initAuthServiceTest()
     return;
 #endif
 
-    //clearing DB
-    AuthService service;
-    QEventLoop loop;
+    /* clearing DB
+     * This may fail if the CAM is not ready; since the CAM state is not
+     * exposed in the client API, in case we get the InternalServer error
+     * (which is emitted in these cases) we wait some time and we retry.
+     */
+    int retries = 0;
+    do {
+        clearDB();
+        if (m_serviceResult.m_responseReceived != TestAuthServiceResult::ErrorResp)
+            break;
+        if (m_serviceResult.m_error != Error::InternalServer)
+            break;
 
-    connect(&service, SIGNAL(cleared()), &m_serviceResult, SLOT(cleared()));
-    connect(&service, SIGNAL(error(const SignOn::Error &)),
-            &m_serviceResult, SLOT(error(const SignOn::Error &)));
-    connect(&m_serviceResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-
-    service.clear();
-
-    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-    loop.exec();
+        QTest::qSleep(2000);
+        retries++;
+    } while (retries < 5);
 
     if(m_serviceResult.m_responseReceived != TestAuthServiceResult::NormalResp) {
 
