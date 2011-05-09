@@ -76,7 +76,7 @@ namespace RemotePluginProcessNS {
     Q_OBJECT
 
     public:
-        CancelEventThread(AuthPluginInterface *plugin, EncryptedDevice *encryptedInDevice);
+        CancelEventThread(AuthPluginInterface *plugin);
         ~CancelEventThread();
 
         void run();
@@ -87,7 +87,6 @@ namespace RemotePluginProcessNS {
     private:
         AuthPluginInterface *m_plugin;
         QSocketNotifier *m_cancelNotifier;
-        EncryptedDevice *m_encryptedInDevice;
 };
 
 /*!
@@ -115,13 +114,11 @@ class RemotePluginProcess : public QObject
     private:
         AuthPluginInterface *m_plugin;
 
-        QFile m_infile;
-        QFile m_outfile;
+        QFile m_inFile;
+        QFile m_outFile;
 
         QSocketNotifier *m_readnotifier;
         QSocketNotifier *m_errnotifier;
-        EncryptedDevice *m_encryptedInDevice;
-        EncryptedDevice *m_encryptedOutDevice;
 
         BlobIOHandler *m_blobIOHandler;
 

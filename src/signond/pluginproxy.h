@@ -121,9 +121,6 @@ namespace SignonDaemonNS {
 
         PluginProcess *m_process;
         SignOn::BlobIOHandler *m_blobIOHandler;
-
-        SignOn::EncryptedDevice *m_encryptedInDevice;
-        SignOn::EncryptedDevice *m_encryptedOutDevice;
     };
 } //namespace SignonDaemonNS
 

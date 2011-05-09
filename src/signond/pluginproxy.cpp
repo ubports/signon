@@ -109,8 +109,6 @@ namespace SignonDaemonNS {
         m_isResultObtained = false;
         m_currentResultOperation = -1;
         m_process = new PluginProcess(this);
-        m_encryptedInDevice = NULL;
-        m_encryptedOutDevice = NULL;
 
 #ifdef SIGNOND_TRACE
         if (criticalsEnabled()) {
@@ -155,11 +153,6 @@ namespace SignonDaemonNS {
                 }
             }
         }
-
-        delete m_encryptedInDevice;
-        m_encryptedInDevice = NULL;
-        delete m_encryptedOutDevice;
-        m_encryptedOutDevice = NULL;
     }
 
     PluginProxy* PluginProxy::createNewPluginProxy(const QString &type)
@@ -202,7 +195,7 @@ namespace SignonDaemonNS {
         QVariant value = inData.value(SSOUI_KEY_UIPOLICY);
         m_uiPolicy = value.toInt();
 
-        QDataStream in(m_encryptedInDevice);
+        QDataStream in(m_process);
         in << (quint32)PLUGIN_OP_PROCESS;
         in << mechanism;
 
@@ -221,7 +214,7 @@ namespace SignonDaemonNS {
 
         m_cancelKey = cancelKey;
 
-        QDataStream in(m_encryptedInDevice);
+        QDataStream in(m_process);
 
         in << (quint32)PLUGIN_OP_PROCESS_UI;
 
@@ -241,7 +234,7 @@ namespace SignonDaemonNS {
 
         m_cancelKey = cancelKey;
 
-        QDataStream in(m_encryptedInDevice);
+        QDataStream in(m_process);
 
         in << (quint32)PLUGIN_OP_REFRESH;
 
@@ -255,14 +248,14 @@ namespace SignonDaemonNS {
    void PluginProxy::cancel()
    {
        TRACE();
-       QDataStream in(m_encryptedInDevice);
+       QDataStream in(m_process);
        in << (quint32)PLUGIN_OP_CANCEL;
     }
 
    void PluginProxy::stop()
    {
        TRACE();
-       QDataStream in(m_encryptedInDevice);
+       QDataStream in(m_process);
        in << (quint32)PLUGIN_OP_STOP;
     }
 
@@ -322,7 +315,7 @@ namespace SignonDaemonNS {
             return;
         }
 
-        QDataStream reader(m_encryptedOutDevice);
+        QDataStream reader(m_process);
         reader >> m_currentResultOperation;
 
         TRACE() << "PROXY RESULT OPERATION:" << m_currentResultOperation;
@@ -430,7 +423,7 @@ namespace SignonDaemonNS {
             quint32 err;
             QString errorMessage;
 
-            QDataStream stream(m_encryptedOutDevice);
+            QDataStream stream(m_process);
             stream >> err;
             stream >> errorMessage;
             m_isProcessing = false;
@@ -446,7 +439,7 @@ namespace SignonDaemonNS {
             quint32 state;
             QString message;
 
-            QDataStream stream(m_encryptedOutDevice);
+            QDataStream stream(m_process);
             stream >> state;
             stream >> message;
 
@@ -491,20 +484,16 @@ namespace SignonDaemonNS {
         if (!restartIfRequired())
             return QString();
 
-        QDataStream ds(m_encryptedInDevice);
+        QDataStream ds(m_process);
         ds << (quint32)PLUGIN_OP_TYPE;
 
         QByteArray typeBa, buffer;
         bool result;
 
-        if ((result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT))) {
-            TemporaryEncryptedDataSourceSetter tedss(m_encryptedOutDevice, &buffer);
-            QDataStream out(m_encryptedOutDevice);
-            out >> typeBa;
-        } else
+        if (!(result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT)))
             qCritical("PluginProxy returned NULL result");
 
-        return QString::fromLatin1(typeBa);
+        return QString::fromLatin1(buffer);
     }
 
     QStringList PluginProxy::queryMechanisms()
@@ -514,7 +503,7 @@ namespace SignonDaemonNS {
         if (!restartIfRequired())
             return QStringList();
 
-        QDataStream in(m_encryptedInDevice);
+        QDataStream in(m_process);
         in << (quint32)PLUGIN_OP_MECHANISMS;
 
         QByteArray buffer;
@@ -522,10 +511,9 @@ namespace SignonDaemonNS {
         bool result;
 
         if ((result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT))) {
-            TemporaryEncryptedDataSourceSetter tedss(m_encryptedOutDevice, &buffer);
 
             QVariant mechanismsVar;
-            QDataStream out(m_encryptedOutDevice);
+            QDataStream out(buffer);
 
             out >> mechanismsVar;
             QVariantList varList = mechanismsVar.toList();
@@ -545,32 +533,7 @@ namespace SignonDaemonNS {
         if (!m_process->waitForStarted(timeout))
             return false;
 
-        delete m_encryptedInDevice;
-        m_encryptedInDevice = NULL;
-        delete m_encryptedOutDevice;
-        m_encryptedOutDevice = NULL;
-
-        unsigned char key[16] = {0};
-        unsigned char iv_in[AES_BLOCK_SIZE] = {0};
-        unsigned char iv_out[AES_BLOCK_SIZE] = {0};
-        RAND_bytes(key, sizeof(key));
-        RAND_bytes(iv_in, sizeof(iv_in));
-        RAND_bytes(iv_out, sizeof(iv_out));
-
-        m_encryptedInDevice = new EncryptedDevice(m_process, key, sizeof(key), iv_out, iv_in);
-        m_encryptedOutDevice = new EncryptedDevice(m_process, key, sizeof(key), iv_out, iv_in);
-
-        // Pass the key and iv to remotepluginprocess. Encrypt them using
-        // aegis-crypto so that no other processes can access them
-        QByteArray key_and_iv;
-        key_and_iv.append((char *)key, sizeof(key));
-        key_and_iv.append((char *)iv_in, sizeof(iv_in));
-        key_and_iv.append((char *)iv_out, sizeof(iv_out));
-        SignOnCrypto::Encryptor encryptor;
-        QDataStream in(m_process);
-        in << encryptor.encodeString(QString::fromLatin1(key_and_iv.toBase64()), m_process->pid());
-
-        m_blobIOHandler = new BlobIOHandler(m_encryptedOutDevice, m_encryptedInDevice, this);
+        m_blobIOHandler = new BlobIOHandler(m_process, m_process, this);
 
         connect(m_blobIOHandler,
                 SIGNAL(dataReceived(const QVariantMap &)),
