@@ -363,7 +363,11 @@ void SignonSessionCore::startProcess()
                 //If secrets db not available attempt loading data from cache
                 if (db->isSecretsDBOpen()) {
                     parameters[SSO_KEY_PASSWORD] = info.password();
-                } else {
+                }
+
+                /* Temporary fix - keep it until session core refactoring is complete and auth cache
+                 * will be dumped in the secrets db. */
+                if (parameters[SSO_KEY_PASSWORD].toString().isEmpty()) {
                     AuthCache *cache = AuthCoreCache::instance()->data(info.id());
                     if (cache != 0) {
                         TRACE() << "Using cached secret.";
@@ -397,7 +401,10 @@ void SignonSessionCore::startProcess()
         QVariantMap storedParams;
         if (db->isSecretsDBOpen()) {
             storedParams = db->loadData(m_id, m_method);
-        } else {
+        }
+        /* Temporary fix - keep it until session core refactoring is complete and auth cache
+         * will be dumped in the secrets db. */
+        if (storedParams.isEmpty()) {
             AuthCache *cache = AuthCoreCache::instance()->data(info.id());
             if (cache != 0) {
                 TRACE() << "Using cached BLOB data.";
