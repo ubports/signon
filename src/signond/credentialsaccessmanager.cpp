@@ -432,7 +432,7 @@ void CredentialsAccessManager::replyToSecureStorageEventNotifiers()
     TRACE();
     //Notify secure storage notifiers if any.
     int eventType = SIGNON_SECURE_STORAGE_NOT_AVAILABLE;
-    if (m_pCredentialsDB->isSecretsDBOpen())
+    if ((m_pCredentialsDB != 0) && m_pCredentialsDB->isSecretsDBOpen())
         eventType = SIGNON_SECURE_STORAGE_AVAILABLE;
 
     // Signal objects that posted secure storage not available events
@@ -491,6 +491,8 @@ void CredentialsAccessManager::customEvent(QEvent *event)
 void CredentialsAccessManager::onEncryptedFSMounted()
 {
     TRACE();
+    if (!credentialsSystemOpened()) return;
+
     if (!isSecretsDBOpen()) {
         if (openSecretsDB()) {
             TRACE() << "Secrets DB opened.";
@@ -505,6 +507,8 @@ void CredentialsAccessManager::onEncryptedFSMounted()
 void CredentialsAccessManager::onEncryptedFSUnmounting()
 {
     TRACE();
+    if (!credentialsSystemOpened()) return;
+
     if (isSecretsDBOpen()) {
         m_pCredentialsDB->closeSecretsDB();
     }
