@@ -1,8 +1,0 @@
-[General]
-plugins=password, sasl
-plugindir=/usr/lib/signon/
-[password]
-mechanisms=password
-[sasl]
-mechanisms=EXTERNAL, LOGIN, NTLM, CRAM-MD5, DIGEST-MD5, ANONYMOUS, PLAIN
-

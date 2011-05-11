@@ -9,9 +9,8 @@ QMAKE_EXTRA_TARGETS += check
 
 TEMPLATE = subdirs
 
-SUBDIRS += authpluginstest/authpluginstest.pro
-#SUBDIRS += authpluginstest/testplugintemplate/testplugin.pro
-#SUBDIRS += singlesignontest/singlesignontest.pro
+CONFIG  += ordered
+
 SUBDIRS += saslplugintest/saslplugintest.pro
 SUBDIRS += passwordplugintest/passwordplugintest.pro
 SUBDIRS += pluginproxytest/pluginproxytest.pro
