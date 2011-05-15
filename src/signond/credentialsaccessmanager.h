@@ -338,6 +338,7 @@ protected:
     void customEvent(QEvent *event);
 
 private:
+    bool createStorageDir();
     bool openSecretsDB();
     bool isSecretsDBOpen();
     bool closeSecretsDB();

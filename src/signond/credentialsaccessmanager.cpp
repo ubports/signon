@@ -154,6 +154,11 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     m_CAMConfiguration.serialize(&config);
     TRACE() << "\n\nInitualizing CredentialsAccessManager with configuration: " << config.data();
 
+    if (!createStorageDir()) {
+        BLAME() << "Failed to create storage directory.";
+        return false;
+    }
+
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
         m_pCryptoFileSystemManager = new CryptoManager(this);
@@ -251,7 +256,7 @@ bool CredentialsAccessManager::closeSecretsDB()
     return true;
 }
 
-bool CredentialsAccessManager::openMetaDataDB()
+bool CredentialsAccessManager::createStorageDir()
 {
     QString dbPath = m_CAMConfiguration.metadataDBPath();
 
@@ -270,6 +275,12 @@ bool CredentialsAccessManager::openMetaDataDB()
         if (!setUserOwnership(storageDir.path()))
             TRACE() << "Failed to set User ownership for the storage directory.";
     }
+    return true;
+
+}
+bool CredentialsAccessManager::openMetaDataDB()
+{
+    QString dbPath = m_CAMConfiguration.metadataDBPath();
 
     m_pCredentialsDB = new CredentialsDB(dbPath);
 
