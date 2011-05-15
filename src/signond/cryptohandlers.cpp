@@ -48,6 +48,9 @@
 
 #define SIGNON_EXTERNAL_PROCESS_READ_TIMEOUT 300
 
+#define KILO_BYTE_SIZE 1024
+#define MEGA_BYTE_SIZE (KILO_BYTE_SIZE * 1024)
+
 namespace SignonDaemonNS {
 
     /*  ------------------- SystemCommandLineCallHandler implementation ------------------- */
@@ -109,13 +112,24 @@ namespace SignonDaemonNS {
 
     bool PartitionHandler::createPartitionFile(const QString &fileName, const quint32 fileSize)
     {
-        SystemCommandLineCallHandler handler;
-        bool ret = handler.makeCall(
-            QLatin1String("/bin/dd"),
-            QStringList() << QLatin1String("if=/dev/urandom")
-                          << QString::fromLatin1("of=%1").arg(fileName)
-                          << QLatin1String("bs=1M")
-                          << QString::fromLatin1("count=%1").arg(fileSize));
+        int fd = open(fileName.toLatin1().data(),
+                      O_RDWR | O_CREAT,
+                      666);
+
+        if (fd < 0) {
+            BLAME() << "FAILED to create signon secure FS partition file. ERRNO:"
+                    << errno;
+            return false;
+        }
+
+        if (ftruncate(fd, fileSize * MEGA_BYTE_SIZE) == -1) {
+            BLAME() << "FAILED to set signon secure FS partition file size. ERRNO:"
+                    << errno;
+            return false;
+        }
+
+        if (close(fd) < 0)
+            TRACE() << "Failed to close secure FS partition file after creation.";
 
         if (!setFilePermissions(fileName, signonFilePermissions))
             TRACE() << "Failed to set file permissions "
@@ -124,7 +138,8 @@ namespace SignonDaemonNS {
         if (!setUserOwnership(fileName))
             TRACE() << "Failed to set User ownership "
                        "for the secure storage container.";
-        return ret;
+
+        return true;
     }
 
     bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
