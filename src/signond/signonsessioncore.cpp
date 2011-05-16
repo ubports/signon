@@ -602,6 +602,12 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         CredentialsDB *db = camManager->credentialsDB();
         Q_ASSERT(db != 0);
 
+        //put temporary password from ui interaction into result if plugin didn't return new password
+        if (!filteredData.contains(SSO_KEY_PASSWORD) && !m_tmpPassword.isEmpty()) {
+            filteredData[SSO_KEY_PASSWORD] = m_tmpPassword;
+            m_tmpPassword.clear();
+        }
+
         //update database entry
         if (m_id != SIGNOND_NEW_IDENTITY) {
             SignonIdentityInfo info = db->credentials(m_id);
