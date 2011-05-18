@@ -64,18 +64,24 @@ namespace SignonDaemonNS {
     QVariantMap SignonAuthSessionAdaptor::process(const QVariantMap &sessionDataVa, const QString &mechanism)
     {
         TRACE();
+
+        QString allowedMechanism(mechanism);
+
         if (parent()->id() != SIGNOND_NEW_IDENTITY) {
             CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
             if (db) {
                 SignonIdentityInfo identityInfo = db->credentials(parent()->id(), false);
                 if (!identityInfo.checkMethodAndMechanism(parent()->method(),
-                                                          mechanism)) {
+                                                          mechanism,
+                                                          allowedMechanism)) {
                     QString errMsg;
                     QTextStream(&errMsg) << SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_STR
                                          << " Method:"
                                          << parent()->method()
                                          << ", mechanism:"
-                                         << mechanism;
+                                         << mechanism
+                                         << ", allowed:"
+                                         << allowedMechanism;
                     errorReply(SIGNOND_METHOD_OR_MECHANISM_NOT_ALLOWED_ERR_NAME, errMsg);
                     return QVariantMap();
                 }
@@ -94,7 +100,7 @@ namespace SignonDaemonNS {
             return QVariantMap();
         }
 
-        return parent()->process(sessionDataVa, mechanism);
+        return parent()->process(sessionDataVa, allowedMechanism);
     }
 
     void SignonAuthSessionAdaptor::cancel()

@@ -170,8 +170,11 @@ bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
 }
 
 bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
-                                                 const QString &mechanism)
+                                                 const QString &mechanism,
+                                                 QString &allowedMechanism)
 {
+    allowedMechanism.clear();
+
     // If no methods have been specified for an identity assume anything goes
     if (m_methods.isEmpty())
         return true;
@@ -184,9 +187,33 @@ bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
     if (mechs.isEmpty())
         return true;
 
-    if (!mechs.contains(mechanism))
+    if (mechs.contains(mechanism)) {
+        allowedMechanism = mechanism;
+        return true;
+    }
+
+    /* in the case of SASL authentication (and possibly others),
+     * mechanism can be a list of strings, separated by a space;
+     * therefore, let's split the list first, and see if any of the
+     * mechanisms is allowed.
+     */
+    QStringList mechanisms =
+        mechanism.split(QLatin1Char(' '), QString::SkipEmptyParts);
+
+    /* if the list is empty of it has only one element, then we already know
+     * that it didn't pass the previous checks */
+    if (mechanisms.size() <= 1)
         return false;
 
+    QStringList allowedMechanisms;
+    foreach (const QString &mech, mechanisms) {
+        if (mechs.contains(mech))
+            allowedMechanisms.append(mech);
+    }
+    if (allowedMechanisms.isEmpty())
+        return false;
+
+    allowedMechanism = allowedMechanisms.join(QLatin1String(" "));
     return true;
 }
 
