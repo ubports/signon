@@ -21,8 +21,10 @@
  */
 
 #include "misc.h"
+#include "signond-common.h"
 
 extern "C" {
+    #include <errno.h>
     #include <sys/stat.h>
 }
 
@@ -37,9 +39,12 @@ bool setUserOwnership(const QString &filePath)
     if (stat(userHomePath, &fileInfo) != 0)
         return false;
 
-    const char *filePathStr = filePath.toLatin1().data();
-    if (chown(filePathStr, fileInfo.st_uid , fileInfo.st_gid) != 0)
+    QByteArray filePathArray = filePath.toLocal8Bit();
+    const char *filePathStr = filePathArray.constData();
+    if (chown(filePathStr, fileInfo.st_uid , fileInfo.st_gid) != 0) {
+        BLAME() << "chown of" << filePathStr << "failed, errno:" << errno;
         return false;
+    }
 
     return true;
 }

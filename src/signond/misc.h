@@ -29,9 +29,7 @@ namespace SignonDaemonNS {
 
 /* Desired permissions for the files created by signond */
 const QFile::Permissions signonFilePermissions =
-    QFile::WriteUser | QFile::ReadUser
-    | QFile::WriteGroup | QFile::ReadGroup
-    | QFile::WriteOther | QFile::ReadOther;
+    QFile::WriteUser | QFile::ReadUser;
 
 /* Sets user UID and GID for a file. */
 bool setUserOwnership(const QString &filePath);

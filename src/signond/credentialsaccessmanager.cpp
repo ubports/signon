@@ -269,11 +269,7 @@ bool CredentialsAccessManager::createStorageDir()
             m_error = CredentialsDbSetupFailed;
             return false;
         }
-        if (!setFilePermissions(storageDir.path(), signonFilePermissions))
-            TRACE() << "Failed to set file permissions for the storage directory.";
-
-        if (!setUserOwnership(storageDir.path()))
-            TRACE() << "Failed to set User ownership for the storage directory.";
+        setUserOwnership(storageDir.path());
     }
     return true;
 
@@ -284,18 +280,9 @@ bool CredentialsAccessManager::openMetaDataDB()
 
     m_pCredentialsDB = new CredentialsDB(dbPath);
 
-    bool dbFileExists = QFile::exists(dbPath);
     if (!m_pCredentialsDB->init()) {
         m_error = CredentialsDbConnectionError;
         return false;
-    }
-
-    if (!dbFileExists) {
-        if (!setFilePermissions(dbPath, signonFilePermissions))
-            TRACE() << "Failed to set file permissions for meta data db file.";
-
-        if (!setUserOwnership(dbPath))
-            TRACE() << "Failed to set User ownership for meta data db file.";
     }
 
     return true;

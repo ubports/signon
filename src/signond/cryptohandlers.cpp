@@ -135,10 +135,6 @@ namespace SignonDaemonNS {
             TRACE() << "Failed to set file permissions "
                        "for the secure storage container.";
 
-        if (!setUserOwnership(fileName))
-            TRACE() << "Failed to set User ownership "
-                       "for the secure storage container.";
-
         return true;
     }
 

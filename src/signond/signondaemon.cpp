@@ -23,6 +23,8 @@
 
 extern "C" {
     #include <sys/socket.h>
+    #include <sys/stat.h>
+    #include <sys/types.h>
 }
 
 #include <QtDebug>
@@ -192,7 +194,10 @@ SignonDaemon *SignonDaemon::m_instance = NULL;
 
 SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
                                             , m_configuration(NULL)
-{}
+{
+    // Files created by signond must be unreadable by "other"
+    umask(S_IROTH | S_IWOTH);
+}
 
 SignonDaemon::~SignonDaemon()
 {
@@ -708,6 +713,8 @@ bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
         return false;
     }
 
+    setUserOwnership(backupRoot);
+
     /* Now copy the files to be backed up */
     bool ok = true;
     foreach (QString fileName, fileNames) {
@@ -721,7 +728,12 @@ bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
 
         QString destination = backupRoot + QDir::separator() + fileName;
         ok = QFile::copy(source, destination);
-        if (!ok) break;
+        if (!ok) {
+            BLAME() << "Copying" << source << "to" << destination << "failed";
+            break;
+        }
+
+        setUserOwnership(destination);
     }
 
     return ok;
@@ -789,17 +801,6 @@ bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
             target.remove(fileName + QLatin1String(".bak"));
         }
 
-        /* ensure restored files have the right permissions */
-        foreach (QString fileName, fileNames) {
-            QString filePath = target.absolutePath() + QDir::separator() + fileName;
-            if (!setFilePermissions(filePath, signonFilePermissions))
-                qCritical() << "Failed to set file permissions for restored file:"
-                            << filePath;
-            if (!setUserOwnership(filePath))
-                qCritical() << "Failed to set user ownership for restored file:"
-                        << filePath;
-        }
-
     }
     return ok;
 }
@@ -814,13 +815,6 @@ bool SignonDaemon::createStorageFileTree(const QStringList &backupFiles) const
             qCritical() << "Could not create storage dir for backup.";
             return false;
         }
-
-        if (!setFilePermissions(storageDirPath, signonFilePermissions))
-            qCritical() << "Failed to set file permissions for the storage dir:"
-                    << storageDirPath;
-        if (!setUserOwnership(storageDirPath))
-            TRACE() << "Failed to set user ownership for the storage dir:"
-                    << storageDirPath;
     }
 
     foreach (QString fileName, backupFiles) {
@@ -833,12 +827,6 @@ bool SignonDaemon::createStorageFileTree(const QStringList &backupFiles) const
             return false;
         } else {
             file.close();
-            if (!setFilePermissions(filePath, signonFilePermissions)) {
-                qCritical() << "Failed to set file permissions for file:" << filePath;
-                return false;
-            }
-            if (!setUserOwnership(filePath))
-                TRACE() << "Failed to set user ownership for file:" << filePath;
         }
     }
 
