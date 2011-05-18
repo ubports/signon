@@ -47,6 +47,7 @@ public:
         m_secprops.min_ssf = 0;
         m_secprops.security_flags = 0;
         m_psecret = NULL;
+        m_saslReset = true;
     }
 
     ~Private() {
@@ -68,6 +69,8 @@ public:
     sasl_conn_t *m_conn;
     sasl_security_properties_t m_secprops;
     sasl_secret_t *m_psecret;
+
+    bool m_saslReset;
 
     SaslData m_input;
     QByteArray m_username;
@@ -260,6 +263,14 @@ void SaslPlugin::process(const SignOn::SessionData &inData,
         state = SaslData::DONE;
         sasl_dispose(&d->m_conn);
         d->m_conn = NULL;
+
+        if (d->m_saslReset) {
+            sasl_done();
+            int result = sasl_client_init(d->m_callbacks);
+            if (result != SASL_OK) {
+                TRACE() << "libsasl error";
+            }
+        }
     }
 
     //set state into info
