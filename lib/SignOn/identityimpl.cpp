@@ -795,18 +795,13 @@ namespace SignOn {
 
     bool IdentityImpl::sendRequest(const char *remoteMethod, const QList<QVariant> &args, const char *replySlot, int timeout)
     {
-        if (timeout <0)
-            return m_DBusInterface->callWithCallback(QLatin1String(remoteMethod),
-                                                  args,
-                                                  this,
-                                                  replySlot,
-                                                  SLOT(errorReply(const QDBusError&)));
         TRACE();
         QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
                                                           m_DBusInterface->path(),
                                                           m_DBusInterface->interface(),
                                                           QLatin1String(remoteMethod));
         msg.setArguments(args);
+        msg.setDelayedReply(true);
         return m_DBusInterface->connection().callWithCallback(msg,
                                                          this,
                                                          replySlot,
@@ -816,26 +811,6 @@ namespace SignOn {
 
     bool IdentityImpl::sendRegisterRequest()
     {
-        QDBusInterface iface(SIGNOND_SERVICE,
-                             SIGNOND_DAEMON_OBJECTPATH,
-                             SIGNOND_DAEMON_INTERFACE,
-                             DBusConnection::sessionBus());
-
-        if (!iface.isValid()) {
-            TRACE() << "Signon Daemon not started. Start on demand "
-                       "could delay the first call's result.";
-            if (iface.lastError().isValid()) {
-                QDBusError err = iface.lastError();
-                TRACE() << "\nError name:" << err.name()
-                        << "\nMessage: " << err.message()
-                        << "\nType: " << QDBusError::errorString(err.type());
-
-                m_operationQueueHandler.clearOperationsQueue();
-                updateState(NeedsRegistration);
-                return false;
-            }
-        }
-
         QList<QVariant> args;
         QString registerMethodName = QLatin1String("registerNewIdentity");
         QByteArray registerReplyMethodName =
@@ -848,17 +823,30 @@ namespace SignOn {
                 SLOT(registerReply(const QDBusObjectPath &, const QList<QVariant> &));
         }
 
-        if (!iface.callWithCallback(
-                                registerMethodName,
-                                args,
-                                this,
-                                registerReplyMethodName.data(),
-                                SLOT(errorReply(const QDBusError &)))) {
+        QDBusMessage registerCall = QDBusMessage::createMethodCall(
+            SIGNOND_SERVICE,
+            SIGNOND_DAEMON_OBJECTPATH,
+            SIGNOND_DAEMON_INTERFACE,
+            registerMethodName);
 
-            QDBusError err = iface.lastError();
+        if (!args.isEmpty())
+            registerCall.setArguments(args);
+
+        registerCall.setDelayedReply(true);
+
+        bool registrationRequested = DBusConnection::sessionBus().callWithCallback(
+            registerCall,
+            this,
+            registerReplyMethodName.data(),
+            SLOT(errorReply(const QDBusError&)));
+
+        if (!registrationRequested) {
+            QDBusError err = DBusConnection::sessionBus().lastError();
             TRACE() << "\nError name:" << err.name()
                     << "\nMessage: " << err.message()
                     << "\nType: " << QDBusError::errorString(err.type());
+            m_operationQueueHandler.clearOperationsQueue();
+            updateState(NeedsRegistration);
             return false;
         }
         updateState(PendingRegistration);

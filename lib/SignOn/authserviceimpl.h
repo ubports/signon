@@ -69,9 +69,10 @@ namespace SignOn {
         void clearReply();
 
     private:
-        bool callWithTimeout(const QString &operation,
-                             const char *replySlot,
-                             const QList<QVariant> &args = QList<QVariant>());
+        bool sendRequest(const QString &operation,
+                         const char *replySlot,
+                         const QList<QVariant> &args = QList<QVariant>(),
+                         int timeout = -1);
 
     private:
         AuthService *m_parent;

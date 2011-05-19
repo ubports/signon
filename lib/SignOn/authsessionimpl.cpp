@@ -96,24 +96,24 @@ void AuthSessionImpl::send2interface(const QString &operation, const char *slot,
          * TODO: Invent something more attractive for the case
          * of operation call with big timeout
          * */
-        if (QLatin1String("process") != operation) {
-            res = m_DBusInterface->callWithCallback(operation,
-                                                arguments,
-                                                this,
-                                                slot,
-                                                SLOT(errorSlot(const QDBusError&)));
-        } else {
-            QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
-                                                              m_DBusInterface->path(),
-                                                              m_DBusInterface->interface(),
-                                                              operation);
+        int timeout = -1;
+        if (QLatin1String("process") == operation)
+            timeout = SIGNOND_MAX_TIMEOUT;
+
+        QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
+                                                          m_DBusInterface->path(),
+                                                          m_DBusInterface->interface(),
+                                                          operation);
+        if (!arguments.isEmpty())
             msg.setArguments(arguments);
-            res = m_DBusInterface->connection().callWithCallback(msg,
-                                                             this,
-                                                             slot,
-                                                             SLOT(errorSlot(const QDBusError&)),
-                                                             SIGNOND_MAX_TIMEOUT);
-        }
+
+        msg.setDelayedReply(true);
+
+        res = m_DBusInterface->connection().callWithCallback(msg,
+                                                         this,
+                                                         slot,
+                                                         SLOT(errorSlot(const QDBusError&)),
+                                                         SIGNOND_MAX_TIMEOUT);
     } else {
         m_DBusInterface->callWithArgumentList(QDBus::NoBlock, operation, arguments);
     }
@@ -186,29 +186,24 @@ bool AuthSessionImpl::initInterface()
         m_DBusInterface = 0;
     }
 
-    QVariantList arguments;
-    QLatin1String operation("getAuthSessionObjectPath");
+    m_operationQueueHandler.stopOperationsProcessing();
 
+    QLatin1String operation("getAuthSessionObjectPath");
+    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
+                                                      SIGNOND_DAEMON_OBJECTPATH,
+                                                      SIGNOND_DAEMON_INTERFACE,
+                                                      operation);
+    QVariantList arguments;
     arguments += m_id;
     arguments += m_methodName;
 
-    QDBusInterface iface(SIGNOND_SERVICE,
-                         SIGNOND_DAEMON_OBJECTPATH,
-                         SIGNOND_DAEMON_INTERFACE,
-                         DBusConnection::sessionBus());
+    msg.setArguments(arguments);
+    msg.setDelayedReply(true);
 
-    if (iface.lastError().isValid()) {
-        qCritical() << "cannot initialize interface: " << iface.lastError();
-        m_isValid = false;
-        return false;
-    } else {
-        m_operationQueueHandler.stopOperationsProcessing();
-        return iface.callWithCallback(operation,
-                                      arguments,
-                                      this,
-                                      SLOT(authenticationSlot(const QString&)),
-                                      SLOT(errorSlot(const QDBusError&)));
-    }
+    return DBusConnection::sessionBus().callWithCallback(
+        msg, this,
+        SLOT(authenticationSlot(const QString&)),
+        SLOT(errorSlot(const QDBusError&)));
 }
 
 QString AuthSessionImpl::name()

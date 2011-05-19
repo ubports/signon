@@ -80,16 +80,14 @@ namespace SignOn {
     {
         bool result = false;
 
+        int timeout = -1;
         if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            result = callWithTimeout(QString::fromLatin1(__func__),
-                                     SLOT(queryMethodsReply(const QStringList&)));
-        else
-            result = m_DBusInterface->callWithCallback(
-                                                QString::fromLatin1(__func__),
-                                                QList<QVariant>(),
-                                                this,
-                                                SLOT(queryMethodsReply(const QStringList&)),
-                                                SLOT(errorReply(const QDBusError &)));
+            timeout = SIGNOND_MAX_TIMEOUT;
+
+        result = sendRequest(QString::fromLatin1(__func__),
+                             SLOT(queryMethodsReply(const QStringList&)),
+                             QList<QVariant>(),
+                             timeout);
         if (!result) {
             emit m_parent->error(
                     Error(Error::InternalCommunication,
@@ -101,17 +99,14 @@ namespace SignOn {
     {
         bool result = false;
 
+        int timeout = -1;
         if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            result = callWithTimeout(QString::fromLatin1(__func__),
-                                     SLOT(queryMechanismsReply(const QStringList&)),
-                                     QList<QVariant>() << method);
-        else
-            result = m_DBusInterface->callWithCallback(
-                                                QString::fromLatin1(__func__),
-                                                QList<QVariant>() << method,
-                                                this,
-                                                SLOT(queryMechanismsReply(const QStringList &)),
-                                                SLOT(errorReply(const QDBusError &)));
+            timeout = SIGNOND_MAX_TIMEOUT;
+
+        result = sendRequest(QString::fromLatin1(__func__),
+                             SLOT(queryMechanismsReply(const QStringList&)),
+                             QList<QVariant>() << method,
+                             timeout);
         if (!result) {
             emit m_parent->error(
                     Error(Error::InternalCommunication,
@@ -155,17 +150,14 @@ namespace SignOn {
         args << filterMap;
 
         bool result = false;
+        int timeout = -1;
         if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            result = callWithTimeout(QString::fromLatin1(__func__),
-                                     SLOT(queryIdentitiesReply(const QList<QVariant> &)),
-                                     args);
-        else
-            result = m_DBusInterface->callWithCallback(
-                                                QString::fromLatin1(__func__),
-                                                args,
-                                                this,
-                                                SLOT(queryIdentitiesReply(const QList<QVariant> &)),
-                                                SLOT(errorReply(const QDBusError &)));
+            timeout = SIGNOND_MAX_TIMEOUT;
+
+        result = sendRequest(QString::fromLatin1(__func__),
+                             SLOT(queryIdentitiesReply(const QList<QVariant> &)),
+                             args,
+                             timeout);
         if (!result) {
             emit m_parent->error(
                     Error(Error::InternalCommunication,
@@ -176,15 +168,14 @@ namespace SignOn {
     void AuthServiceImpl::clear()
     {
         bool result = false;
+        int timeout = -1;
         if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            result = callWithTimeout(QLatin1String(__func__),
-                                     SLOT(clearReply()));
-        else
-            result = m_DBusInterface->callWithCallback(QLatin1String(__func__),
-                                                QList<QVariant>(),
-                                                this,
-                                                SLOT(clearReply()),
-                                                SLOT(errorReply(const QDBusError &)));
+            timeout = SIGNOND_MAX_TIMEOUT;
+
+        result = sendRequest(QLatin1String(__func__),
+                             SLOT(clearReply()),
+                             QList<QVariant>(),
+                             timeout);
         if (!result) {
             emit m_parent->error(
                     Error(Error::InternalCommunication,
@@ -192,9 +183,12 @@ namespace SignOn {
         }
     }
 
-    bool AuthServiceImpl::callWithTimeout(const QString &operation,
-                                          const char *replySlot,
-                                          const QList<QVariant> &args)
+
+
+    bool AuthServiceImpl::sendRequest(const QString &operation,
+                                      const char *replySlot,
+                                      const QList<QVariant> &args,
+                                      int timeout)
     {
         QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
                                                           m_DBusInterface->path(),
@@ -202,12 +196,13 @@ namespace SignOn {
                                                           operation);
         if (!args.isEmpty())
             msg.setArguments(args);
+        msg.setDelayedReply(true);
 
         return m_DBusInterface->connection().callWithCallback(msg,
                                                               this,
                                                               replySlot,
                                                               SLOT(errorReply(const QDBusError&)),
-                                                              SIGNOND_MAX_TIMEOUT);
+                                                              timeout);
     }
 
     void AuthServiceImpl::queryMethodsReply(const QStringList &methods)
