@@ -210,7 +210,7 @@ class MetaDataDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-metadata"), 1) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata"), 2) {}
 
     bool createTables();
     bool updateDB(int version);
@@ -227,6 +227,7 @@ public:
     bool clear();
 
     QStringList accessControlList(const quint32 identityId);
+    QStringList ownerList(const quint32 identityId);
 
     bool addReference(const quint32 id,
                       const QString &token,
@@ -322,6 +323,7 @@ public:
     bool clear();
 
     QStringList accessControlList(const quint32 identityId);
+    QStringList ownerList(const quint32 identityId);
     QString credentialsOwnerSecurityToken(const quint32 identityId);
 
     QVariantMap loadData(const quint32 id, const QString &method);

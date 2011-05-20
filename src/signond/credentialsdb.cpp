@@ -87,8 +87,7 @@ bool SqlDatabase::init()
 
 bool SqlDatabase::updateDB(int version)
 {
-    Q_UNUSED(version);
-    TRACE() << "Setting DB version:" << m_version;
+    TRACE() << "Update DB from version " << version << " to " << m_version;
     exec(QString::fromLatin1("PRAGMA user_version = %1").arg(m_version));
     return true;
 }
@@ -294,6 +293,11 @@ bool MetaDataDB::createTables()
             "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE,"
             "ref TEXT,"
             "PRIMARY KEY (identity_id, token_id, ref))")
+        <<  QString::fromLatin1(
+            "CREATE TABLE OWNER"
+            "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+            "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
 
 /*
 * triggers generated with
@@ -481,6 +485,33 @@ bool MetaDataDB::createTables()
             "FOR EACH ROW BEGIN "
             "    DELETE FROM REFS WHERE REFS.token_id = OLD.id; "
             "END; "
+        )
+        //added triggers for OWNER
+        << QString::fromLatin1(
+            // Foreign Key Preventing insert
+            "CREATE TRIGGER fki_OWNER_token_id_TOKENS_id "
+            "BEFORE INSERT ON [OWNER] "
+            "FOR EACH ROW BEGIN "
+            "  SELECT RAISE(ROLLBACK, 'insert on table OWNER violates foreign key constraint fki_OWNER_token_id_TOKENS_id') "
+            "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+            "END; "
+        )
+        << QString::fromLatin1(
+            // Foreign key preventing update
+            "CREATE TRIGGER fku_OWNER_token_id_TOKENS_id "
+            "BEFORE UPDATE ON [OWNER] "
+            "FOR EACH ROW BEGIN "
+            "    SELECT RAISE(ROLLBACK, 'update on table OWNER violates foreign key constraint fku_OWNER_token_id_TOKENS_id') "
+            "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+            "END; "
+        )
+        << QString::fromLatin1(
+            // Cascading Delete
+            "CREATE TRIGGER fkdc_OWNER_token_id_TOKENS_id "
+            "BEFORE DELETE ON TOKENS "
+            "FOR EACH ROW BEGIN "
+            "    DELETE FROM OWNER WHERE OWNER.token_id = OLD.id; "
+            "END; "
         );
 /*
 end of generated code
@@ -516,6 +547,59 @@ bool MetaDataDB::updateDB(int version)
         if (!createTables())
             return false;
     }
+
+    //convert from 1 to 2
+    if (version == 1) {
+        QStringList createTableQuery = QStringList()
+            <<  QString::fromLatin1(
+                "CREATE TABLE OWNER"
+                "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
+                "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+                "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
+            //added triggers for OWNER
+            << QString::fromLatin1(
+                // Foreign Key Preventing insert
+                "CREATE TRIGGER fki_OWNER_token_id_TOKENS_id "
+                "BEFORE INSERT ON [OWNER] "
+                "FOR EACH ROW BEGIN "
+                "  SELECT RAISE(ROLLBACK, 'insert on table OWNER violates foreign key constraint fki_OWNER_token_id_TOKENS_id') "
+                "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Foreign key preventing update
+                "CREATE TRIGGER fku_OWNER_token_id_TOKENS_id "
+                "BEFORE UPDATE ON [OWNER] "
+                "FOR EACH ROW BEGIN "
+                "    SELECT RAISE(ROLLBACK, 'update on table OWNER violates foreign key constraint fku_OWNER_token_id_TOKENS_id') "
+                "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+                "END; "
+            )
+            << QString::fromLatin1(
+                // Cascading Delete
+                "CREATE TRIGGER fkdc_OWNER_token_id_TOKENS_id "
+                "BEFORE DELETE ON TOKENS "
+                "FOR EACH ROW BEGIN "
+                "    DELETE FROM OWNER WHERE OWNER.token_id = OLD.id; "
+                "END; "
+            );
+
+        foreach (QString createTable, createTableQuery) {
+            QSqlQuery query = exec(createTable);
+            if (lastError().isValid()) {
+                TRACE() << "Error occurred while inseting new tables.";
+                return false;
+            }
+            query.clear();
+            commit();
+        }
+        TRACE() << "Table insert successful";
+
+        //TODO populate owner table from acl
+    } else {
+        return false;
+    }
+
     return SqlDatabase::updateDB(version);
 }
 
@@ -586,10 +670,9 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
             QString::fromLatin1("SELECT realm FROM REALMS "
                     "WHERE identity_id = %1").arg(id));
 
-    //TODO change ACL to OWNER
     query_str = QString::fromLatin1("SELECT token FROM TOKENS "
             "WHERE id IN "
-            "(SELECT token_id FROM ACL WHERE identity_id = '%1' )")
+            "(SELECT token_id FROM OWNER WHERE identity_id = '%1' )")
             .arg(id);
     query = exec(query_str);
     QStringList ownerTokens;
@@ -697,6 +780,14 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
         exec(tokenInsert);
     }
 
+    foreach (QString token, info.ownerList()) {
+        QSqlQuery tokenInsert = newQuery();
+        tokenInsert.prepare(S("INSERT OR IGNORE INTO TOKENS (token) "
+                              "VALUES ( :token )"));
+        tokenInsert.bindValue(S(":token"), token);
+        exec(tokenInsert);
+    }
+
     if (!info.isNew()) {
         //remove acl
         QString queryStr = QString::fromLatin1(
@@ -781,6 +872,18 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
         }
     }
 
+    //insert owner list
+    foreach (QString token, info.ownerList()) {
+        QSqlQuery ownerInsert = newQuery();
+        ownerInsert.prepare(S("INSERT OR REPLACE INTO OWNER "
+                            "(identity_id, token_id) "
+                            "VALUES ( :id, "
+                            "( SELECT id FROM TOKENS WHERE token = :token ))"));
+        ownerInsert.bindValue(S(":id"), id);
+        ownerInsert.bindValue(S(":token"), token);
+        exec(ownerInsert);
+    }
+
     if (commit()) {
         return id;
     } else {
@@ -800,7 +903,9 @@ bool MetaDataDB::removeIdentity(const quint32 id)
         << QString::fromLatin1(
             "DELETE FROM ACL WHERE identity_id = %1").arg(id)
         << QString::fromLatin1(
-            "DELETE FROM REALMS WHERE identity_id = %1").arg(id);
+            "DELETE FROM REALMS WHERE identity_id = %1").arg(id)
+        << QString::fromLatin1(
+            "DELETE FROM owner WHERE identity_id = %1").arg(id);
 
     return transactionalExec(queries);
 }
@@ -815,7 +920,8 @@ bool MetaDataDB::clear()
         << QLatin1String("DELETE FROM MECHANISMS")
         << QLatin1String("DELETE FROM ACL")
         << QLatin1String("DELETE FROM REALMS")
-        << QLatin1String("DELETE FROM TOKENS");
+        << QLatin1String("DELETE FROM TOKENS")
+        << QLatin1String("DELETE FROM OWNER");
 
     return transactionalExec(clearCommands);
 }
@@ -825,6 +931,14 @@ QStringList MetaDataDB::accessControlList(const quint32 identityId)
     return queryList(QString::fromLatin1("SELECT token FROM TOKENS "
             "WHERE id IN "
             "(SELECT token_id FROM ACL WHERE identity_id = '%1' )")
+            .arg(identityId));
+}
+
+QStringList MetaDataDB::ownerList(const quint32 identityId)
+{
+    return queryList(QString::fromLatin1("SELECT token FROM TOKENS "
+            "WHERE id IN "
+            "(SELECT token_id FROM OWNER WHERE identity_id = '%1' )")
             .arg(identityId));
 }
 
@@ -1541,14 +1655,17 @@ QStringList CredentialsDB::accessControlList(const quint32 identityId)
     return metaDataDB->accessControlList(identityId);
 }
 
+QStringList CredentialsDB::ownerList(const quint32 identityId)
+{
+    INIT_ERROR();
+    return metaDataDB->ownerList(identityId);
+}
+
 QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
 {
-    QStringList acl = accessControlList(identityId);
-    int index = -1;
-    QRegExp aegisIdTokenPrefixRegExp(QLatin1String("^AID::.*"));
-    if ((index = acl.indexOf(aegisIdTokenPrefixRegExp)) != -1)
-        return acl.at(index);
-    return QString();
+    //return first owner token
+    QStringList owners = ownerList(identityId);
+    return owners.at(0);
 }
 
 bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
