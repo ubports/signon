@@ -155,108 +155,108 @@ namespace SignonDaemonNS {
             mapList.insert(it.key(), it.value().toStringList());
         }
     return mapList;
-}
-
-const QString SignonIdentityInfo::serialize()
-{
-    QString serialized;
-    QTextStream stream(&serialized);
-    stream << QString::fromLatin1("SignondIdentityInfo serialized:\nID = %1, ").arg(m_id);
-    stream << QString::fromLatin1("username = %1, ").arg(m_userName);
-    stream << QString::fromLatin1("password = %1, ").arg(m_password);
-    stream << QString::fromLatin1("caption = %1, ").arg(m_caption);
-    stream << QString::fromLatin1("realms = %1, \n").arg(m_realms.join(QLatin1String(" ")));
-    stream << QString::fromLatin1("acl = %1, \n").arg(m_accessControlList.join(QLatin1String(" ")));
-    stream << QString::fromLatin1("type = %1, \n").arg(m_type);
-    stream << QString::fromLatin1("refcount = %1, \n").arg(m_refCount);
-    stream << QString::fromLatin1("validated = %1, \n").arg(m_validated);
-
-    stream << "methods (";
-    for (QMap<QString, QStringList>::iterator it = m_methods.begin();
-         it != m_methods.end(); ++it) {
-        stream << QString::fromLatin1("(%1, (%2))").arg(it.key()).arg(it.value().join(QLatin1String(",")));
-    }
-    stream << ")";
-
-    return serialized;
-}
-
-bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
-{
-    //do not care about list element order
-    SignonIdentityInfo me = *this;
-    SignonIdentityInfo you = other;
-    me.m_realms.sort();
-    you.m_realms.sort();
-    me.m_accessControlList.sort();
-    you.m_accessControlList.sort();
-    QMapIterator<QString, QStringList> it(me.m_methods);
-    while (it.hasNext()) {
-        it.next();
-        QStringList list1 = it.value();
-        QStringList list2 = you.m_methods.value(it.key());
-        list1.sort();
-        list2.sort();
-        if (list1 != list2) return false;
     }
 
-    return (m_id == other.m_id)
-            && (m_userName == other.m_userName)
-            && (m_password == other.m_password)
-            && (m_caption == other.m_caption)
-            && (me.m_realms ==you.m_realms)
-            && (me.m_accessControlList == you.m_accessControlList)
-            && (m_type == other.m_type)
-            && (m_validated == other.m_validated);
-}
+    const QString SignonIdentityInfo::serialize()
+    {
+        QString serialized;
+        QTextStream stream(&serialized);
+        stream << QString::fromLatin1("SignondIdentityInfo serialized:\nID = %1, ").arg(m_id);
+        stream << QString::fromLatin1("username = %1, ").arg(m_userName);
+        stream << QString::fromLatin1("password = %1, ").arg(m_password);
+        stream << QString::fromLatin1("caption = %1, ").arg(m_caption);
+        stream << QString::fromLatin1("realms = %1, \n").arg(m_realms.join(QLatin1String(" ")));
+        stream << QString::fromLatin1("acl = %1, \n").arg(m_accessControlList.join(QLatin1String(" ")));
+        stream << QString::fromLatin1("type = %1, \n").arg(m_type);
+        stream << QString::fromLatin1("refcount = %1, \n").arg(m_refCount);
+        stream << QString::fromLatin1("validated = %1, \n").arg(m_validated);
 
-bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
-                                                 const QString &mechanism,
-                                                 QString &allowedMechanism)
-{
-    allowedMechanism.clear();
+        stream << "methods (";
+        for (QMap<QString, QStringList>::iterator it = m_methods.begin();
+             it != m_methods.end(); ++it) {
+            stream << QString::fromLatin1("(%1, (%2))").arg(it.key()).arg(it.value().join(QLatin1String(",")));
+        }
+        stream << ")";
 
-    // If no methods have been specified for an identity assume anything goes
-    if (m_methods.isEmpty())
+        return serialized;
+    }
+
+    bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
+    {
+        //do not care about list element order
+        SignonIdentityInfo me = *this;
+        SignonIdentityInfo you = other;
+        me.m_realms.sort();
+        you.m_realms.sort();
+        me.m_accessControlList.sort();
+        you.m_accessControlList.sort();
+        QMapIterator<QString, QStringList> it(me.m_methods);
+        while (it.hasNext()) {
+            it.next();
+            QStringList list1 = it.value();
+            QStringList list2 = you.m_methods.value(it.key());
+            list1.sort();
+            list2.sort();
+            if (list1 != list2) return false;
+        }
+
+        return (m_id == other.m_id)
+                && (m_userName == other.m_userName)
+                && (m_password == other.m_password)
+                && (m_caption == other.m_caption)
+                && (me.m_realms ==you.m_realms)
+                && (me.m_accessControlList == you.m_accessControlList)
+                && (m_type == other.m_type)
+                && (m_validated == other.m_validated);
+    }
+
+    bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
+                                                     const QString &mechanism,
+                                                     QString &allowedMechanism)
+    {
+        allowedMechanism.clear();
+
+        // If no methods have been specified for an identity assume anything goes
+        if (m_methods.isEmpty())
+            return true;
+
+        if (!m_methods.contains(method))
+            return false;
+
+        MechanismsList mechs = m_methods[method];
+        // If no mechanisms have been specified for a method, assume anything goes
+        if (mechs.isEmpty())
+            return true;
+
+        if (mechs.contains(mechanism)) {
+            allowedMechanism = mechanism;
+            return true;
+        }
+
+        /* in the case of SASL authentication (and possibly others),
+         * mechanism can be a list of strings, separated by a space;
+         * therefore, let's split the list first, and see if any of the
+         * mechanisms is allowed.
+         */
+        QStringList mechanisms =
+            mechanism.split(QLatin1Char(' '), QString::SkipEmptyParts);
+
+        /* if the list is empty of it has only one element, then we already know
+         * that it didn't pass the previous checks */
+        if (mechanisms.size() <= 1)
+            return false;
+
+        QStringList allowedMechanisms;
+        foreach (const QString &mech, mechanisms) {
+            if (mechs.contains(mech))
+                allowedMechanisms.append(mech);
+        }
+        if (allowedMechanisms.isEmpty())
+            return false;
+
+        allowedMechanism = allowedMechanisms.join(QLatin1String(" "));
         return true;
-
-    if (!m_methods.contains(method))
-        return false;
-
-    MechanismsList mechs = m_methods[method];
-    // If no mechanisms have been specified for a method, assume anything goes
-    if (mechs.isEmpty())
-        return true;
-
-    if (mechs.contains(mechanism)) {
-        allowedMechanism = mechanism;
-        return true;
     }
-
-    /* in the case of SASL authentication (and possibly others),
-     * mechanism can be a list of strings, separated by a space;
-     * therefore, let's split the list first, and see if any of the
-     * mechanisms is allowed.
-     */
-    QStringList mechanisms =
-        mechanism.split(QLatin1Char(' '), QString::SkipEmptyParts);
-
-    /* if the list is empty of it has only one element, then we already know
-     * that it didn't pass the previous checks */
-    if (mechanisms.size() <= 1)
-        return false;
-
-    QStringList allowedMechanisms;
-    foreach (const QString &mech, mechanisms) {
-        if (mechs.contains(mech))
-            allowedMechanisms.append(mech);
-    }
-    if (allowedMechanisms.isEmpty())
-        return false;
-
-    allowedMechanism = allowedMechanisms.join(QLatin1String(" "));
-    return true;
-}
 
     SignonIdentityInfo &SignonIdentityInfo::operator=(const SignonIdentityInfo &other)
     {

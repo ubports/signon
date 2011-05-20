@@ -251,6 +251,45 @@ QStringList SqlDatabase::queryList(QSqlQuery &q)
     return list;
 }
 
+QStringList MetaDataDB::tableUpdates2()
+{
+    QStringList tableUpdates = QStringList()
+        <<  QString::fromLatin1(
+            "CREATE TABLE OWNER"
+            "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
+            "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
+        //added triggers for OWNER
+        << QString::fromLatin1(
+            // Foreign Key Preventing insert
+            "CREATE TRIGGER fki_OWNER_token_id_TOKENS_id "
+            "BEFORE INSERT ON [OWNER] "
+            "FOR EACH ROW BEGIN "
+            "  SELECT RAISE(ROLLBACK, 'insert on table OWNER violates foreign key constraint fki_OWNER_token_id_TOKENS_id') "
+            "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+            "END; "
+        )
+        << QString::fromLatin1(
+            // Foreign key preventing update
+            "CREATE TRIGGER fku_OWNER_token_id_TOKENS_id "
+            "BEFORE UPDATE ON [OWNER] "
+            "FOR EACH ROW BEGIN "
+            "    SELECT RAISE(ROLLBACK, 'update on table OWNER violates foreign key constraint fku_OWNER_token_id_TOKENS_id') "
+            "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
+            "END; "
+        )
+        << QString::fromLatin1(
+            // Cascading Delete
+            "CREATE TRIGGER fkdc_OWNER_token_id_TOKENS_id "
+            "BEFORE DELETE ON TOKENS "
+            "FOR EACH ROW BEGIN "
+            "    DELETE FROM OWNER WHERE OWNER.token_id = OLD.id; "
+            "END; "
+        );
+
+    return tableUpdates;
+}
+
 bool MetaDataDB::createTables()
 {
     /* !!! Foreign keys support seems to be disabled, for the moment... */
@@ -293,11 +332,6 @@ bool MetaDataDB::createTables()
             "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE,"
             "ref TEXT,"
             "PRIMARY KEY (identity_id, token_id, ref))")
-        <<  QString::fromLatin1(
-            "CREATE TABLE OWNER"
-            "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-            "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
 
 /*
 * triggers generated with
@@ -485,37 +519,13 @@ bool MetaDataDB::createTables()
             "FOR EACH ROW BEGIN "
             "    DELETE FROM REFS WHERE REFS.token_id = OLD.id; "
             "END; "
-        )
-        //added triggers for OWNER
-        << QString::fromLatin1(
-            // Foreign Key Preventing insert
-            "CREATE TRIGGER fki_OWNER_token_id_TOKENS_id "
-            "BEFORE INSERT ON [OWNER] "
-            "FOR EACH ROW BEGIN "
-            "  SELECT RAISE(ROLLBACK, 'insert on table OWNER violates foreign key constraint fki_OWNER_token_id_TOKENS_id') "
-            "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Foreign key preventing update
-            "CREATE TRIGGER fku_OWNER_token_id_TOKENS_id "
-            "BEFORE UPDATE ON [OWNER] "
-            "FOR EACH ROW BEGIN "
-            "    SELECT RAISE(ROLLBACK, 'update on table OWNER violates foreign key constraint fku_OWNER_token_id_TOKENS_id') "
-            "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-            "END; "
-        )
-        << QString::fromLatin1(
-            // Cascading Delete
-            "CREATE TRIGGER fkdc_OWNER_token_id_TOKENS_id "
-            "BEFORE DELETE ON TOKENS "
-            "FOR EACH ROW BEGIN "
-            "    DELETE FROM OWNER WHERE OWNER.token_id = OLD.id; "
-            "END; "
         );
 /*
 end of generated code
 */
+    //insert table updates
+    createTableQuery << tableUpdates2();
+
     foreach (QString createTable, createTableQuery) {
         QSqlQuery query = exec(createTable);
         if (lastError().isValid()) {
@@ -553,40 +563,7 @@ bool MetaDataDB::updateDB(int version)
 
     //convert from 1 to 2
     if (version == 1) {
-        QStringList createTableQuery = QStringList()
-            <<  QString::fromLatin1(
-                "CREATE TABLE OWNER"
-                "(rowid INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "identity_id INTEGER CONSTRAINT fk_identity_id REFERENCES CREDENTIALS(id) ON DELETE CASCADE,"
-                "token_id INTEGER CONSTRAINT fk_token_id REFERENCES TOKENS(id) ON DELETE CASCADE)")
-            //added triggers for OWNER
-            << QString::fromLatin1(
-                // Foreign Key Preventing insert
-                "CREATE TRIGGER fki_OWNER_token_id_TOKENS_id "
-                "BEFORE INSERT ON [OWNER] "
-                "FOR EACH ROW BEGIN "
-                "  SELECT RAISE(ROLLBACK, 'insert on table OWNER violates foreign key constraint fki_OWNER_token_id_TOKENS_id') "
-                "  WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-                "END; "
-            )
-            << QString::fromLatin1(
-                // Foreign key preventing update
-                "CREATE TRIGGER fku_OWNER_token_id_TOKENS_id "
-                "BEFORE UPDATE ON [OWNER] "
-                "FOR EACH ROW BEGIN "
-                "    SELECT RAISE(ROLLBACK, 'update on table OWNER violates foreign key constraint fku_OWNER_token_id_TOKENS_id') "
-                "      WHERE NEW.token_id IS NOT NULL AND (SELECT id FROM TOKENS WHERE id = NEW.token_id) IS NULL; "
-                "END; "
-            )
-            << QString::fromLatin1(
-                // Cascading Delete
-                "CREATE TRIGGER fkdc_OWNER_token_id_TOKENS_id "
-                "BEFORE DELETE ON TOKENS "
-                "FOR EACH ROW BEGIN "
-                "    DELETE FROM OWNER WHERE OWNER.token_id = OLD.id; "
-                "END; "
-            );
-
+        QStringList createTableQuery = tableUpdates2();
         foreach (QString createTable, createTableQuery) {
             QSqlQuery query = exec(createTable);
             if (lastError().isValid()) {

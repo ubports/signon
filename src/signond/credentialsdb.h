@@ -37,6 +37,8 @@
 #include "signonidentityinfo.h"
 
 #define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
+#define SSO_METADATADB_VERSION 2
+#define SSO_SECRETSDB_VERSION 1
 
 class TestDatabase;
 
@@ -210,7 +212,7 @@ class MetaDataDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-metadata"), 2) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata"), SSO_METADATADB_VERSION) {}
 
     bool createTables();
     bool updateDB(int version);
@@ -240,6 +242,7 @@ private:
     bool insertMethods(QMap<QString, QStringList> methods);
     quint32 updateCredentials(const SignonIdentityInfo &info);
     bool updateRealms(quint32 id, const QStringList &realms, bool isNew);
+    QStringList tableUpdates2();
 };
 
 class SecretsDB: public SqlDatabase
@@ -247,7 +250,7 @@ class SecretsDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     SecretsDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-secrets"), 1) {}
+        SqlDatabase(name, QLatin1String("SSO-secrets"), SSO_SECRETSDB_VERSION) {}
 
     bool createTables();
     bool clear();
