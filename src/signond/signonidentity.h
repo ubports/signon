@@ -72,6 +72,7 @@ namespace SignonDaemonNS {
         bool verifySecret(const QString &secret);
         void remove();
         bool signOut();
+        quint32 store(const QVariantMap &info);
         quint32 storeCredentials(const quint32 id,
                                  const QString &userName,
                                  const QString &secret,

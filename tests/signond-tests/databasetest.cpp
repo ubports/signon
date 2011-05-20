@@ -159,9 +159,10 @@ void TestDatabase::methodsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
+                           testAcl,
                            testAcl);
 
     id = m_db->insertCredentials(info, true);
@@ -184,8 +185,8 @@ void TestDatabase::checkPasswordTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -211,8 +212,8 @@ void TestDatabase::credentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -247,8 +248,8 @@ void TestDatabase::insertCredentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms);
 
     id = m_db->insertCredentials(info, false);
@@ -264,8 +265,8 @@ void TestDatabase::insertCredentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           methods2,
                            QLatin1String("Caption"),
+                           methods2,
                            testRealms);
 
     id = m_db->insertCredentials(info2, false);
@@ -280,8 +281,8 @@ void TestDatabase::insertCredentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -328,8 +329,8 @@ void TestDatabase::updateCredentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -355,9 +356,10 @@ void TestDatabase::updateCredentialsTest()
         SignonIdentityInfo(id,
                            QLatin1String("UpUser"),
                            QLatin1String("UpdatedPass"), true,
-                           umethods,
                            QLatin1String("Updated Caption"),
+                           umethods,
                            urealms,
+                           testAcl,
                            testAcl,
                            2, 0, false);
 
@@ -382,8 +384,8 @@ void TestDatabase::removeCredentialsTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -466,8 +468,8 @@ void TestDatabase::dataTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -561,8 +563,8 @@ void TestDatabase::referenceTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -615,8 +617,8 @@ void TestDatabase::accessControlListTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 
@@ -636,8 +638,8 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
         SignonIdentityInfo(0,
                            QLatin1String("User"),
                            QLatin1String("Pass"), true,
-                           testMethods,
                            QLatin1String("Caption"),
+                           testMethods,
                            testRealms,
                            testAcl);
 

@@ -586,14 +586,26 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
             QString::fromLatin1("SELECT realm FROM REALMS "
                     "WHERE identity_id = %1").arg(id));
 
+    //TODO change ACL to OWNER
     query_str = QString::fromLatin1("SELECT token FROM TOKENS "
             "WHERE id IN "
             "(SELECT token_id FROM ACL WHERE identity_id = '%1' )")
             .arg(id);
     query = exec(query_str);
-    QStringList security_tokens;
+    QStringList ownerTokens;
     while (query.next()) {
-        security_tokens.append(query.value(0).toString());
+        ownerTokens.append(query.value(0).toString());
+    }
+    query.clear();
+
+    query_str = QString::fromLatin1("SELECT token FROM TOKENS "
+            "WHERE id IN "
+            "(SELECT token_id FROM ACL WHERE identity_id = '%1' )")
+            .arg(id);
+    query = exec(query_str);
+    QStringList securityTokens;
+    while (query.next()) {
+        securityTokens.append(query.value(0).toString());
     }
     query.clear();
     QMap<QString, QVariant> methods;
@@ -617,8 +629,10 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
     //TODO query for refcount
 
     SignonIdentityInfo info =
-        SignonIdentityInfo(id, username, QString(), savePassword, methods,
-                           caption, realms, security_tokens, type, refCount, validated);
+        SignonIdentityInfo(id, username, QString(), savePassword,
+                           caption, methods, realms, securityTokens,
+                           ownerTokens,
+                           type, refCount, validated);
     info.setUserNameSecret(isUserNameSecret);
     return info;
 }

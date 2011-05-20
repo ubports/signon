@@ -30,6 +30,7 @@
 
 #include "QtCore/qglobal.h"
 #include <QMap>
+#include <QVariantMap>
 
 #include "identityinfo.h"
 
@@ -49,6 +50,7 @@ namespace SignOn {
 
     public:
         IdentityInfoImpl(IdentityInfo *identityInfo);
+        IdentityInfoImpl(IdentityInfo *identityInfo, const QVariantMap &infoMap);
         ~IdentityInfoImpl();
 
         void addMethod(const MethodName &method, const MechanismsList &mechanismsList);
@@ -62,6 +64,7 @@ namespace SignOn {
         bool isEmpty() const;
         bool hasMethod(const MethodName &method) const;
         void clear();
+        QVariantMap toMap() const;
 
     private:
         void copy(const IdentityInfoImpl &other);
@@ -69,21 +72,18 @@ namespace SignOn {
     private:
         IdentityInfo *m_identityInfo;
 
-        bool m_empty;
         quint32 m_id;
+        QString m_userName;
         QString m_secret;
         bool m_storeSecret;
-
-        QString m_userName;
         QString m_caption;
-        QStringList m_realms;
-
         QMap<MethodName, QVariant> m_authMethods; //The variant is holding the MechanismsList
-        QString m_owner;
+        QStringList m_realms;
         QStringList m_accessControlList;
+        QString m_owner;
         IdentityInfo::CredentialsType m_type;
-        bool m_isEmpty;
         qint32 m_refCount;
+        bool m_isEmpty;
     };
 
 } //namespace SignOn

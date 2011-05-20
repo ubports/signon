@@ -171,6 +171,28 @@ namespace SignonDaemonNS {
         return m_parent->signOut();
     }
 
+    quint32 SignonIdentityAdaptor::store(const QVariantMap &info)
+    {
+        quint32 id = info.value(QLatin1String("Id"), SIGNOND_NEW_IDENTITY).toInt();
+        /* Access Control */
+        if (id != SIGNOND_NEW_IDENTITY) {
+            AccessControlManager::IdentityOwnership ownership =
+                    AccessControlManager::isPeerOwnerOfIdentity(
+                                                parentDBusContext(), m_parent->id());
+
+            if (ownership != AccessControlManager::IdentityDoesNotHaveOwner) {
+                //Identity has an owner
+                if (ownership == AccessControlManager::ApplicationIsNotOwner
+                    && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+
+                    securityErrorReply(__func__);
+                    return 0;
+                }
+            }
+        }
+        return m_parent->store(info);
+    }
+
     quint32 SignonIdentityAdaptor::storeCredentials(const quint32 id,
                                                     const QString &userName,
                                                     const QString &secret,

@@ -26,93 +26,134 @@
 #include <QDataStream>
 #include <QDebug>
 
-using namespace SignonDaemonNS;
+namespace SignonDaemonNS {
 
-SignonIdentityInfo::SignonIdentityInfo()
-    : m_id(0),
-      m_userName(QString()),
-      m_password(QString()),
-      m_storePassword(false),
-      m_caption(QString()),
-      m_realms(QStringList()),
-      m_accessControlList(QStringList()),
-      m_type(0),
-      m_refCount(0),
-      m_validated(false)
-{
-}
-
-SignonIdentityInfo::SignonIdentityInfo(const quint32 id, const QString &userName,
-            const QString &password, const bool storePassword,
-            const QMap<QString, QVariant> &methods,
-            const QString &caption, const QStringList &realms,
-            const QStringList &accessControlList,
-            int type, int refCount, bool validated)
-    : m_id(id),
-      m_userName(userName),
-      m_password(password),
-      m_storePassword(storePassword),
-      m_caption(caption),
-      m_realms(realms),
-      m_methods(mapVariantToMapList(methods)),
-      m_accessControlList(accessControlList),
-      m_type(type),
-      m_refCount(refCount),
-      m_validated(validated),
-      m_isUserNameSecret(false)
-{
-}
-
-const QList<QVariant> SignonIdentityInfo::toVariantList()
-{
-    QList<QVariant> list;
-    list << m_id
-         << m_userName
-         << m_password
-         << m_caption
-         << m_realms
-         << QVariant(mapListToMapVariant(m_methods))
-         << m_accessControlList
-         << m_type
-         << m_refCount
-         << m_validated
-         << m_isUserNameSecret;
-
-    return list;
-}
-
-const QList<QVariant> SignonIdentityInfo::listToVariantList(
-        const QList<SignonIdentityInfo> &list)
-{
-    QList<QVariant> variantList;
-    foreach(SignonIdentityInfo info, list)
-        variantList.append(QVariant(info.toVariantList())) ;
-    return variantList;
-}
-
-const QMap<QString, QVariant> SignonIdentityInfo::mapListToMapVariant(
-        const QMap<QString, QStringList> &mapList)
-{
-    QMap<QString, QVariant> mapVariant;
-
-    QMapIterator<QString, QStringList> it(mapList);
-    while (it.hasNext()) {
-        it.next();
-        mapVariant.insert(it.key(), QVariant(it.value()));
+    SignonIdentityInfo::SignonIdentityInfo()
+        : m_id(0),
+          m_userName(QString()),
+          m_password(QString()),
+          m_storePassword(false),
+          m_caption(QString()),
+          m_methods(QMap<QString, QStringList>()),
+          m_realms(QStringList()),
+          m_accessControlList(QStringList()),
+          m_ownerList(QStringList()),
+          m_type(0),
+          m_refCount(0),
+          m_validated(false),
+          m_isUserNameSecret(false)
+    {
     }
-    return mapVariant;
-}
 
-const QMap<QString, QStringList> SignonIdentityInfo::mapVariantToMapList(
-        const QMap<QString, QVariant> &mapVariant)
-{
-    QMap<QString, QStringList> mapList;
+    SignonIdentityInfo::SignonIdentityInfo(const QVariantMap &info)
+        : m_id(0),
+          m_userName(QString()),
+          m_password(QString()),
+          m_storePassword(false),
+          m_caption(QString()),
+          m_methods(QMap<QString, QStringList>()),
+          m_realms(QStringList()),
+          m_accessControlList(QStringList()),
+          m_ownerList(QStringList()),
+          m_type(0),
+          m_refCount(0),
+          m_validated(false),
+          m_isUserNameSecret(false)
+    {
+        m_id = info.value(SIGNOND_IDENTITY_INFO_ID).toInt();
+        m_userName = info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
+        m_password = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+        m_storePassword = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
+        m_caption = info.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
+        QVariantMap methods = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS).toMap();
+        m_methods = mapVariantToMapList(methods);
 
-    QMapIterator<QString, QVariant> it(mapVariant);
-    while (it.hasNext()) {
-        it.next();
-        mapList.insert(it.key(), it.value().toStringList());
+        m_realms = info.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
+        m_accessControlList = info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
+        m_ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
+        m_type = info.value(SIGNOND_IDENTITY_INFO_TYPE).toInt();
+        m_refCount = info.value(SIGNOND_IDENTITY_INFO_REFCOUNT).toInt();
+        m_validated = info.value(SIGNOND_IDENTITY_INFO_VALIDATED).toBool();
     }
+
+    SignonIdentityInfo::SignonIdentityInfo(const quint32 id,
+                                const QString &userName,
+                                const QString &password,
+                                const bool storePassword,
+                                const QString &caption,
+                                const QMap<QString, QVariant> &methods,
+                                const QStringList &realms,
+                                const QStringList &accessControlList,
+                                const QStringList &ownerList,
+                                int type,
+                                int refCount,
+                                bool validated)
+        : m_id(id),
+          m_userName(userName),
+          m_password(password),
+          m_storePassword(storePassword),
+          m_caption(caption),
+          m_methods(mapVariantToMapList(methods)),
+          m_realms(realms),
+          m_accessControlList(accessControlList),
+          m_ownerList(ownerList),
+          m_type(type),
+          m_refCount(refCount),
+          m_validated(validated),
+          m_isUserNameSecret(false)
+    {
+    }
+
+    const QList<QVariant> SignonIdentityInfo::toVariantList()
+    {
+        QList<QVariant> list;
+        list << m_id
+             << m_userName
+             << m_password
+             << m_caption
+             << m_realms
+             << QVariant(mapListToMapVariant(m_methods))
+             << m_accessControlList
+             << m_type
+             << m_refCount
+             << m_validated
+             << m_isUserNameSecret;
+
+        return list;
+    }
+
+    const QList<QVariant> SignonIdentityInfo::listToVariantList(
+            const QList<SignonIdentityInfo> &list)
+    {
+        QList<QVariant> variantList;
+        foreach(SignonIdentityInfo info, list)
+            variantList.append(QVariant(info.toVariantList())) ;
+        return variantList;
+    }
+
+    const QMap<QString, QVariant> SignonIdentityInfo::mapListToMapVariant(
+            const QMap<QString, QStringList> &mapList)
+    {
+        QMap<QString, QVariant> mapVariant;
+
+        QMapIterator<QString, QStringList> it(mapList);
+        while (it.hasNext()) {
+            it.next();
+            mapVariant.insert(it.key(), QVariant(it.value()));
+        }
+        return mapVariant;
+    }
+
+    const QMap<QString, QStringList> SignonIdentityInfo::mapVariantToMapList(
+            const QMap<QString, QVariant> &mapVariant)
+    {
+        QMap<QString, QStringList> mapList;
+
+        QMapIterator<QString, QVariant> it(mapVariant);
+        while (it.hasNext()) {
+            it.next();
+            mapList.insert(it.key(), it.value().toStringList());
+        }
     return mapList;
 }
 
@@ -217,3 +258,22 @@ bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
     return true;
 }
 
+    SignonIdentityInfo &SignonIdentityInfo::operator=(const SignonIdentityInfo &other)
+    {
+
+        m_id = other.m_id;
+        m_userName = other.m_userName;
+        m_password = other.m_password ;
+        m_storePassword = other.m_storePassword;
+        m_caption = other.m_caption;
+        m_realms = other.m_realms;
+        m_accessControlList = other.m_accessControlList;
+        m_ownerList = other.m_ownerList;
+        m_type = other.m_type;
+        m_refCount = other.m_refCount;
+        m_validated = other.m_validated;
+        m_methods = other.m_methods;
+        return *this;
+    }
+
+} //namespace SignonDaemonNS

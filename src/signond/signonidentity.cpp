@@ -22,11 +22,13 @@
  */
 
 #include <iostream>
+#include <QVariantMap>
 
 #include "signond-common.h"
 #include "signonidentity.h"
 #include "signonui_interface.h"
 #include "SignOn/uisessiondata.h"
+#include "signoncommon.h"
 
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
@@ -390,6 +392,73 @@ namespace SignonDaemonNS {
         return true;
     }
 
+    quint32 SignonIdentity::store(const QVariantMap &info)
+    {
+        keepInUse();
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
+
+        /*
+         * TODO: optimize the interaction with security framework: have 1 less call
+         * In order to have this we need to fetch all tokens once, and parse them
+         * in 'decodeString' and 'idTokenOfPid' as argument, but not pidOfPeer
+         * */
+
+        pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
+        QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
+
+        if (m_encryptor->status() != Encryptor::Ok) {
+            replyError(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
+                       SIGNOND_ENCRYPTION_FAILED_ERR_STR);
+            return SIGNOND_NEW_IDENTITY;
+        }
+
+        QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
+
+        bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
+        QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
+        QVariantMap methods = qdbus_cast<QVariantMap>(container.value<QDBusArgument>());
+
+        //Add creator to owner list if it has AID
+        QStringList ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
+        if (!aegisIdToken.isNull())
+            ownerList.prepend(aegisIdToken);
+
+        if (m_pInfo == 0) {
+            m_pInfo = new SignonIdentityInfo(info);
+            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setOwnerList(ownerList);
+        } else {
+            QString userName = info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
+            QString caption = info.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
+            QStringList realms = info.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
+            QStringList accessControlList = info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
+            int type = info.value(SIGNOND_IDENTITY_INFO_TYPE).toInt();
+
+            m_pInfo->setUserName(userName);
+            m_pInfo->setCaption(caption);
+            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setRealms(realms);
+            m_pInfo->setAccessControlList(accessControlList);
+            m_pInfo->setOwnerList(ownerList);
+            m_pInfo->setType(type);
+        }
+
+        if (storeSecret) {
+            m_pInfo->setPassword(decodedSecret);
+        } else {
+            m_pInfo->setPassword(QString());
+        }
+        m_id = storeCredentials(*m_pInfo, storeSecret);
+
+        if (m_id == SIGNOND_NEW_IDENTITY) {
+            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
+                       SIGNOND_STORE_FAILED_ERR_STR);
+        }
+
+        return m_id;
+    }
+
     quint32 SignonIdentity::storeCredentials(const quint32 id,
                                              const QString &userName,
                                              const QString &secret,
@@ -428,8 +497,9 @@ namespace SignonDaemonNS {
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(id, userName, decodedSecret, storeSecret,
-                                             methods, caption, realms,
-                                             accessControlListLocal, type);
+                                             caption, methods, realms,
+                                             accessControlListLocal, accessControlListLocal,
+                                             type);
         } else {
             m_pInfo->setUserName(userName);
             m_pInfo->setPassword(decodedSecret);

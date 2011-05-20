@@ -22,27 +22,47 @@
  */
 #include "identityinfoimpl.h"
 #include "identityinfo.h"
+#include "signond/signoncommon.h"
 
 #include <QVariant>
+#include <QVariantMap>
 
 namespace SignOn {
 
     IdentityInfoImpl::IdentityInfoImpl(IdentityInfo *identityInfo)
         : m_identityInfo(identityInfo),
-          m_empty(true),
           m_id(0),
+          m_userName(QString()),
           m_secret(QString()),
           m_storeSecret(false),
-          m_userName(QString()),
           m_caption(QString()),
-          m_realms(QStringList()),
           m_authMethods(QMap<MethodName, QVariant>()),
-          m_owner(QString()),
+          m_realms(QStringList()),
           m_accessControlList(QStringList()),
+          m_owner(QString()),
           m_type(IdentityInfo::Other),
-          m_isEmpty(true),
-          m_refCount(0)
+          m_refCount(0),
+          m_isEmpty(true)
     {
+    }
+
+    IdentityInfoImpl::IdentityInfoImpl(IdentityInfo *identityInfo, const QVariantMap &infoMap)
+        : m_identityInfo(identityInfo),
+          m_id(0),
+          m_userName(QString()),
+          m_secret(QString()),
+          m_storeSecret(false),
+          m_caption(QString()),
+          m_authMethods(QMap<MethodName, QVariant>()),
+          m_realms(QStringList()),
+          m_accessControlList(QStringList()),
+          m_owner(QString()),
+          m_type(IdentityInfo::Other),
+          m_refCount(0),
+          m_isEmpty(true)
+    {
+        Q_UNUSED(infoMap);
+        //TODO set values from map
     }
 
     IdentityInfoImpl::~IdentityInfoImpl()
@@ -103,12 +123,12 @@ namespace SignOn {
         m_storeSecret = other.m_storeSecret;
         m_caption =  other.m_caption;
         m_authMethods = other.m_authMethods;
-        m_owner = other.m_owner;
         m_realms = other.m_realms;
         m_accessControlList = other.m_accessControlList;
+        m_owner = other.m_owner;
         m_type = other.m_type;
-        m_isEmpty = other.m_isEmpty;
         m_refCount = other.m_refCount;
+        m_isEmpty = other.m_isEmpty;
     }
 
     void IdentityInfoImpl::clear()
@@ -119,12 +139,30 @@ namespace SignOn {
         m_storeSecret = false;
         m_caption =  QString();
         m_authMethods.clear();
-        m_owner = QString();
         m_realms.clear();
         m_accessControlList.clear();
+        m_owner = QString();
         m_type = IdentityInfo::Other;
-        m_isEmpty = true;
         m_refCount = 0;
+        m_isEmpty = true;
+    }
+
+    QVariantMap IdentityInfoImpl::toMap() const
+    {
+        QVariantMap values;
+        values.insert(SIGNOND_IDENTITY_INFO_ID, m_id);
+        values.insert(SIGNOND_IDENTITY_INFO_USERNAME, m_userName);
+        values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_secret);
+        values.insert(SIGNOND_IDENTITY_INFO_STORESECRET, m_storeSecret);
+        values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
+        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS, m_authMethods);
+        values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
+        values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
+        //signond side uses list of owners
+        values.insert(SIGNOND_IDENTITY_INFO_OWNER, QStringList(m_owner));
+        values.insert(SIGNOND_IDENTITY_INFO_TYPE, m_type);
+        values.insert(SIGNOND_IDENTITY_INFO_REFCOUNT, m_refCount);
+        return values;
     }
 
 } //namespace SignOn

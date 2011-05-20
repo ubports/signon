@@ -271,17 +271,11 @@ namespace SignOn {
         }
 
         QList<QVariant> args;
-        args << m_identityInfo->id()
-             << info.userName()
-             << encodedSecret
-             << info.isStoringSecret()
-             << QVariant(info.impl->m_authMethods)
-             << info.caption()
-             << info.realms()
-             << QVariant(info.accessControlList())
-             << info.type();
+        QVariantMap map = info.impl->toMap();
+        map.insert(SIGNOND_IDENTITY_INFO_SECRET, encodedSecret);
+        args << map;
 
-        bool result = sendRequest(__func__, args,
+        bool result = sendRequest("store", args,
                                   SLOT(storeCredentialsReply(const quint32)));
         if (!result) {
             TRACE() << "Error occurred.";
