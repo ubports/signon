@@ -67,44 +67,4 @@ protected:
         const QList<QVariant> &args = QList<QVariant>());
 };
 
-class SignonSecureStorageUiAdaptor : public QObject
-{
-    Q_OBJECT
-
-public:
-    SignonSecureStorageUiAdaptor(const QString &service,
-                                 const QString &path,
-                                 const QDBusConnection &connection,
-                                 QObject *parent = 0);
-    ~SignonSecureStorageUiAdaptor();
-
-    void notifyNoKeyPresent();
-    void notifyNoAuthorizedKeyPresent();
-    void notifyKeyAuthorized();
-    void notifyStorageCleared();
-    void closeUi();
-
-Q_SIGNALS:
-    void noKeyPresentAccepted();
-    void clearPasswordsStorage();
-    void uiRejected();
-    void error();
-
-private Q_SLOTS:
-    //Reimplemented slot - not to be declared as a Qt slot.
-    void callFinished(QDBusPendingCallWatcher *call);
-
-private:
-    void displaySecureStorageUi(const QVariantMap &params);
-
-private:
-    SignonUiAdaptor *uiAdaptor;
-    bool isBusy;
-};
-
-namespace com {
-  namespace nokia {
-    typedef ::SignonUiAdaptor singlesignonui;
-  }
-}
 #endif
