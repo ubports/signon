@@ -20,6 +20,7 @@ HEADERS += \
     credentialsdb.h \
     cryptomanager.h \
     cryptohandlers.h \
+    default-key-authorizer.h \
     key-handler.h \
     signonsessioncore.h \
     signonauthsessionadaptor.h \
@@ -45,6 +46,7 @@ SOURCES += \
     credentialsdb.cpp \
     cryptomanager.cpp \
     cryptohandlers.cpp \
+    default-key-authorizer.cpp \
     key-handler.cpp \
     signonsessioncore.cpp \
     signonauthsessionadaptor.cpp \
