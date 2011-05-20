@@ -53,7 +53,7 @@ typedef QByteArray Key;
  * @li if the user changes the password, emit keyInserted() with the new
  * passord, and keyRemoved() for the old one.
  */
-class AbstractKeyManager: public QObject
+class SIGNON_EXPORT AbstractKeyManager: public QObject
 {
     Q_OBJECT
 

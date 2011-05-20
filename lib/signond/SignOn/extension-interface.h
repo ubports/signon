@@ -27,6 +27,8 @@
 #ifndef SIGNON_EXTENSION_INTERFACE_H
 #define SIGNON_EXTENSION_INTERFACE_H
 
+#include <SignOn/export.h>
+
 #include <QObject>
 #include <QtPlugin>
 
@@ -38,7 +40,7 @@ class AbstractKeyManager;
  * @class ExtensionInterface.
  * Interface definition for signond extensions.
  */
-class ExtensionInterface
+class SIGNON_EXPORT ExtensionInterface
 {
 public:
     virtual ~ExtensionInterface() {}

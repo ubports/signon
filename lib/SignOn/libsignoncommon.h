@@ -48,6 +48,10 @@
     #endif
 #endif
 
+#ifdef SIGNON_EXPORT
+    #undef SIGNON_EXPORT
+#endif
+
 #if __GNUC__ >= 4
     #define SIGNON_EXPORT __attribute__ ((visibility("default")))
 #endif

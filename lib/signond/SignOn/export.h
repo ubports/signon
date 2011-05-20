@@ -20,14 +20,19 @@
  * 02110-1301 USA
  */
 
-#include "debug.h"
+#ifndef SIGNON_EXPORT_H
+#define SIGNON_EXPORT_H
 
-using namespace SignOn;
+#include <QtCore/QtGlobal>
 
-SIGNON_EXPORT int signonLoggingLevel = 1; // criticals
+#ifdef SIGNON_EXPORT
+#   undef SIGNON_EXPORT
+#endif
 
-SIGNON_EXPORT void setLoggingLevel(int level)
-{
-    signonLoggingLevel = level;
-}
+#ifdef BUILDING_SIGNON
+#   define SIGNON_EXPORT Q_DECL_EXPORT
+#else
+#   define SIGNON_EXPORT
+#endif
 
+#endif // SIGNON_EXPORT_H

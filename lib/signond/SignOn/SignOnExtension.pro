@@ -7,6 +7,7 @@ TARGET = signon-extension
 HEADERS = \
     abstract-key-manager.h \
     debug.h \
+    export.h \
     extension-interface.h
 
 INCLUDEPATH += \
@@ -21,10 +22,12 @@ QT -= gui
 
 QMAKE_CXXFLAGS += \
     -fno-exceptions \
-    -fno-rtti
+    -fno-rtti \
+    -fvisibility=hidden
 
 DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
 DEFINES += \
+    BUILDING_SIGNON \
     SIGNON_TRACE
 
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
@@ -34,6 +37,7 @@ headers.files = \
     abstract-key-manager.h \
     Debug \
     debug.h \
+    export.h \
     ExtensionInterface \
     extension-interface.h
 headers.path = $${INSTALL_PREFIX}/include/$${TARGET}/SignOn

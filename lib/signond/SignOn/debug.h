@@ -23,6 +23,8 @@
 #ifndef SIGNON_DEBUG_H
 #define SIGNON_DEBUG_H
 
+#include <SignOn/export.h>
+
 #ifdef SIGNON_TRACE
     #ifdef TRACE
         #undef TRACE
