@@ -796,6 +796,13 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
                     .arg(info.id());
         QSqlQuery insertQuery = exec(queryStr);
         insertQuery.clear();
+        //remove owner
+        queryStr = QString::fromLatin1(
+                    "DELETE FROM OWNER WHERE "
+                    "identity_id = '%1'")
+                    .arg(info.id());
+        insertQuery = exec(queryStr);
+        insertQuery.clear();
     }
 
     /* ACL insert, this will do basically identity level ACL */
