@@ -46,25 +46,6 @@ namespace SignOn {
     {
     }
 
-    IdentityInfoImpl::IdentityInfoImpl(IdentityInfo *identityInfo, const QVariantMap &infoMap)
-        : m_identityInfo(identityInfo),
-          m_id(0),
-          m_userName(QString()),
-          m_secret(QString()),
-          m_storeSecret(false),
-          m_caption(QString()),
-          m_authMethods(QMap<MethodName, QVariant>()),
-          m_realms(QStringList()),
-          m_accessControlList(QStringList()),
-          m_owner(QString()),
-          m_type(IdentityInfo::Other),
-          m_refCount(0),
-          m_isEmpty(true)
-    {
-        Q_UNUSED(infoMap);
-        //TODO set values from map
-    }
-
     IdentityInfoImpl::~IdentityInfoImpl()
     {
     }

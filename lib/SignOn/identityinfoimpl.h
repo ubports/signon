@@ -50,7 +50,6 @@ namespace SignOn {
 
     public:
         IdentityInfoImpl(IdentityInfo *identityInfo);
-        IdentityInfoImpl(IdentityInfo *identityInfo, const QVariantMap &infoMap);
         ~IdentityInfoImpl();
 
         void addMethod(const MethodName &method, const MechanismsList &mechanismsList);
