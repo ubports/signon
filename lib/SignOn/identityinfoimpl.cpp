@@ -37,6 +37,7 @@ namespace SignOn {
           m_caption(QString()),
           m_realms(QStringList()),
           m_authMethods(QMap<MethodName, QVariant>()),
+          m_owner(QString()),
           m_accessControlList(QStringList()),
           m_type(IdentityInfo::Other),
           m_isEmpty(true),
@@ -102,6 +103,7 @@ namespace SignOn {
         m_storeSecret = other.m_storeSecret;
         m_caption =  other.m_caption;
         m_authMethods = other.m_authMethods;
+        m_owner = other.m_owner;
         m_realms = other.m_realms;
         m_accessControlList = other.m_accessControlList;
         m_type = other.m_type;
@@ -117,6 +119,7 @@ namespace SignOn {
         m_storeSecret = false;
         m_caption =  QString();
         m_authMethods.clear();
+        m_owner = QString();
         m_realms.clear();
         m_accessControlList.clear();
         m_type = IdentityInfo::Other;

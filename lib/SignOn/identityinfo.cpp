@@ -118,6 +118,16 @@ namespace SignOn {
         return impl->m_realms;
     }
 
+    void IdentityInfo::setOwner(const QString &ownerToken)
+    {
+        impl->m_owner = ownerToken;
+    }
+
+    QString IdentityInfo::owner() const
+    {
+        return impl->m_owner;
+    }
+
     void IdentityInfo::setAccessControlList(const QStringList &accessControlList)
     {
         impl->m_accessControlList = accessControlList;

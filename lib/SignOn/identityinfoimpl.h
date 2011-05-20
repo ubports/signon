@@ -79,6 +79,7 @@ namespace SignOn {
         QStringList m_realms;
 
         QMap<MethodName, QVariant> m_authMethods; //The variant is holding the MechanismsList
+        QString m_owner;
         QStringList m_accessControlList;
         IdentityInfo::CredentialsType m_type;
         bool m_isEmpty;
