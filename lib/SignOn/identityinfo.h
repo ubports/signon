@@ -180,11 +180,28 @@ namespace SignOn {
         QStringList realms() const;
 
         /*!
-         * Sets the list of access control application tokens, by this defining the applications
-         * that will be able to access this specific set of credentials
+         * Sets application token that owns identity, therefore defining the
+         * applications that will be able to modify this specific set of credentials
          *
-         * @attention This list is to be set by the 1st application that stores the credentials
-         * and will be editable by only the same application. Applications own token will be added into ACL automatically.
+         * @param ownerToken owner token
+         */
+        void setOwner(const QString &ownerToken);
+
+        /*!
+         * Gets the owner application token that is defining the applications
+         * that are able to modify this specific set of credentials
+         *
+         * @attention This is accessible only to the owner application.
+         *
+         * @return The access control token which defines the applications
+         * allowed to modify this set of credentials.
+         */
+        QString owner() const;
+
+        /*!
+         * Sets the list of access control application tokens, therefore
+         * defining the applications that will be able to access this specific
+         * set of credentials
          *
          * @param accessControlList List of access control tokens
          */
