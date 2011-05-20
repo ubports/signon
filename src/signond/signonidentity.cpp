@@ -422,7 +422,7 @@ namespace SignonDaemonNS {
         //Add creator to owner list if it has AID
         QStringList ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
         if (!aegisIdToken.isNull())
-            ownerList.prepend(aegisIdToken);
+            ownerList.append(aegisIdToken);
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(info);
@@ -491,10 +491,10 @@ namespace SignonDaemonNS {
 
         QStringList accessControlListLocal = accessControlList;
 
-//TODO: AID enforcement disabled until API has changed to support ownership
-//        if (!aegisIdToken.isNull())
-//            accessControlListLocal.prepend(aegisIdToken);
+        if (!aegisIdToken.isNull())
+            accessControlListLocal.append(aegisIdToken);
 
+        //this method is deprecated, so it will set acl as owner list
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(id, userName, decodedSecret, storeSecret,
                                              caption, methods, realms,
