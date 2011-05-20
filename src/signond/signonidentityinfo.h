@@ -104,7 +104,8 @@ namespace SignonDaemonNS {
         QStringList ownerList() const { return m_ownerList; }
 
         bool checkMethodAndMechanism(const QString &method,
-                                     const QString &mechanism);
+                                     const QString &mechanism,
+                                     QString &allowedMechanism);
 
     private:
         quint32 m_id;
