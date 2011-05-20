@@ -34,7 +34,9 @@
 
 namespace SignOn {
 
+class AbstractKeyAuthorizer;
 class AbstractKeyManager;
+class KeyHandler;
 
 /*!
  * @class ExtensionInterface.
@@ -53,9 +55,29 @@ public:
     virtual AbstractKeyManager *keyManager(QObject *parent = 0) const = 0;
 };
 
+/*!
+ * @class ExtensionInterface2.
+ * Interface definition for signond extensions.
+ */
+class SIGNON_EXPORT ExtensionInterface2: public ExtensionInterface
+{
+public:
+    virtual ~ExtensionInterface2() {}
+
+    /*!
+     * Gets the KeyAuthorizer object.
+     *
+     * @return A key authorizer object, or 0 if none is provided by this plugin
+     */
+    virtual AbstractKeyAuthorizer *keyAuthorizer(KeyHandler *keyHandler,
+                                                 QObject *parent = 0) const = 0;
+};
+
 } // namespace
 
 Q_DECLARE_INTERFACE(SignOn::ExtensionInterface,
                     "com.nokia.SingleSignOn.ExtensionInterface/1.0")
+Q_DECLARE_INTERFACE(SignOn::ExtensionInterface2,
+                    "com.nokia.SingleSignOn.ExtensionInterface/2.0")
 
 #endif // SIGNON_EXTENSION_INTERFACE_H
