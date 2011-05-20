@@ -575,7 +575,15 @@ bool MetaDataDB::updateDB(int version)
         }
         TRACE() << "Table insert successful";
 
-        //TODO populate owner table from acl
+        //populate owner table from acl
+        QSqlQuery ownerInsert = exec(S("INSERT OR IGNORE INTO OWNER "
+                            "(identity_id, token_id) "
+                            " SELECT identity_id, token_id FROM ACL"));
+        if (!commit()){
+            BLAME() << "Table copy failed.";
+            rollback();
+        }
+
     } else {
         return false;
     }
