@@ -250,6 +250,14 @@ public:
     void addKeyManager(SignOn::AbstractKeyManager *keyManager);
 
     /*!
+     * Initializes know objects from an extension plugin.
+     * @param extension A signon extension plugin.
+     *
+     * @returns True if the extension provides objects that the CAM is using.
+     */
+    bool initExtension(QObject *object);
+
+    /*!
         Opens the credentials system, creates the CreadentialsDB object;
         if encryption is configured this will also mount the encrypted file system, based on
         the AccessControlHandler obtained keys.

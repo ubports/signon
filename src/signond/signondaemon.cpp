@@ -35,8 +35,6 @@ extern "C" {
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
 
-#include "SignOn/AbstractKeyManager"
-#include "SignOn/ExtensionInterface"
 #include "SignOn/misc.h"
 
 #include "signondaemon.h"
@@ -427,20 +425,11 @@ void SignonDaemon::initExtension(const QString &filePath)
         return;
     }
 
-    ExtensionInterface *extension = qobject_cast<ExtensionInterface *>(plugin);
-    if (extension == 0) {
-        qWarning() << "Plugin instance is not an ExtensionInterface";
-        return;
-    }
-
     /* Check whether the extension implements some useful objects; if not,
      * unload it. */
     bool extensionInUse = false;
-    AbstractKeyManager *keyManager = extension->keyManager(this);
-    if (keyManager) {
-        m_pCAMManager->addKeyManager(keyManager);
+    if (m_pCAMManager->initExtension(plugin))
         extensionInUse = true;
-    }
 
     if (!extensionInUse) {
         pluginLoader.unload();
