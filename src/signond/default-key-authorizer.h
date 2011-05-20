@@ -27,7 +27,7 @@
 #ifndef SIGNON_DEFAULT_KEY_AUTHORIZER_H
 #define SIGNON_DEFAULT_KEY_AUTHORIZER_H
 
-#include "abstract-key-authorizer.h"
+#include "SignOn/AbstractKeyAuthorizer"
 
 #include <QObject>
 
@@ -38,12 +38,13 @@ namespace SignonDaemonNS {
  *
  * Implements a default key authorizer, which authorizes all given keys.
  */
-class DefaultKeyAuthorizer: public AbstractKeyAuthorizer
+class DefaultKeyAuthorizer: public SignOn::AbstractKeyAuthorizer
 {
     Q_OBJECT
 
 public:
-    explicit DefaultKeyAuthorizer(KeyHandler *keyHandler, QObject *parent = 0);
+    explicit DefaultKeyAuthorizer(SignOn::KeyHandler *keyHandler,
+                                  QObject *parent = 0);
     ~DefaultKeyAuthorizer();
 
     /* reimplemented from KeyAuthorizer */

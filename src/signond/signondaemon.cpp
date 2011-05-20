@@ -37,6 +37,7 @@ extern "C" {
 
 #include "SignOn/AbstractKeyManager"
 #include "SignOn/ExtensionInterface"
+#include "SignOn/misc.h"
 
 #include "signondaemon.h"
 #include "signond-common.h"
@@ -46,7 +47,6 @@ extern "C" {
 #include "signonauthsession.h"
 #include "accesscontrolmanager.h"
 #include "backupifadaptor.h"
-#include "misc.h"
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \

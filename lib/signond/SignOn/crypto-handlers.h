@@ -2,7 +2,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2009-2011 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
@@ -29,15 +29,15 @@
   @ingroup Accounts_and_SSO_Framework
  */
 
-#ifndef CRYPTSETUP_HANDLER_H
-#define CRYPTSETUP_HANDLER_H
+#ifndef SIGNON_CRYPTSETUP_HANDLER_H
+#define SIGNON_CRYPTSETUP_HANDLER_H
 
 #include <QProcess>
 #include <QMap>
 #include <QFile>
 
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
     /*!
         @class SystemCommandLineCallHandler
@@ -267,4 +267,4 @@ namespace SignonDaemonNS {
 
 } // namespace SignonDaemonNS
 
-#endif // CRYPTSETUP_HANDLER_H
+#endif // SIGNON_CRYPTSETUP_HANDLER_H

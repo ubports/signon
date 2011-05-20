@@ -24,7 +24,8 @@
 
 using namespace SignonDaemonNS;
 
-DefaultKeyAuthorizer::DefaultKeyAuthorizer(KeyHandler *keyHandler, QObject *parent):
+DefaultKeyAuthorizer::DefaultKeyAuthorizer(SignOn::KeyHandler *keyHandler,
+                                           QObject *parent):
     AbstractKeyAuthorizer(keyHandler, parent)
 {
 }

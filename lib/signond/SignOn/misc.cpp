@@ -20,8 +20,9 @@
  * 02110-1301 USA
  */
 
+#include "debug.h"
+#include "export.h"
 #include "misc.h"
-#include "signond-common.h"
 
 extern "C" {
     #include <errno.h>
@@ -30,8 +31,9 @@ extern "C" {
 
 #include <QDir>
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
+SIGNON_EXPORT
 bool setUserOwnership(const QString &filePath)
 {
     const char *userHomePath = QDir::homePath().toLatin1().data();
@@ -49,6 +51,7 @@ bool setUserOwnership(const QString &filePath)
     return true;
 }
 
+SIGNON_EXPORT
 bool setFilePermissions(const QString &filePath,
                         const QFile::Permissions desiredPermissions,
                         bool keepExisting)

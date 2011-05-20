@@ -35,8 +35,8 @@
 #include <QFileInfo>
 #include <QDir>
 
-#include "cryptohandlers.h"
-#include "signond-common.h"
+#include "crypto-handlers.h"
+#include "debug.h"
 #include "misc.h"
 
 
@@ -51,7 +51,7 @@
 #define KILO_BYTE_SIZE 1024
 #define MEGA_BYTE_SIZE (KILO_BYTE_SIZE * 1024)
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
     /*  ------------------- SystemCommandLineCallHandler implementation ------------------- */
 

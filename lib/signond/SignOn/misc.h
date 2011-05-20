@@ -20,12 +20,12 @@
  * 02110-1301 USA
  */
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef SIGNON_MISC_H
+#define SIGNON_MISC_H
 
 #include <QFile>
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
 /* Desired permissions for the files created by signond */
 const QFile::Permissions signonFilePermissions =
@@ -39,4 +39,4 @@ bool setFilePermissions(const QString &filePath,
                         bool keepExisting = true);
 }
 
-#endif //MISC_H
+#endif // SIGNON_MISC_H

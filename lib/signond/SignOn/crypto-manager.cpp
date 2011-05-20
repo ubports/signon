@@ -23,9 +23,9 @@
  */
 
 
-#include "cryptomanager.h"
-#include "cryptohandlers.h"
-#include "signond-common.h"
+#include "crypto-manager.h"
+#include "crypto-handlers.h"
+#include "debug.h"
 #include "misc.h"
 
 #include <QFile>
@@ -38,7 +38,7 @@
 #define EXT3 "ext3"
 #define EXT4 "ext4"
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
     const QLatin1String keysStorageFileName = QLatin1String("keys");
 

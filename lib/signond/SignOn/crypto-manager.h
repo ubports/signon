@@ -2,7 +2,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2009-2011 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
@@ -28,21 +28,25 @@
   @ingroup Accounts_and_SSO_Framework
  */
 
-#ifndef CRYPTO_MANAGER_H
-#define CRYPTO_MANAGER_H
+#ifndef SIGNON_CRYPTO_MANAGER_H
+#define SIGNON_CRYPTO_MANAGER_H
+
+#ifdef SIGNON_ENABLE_UNSTABLE_APIS
+
+#include "SignOn/export.h"
 
 #include <QObject>
 
 #define MINUMUM_ENCRYPTED_FILE_SYSTEM_SIZE 4
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
     /*!
         @class CryptoManager
         Encrypted file system manager. Uses cryptsetup and LUKS.
         @ingroup Accounts_and_SSO_Framework
     */
-    class CryptoManager : public QObject
+    class SIGNON_EXPORT CryptoManager : public QObject
     {
         Q_OBJECT
 
@@ -249,5 +253,6 @@ namespace SignonDaemonNS {
 
 } //namespace SignonDaemonNS
 
+#endif  // SIGNON_ENABLE_UNSTABLE_APIS
 
-#endif // CRYPTOMANAGER_H
+#endif // SIGNON_CRYPTOMANAGER_H

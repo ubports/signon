@@ -22,9 +22,9 @@
 
 #include "abstract-key-authorizer.h"
 
-using namespace SignonDaemonNS;
+using namespace SignOn;
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
 class AbstractKeyAuthorizerPrivate
 {

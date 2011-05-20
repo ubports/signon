@@ -20,14 +20,14 @@
  * 02110-1301 USA
  */
 
-#include "cryptomanager.h"
+#include "crypto-manager.h"
+#include "debug.h"
 #include "key-handler.h"
-#include "signond-common.h"
 #include <QSet>
 
-using namespace SignonDaemonNS;
+using namespace SignOn;
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
 class KeyHandlerPrivate: public QObject
 {

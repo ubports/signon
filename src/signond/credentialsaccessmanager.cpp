@@ -22,12 +22,13 @@
  * 02110-1301 USA
  */
 
-
+#define SIGNON_ENABLE_UNSTABLE_APIS
 #include "credentialsaccessmanager.h"
 
 #include "default-key-authorizer.h"
 #include "signond-common.h"
-#include "misc.h"
+
+#include "SignOn/misc.h"
 
 #include <QFile>
 #include <QBuffer>
@@ -43,6 +44,7 @@
     } while (0)
 
 using namespace SignonDaemonNS;
+using namespace SignOn;
 
 /* ---------------------- CAMConfiguration ---------------------- */
 
@@ -161,7 +163,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
-        m_pCryptoFileSystemManager = new CryptoManager(this);
+        m_pCryptoFileSystemManager = new SignOn::CryptoManager(this);
         QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemMounted()),
                          this, SLOT(onEncryptedFSMounted()));
         QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemUnmounting()),
@@ -170,7 +172,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
         m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
         m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
 
-        m_keyHandler = new KeyHandler(this);
+        m_keyHandler = new SignOn::KeyHandler(this);
 
         m_keyAuthorizer = new DefaultKeyAuthorizer(m_keyHandler, this);
         QObject::connect(m_keyAuthorizer,

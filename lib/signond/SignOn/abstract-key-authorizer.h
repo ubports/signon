@@ -27,12 +27,12 @@
 #ifndef SIGNON_ABSTRACT_KEY_AUTHORIZER_H
 #define SIGNON_ABSTRACT_KEY_AUTHORIZER_H
 
-#include "key-handler.h"
 #include "SignOn/abstract-key-manager.h"
+#include "SignOn/key-handler.h"
 
 #include <QObject>
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
 class AbstractKeyAuthorizerPrivate;
 
@@ -44,7 +44,7 @@ class AbstractKeyAuthorizerPrivate;
  * It provides signals to notify when keys are inserted, authorized, removed,
  * disabled, as well as methods to authorize and unauthorize keys.
  */
-class AbstractKeyAuthorizer: public QObject
+class SIGNON_EXPORT AbstractKeyAuthorizer: public QObject
 {
     Q_OBJECT
 

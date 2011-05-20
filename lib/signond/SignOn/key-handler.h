@@ -32,7 +32,7 @@
 #include <QObject>
 #include <QSet>
 
-namespace SignonDaemonNS {
+namespace SignOn {
 
 class CryptoManager;
 
@@ -47,7 +47,7 @@ typedef QList<SignOn::AbstractKeyManager *> KeyManagersList;
  * signals to notify when keys are inserted, authorized, removed, disabled, as
  * well as methods to authorize and unauthorize keys.
  */
-class KeyHandler: public QObject
+class SIGNON_EXPORT KeyHandler: public QObject
 {
     Q_OBJECT
 
