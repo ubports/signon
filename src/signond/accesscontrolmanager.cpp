@@ -85,16 +85,15 @@ namespace SignonDaemonNS {
             TRACE() << "NULL db pointer, secure storage might be unavailable,";
             return ApplicationIsNotOwner;
         }
-        QString ownerToken = db->credentialsOwnerSecurityToken(identityId);
+        QStringList ownerTokens = db->ownerList(identityId);
 
         if (db->errorOccurred())
             return ApplicationIsNotOwner;
 
-        if (ownerToken.isNull())
+        if (ownerTokens.isEmpty())
             return IdentityDoesNotHaveOwner;
 
-        QStringList acl = accessTokens(peerContext);
-        return acl.contains(ownerToken) ? ApplicationIsOwner : ApplicationIsNotOwner;
+        return peerHasOneOfTokens(peerContext, ownerTokens) ? ApplicationIsOwner : ApplicationIsNotOwner;
     }
 
     bool AccessControlManager::isPeerKeychainWidget(const QDBusContext &peerContext)

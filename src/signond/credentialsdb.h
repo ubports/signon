@@ -198,8 +198,8 @@ protected:
 
 private:
     QSqlError m_lastError;
-    int m_version;
 protected:
+    int m_version;
     QSqlDatabase m_database;
 
     friend class CredentialsDB;

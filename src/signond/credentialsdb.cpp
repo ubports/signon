@@ -74,12 +74,12 @@ bool SqlDatabase::init()
             BLAME() << "Failed to set database version to: " << m_version
                     << ".This could lead to data loss.";
     } else {
+        TRACE() << "SQL table structure already created...";
         // check the DB version
         QSqlQuery q = exec(S("PRAGMA user_version"));
         int oldVersion = q.first() ? q.value(0).toInt() : 0;
         if (oldVersion < m_version)
             updateDB(oldVersion);
-        TRACE() << "SQL table structure already created...";
     }
 
     return true;
@@ -532,6 +532,9 @@ end of generated code
 
 bool MetaDataDB::updateDB(int version)
 {
+    if (version == m_version)
+        return true;
+
     if (version < 1) {
         TRACE() << "Upgrading from version < 1 not supported. Clearing DB";
         QString fileName = m_database.databaseName();
@@ -670,16 +673,11 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
             QString::fromLatin1("SELECT realm FROM REALMS "
                     "WHERE identity_id = %1").arg(id));
 
-    query_str = QString::fromLatin1("SELECT token FROM TOKENS "
-            "WHERE id IN "
-            "(SELECT token_id FROM OWNER WHERE identity_id = '%1' )")
-            .arg(id);
-    query = exec(query_str);
-    QStringList ownerTokens;
-    while (query.next()) {
-        ownerTokens.append(query.value(0).toString());
-    }
-    query.clear();
+    QStringList ownerTokens = queryList(
+            QString::fromLatin1("SELECT token FROM TOKENS "
+                                "WHERE id IN "
+                                "(SELECT token_id FROM OWNER WHERE identity_id = '%1' )")
+                                .arg(id));
 
     query_str = QString::fromLatin1("SELECT token FROM TOKENS "
             "WHERE id IN "
@@ -1672,7 +1670,7 @@ QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
 {
     //return first owner token
     QStringList owners = ownerList(identityId);
-    return owners.at(0);
+    return owners.count() ? owners.at(0) : QString();
 }
 
 bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)

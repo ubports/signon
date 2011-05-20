@@ -641,6 +641,7 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
                            QLatin1String("Caption"),
                            testMethods,
                            testRealms,
+                           testAcl,
                            testAcl);
 
     id = m_db->insertCredentials(info, true);
@@ -648,6 +649,10 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
     QString token = m_db->credentialsOwnerSecurityToken(id);
     qDebug() << token;
     QVERIFY(token == QLatin1String("AID::12345678"));
+    QStringList tokens = m_db->ownerList(id);
+    qDebug() << tokens;
+    QVERIFY(tokens == testAcl);
+
 }
 
 void TestDatabase::runAllTests()
