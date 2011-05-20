@@ -25,8 +25,8 @@
 
 #include "credentialsaccessmanager.h"
 
+#include "default-key-authorizer.h"
 #include "signond-common.h"
-#include "ui-key-authorizer.h"
 #include "misc.h"
 
 #include <QFile>
@@ -172,7 +172,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
         m_keyHandler = new KeyHandler(this);
 
-        m_keyAuthorizer = new UiKeyAuthorizer(m_keyHandler, this);
+        m_keyAuthorizer = new DefaultKeyAuthorizer(m_keyHandler, this);
         QObject::connect(m_keyAuthorizer,
                          SIGNAL(keyAuthorizationQueried(const SignOn::Key,int)),
                          this,
