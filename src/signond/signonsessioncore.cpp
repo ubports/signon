@@ -523,6 +523,10 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
                 errName = SIGNOND_FORGOT_PASSWORD_ERR_NAME;
                 errMessage = SIGNOND_FORGOT_PASSWORD_ERR_STR;
                 break;
+            case Error::IncorrectDate:
+                errName = SIGNOND_INCORRECT_DATE_ERR_NAME;
+                errMessage = SIGNOND_INCORRECT_DATE_ERR_STR;
+                break;
             default:
                 if (message.isEmpty())
                     errMessage = SIGNOND_UNKNOWN_ERR_STR;

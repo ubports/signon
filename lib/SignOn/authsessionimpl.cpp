@@ -385,6 +385,8 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         errCode = Error::TOSNotAccepted;
     } else if (err.name() == SIGNOND_FORGOT_PASSWORD_ERR_NAME) {
         errCode = Error::ForgotPassword;
+    } else if (err.name() == SIGNOND_INCORRECT_DATE_ERR_NAME) {
+        errCode = Error::IncorrectDate;
     } else if (err.name() == SIGNOND_USER_ERROR_ERR_NAME){
         //the error message comes in as "code:message"
         bool ok = false;

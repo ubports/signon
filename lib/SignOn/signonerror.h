@@ -107,6 +107,7 @@ namespace SignOn {
             TOSNotAccepted,            /**< User declined Terms of Service. */
             ForgotPassword,            /**< User requested reset password sequence. */
             MethodOrMechanismNotAllowed, /**< Method or mechanism not allowed for this identity. */
+            IncorrectDate,             /**< Date time incorrect on device. */
             UserErr = 400                   /* Placeholder to rearrange enumeration
                                              - User space specific */
         };
