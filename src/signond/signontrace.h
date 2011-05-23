@@ -59,6 +59,12 @@ namespace SignOn {
             if (!m_pInstance)
                 return;
 
+            if (!criticalsEnabled()) {
+                if (type <= QtCriticalMsg) return;
+            } else if (!debugEnabled()) {
+                if (type <= QtDebugMsg) return;
+            }
+
             int priority;
             switch (type) {
                 case QtWarningMsg: priority = LOG_WARNING; break;
