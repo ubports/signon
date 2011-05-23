@@ -137,7 +137,6 @@ QByteArray BlobIOHandler::variantMapToByteArray(const QVariantMap &map)
     stream << map;
     buffer.close();
 
-    TRACE() << "Buffer size:" << buffer.data().size();
     return buffer.data();
 }
 
@@ -154,7 +153,6 @@ QVariantMap BlobIOHandler::byteArrayToVariantMap(const QByteArray &array)
     stream >> map;
     buffer.close();
 
-    TRACE() << "Buffer size:" << buffer.data().size();
     return map;
 }
 
