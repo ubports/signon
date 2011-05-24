@@ -29,7 +29,6 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
-#include <QDBusInterface>
 #include <QMetaMethod>
 #include <QQueue>
 #include <QDBusObjectPath>
@@ -38,6 +37,7 @@
 
 #include "libsignoncommon.h"
 #include "identity.h"
+#include "dbusinterface.h"
 #include "dbusoperationqueuehandler.h"
 
 
@@ -123,7 +123,7 @@ namespace SignOn {
         /* Cache info in the storing case, so that if the storing succeeds, server side
            does not have to send succesfully stored data over IPC channel */
         IdentityInfo *m_tmpIdentityInfo;
-        QDBusInterface *m_DBusInterface;
+        DBusInterface *m_DBusInterface;
         State m_state;
         QList<AuthSession *> m_authSessions;
         /* This flag allows the queryInfo() reply slot not to reply with the 'info()'

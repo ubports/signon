@@ -910,11 +910,11 @@ namespace SignOn {
 
     void IdentityImpl::registerReply(const QDBusObjectPath &objectPath, const QList<QVariant> &infoData)
     {
-        m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
-                                             objectPath.path(),
-                                             QLatin1String(SIGNOND_IDENTITY_INTERFACE),
-                                             DBusConnection::sessionBus(),
-                                             this);
+        m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
+                                            objectPath.path(),
+                                            SIGNOND_IDENTITY_INTERFACE_C,
+                                            DBusConnection::sessionBus(),
+                                            this);
         if (!m_DBusInterface->isValid()) {
             TRACE() << "The interface cannot be registered!!! " << m_DBusInterface->lastError();
             updateState(NeedsRegistration);

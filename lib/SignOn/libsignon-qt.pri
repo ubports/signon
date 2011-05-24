@@ -19,7 +19,8 @@ private_headers = authserviceimpl.h \
     authsessionimpl.h \
     identityinfoimpl.h \
     dbusoperationqueuehandler.h \
-    dbusconnection.h
+    dbusconnection.h \
+    dbusinterface.h
 
 HEADERS = $$public_headers \
     $$private_headers
@@ -36,7 +37,8 @@ SOURCES += identityinfo.cpp \
     authsessionimpl.cpp \
     identityinfoimpl.cpp \
     dbusoperationqueuehandler.cpp \
-    dbusconnection.cpp
+    dbusconnection.cpp \
+    dbusinterface.cpp
 
 QT += core \
     dbus

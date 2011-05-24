@@ -30,11 +30,11 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
-#include <QDBusInterface>
 #include <QQueue>
 #include <QDateTime>
 
 #include "authsession.h"
+#include "dbusinterface.h"
 #include "dbusoperationqueuehandler.h"
 
 #include <SignOnCrypto/Encryptor>
@@ -83,7 +83,7 @@ namespace SignOn {
         DBusOperationQueueHandler m_operationQueueHandler;
         quint32 m_id;
         QString m_methodName;
-        QDBusInterface *m_DBusInterface;
+        DBusInterface *m_DBusInterface;
         SignOnCrypto::Encryptor m_encryptor;
 
         /*

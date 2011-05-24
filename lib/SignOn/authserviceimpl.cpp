@@ -62,11 +62,11 @@ namespace SignOn {
         : m_parent(parent)
     {
         TRACE();
-        m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
-                                             SIGNOND_DAEMON_OBJECTPATH,
-                                             SIGNOND_DAEMON_INTERFACE,
-                                             DBusConnection::sessionBus(),
-                                             this);
+        m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
+                                            SIGNOND_DAEMON_OBJECTPATH,
+                                            SIGNOND_DAEMON_INTERFACE_C,
+                                            DBusConnection::sessionBus(),
+                                            this);
         if (!m_DBusInterface->isValid())
             BLAME() << "Signon Daemon not started. Start on demand "
                        "could delay the first call's result.";

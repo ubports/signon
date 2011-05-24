@@ -418,10 +418,10 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
 void AuthSessionImpl::authenticationSlot(const QString &path)
 {
     if (QString() != path) {
-        m_DBusInterface = new QDBusInterface(SIGNOND_SERVICE,
-                                             path,
-                                             QLatin1String(SIGNOND_AUTH_SESSION_INTERFACE),
-                                             DBusConnection::sessionBus());
+        m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
+                                            path,
+                                            SIGNOND_AUTH_SESSION_INTERFACE_C,
+                                            DBusConnection::sessionBus());
         connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
                 this, SLOT(stateSlot(int, const QString&)));
 

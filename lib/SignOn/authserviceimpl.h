@@ -30,10 +30,10 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
-#include <QDBusInterface>
 #include <QQueue>
 
 #include "authservice.h"
+#include "dbusinterface.h"
 
 namespace SignOn {
 
@@ -76,7 +76,7 @@ namespace SignOn {
 
     private:
         AuthService *m_parent;
-        QDBusInterface *m_DBusInterface;
+        DBusInterface *m_DBusInterface;
         QQueue<QString> m_methodsForWhichMechsWereQueried;
     };
 
