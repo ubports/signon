@@ -170,11 +170,6 @@ void SaslPluginTest::testPluginChallengePlain()
     info.setSecret(QString("abc123"));
     info.setAuthname(QString("authn"));
 
-    //create connection to server to get initial challenge
-    SaslServer* server = new SaslServer();
-    QByteArray reply;
-    server->init(QString("PLAIN"),reply);
-
     //give challenge to plugin
     m_testPlugin->process(info, QString("PLAIN"));
     m_loop.exec();
@@ -185,6 +180,12 @@ void SaslPluginTest::testPluginChallengePlain()
     token.replace('\0',':');
     qDebug() << token;
     QCOMPARE(result.Response(), QByteArray("idmtestuser\0authn\0abc123",11+5+6+2));
+
+
+    //create connection to server to get initial challenge
+    SaslServer* server = new SaslServer();
+    QByteArray reply;
+    int ret = server->init(QString("PLAIN"),reply);
 
    //check that authentication server is happy about answer
     int retval=server->step(result.Response());
