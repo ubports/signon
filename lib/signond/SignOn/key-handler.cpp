@@ -301,5 +301,11 @@ bool KeyHandler::revokeKeyAuthorization(const SignOn::Key &key)
     return d->revokeKeyAuthorization(key);
 }
 
+bool KeyHandler::canAddKeyAuthorization() const
+{
+    Q_D(const KeyHandler);
+    return !d->m_authorizedKeys.isEmpty();
+}
+
 #include "key-handler.moc"
 

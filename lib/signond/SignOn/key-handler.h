@@ -114,6 +114,13 @@ public:
      */
     bool revokeKeyAuthorization(const SignOn::Key &key);
 
+    /*!
+     * Returns true if a new key can be authorized by calling authorizeKey()
+     * without specifying the FormatStorage flag (that is, if the KeyHandler
+     * knows other keys which can open the storage).
+     */
+    bool canAddKeyAuthorization() const;
+
 Q_SIGNALS:
     /*!
      * Emitted after all key managers have been initialized and have reported

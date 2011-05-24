@@ -38,6 +38,10 @@ void DefaultKeyAuthorizer::queryKeyAuthorization(const SignOn::Key &key,
                                                  Reason reason)
 {
     Q_UNUSED(reason);
-    emit keyAuthorizationQueried(key, Approved);
+
+    int result = keyHandler()->canAddKeyAuthorization() ?
+        Approved : Exclusive;
+
+    emit keyAuthorizationQueried(key, result);
 }
 
