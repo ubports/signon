@@ -417,7 +417,7 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
 
 void AuthSessionImpl::authenticationSlot(const QString &path)
 {
-    if (QString() != path) {
+    if (!path.isEmpty()) {
         m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
                                             path,
                                             SIGNOND_AUTH_SESSION_INTERFACE_C,
