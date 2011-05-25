@@ -51,6 +51,7 @@
 #define SSOUI_KEY_WINDOWID          QLatin1String("WindowId")
 #define SSOUI_KEY_CONFIRM           QLatin1String("Confirm")
 #define SSOUI_KEY_ICON              QLatin1String("Icon")
+#define SSOUI_KEY_TITLE             QLatin1String("Title")
 
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"

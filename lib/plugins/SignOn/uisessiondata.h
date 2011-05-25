@@ -88,12 +88,19 @@ public:
 
     /*!
      * Declare the property Caption setter and getter.
-     * Caption is used to set dialog title.
+     * Caption is used to set credentials caption.
      * Empty caption is discarded.
      * @warning This string is shown to user as it is,
      * plugin is responsible for localization.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, Caption)
+
+    /*!
+     * Declare the property Title setter and getter.
+     * Title is used to set dialog title for password confirmation.
+     * @warning This string is shown to user as it is.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, Title)
 
     /*!
      * Declares the property QueryMessageId setter and getter.

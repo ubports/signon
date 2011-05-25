@@ -27,16 +27,10 @@
 #include "signonidentity.h"
 #include "signonui_interface.h"
 #include "SignOn/uisessiondata.h"
+#include "SignOn/uisessiondata_priv.h"
 
 #include "accesscontrolmanager.h"
 #include "signonidentityadaptor.h"
-
-#define SSOUI_KEY_CAPTION         QLatin1String("Caption")
-#define SSOUI_KEY_MESSAGE         QLatin1String("QueryMessage")
-#define SSOUI_KEY_USERNAME        QLatin1String("UserName")
-#define SSOUI_KEY_QUERYPASSWORD   QLatin1String("QueryPassword")
-#define SSOUI_KEY_PASSWORD        QLatin1String("Secret")
-#define SSOUI_KEY_ERROR           QLatin1String("QueryErrorCode")
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
         if (!(CredentialsAccessManager::instance()->credentialsSystemOpened())) { \
