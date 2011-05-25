@@ -855,7 +855,8 @@ uchar SignonDaemon::backupStarts()
     eraseBackupDir();
     if (!copyToBackupDir(backupFiles)) {
         qCritical() << "Cannot copy database";
-        m_pCAMManager->openCredentialsSystem();
+        if (!m_backup)
+            m_pCAMManager->openCredentialsSystem();
         return 2;
     }
 
