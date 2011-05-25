@@ -352,13 +352,22 @@ bool CredentialsAccessManager::openCredentialsSystem()
         return false;
     }
 
-    if (!openSecretsDB()) {
-        BLAME() << "Failed to open secrets DB.";
-        /* Even if the secrets DB couldn't be opened, signond is still usable:
-         * that's why we return "true" anyways. */
+    m_systemOpened = true;
+
+    if (m_pCryptoFileSystemManager == 0 ||
+        m_pCryptoFileSystemManager->fileSystemIsMounted()) {
+        if (!openSecretsDB()) {
+            BLAME() << "Failed to open secrets DB.";
+            /* Even if the secrets DB couldn't be opened, signond is still
+             * usable: that's why we return "true" anyways. */
+        }
+    } else {
+        /* The secrets DB will be opened as soon as the encrypted FS is
+         * mounted.
+         */
+        m_pCryptoFileSystemManager->mountFileSystem();
     }
 
-    m_systemOpened = true;
     return true;
 }
 
