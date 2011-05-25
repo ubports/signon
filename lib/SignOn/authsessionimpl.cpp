@@ -422,11 +422,10 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
                                             path,
                                             SIGNOND_AUTH_SESSION_INTERFACE_C,
                                             DBusConnection::sessionBus());
-        connect(m_DBusInterface, SIGNAL(stateChanged(int, const QString&)),
-                this, SLOT(stateSlot(int, const QString&)));
-
-        connect(m_DBusInterface, SIGNAL(unregistered()),
-                this, SLOT(unregisteredSlot()));
+        m_DBusInterface->connect("stateChanged", this,
+                                 SLOT(stateSlot(int, const QString&)));
+        m_DBusInterface->connect("unregistered", this,
+                                 SLOT(unregisteredSlot()));
 
         if (m_operationQueueHandler.queuedOperationsCount() > 0)
             m_operationQueueHandler.execQueuedOperations();

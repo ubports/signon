@@ -932,13 +932,9 @@ namespace SignOn {
             return;
         }
 
-        connect(
-                m_DBusInterface,
-                SIGNAL(infoUpdated(int)),
-                this,
-                SLOT(infoUpdated(int)));
-
-        connect(m_DBusInterface, SIGNAL(unregistered()), SLOT(removeObjectDestroyed()));
+        m_DBusInterface->connect("infoUpdated", this, SLOT(infoUpdated(int)));
+        m_DBusInterface->connect("unregistered", this,
+                                 SLOT(removeObjectDestroyed()));
 
         if (!infoData.empty())
             updateCachedData(infoData);
