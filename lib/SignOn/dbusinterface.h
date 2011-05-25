@@ -39,6 +39,8 @@ public:
                   const QDBusConnection &connection,
                   QObject *parent = 0);
     virtual ~DBusInterface();
+
+    bool connect(const char *name, QObject *receiver, const char *slot);
 };
 
 }

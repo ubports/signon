@@ -38,3 +38,11 @@ DBusInterface::~DBusInterface()
 {
 }
 
+bool DBusInterface::connect(const char *name,
+                            QObject *receiver,
+                            const char *slot)
+{
+    return connection().connect(service(), path(), interface(),
+                                QLatin1String(name), receiver, slot);
+}
+
