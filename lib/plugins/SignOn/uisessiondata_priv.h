@@ -36,6 +36,7 @@
 #define SSOUI_KEY_NETWORKPROXY    QLatin1String("NetworkProxy")
 #define SSOUI_KEY_UIPOLICY        QLatin1String("UiPolicy")
 #define SSOUI_KEY_OPENURL         QLatin1String("OpenUrl")
+#define SSOUI_KEY_FINALURL        QLatin1String("FinalUrl")
 #define SSOUI_KEY_URLRESPONSE     QLatin1String("UrlResponse")
 #define SSOUI_KEY_CAPTCHAURL      QLatin1String("CaptchaUrl")
 #define SSOUI_KEY_CAPTCHAIMG      QLatin1String("CaptchaImage") //QByteArray !!!

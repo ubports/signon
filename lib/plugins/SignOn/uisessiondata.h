@@ -151,6 +151,13 @@ public:
     SIGNON_SESSION_DECLARE_PROPERTY(QString, OpenUrl)
 
     /*!
+     * Declares the property FinalUrl setter and getter.
+     * If this URL is set, the signon-ui browser widget will close
+     * automatically when this URL is reached.
+     */
+    SIGNON_SESSION_DECLARE_PROPERTY(QString, FinalUrl)
+
+    /*!
      * Declares the property UrlResponse setter and getter.
      * Response from signon-ui for OpenUrl request.
      * After completion UrlResponse contains redirect target url, if there was redirection.
