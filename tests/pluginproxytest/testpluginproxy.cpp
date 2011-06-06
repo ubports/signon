@@ -75,6 +75,7 @@ void TestPluginProxy::mechanisms_for_dummy()
     pattern << "mech1";
     pattern << "mech2";
     pattern << "mech3";
+    pattern << "BLOB";
 
     QVERIFY(mechs == pattern);
 }

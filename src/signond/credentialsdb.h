@@ -37,6 +37,8 @@
 #include "signonidentityinfo.h"
 
 #define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
+#define SSO_METADATADB_VERSION 2
+#define SSO_SECRETSDB_VERSION 1
 
 class TestDatabase;
 
@@ -198,8 +200,8 @@ protected:
 
 private:
     QSqlError m_lastError;
-    int m_version;
 protected:
+    int m_version;
     QSqlDatabase m_database;
 
     friend class CredentialsDB;
@@ -210,7 +212,7 @@ class MetaDataDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-metadata"), 1) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata"), SSO_METADATADB_VERSION) {}
 
     bool createTables();
     bool updateDB(int version);
@@ -227,6 +229,7 @@ public:
     bool clear();
 
     QStringList accessControlList(const quint32 identityId);
+    QStringList ownerList(const quint32 identityId);
 
     bool addReference(const quint32 id,
                       const QString &token,
@@ -239,6 +242,7 @@ private:
     bool insertMethods(QMap<QString, QStringList> methods);
     quint32 updateCredentials(const SignonIdentityInfo &info);
     bool updateRealms(quint32 id, const QStringList &realms, bool isNew);
+    QStringList tableUpdates2();
 };
 
 class SecretsDB: public SqlDatabase
@@ -246,7 +250,7 @@ class SecretsDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     SecretsDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-secrets"), 1) {}
+        SqlDatabase(name, QLatin1String("SSO-secrets"), SSO_SECRETSDB_VERSION) {}
 
     bool createTables();
     bool clear();
@@ -322,6 +326,7 @@ public:
     bool clear();
 
     QStringList accessControlList(const quint32 identityId);
+    QStringList ownerList(const quint32 identityId);
     QString credentialsOwnerSecurityToken(const quint32 identityId);
 
     QVariantMap loadData(const quint32 id, const QString &method);

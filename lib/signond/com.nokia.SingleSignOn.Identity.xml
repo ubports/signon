@@ -27,6 +27,11 @@
     <method name="signOut">
       <arg type="b" direction="out"/>
     </method>
+    <method name="store">
+      <arg type="u" direction="out"/>
+      <arg type="a{sv}" direction="in"/>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In4" value="QVariantMap"/>
+    </method>
     <method name="storeCredentials">
       <arg type="u" direction="out"/>
       <arg name="id" type="u" direction="in"/>
