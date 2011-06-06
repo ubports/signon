@@ -77,7 +77,6 @@ DEFINES += QT_NO_CAST_TO_ASCII \
 #Trace defines can be overruled by signond's configuration file `LoggingLevel`
 DEFINES += SIGNOND_TRACE
 LIBS += \
-    -lcryptsetup \
     -lsignon-plugins-common \
     -lsignon-extension
 

@@ -41,6 +41,9 @@ DEFINES += \
     SIGNON_ENABLE_UNSTABLE_APIS \
     SIGNON_TRACE
 
+LIBS += \
+    -lcryptsetup
+
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 headers.files = \
