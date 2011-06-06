@@ -76,13 +76,21 @@ DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
 #Trace defines can be overruled by signond's configuration file `LoggingLevel`
 DEFINES += SIGNOND_TRACE
-LIBS += -lcreds \
+LIBS += \
     -lcryptsetup \
     -lsignon-plugins-common \
     -lsignon-extension
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h
+
+exists(/usr/include/sys/creds.h) {
+    DEFINES += HAVE_LIBCREDS=1
+    LIBS += -lcreds
+} else {
+    DEFINES += HAVE_LIBCREDS=0
+    DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
+}
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )

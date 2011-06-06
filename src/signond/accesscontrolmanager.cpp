@@ -31,7 +31,9 @@
 #include "credentialsaccessmanager.h"
 #include "signonidentity.h"
 
+#if HAVE_LIBCREDS
 #include <sys/creds.h>
+#endif
 
 #define SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX QLatin1String("AID::")
 #define SSO_DEFAULT_CREDS_STR_BUFFER_SIZE 256
@@ -146,6 +148,7 @@ namespace SignonDaemonNS {
 
     QStringList AccessControlManager::accessTokens(const pid_t peerPid)
     {
+#if HAVE_LIBCREDS
         creds_t ccreds = creds_gettask(peerPid);
 
         creds_value_t value;
@@ -168,6 +171,10 @@ namespace SignonDaemonNS {
 
         creds_free(ccreds);
         return tokens;
+#else
+        Q_UNUSED(peerPid);
+        return QStringList();
+#endif
     }
 
     QStringList AccessControlManager::accessTokens(const QDBusContext &peerContext)
@@ -182,6 +189,7 @@ namespace SignonDaemonNS {
 
     bool AccessControlManager::peerHasToken(const pid_t processPid, const QString &token)
     {
+#if HAVE_LIBCREDS
         creds_type_t require_type;
         creds_value_t require_value;
         creds_t ccreds;
@@ -200,6 +208,11 @@ namespace SignonDaemonNS {
         creds_free(ccreds);
 
         return hasAccess;
+#else
+        Q_UNUSED(processPid);
+        Q_UNUSED(token);
+        return true;
+#endif
     }
 
     pid_t AccessControlManager::pidOfPeer(const QDBusContext &peerContext)

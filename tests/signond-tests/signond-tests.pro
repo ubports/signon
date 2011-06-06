@@ -19,7 +19,6 @@ PKGCONFIG += \
     libsignoncrypto-qt
 
 LIBS += -L/usr/lib \
-        -lcreds \
         -lsignon-qt
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
@@ -60,6 +59,8 @@ contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
  SOURCES *= $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/includes.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/dbuspeer.cpp
+
+ LIBS += -lcreds
 }
 
 TARGET = signon-tests
