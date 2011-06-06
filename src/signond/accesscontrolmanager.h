@@ -31,8 +31,6 @@
 #ifndef ACCESSCONTROLMANAGER_H
 #define ACCESSCONTROLMANAGER_H
 
-#include <sys/creds.h>
-
 #include <QIODevice>
 #include <QMap>
 #include <QDBusConnection>
@@ -169,9 +167,6 @@ namespace SignonDaemonNS {
             @returns true, if the peer has the tokens, false otherwise.
         */
         static bool peerHasToken(const QDBusContext &context, const QString &token);
-
-        static void listCredentials(QIODevice *device, creds_t creds, const QString &ownerInfo = 0);
-
     };
 
 } // namespace SignonDaemonNS

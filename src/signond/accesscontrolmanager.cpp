@@ -31,6 +31,7 @@
 #include "credentialsaccessmanager.h"
 #include "signonidentity.h"
 
+#include <sys/creds.h>
 
 #define SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX QLatin1String("AID::")
 #define SSO_DEFAULT_CREDS_STR_BUFFER_SIZE 256
@@ -207,41 +208,4 @@ namespace SignonDaemonNS {
         return peerContext.connection().interface()->servicePid(service).value();
     }
 
-    void AccessControlManager::listCredentials(QIODevice *device, creds_t creds, const QString &ownerInfo)
-    {
-        //TODO - this method will have to disappear at some point.
-        if (!device)
-            return;
-
-        if (!device->isOpen())
-            device->open(QIODevice::WriteOnly);
-
-        device->reset();
-
-        if (!ownerInfo.isNull())
-           device->write(ownerInfo.toUtf8().data(), strlen(ownerInfo.toUtf8().data()));
-
-        creds_value_t value;
-        creds_type_t type;
-
-        device->write("\n");
-
-        char buf[SSO_DEFAULT_CREDS_STR_BUFFER_SIZE];
-        for (int i = 0; (type = creds_list(creds, i,  &value)) != CREDS_BAD; ++i) {
-            long actualSize = creds_creds2str(type, value, buf, SSO_DEFAULT_CREDS_STR_BUFFER_SIZE);
-
-            if (actualSize >= SSO_DEFAULT_CREDS_STR_BUFFER_SIZE) {
-                qWarning() << "Size limit exceeded for aegis token as string.";
-                buf[SSO_DEFAULT_CREDS_STR_BUFFER_SIZE-1] = 0;
-            } else {
-                buf[actualSize] = 0;
-            }
-
-            device->write("\t");
-            device->write(buf, strlen(buf));
-            device->write("\n");
-        }
-        device->write("\n");
-        device->close();
-    }
 } //namespace SignonDaemonNS
