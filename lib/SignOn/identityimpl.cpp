@@ -272,6 +272,7 @@ namespace SignOn {
 
         QList<QVariant> args;
         QVariantMap map = info.impl->toMap();
+        map.insert(SIGNOND_IDENTITY_INFO_ID, m_identityInfo->id());
         map.insert(SIGNOND_IDENTITY_INFO_SECRET, encodedSecret);
         args << map;
 
@@ -621,6 +622,7 @@ namespace SignOn {
 
     void IdentityImpl::storeCredentialsReply(const quint32 id)
     {
+        TRACE() << "stored id:" << id << "old id:" << this->id();
         if (m_tmpIdentityInfo) {
             *m_identityInfo = *m_tmpIdentityInfo;
             delete m_tmpIdentityInfo;

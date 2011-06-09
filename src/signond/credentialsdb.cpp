@@ -764,11 +764,13 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
     }
 
     foreach (QString token, info.ownerList()) {
-        QSqlQuery tokenInsert = newQuery();
-        tokenInsert.prepare(S("INSERT OR IGNORE INTO TOKENS (token) "
-                              "VALUES ( :token )"));
-        tokenInsert.bindValue(S(":token"), token);
-        exec(tokenInsert);
+        if (!token.isEmpty()) {
+            QSqlQuery tokenInsert = newQuery();
+            tokenInsert.prepare(S("INSERT OR IGNORE INTO TOKENS (token) "
+                                  "VALUES ( :token )"));
+            tokenInsert.bindValue(S(":token"), token);
+            exec(tokenInsert);
+        }
     }
 
     if (!info.isNew()) {
@@ -864,14 +866,16 @@ quint32 MetaDataDB::updateIdentity(const SignonIdentityInfo &info)
 
     //insert owner list
     foreach (QString token, info.ownerList()) {
-        QSqlQuery ownerInsert = newQuery();
-        ownerInsert.prepare(S("INSERT OR REPLACE INTO OWNER "
+        if (!token.isEmpty()) {
+            QSqlQuery ownerInsert = newQuery();
+            ownerInsert.prepare(S("INSERT OR REPLACE INTO OWNER "
                             "(identity_id, token_id) "
                             "VALUES ( :id, "
                             "( SELECT id FROM TOKENS WHERE token = :token ))"));
-        ownerInsert.bindValue(S(":id"), id);
-        ownerInsert.bindValue(S(":token"), token);
-        exec(ownerInsert);
+            ownerInsert.bindValue(S(":id"), id);
+            ownerInsert.bindValue(S(":token"), token);
+            exec(ownerInsert);
+        }
     }
 
     if (commit()) {
