@@ -553,30 +553,32 @@ void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
     CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
     Q_ASSERT(db != 0);
 
-    SignonIdentityInfo info = operation.m_info;
+    if (operation.m_storeType != StoreOperation::Blob) {
 
-    QVariantMap data = operation.m_credsData;
+        SignonIdentityInfo info = operation.m_info;
 
-    //allow update only for not validated username
-    if (!info.validated()
-            && data.contains(SSO_KEY_USERNAME)
-            && !data[SSO_KEY_USERNAME].toString().isEmpty())
-        info.setUserName(data[SSO_KEY_USERNAME].toString());
+        QVariantMap data = operation.m_credsData;
 
-    if (!m_passwordUpdate.isEmpty())
-        info.setPassword(m_passwordUpdate);
+        //allow update only for not validated username
+        if (!info.validated()
+                && data.contains(SSO_KEY_USERNAME)
+                && !data[SSO_KEY_USERNAME].toString().isEmpty())
+            info.setUserName(data[SSO_KEY_USERNAME].toString());
 
-    if (data.contains(SSO_KEY_PASSWORD)
-        && !data[SSO_KEY_PASSWORD].toString().isEmpty())
-        info.setPassword(data[SSO_KEY_PASSWORD].toString());
+        if (!m_passwordUpdate.isEmpty())
+            info.setPassword(m_passwordUpdate);
 
-    info.setValidated(true);
+        if (data.contains(SSO_KEY_PASSWORD)
+            && !data[SSO_KEY_PASSWORD].toString().isEmpty())
+            info.setPassword(data[SSO_KEY_PASSWORD].toString());
 
-    if (!(db->updateCredentials(info))) {
-        BLAME() << "Error occured while updating credentials.";
-    }
+        info.setValidated(true);
 
-    if (operation.m_storeType == StoreOperation::Blob) {
+        if (!(db->updateCredentials(info))) {
+            BLAME() << "Error occured while updating credentials.";
+        }
+
+    } else {
         TRACE() << "Processing --- StoreOperation::Blob";
 
         if(!db->storeData(m_id,
