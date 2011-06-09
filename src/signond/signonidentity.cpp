@@ -274,6 +274,16 @@ namespace SignonDaemonNS {
         return info.toVariantList();
     }
 
+    void SignonIdentity::queryUserPassword(const QVariantMap &params) {
+        TRACE() << "Waiting for reply from signon-ui";
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(
+                m_signonui->queryDialog(params), this);
+        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this,
+                SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
+
+        setAutoDestruct(false);
+    }
+
     bool SignonIdentity::verifyUser(const QVariantMap &params)
     {
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
@@ -305,13 +315,7 @@ namespace SignonDaemonNS {
         uiRequest.insert(SSOUI_KEY_USERNAME, info.userName());
         uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
 
-        TRACE() << "Waiting for reply from signon-ui";
-        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(
-                m_signonui->queryDialog(uiRequest), this);
-        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this,
-                SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
-
-        setAutoDestruct(false);
+        queryUserPassword(uiRequest);
         return false;
     }
 
@@ -693,6 +697,18 @@ namespace SignonDaemonNS {
             if (m_pInfo) {
                 bool ret = m_pInfo->password() == resultParameters[SSOUI_KEY_PASSWORD].toString();
 
+                if (!ret && resultParameters.contains(SSOUI_KEY_CONFIRMCOUNT)) {
+                    int count = resultParameters[SSOUI_KEY_CONFIRMCOUNT].toInt();
+                    TRACE() << "retry count:" << count;
+                    if (count > 0) { //retry
+                        resultParameters[SSOUI_KEY_CONFIRMCOUNT] = (count-1);
+                        resultParameters[SSOUI_KEY_MESSAGEID] = QUERY_MESSAGE_NOT_AUTHORIZED;
+                        queryUserPassword(resultParameters);
+                        return;
+                    } else {
+                        //TODO show error note here if needed
+                    }
+                }
                 delete m_pInfo;
                 m_pInfo = NULL;
                 QDBusMessage dbusreply = m_message.createReply();
