@@ -297,7 +297,7 @@ namespace SignonDaemonNS {
                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return false;
         }
-        if (!info.storePassword()) {
+        if (!info.storePassword() || info.password().isEmpty()) {
             BLAME() << "Password is not stored.";
             replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
                        SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
