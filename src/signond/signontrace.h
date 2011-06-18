@@ -43,6 +43,7 @@ namespace SignOn {
         ~SignonTrace()
         {
             m_pInstance = NULL;
+            closelog();
         }
 
         static void initialize()
@@ -51,6 +52,7 @@ namespace SignOn {
                 return;
 
             m_pInstance = new SignonTrace<T>();
+            openlog(NULL, LOG_PID, LOG_DAEMON);
             qInstallMsgHandler(output);
         }
 
