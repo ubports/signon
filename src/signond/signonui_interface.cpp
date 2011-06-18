@@ -21,6 +21,7 @@
  */
 
 #include "signonui_interface.h"
+#include "signond-common.h"
 
 #include "SignOn/uisessiondata_priv.h"
 

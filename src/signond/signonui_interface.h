@@ -34,8 +34,6 @@
 #include <QtDBus/QtDBus>
 #include <QtDBus/QDBusPendingCall>
 
-#include "signond-common.h"
-
 /*
  * Proxy class for interface com.nokia.singlesignonui
  */

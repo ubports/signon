@@ -61,10 +61,6 @@ extern "C" {
 
 using namespace SignOn;
 
-/* Global variable used by the logging system:
- * 0 - fatal, 1 - critical(default), 2 - info/debug */
-int loggingLevel = 1;
-
 namespace SignonDaemonNS {
 
 /* ---------------------- SignonDaemonConfiguration ---------------------- */
@@ -109,7 +105,9 @@ void SignonDaemonConfiguration::load()
         QSettings settings(QLatin1String("/etc/signond.conf"),
                            QSettings::NativeFormat);
 
-        loggingLevel = settings.value(QLatin1String("LoggingLevel"), 1).toUInt();
+        int loggingLevel =
+            settings.value(QLatin1String("LoggingLevel"), 1).toInt();
+        setLoggingLevel(loggingLevel);
 
         QString storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();

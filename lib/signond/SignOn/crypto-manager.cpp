@@ -173,8 +173,10 @@ namespace SignOn {
         updateMountState(LoopLuksFormatted);
 
         //attempt luks close, in case of a leftover.
-        if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName))
+        if (QFile::exists(QLatin1String(DEVICE_MAPPER_DIR) + m_fileSystemName)) {
+            TRACE() << "Filesystem exists, closing";
             CryptsetupHandler::closeFile(m_fileSystemName);
+        }
 
         if (!CryptsetupHandler::openFile(m_accessCode,
                                          m_loopDeviceName,
