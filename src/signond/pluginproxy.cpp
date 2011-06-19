@@ -176,7 +176,14 @@ namespace SignonDaemonNS {
             return NULL;
         }
 
-        pp->m_type = pp->queryType();
+        if (debugEnabled()) {
+            QString pluginType = pp->queryType();
+            if (pluginType != pp->m_type) {
+                BLAME() << QString::fromLatin1("Plugin returned type '%1', "
+                                               "expected '%2'").
+                    arg(pluginType).arg(pp->m_type);
+            }
+        }
         pp->m_mechanisms = pp->queryMechanisms();
 
         connect(pp->m_process, SIGNAL(readyRead()), pp, SLOT(onReadStandardOutput()));
