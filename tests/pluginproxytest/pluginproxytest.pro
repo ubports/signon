@@ -12,7 +12,10 @@ PKGCONFIG += \
     libcrypto \
     libsignoncrypto-qt
 
-DEFINES += TESTS_TRACE
+LIBS += \
+    -lsignon-extension
+
+DEFINES += SIGNOND_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE
 
 SOURCES = \
@@ -32,6 +35,7 @@ INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn \
+    $${TOP_SRC_DIR}/lib/signond \
     $${TOP_SRC_DIR}/src/plugins \
     $${TOP_SRC_DIR}/src/signond
 

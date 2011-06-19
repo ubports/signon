@@ -19,11 +19,12 @@ PKGCONFIG += \
     libsignoncrypto-qt
 
 LIBS += -L/usr/lib \
+        -lsignon-extension \
         -lsignon-qt
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
-DEFINES += TESTS_TRACE
+DEFINES += SIGNOND_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE
 
 HEADERS += \
@@ -67,6 +68,7 @@ TARGET = signon-tests
 
 INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
+    $$TOP_SRC_DIR/lib/signond \
     $$TOP_SRC_DIR/tests/pluginproxytest \
     $$TOP_SRC_DIR/src/signond \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
