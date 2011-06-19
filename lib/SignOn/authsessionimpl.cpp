@@ -24,7 +24,6 @@
 
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
-#include "dbusconnection.h"
 
 
 #define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
@@ -200,7 +199,7 @@ bool AuthSessionImpl::initInterface()
     msg.setArguments(arguments);
     msg.setDelayedReply(true);
 
-    return DBusConnection::sessionBus().callWithCallback(
+    return SIGNOND_BUS.callWithCallback(
         msg, this,
         SLOT(authenticationSlot(const QString&)),
         SLOT(errorSlot(const QDBusError&)));
@@ -421,7 +420,7 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
         m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
                                             path,
                                             SIGNOND_AUTH_SESSION_INTERFACE_C,
-                                            DBusConnection::sessionBus());
+                                            SIGNOND_BUS);
         m_DBusInterface->connect("stateChanged", this,
                                  SLOT(stateSlot(int, const QString&)));
         m_DBusInterface->connect("unregistered", this,

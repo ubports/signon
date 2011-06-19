@@ -33,7 +33,6 @@
 #include "identityinfo.h"
 #include "identityinfoimpl.h"
 #include "authsessionimpl.h"
-#include "dbusconnection.h"
 #include "signonerror.h"
 
 #define SIGNOND_AUTH_SESSION_CANCEL_TIMEOUT 5000 //ms
@@ -830,14 +829,14 @@ namespace SignOn {
 
         registerCall.setDelayedReply(true);
 
-        bool registrationRequested = DBusConnection::sessionBus().callWithCallback(
+        bool registrationRequested = SIGNOND_BUS.callWithCallback(
             registerCall,
             this,
             registerReplyMethodName.data(),
             SLOT(errorReply(const QDBusError&)));
 
         if (!registrationRequested) {
-            QDBusError err = DBusConnection::sessionBus().lastError();
+            QDBusError err = SIGNOND_BUS.lastError();
             TRACE() << "\nError name:" << err.name()
                     << "\nMessage: " << err.message()
                     << "\nType: " << QDBusError::errorString(err.type());
@@ -909,7 +908,7 @@ namespace SignOn {
         m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
                                             objectPath.path(),
                                             SIGNOND_IDENTITY_INTERFACE_C,
-                                            DBusConnection::sessionBus(),
+                                            SIGNOND_BUS,
                                             this);
         if (!m_DBusInterface->isValid()) {
             TRACE() << "The interface cannot be registered!!! " << m_DBusInterface->lastError();
