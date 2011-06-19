@@ -331,9 +331,7 @@ namespace RemotePluginProcessNS {
     void RemotePluginProcess::type()
     {
         QDataStream out(&m_outFile);
-        QByteArray typeBa;
-        typeBa.append(m_plugin->type());
-        out << typeBa;
+        out << m_plugin->type();
     }
 
     void RemotePluginProcess::mechanisms()

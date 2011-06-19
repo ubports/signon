@@ -494,13 +494,16 @@ namespace SignonDaemonNS {
         QDataStream ds(m_process);
         ds << (quint32)PLUGIN_OP_TYPE;
 
-        QByteArray typeBa, buffer;
+        QByteArray buffer;
         bool result;
 
         if (!(result = readOnReady(buffer, PLUGINPROCESS_START_TIMEOUT)))
             qCritical("PluginProxy returned NULL result");
 
-        return QString::fromLatin1(buffer);
+        QString type;
+        QDataStream out(buffer);
+        out >> type;
+        return type;
     }
 
     QStringList PluginProxy::queryMechanisms()
