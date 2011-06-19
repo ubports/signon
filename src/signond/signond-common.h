@@ -35,8 +35,8 @@
 
 #ifdef SIGNOND_TRACE
     #define SIGNON_TRACE
+    #include "SignOn/Debug"
 #endif
-#include "SignOn/Debug"
 
 #define SIGNOND_INITIALIZE_TRACE() initializeTrace();
 
