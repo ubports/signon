@@ -15,6 +15,9 @@ PKGCONFIG += \
 LIBS += \
     -lsignon-extension
 
+QMAKE_LIBDIR += \
+    $${TOP_BUILD_DIR}/lib/signond/SignOn
+
 DEFINES += SIGNOND_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE
 

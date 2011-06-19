@@ -22,6 +22,9 @@ LIBS += -L/usr/lib \
         -lsignon-extension \
         -lsignon-qt
 
+QMAKE_LIBDIR += \
+    $${TOP_BUILD_DIR}/lib/signond/SignOn
+
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
 DEFINES += SIGNOND_TRACE
