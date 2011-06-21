@@ -390,6 +390,13 @@ void SignonDaemon::init()
         qFatal("SignonDaemon requires to register daemon's service");
     }
 
+    // handle D-Bus disconnection
+    connection.connect(QString(),
+                       QLatin1String("/org/freedesktop/DBus/Local"),
+                       QLatin1String("org.freedesktop.DBus.Local"),
+                       QLatin1String("Disconnected"),
+                       this, SLOT(onDisconnected()));
+
     initExtensions();
 
     if (!initStorage())
@@ -943,6 +950,12 @@ void SignonDaemon::listDBusInterfaces()
     servicesList += list.join(QLatin1String("\n"));
 
     TRACE() << "\n\n" << servicesList.toAscii().data() << "\n";
+}
+
+void SignonDaemon::onDisconnected()
+{
+    TRACE() << "Disconnected from session bus: exiting";
+    this->deleteLater();
 }
 
 } //namespace SignonDaemonNS

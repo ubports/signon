@@ -128,6 +128,7 @@ public Q_SLOTS:
     QStringList queryMechanisms(const QString &method);
     QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
     bool clear();
+    void onDisconnected();
 
 public Q_SLOTS: // backup METHODS
     uchar backupStarts();
