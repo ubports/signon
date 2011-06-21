@@ -956,6 +956,9 @@ void SignonDaemon::onDisconnected()
 {
     TRACE() << "Disconnected from session bus: exiting";
     this->deleteLater();
+    QMetaObject::invokeMethod(QCoreApplication::instance(),
+                              "quit",
+                              Qt::QueuedConnection);
 }
 
 } //namespace SignonDaemonNS
