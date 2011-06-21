@@ -240,7 +240,6 @@ void SignonDaemon::setupSignalHandlers()
 
 void SignonDaemon::signalHandler(int signal)
 {
-    TRACE() << "signal: " << signal;
     ::write(sigFd[0], &signal, sizeof(signal));
 }
 
