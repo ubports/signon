@@ -139,6 +139,11 @@ namespace SignonDaemonNS {
 
             stop();
 
+            /* Closing the write channel ensures that the plugin process
+             * will not get stuck on the next read.
+             */
+            m_process->closeWriteChannel();
+
             if (!m_process->waitForFinished(PLUGINPROCESS_STOP_TIMEOUT)) {
                 qCritical() << "The signon plugin does not react on demand to stop: need to kill it!!!";
                 m_process->kill();
