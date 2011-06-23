@@ -57,8 +57,9 @@ namespace SignOn {
 
     /* ----------------------- AuthServiceImpl ----------------------- */
 
-    AuthServiceImpl::AuthServiceImpl(AuthService *parent)
-        : m_parent(parent)
+    AuthServiceImpl::AuthServiceImpl(AuthService *parent):
+        QObject(parent),
+        m_parent(parent)
     {
         TRACE();
         m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
