@@ -234,6 +234,11 @@ namespace SignOn {
         static bool createPartitionFile(const QString &filePath);
         static bool formatMapFileSystem(const QString &fileSystemPath);
 
+        const QString keychainFilePath() const;
+        void addKeyToKeychain(const QByteArray &key) const;
+        void removeKeyFromKeychain(const QByteArray &key) const;
+        bool keychainContainsKey(const QByteArray &key) const;
+
     private:
         //TODO remove this
         void serializeData();

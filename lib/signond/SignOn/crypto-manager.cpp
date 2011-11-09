@@ -40,7 +40,42 @@
 
 namespace SignOn {
 
-    const QLatin1String keysStorageFileName = QLatin1String("keys");
+    const QString CryptoManager::keychainFilePath() const
+    {
+        return m_fileSystemMountPath + QDir::separator() + QLatin1String("keychain");
+    }
+
+    void CryptoManager::addKeyToKeychain(const QByteArray &key) const
+    {
+        //If key is already present do not add it - backwards compat. feature
+        if (keychainContainsKey(key)) return;
+
+        QSettings keychain(keychainFilePath(), QSettings::IniFormat);
+        int keyCount = keychain.allKeys().count();
+        keychain.setValue(QString::number(++keyCount), QVariant(key));
+    }
+
+    void CryptoManager::removeKeyFromKeychain(const QByteArray &key) const
+    {
+        QSettings keychain(keychainFilePath(), QSettings::IniFormat);
+        foreach (QString keyIt, keychain.allKeys()) {
+            if (keychain.value(keyIt).toByteArray() == key) {
+                keychain.remove(keyIt);
+                break;
+            }
+        }
+    }
+
+    bool CryptoManager::keychainContainsKey(const QByteArray &key) const
+    {
+        QSettings keychain(keychainFilePath(), QSettings::IniFormat);
+        foreach (QString keyIt, keychain.allKeys()) {
+            if (keychain.value(keyIt).toByteArray() == key)
+                return true;
+        }
+
+        return false;
+    }
 
     CryptoManager::CryptoManager(QObject *parent)
             : QObject(parent),
@@ -200,6 +235,7 @@ namespace SignOn {
             return false;
         }
 
+        addKeyToKeychain(m_accessCode);
         updateMountState(Mounted);
         return true;
     }
@@ -255,6 +291,8 @@ namespace SignOn {
             unmountFileSystem();
             return false;
         }
+
+        addKeyToKeychain(m_accessCode);
         updateMountState(Mounted);
         return true;
     }
@@ -403,8 +441,11 @@ namespace SignOn {
          */
         if (m_mountState >= LoopLuksOpened) {
             if (CryptsetupHandler::addKeySlot(
-                m_loopDeviceName, key, existingKey))
+                    m_loopDeviceName, key, existingKey)) {
+
+                addKeyToKeychain(key);
                 return true;
+            }
         }
         TRACE() << "FAILED to occupy key slot on the encrypted file system header.";
         return false;
@@ -416,6 +457,8 @@ namespace SignOn {
         if (m_mountState >= LoopLuksOpened) {
             if (CryptsetupHandler::removeKeySlot(
                 m_loopDeviceName, key, remainingKey))
+
+                removeKeyFromKeychain(key);
                 return true;
         }
         TRACE() << "FAILED to release key slot from the encrypted file system header.";
@@ -432,15 +475,25 @@ namespace SignOn {
            return mountFileSystem();
         }
 
-        QByteArray dummyKey("dummy");
-        if (addEncryptionKey(dummyKey, key)) {
-            if (!removeEncryptionKey(dummyKey, key))
-                BLAME() << "Could not remove dummy auxiliary key "
-                           "from encrypted file system header.";
-            return true;
-        }
+        /* Variant that tests if the key is in the LUKS keychain
+         * by using a file on the encrypted storage containing the keychain.
+         */
+        return keychainContainsKey(key);
 
-        return false;
+        /*
+         * Variant that tests if the key is in the LUKS keychain
+         * by directly accessing the LUKS system
+         *
+         * QByteArray dummyKey("dummy");
+         * if (addEncryptionKey(dummyKey, key)) {
+         *     if (!removeEncryptionKey(dummyKey, key))
+         *         BLAME() << "Could not remove dummy auxiliary key "
+         *                    "from encrypted file system header.";
+         *    return true;
+         * }
+         *
+         * return false;
+         */
     }
 
     //TODO - remove this after stable version is achieved.
