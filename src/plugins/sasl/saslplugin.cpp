@@ -30,6 +30,8 @@
 #define N_CALLBACKS (16)
 #define SAMPLE_SEC_BUF_SIZE (2048)
 
+using namespace SignOn;
+
 namespace SaslPluginNS {
 
 class SaslPlugin::Private
@@ -142,7 +144,7 @@ QStringList SaslPlugin::mechanisms() const
 void SaslPlugin::cancel()
 {
     TRACE();
-    //nothing to do for cancel
+    emit error(Error(Error::SessionCanceled));
 }
 
 void SaslPlugin::process(const SignOn::SessionData &inData,

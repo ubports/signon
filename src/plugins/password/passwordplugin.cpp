@@ -52,6 +52,7 @@ namespace PasswordPluginNS {
 
     void PasswordPlugin::cancel()
     {
+        emit error(Error(Error::SessionCanceled));
     }
 
     /*
