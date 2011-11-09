@@ -91,14 +91,6 @@ void AuthSessionImpl::send2interface(const QString &operation, const char *slot,
     bool res = true;
 
     if (slot) {
-        /*
-         * TODO: Invent something more attractive for the case
-         * of operation call with big timeout
-         * */
-        int timeout = -1;
-        if (QLatin1String("process") == operation)
-            timeout = SIGNOND_MAX_TIMEOUT;
-
         QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
                                                           m_DBusInterface->path(),
                                                           m_DBusInterface->interface(),
