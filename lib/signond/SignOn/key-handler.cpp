@@ -20,7 +20,7 @@
  * 02110-1301 USA
  */
 
-#include "crypto-manager.h"
+#include "abstract-crypto-manager.h"
 #include "debug.h"
 #include "key-handler.h"
 #include <QSet>
@@ -42,7 +42,7 @@ public:
     }
     ~KeyHandlerPrivate() {}
 
-    void initialize(CryptoManager *cryptoManager,
+    void initialize(AbstractCryptoManager *cryptoManager,
                     const KeyManagersList &keyManagers);
 
     bool isReady() const
@@ -71,7 +71,7 @@ private Q_SLOTS:
 
 private:
     mutable KeyHandler *q_ptr;
-    CryptoManager *m_cryptoManager;
+    AbstractCryptoManager *m_cryptoManager;
     KeyManagersList m_keyManagers;
     KeyManagersList m_readyKeyManagers;
     QSet<SignOn::Key> m_insertedKeys;
@@ -79,7 +79,7 @@ private:
 };
 };
 
-void KeyHandlerPrivate::initialize(CryptoManager *cryptoManager,
+void KeyHandlerPrivate::initialize(AbstractCryptoManager *cryptoManager,
                                    const KeyManagersList &keyManagers)
 {
     m_cryptoManager = cryptoManager;
@@ -258,14 +258,14 @@ KeyHandler::~KeyHandler()
     delete d_ptr;
 }
 
-void KeyHandler::initialize(CryptoManager *cryptoManager,
+void KeyHandler::initialize(AbstractCryptoManager *cryptoManager,
                             const KeyManagersList &keyManagers)
 {
     Q_D(KeyHandler);
     d->initialize(cryptoManager, keyManagers);
 }
 
-CryptoManager *KeyHandler::cryptoManager() const
+AbstractCryptoManager *KeyHandler::cryptoManager() const
 {
     Q_D(const KeyHandler);
     return d->m_cryptoManager;

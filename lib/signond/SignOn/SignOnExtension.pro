@@ -5,6 +5,7 @@ TEMPLATE = lib
 TARGET = signon-extension
 
 HEADERS = \
+    abstract-crypto-manager.h \
     abstract-key-authorizer.h \
     abstract-key-manager.h \
     debug.h \
@@ -19,6 +20,7 @@ INCLUDEPATH += \
     ..
 
 SOURCES += \
+    abstract-crypto-manager.cpp \
     abstract-key-authorizer.cpp \
     abstract-key-manager.cpp \
     crypto-handlers.cpp \
@@ -47,6 +49,8 @@ LIBS += \
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 headers.files = \
+    AbstractCryptoManager \
+    abstract-crypto-manager.h \
     AbstractKeyAuthorizer \
     abstract-key-authorizer.h \
     AbstractKeyManager \
