@@ -9,8 +9,6 @@ HEADERS = \
     abstract-key-authorizer.h \
     abstract-key-manager.h \
     debug.h \
-    crypto-handlers.h \
-    crypto-manager.h \
     export.h \
     extension-interface.h \
     key-handler.h \
@@ -23,8 +21,6 @@ SOURCES += \
     abstract-crypto-manager.cpp \
     abstract-key-authorizer.cpp \
     abstract-key-manager.cpp \
-    crypto-handlers.cpp \
-    crypto-manager.cpp \
     debug.cpp \
     key-handler.cpp \
     misc.cpp
@@ -43,9 +39,6 @@ DEFINES += \
     SIGNON_ENABLE_UNSTABLE_APIS \
     SIGNON_TRACE
 
-LIBS += \
-    -lcryptsetup
-
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 headers.files = \
@@ -57,7 +50,6 @@ headers.files = \
     abstract-key-manager.h \
     Debug \
     debug.h \
-    crypto-manager.h \
     export.h \
     ExtensionInterface \
     extension-interface.h \

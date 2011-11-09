@@ -62,10 +62,7 @@
  * Signon Daemon default configuration values
  */
 const char signonDefaultDbName[] = "signon.db";
-const char signonDefaultStoragePath[] = "/home/user/.signon";
-const char signonDefaultFileSystemName[] = "signonfs";
-const char signonDefaultFileSystemType[] = "ext2";
 const bool signonDefaultUseEncryption = true;
-const uint signonMinumumDbSize = 8;
+const char signonDefaultStoragePath[] = "/home/user/.signon";
 
 #endif // SIGNOND_COMMON_H_
