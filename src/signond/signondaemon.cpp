@@ -537,7 +537,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
     }
 
     bool ok;
-    SignonIdentityInfo info = identity->queryInfo(ok);
+    SignonIdentityInfo info = identity->queryInfo(ok, false);
 
     if (info.isNew())
     {
