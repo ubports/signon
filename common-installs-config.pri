@@ -36,7 +36,16 @@ contains( TEMPLATE, app ) {
 #-----------------------------------------------------------------------------
 contains( TEMPLATE, lib ) {
 
-    target.path  = $${INSTALL_PREFIX}/lib
+    exists( meego-release ) {
+        ARCH = $$system(tail -n1 meego-release)
+    } else {
+        ARCH = $$system(uname -m)
+    }
+    contains( ARCH, x86_64 ) {
+        target.path  = $${INSTALL_PREFIX}/lib64
+    } else {
+        target.path  = $${INSTALL_PREFIX}/lib
+    }
     INSTALLS    += target
     message("====")
     message("==== INSTALLS += target")
