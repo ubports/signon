@@ -1,4 +1,7 @@
 TEMPLATE = subdirs
-SUBDIRS = \
-    cryptsetup
+SUBDIRS =
+
+system(pkg-config --exists libcryptsetup) {
+    SUBDIRS += cryptsetup
+}
 
