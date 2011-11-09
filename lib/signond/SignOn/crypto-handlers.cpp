@@ -42,8 +42,10 @@
 
 #define SIGNON_LUKS_DEFAULT_HASH  "ripemd160"
 
-#define SIGNON_LUKS_CIPHER        "aes-xts-plain"
-#define SIGNON_LUKS_KEY_SIZE	  256
+#define SIGNON_LUKS_CIPHER_NAME   "aes"
+#define SIGNON_LUKS_CIPHER_MODE   "xts-plain"
+#define SIGNON_LUKS_CIPHER        SIGNON_LUKS_CIPHER_NAME "-" SIGNON_LUKS_CIPHER_MODE
+#define SIGNON_LUKS_KEY_SIZE      256
 #define SIGNON_LUKS_BASE_KEYSLOT  0
 
 #define SIGNON_EXTERNAL_PROCESS_READ_TIMEOUT 300
@@ -235,7 +237,7 @@ namespace SignOn {
     */
     static int yesDialog(char *msg)
     {
-        Q_UNUSED(msg)
+        Q_UNUSED(msg);
         return 0;
     }
 
@@ -252,6 +254,52 @@ namespace SignOn {
                 TRACE() << "Internal error on logging class for msg: " << msg;
                 break;
         }
+    }
+
+    static void log_wrapper(int level, const char *msg, void *usrptr)
+    {
+        void (*xlog)(int level, char *msg) = (void (*)(int, char*)) usrptr;
+        xlog(level, (char *)msg);
+    }
+
+    static int yesDialog_wrapper(const char *msg, void *usrptr)
+    {
+        int (*xyesDialog)(char *msg) = (int (*)(char*)) usrptr;
+        return xyesDialog((char*)msg);
+    }
+
+    int crypt_luksFormatBinary(struct crypt_options *options, const char *pwd, unsigned int pwdLen)
+    {
+        struct crypt_device *cd = NULL;
+        struct crypt_params_luks1 cp = {
+            options->hash,
+            options->align_payload
+        };
+        int r;
+
+        if ((r = crypt_init(&cd, options->device)))
+            return -EINVAL;
+
+        crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
+        crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+
+        crypt_set_timeout(cd, options->timeout);
+        crypt_set_password_retry(cd, options->tries);
+        crypt_set_iterarion_time(cd, options->iteration_time ?: 1000);
+        crypt_set_password_verify(cd, options->flags & CRYPT_FLAG_VERIFY);
+
+        r = crypt_format(cd, CRYPT_LUKS1, SIGNON_LUKS_CIPHER_NAME, SIGNON_LUKS_CIPHER_MODE,
+                         NULL, NULL, options->key_size, &cp);
+        if (r < 0)
+            goto out;
+
+        /* Add keyslot using internally stored volume key generated during format */
+        r = crypt_keyslot_add_by_volume_key(cd, options->key_slot, NULL, 0,
+                                            pwd, pwdLen);
+    out:
+        crypt_free(cd);
+        return (r < 0) ? r : 0;
+
     }
 
     bool CryptsetupHandler::formatFile(const QByteArray &key, const QString &deviceName)
@@ -274,9 +322,6 @@ namespace SignOn {
         Q_ASSERT(localKey != NULL);
         memcpy(localKey, key.constData(), key.length());
 
-        options.key_material = localKey;
-        options.material_size = key.length();
-
         options.flags = 0;
         options.iteration_time = 1000;
         options.timeout = 0;
@@ -290,7 +335,7 @@ namespace SignOn {
         TRACE() << "Device: [" << options.device << "]";
         TRACE() << "Key size:" << key.length();
 
-        int ret = crypt_luksFormat(&options);
+        int ret = crypt_luksFormatBinary(&options, localKey, key.length());
 
         if (ret != 0)
             TRACE() << "LUKS format API call result:" << ret << "." << error();
@@ -298,10 +343,51 @@ namespace SignOn {
         if (localDeviceName)
             free(localDeviceName);
 
-        if (localKey)
+        if (localKey) {
+            memset(localKey, 0x00, key.length());
             free(localKey);
+        }
 
         return (ret == 0);
+    }
+
+    int crypt_luksOpenBinary(struct crypt_options *options, const char *pwd, unsigned int pwdLen)
+    {
+        struct crypt_device *cd = NULL;
+        uint32_t flags = 0;
+        int r;
+
+        if ((r = crypt_init(&cd, options->device)))
+            return -EINVAL;
+
+        crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
+        crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+
+        crypt_set_timeout(cd, options->timeout);
+        crypt_set_password_retry(cd, options->tries);
+        crypt_set_iterarion_time(cd, options->iteration_time ?: 1000);
+        crypt_set_password_verify(cd, options->flags & CRYPT_FLAG_VERIFY);
+
+        if ((r = crypt_load(cd, CRYPT_LUKS1, NULL))) {
+            crypt_free(cd);
+            return r;
+        }
+
+        if (options->flags & CRYPT_FLAG_READONLY)
+            flags |= CRYPT_ACTIVATE_READONLY;
+
+        if (options->flags & CRYPT_FLAG_NON_EXCLUSIVE_ACCESS)
+            flags |= CRYPT_ACTIVATE_NO_UUID;
+
+        if (options->key_file)
+            r = -1;
+        else
+            r = crypt_activate_by_passphrase(cd, options->name,
+                                             CRYPT_ANY_SLOT,
+                                             pwd, pwdLen, flags);
+
+        crypt_free(cd);
+        return (r < 0) ? r : 0;
     }
 
     bool CryptsetupHandler::openFile(const QByteArray &key,
@@ -323,8 +409,6 @@ namespace SignOn {
         char *localKey = (char *)malloc(key.length());
         Q_ASSERT(localKey != NULL);
         memcpy(localKey, key.constData(), key.length());
-        options.key_material = localKey;
-        options.material_size = key.length();
 
         options.key_file = NULL;
         options.timeout = 0;
@@ -347,7 +431,7 @@ namespace SignOn {
         TRACE() << "Map name [" << options.name << "]";
         TRACE() << "Key size:" << key.length();
 
-        int ret = crypt_luksOpen(&options);
+        int ret = crypt_luksOpenBinary(&options, localKey, key.length());
 
         if (ret != 0)
             TRACE() << "LUKS open API call result:" << ret << "." << error() << ".";
@@ -358,8 +442,10 @@ namespace SignOn {
         if (localDeviceMap)
             free(localDeviceMap);
 
-        if (localKey)
+        if (localKey) {
+            memset(localKey, 0x00, key.length());
             free(localKey);
+        }
 
         return (ret == 0);
     }
@@ -393,9 +479,42 @@ namespace SignOn {
 
     bool CryptsetupHandler::removeFile(const QString &deviceName)
     {
-        Q_UNUSED(deviceName)
+        Q_UNUSED(deviceName);
         //todo - delete file system (wipe credentials storege) is based on this
         return false;
+    }
+
+    int crypt_luksAddKeyBinary(struct crypt_options *options,
+                               const char *pwd, unsigned int pwdLen,
+                               const char *newPwd, unsigned int newPwdLen)
+    {
+        struct crypt_device *cd = NULL;
+        int r;
+
+        if ((r = crypt_init(&cd, options->device)))
+            return -EINVAL;
+
+        crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
+        crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+
+        crypt_set_timeout(cd, options->timeout);
+        crypt_set_password_retry(cd, options->tries);
+        crypt_set_iterarion_time(cd, options->iteration_time ?: 1000);
+        crypt_set_password_verify(cd, options->flags & CRYPT_FLAG_VERIFY);
+
+        if ((r = crypt_load(cd, CRYPT_LUKS1, NULL))) {
+            crypt_free(cd);
+            return r;
+        }
+
+        if (options->key_file || options->new_key_file)
+            r = -1;
+        else
+            r = crypt_keyslot_add_by_passphrase(cd, options->key_slot,
+                                                pwd, pwdLen, newPwd, newPwdLen);
+
+        crypt_free(cd);
+        return (r < 0) ? r : 0;
     }
 
     bool CryptsetupHandler::addKeySlot(const QString &deviceName,
@@ -416,12 +535,6 @@ namespace SignOn {
         options.key_file = NULL;
         options.key_slot = -1;
 
-        options.key_material = existingKey.constData();
-        options.key_material2 = key.constData();
-        
-        options.material_size = existingKey.length();
-        options.material_size2 = key.length();
-
         options.flags = 0;
         options.iteration_time = 1000;
         options.timeout = 0;
@@ -432,7 +545,9 @@ namespace SignOn {
         cmd_icb.log = cmdLineLog;
         options.icb = &cmd_icb;
 
-        int ret = crypt_luksAddKey(&options);
+        int ret = crypt_luksAddKeyBinary(&options,
+                                         existingKey.constData(), existingKey.length(),
+                                         key.constData(), key.length());
 
         if (localDeviceName)
             free(localDeviceName);
@@ -441,6 +556,42 @@ namespace SignOn {
             TRACE() << "Cryptsetup add key API call result:" << ret << "." <<  error();
 
         return (ret == 0);
+    }
+
+    int crypt_luksRemoveKeyBinary(struct crypt_options *options,
+                                  const char *pwdToRemove, unsigned int pwdToRemoveLen)
+    {
+        struct crypt_device *cd = NULL;
+        int key_slot;
+        int r;
+
+        if ((r = crypt_init(&cd, options->device)))
+            return -EINVAL;
+
+        crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
+        crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+
+        crypt_set_timeout(cd, options->timeout);
+        crypt_set_password_retry(cd, options->tries);
+        crypt_set_iterarion_time(cd, options->iteration_time ?: 1000);
+        crypt_set_password_verify(cd, options->flags & CRYPT_FLAG_VERIFY);
+
+        if ((r = crypt_load(cd, CRYPT_LUKS1, NULL))) {
+            crypt_free(cd);
+            return r;
+        }
+
+        if ((key_slot = crypt_keyslot_by_passphrase(cd, NULL, pwdToRemove,
+                                                    pwdToRemoveLen, 0, NULL)) < 0) {
+            r = -EPERM;
+            goto out;
+        }
+
+        r = crypt_keyslot_destroy(cd, key_slot);
+
+    out:
+        crypt_free(cd);
+        return (r < 0) ? r : 0;
     }
 
     bool CryptsetupHandler::removeKeySlot(const QString &deviceName,
@@ -461,12 +612,6 @@ namespace SignOn {
         options.key_file = NULL;
         options.key_slot = -1;
 
-        options.key_material = key.constData();
-        options.key_material2 = remainingKey.constData();
-
-        options.material_size = key.length();
-        options.material_size2 = remainingKey.length();
-
         options.flags = 0;
         options.timeout = 0;
 
@@ -475,7 +620,7 @@ namespace SignOn {
         cmd_icb.log = cmdLineLog;
         options.icb = &cmd_icb;
 
-        int ret = crypt_luksRemoveKey(&options);
+        int ret = crypt_luksRemoveKeyBinary(&options, key.constData(), key.length());
 
         if (localDeviceName)
             free(localDeviceName);
