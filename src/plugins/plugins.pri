@@ -33,9 +33,10 @@ exists( ../../meego-release ) {
 }
 contains( ARCH, x86_64 ) {
     pkgconfig.path  = $${INSTALL_PREFIX}/lib64/pkgconfig
+    target.path = $${INSTALL_PREFIX}/lib64/signon
 } else {
     pkgconfig.path  = $${INSTALL_PREFIX}/lib/pkgconfig
+    target.path = $${INSTALL_PREFIX}/lib/signon
 }
 
-target.path = $${INSTALL_PREFIX}/lib/signon
 INSTALLS = target
