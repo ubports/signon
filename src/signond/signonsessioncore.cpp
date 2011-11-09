@@ -43,7 +43,6 @@
 #define SSO_KEY_CAPTION QLatin1String("Caption")
 
 using namespace SignonDaemonNS;
-using namespace SignOnCrypto;
 
 /*
  * cache of session queues, as was mentined they cannot be static
@@ -89,9 +88,6 @@ SignonSessionCore::SignonSessionCore(quint32 id,
     m_signonui = NULL;
     m_watcher = NULL;
 
-    if (!(m_encryptor = new Encryptor))
-        qFatal("Cannot allocate memory for encryptor");
-
     m_signonui = new SignonUiAdaptor(
                                     SIGNON_UI_SERVICE,
                                     SIGNON_UI_DAEMON_OBJECTPATH,
@@ -111,7 +107,6 @@ SignonSessionCore::~SignonSessionCore()
     delete m_plugin;
     delete m_watcher;
     delete m_signonui;
-    delete m_encryptor;
 
     m_plugin = NULL;
     m_signonui = NULL;
@@ -249,29 +244,11 @@ void SignonSessionCore::process(const QDBusConnection &connection,
                                  const QString &cancelKey)
 {
     keepInUse();
-    if (m_encryptor->isVariantMapEncrypted(sessionDataVa)) {
-        pid_t pid = pidOfContext(connection, message);
-        QVariantMap decodedData(m_encryptor->
-                                decodeVariantMap(sessionDataVa, pid));
-        if (m_encryptor->status() != Encryptor::Ok) {
-            replyError(connection,
-                       message,
-                       Error::EncryptionFailure,
-                       QString::fromLatin1("Failed to decrypt incoming message"));
-            return;
-        }
-        m_listOfRequests.enqueue(RequestData(connection,
-                                             message,
-                                             decodedData,
-                                             mechanism,
-                                             cancelKey));
-    } else {
-        m_listOfRequests.enqueue(RequestData(connection,
-                                             message,
-                                             sessionDataVa,
-                                             mechanism,
-                                             cancelKey));
-    }
+    m_listOfRequests.enqueue(RequestData(connection,
+                                         message,
+                                         sessionDataVa,
+                                         mechanism,
+                                         cancelKey));
 
     if (CredentialsAccessManager::instance()->isCredentialsSystemReady())
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
@@ -666,19 +643,8 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             && filteredData.contains(SSO_KEY_PASSWORD))
             filteredData.remove(SSO_KEY_PASSWORD);
 
-        pid_t pid = pidOfContext(rd.m_conn, rd.m_msg);
-        QVariantMap encodedData(m_encryptor->
-                                encodeVariantMap(filteredData, pid));
-        if (m_encryptor->status() != Encryptor::Ok) {
-            replyError(rd.m_conn,
-                       rd.m_msg,
-                       Error::EncryptionFailure,
-                       QString::fromLatin1("Failed to encrypt outgoing message"));
-        } else {
-            encodedData = filterVariantMap(encodedData);
-            arguments << encodedData;
-            rd.m_conn.send(rd.m_msg.createReply(arguments));
-        }
+        arguments << filteredData;
+        rd.m_conn.send(rd.m_msg.createReply(arguments));
 
         m_canceled = QString();
 

@@ -43,8 +43,6 @@
         }                               \
     } while(0)
 
-using namespace SignOnCrypto;
-
 namespace SignonDaemonNS {
 
     const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
@@ -72,9 +70,6 @@ namespace SignonDaemonNS {
                                         SIGNON_UI_DAEMON_OBJECTPATH,
                                         SIGNOND_BUS,
                                         this);
-
-        if (!(m_encryptor = new Encryptor))
-            qFatal("Cannot allocate memory for encryptor");
     }
 
     SignonIdentity::~SignonIdentity()
@@ -92,7 +87,6 @@ namespace SignonDaemonNS {
             m_pSignonDaemon->m_unstoredIdentities.remove(objectName());
 
         delete m_signonui;
-        delete m_encryptor;
     }
 
     bool SignonIdentity::init()
@@ -323,16 +317,6 @@ namespace SignonDaemonNS {
     {
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
-        pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
-        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
-
-        if (m_encryptor->status() != Encryptor::Ok) {
-            QDBusMessage errReply = message().createErrorReply(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
-                                                               SIGNOND_ENCRYPTION_FAILED_ERR_STR);
-            SIGNOND_BUS.send(errReply);
-            return false;
-        }
-
         bool ok;
         queryInfo(ok);
         if (!ok) {
@@ -344,7 +328,7 @@ namespace SignonDaemonNS {
         }
 
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        bool ret = db->checkPassword(m_pInfo->id(), m_pInfo->userName(), decodedSecret);
+        bool ret = db->checkPassword(m_pInfo->id(), m_pInfo->userName(), secret);
 
         keepInUse();
         return ret;
@@ -403,13 +387,6 @@ namespace SignonDaemonNS {
 
         pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
         QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
-        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
-
-        if (m_encryptor->status() != Encryptor::Ok) {
-            replyError(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
-                       SIGNOND_ENCRYPTION_FAILED_ERR_STR);
-            return SIGNOND_NEW_IDENTITY;
-        }
 
         QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
 
@@ -443,7 +420,7 @@ namespace SignonDaemonNS {
         }
 
         if (storeSecret) {
-            m_pInfo->setPassword(decodedSecret);
+            m_pInfo->setPassword(secret);
         } else {
             m_pInfo->setPassword(QString());
         }
@@ -477,14 +454,6 @@ namespace SignonDaemonNS {
          * */
 
         pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
-        QString decodedSecret(m_encryptor->decodeString(secret, pidOfPeer));
-
-        if (m_encryptor->status() != Encryptor::Ok) {
-            replyError(SIGNOND_ENCRYPTION_FAILED_ERR_NAME,
-                       SIGNOND_ENCRYPTION_FAILED_ERR_STR);
-            return SIGNOND_NEW_IDENTITY;
-        }
-
         QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
 
         QStringList accessControlListLocal = accessControlList;
@@ -494,13 +463,13 @@ namespace SignonDaemonNS {
 
         //this method is deprecated, so it will set acl as owner list
         if (m_pInfo == 0) {
-            m_pInfo = new SignonIdentityInfo(id, userName, decodedSecret, storeSecret,
+            m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
                                              caption, methods, realms,
                                              accessControlListLocal, accessControlListLocal,
                                              type);
         } else {
             m_pInfo->setUserName(userName);
-            m_pInfo->setPassword(decodedSecret);
+            m_pInfo->setPassword(secret);
             m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
             m_pInfo->setCaption(caption);
             m_pInfo->setRealms(realms);

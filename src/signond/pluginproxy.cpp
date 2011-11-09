@@ -43,12 +43,7 @@
 
 // signon-plugins-common
 #include "SignOn/blobiohandler.h"
-#include "SignOn/encrypteddevice.h"
 #include "SignOn/ipc.h"
-
-#include <SignOnCrypto/Encryptor>
-
-#include <openssl/rand.h>
 
 using namespace SignOn;
 

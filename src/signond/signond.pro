@@ -62,8 +62,6 @@ CONFIG += build_all \
     link_pkgconfig
 
 PKGCONFIG += \
-    libcrypto \
-    libsignoncrypto-qt \
     signon-plugins-common
 
 QMAKE_LIBDIR += \
