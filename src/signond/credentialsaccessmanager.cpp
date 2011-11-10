@@ -151,18 +151,21 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
         return false;
     }
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        //Initialize CryptoManager
-        if (m_cryptoManager == 0) {
-            TRACE() << "No CryptoManager set, using default (dummy)";
-            m_cryptoManager = new DefaultCryptoManager(this);
-        }
-        QObject::connect(m_cryptoManager, SIGNAL(fileSystemMounted()),
-                         this, SLOT(onEncryptedFSMounted()));
-        QObject::connect(m_cryptoManager, SIGNAL(fileSystemUnmounting()),
-                         this, SLOT(onEncryptedFSUnmounting()));
-        m_cryptoManager->initialize(m_CAMConfiguration.m_settings);
+    //Initialize CryptoManager
+    if (m_cryptoManager == 0) {
+        TRACE() << "No CryptoManager set, using default (dummy)";
+        m_cryptoManager = new DefaultCryptoManager(this);
+    }
+    QObject::connect(m_cryptoManager, SIGNAL(fileSystemMounted()),
+                     this, SLOT(onEncryptedFSMounted()));
+    QObject::connect(m_cryptoManager, SIGNAL(fileSystemUnmounting()),
+                     this, SLOT(onEncryptedFSUnmounting()));
+    m_cryptoManager->initialize(m_CAMConfiguration.m_settings);
 
+    /* This check is an optimization: instantiating the KeyAuthorizer is
+     * probably not harmful if m_useEncryption is false, but it's certainly
+     * useless. */
+    if (m_CAMConfiguration.m_useEncryption) {
         if (m_keyAuthorizer == 0) {
             TRACE() << "No key authorizer set, using default";
             m_keyAuthorizer = new DefaultKeyAuthorizer(m_keyHandler, this);
@@ -274,9 +277,7 @@ QStringList CredentialsAccessManager::backupFiles() const
 {
     QStringList files;
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        files << m_cryptoManager->backupFiles();
-    }
+    files << m_cryptoManager->backupFiles();
     return files;
 }
 
@@ -318,11 +319,9 @@ bool CredentialsAccessManager::closeSecretsDB()
 {
     m_pCredentialsDB->closeSecretsDB();
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_cryptoManager->unmountFileSystem()) {
-            m_error = CredentialsDbUnmountFailed;
-            return false;
-        }
+    if (!m_cryptoManager->unmountFileSystem()) {
+        m_error = CredentialsDbUnmountFailed;
+        return false;
     }
 
     return true;
@@ -379,8 +378,7 @@ bool CredentialsAccessManager::openCredentialsSystem()
 
     m_systemOpened = true;
 
-    if (m_cryptoManager == 0 ||
-        m_cryptoManager->fileSystemIsMounted()) {
+    if (m_cryptoManager->fileSystemIsMounted()) {
         if (!openSecretsDB()) {
             BLAME() << "Failed to open secrets DB.";
             /* Even if the secrets DB couldn't be opened, signond is still
