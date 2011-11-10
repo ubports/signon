@@ -374,7 +374,7 @@ private:
     QList<SignOn::AbstractKeyManager *> keyManagers;
 
     CredentialsDB *m_pCredentialsDB;
-    SignOn::AbstractCryptoManager *m_pCryptoFileSystemManager;
+    SignOn::AbstractCryptoManager *m_cryptoManager;
     SignOn::KeyHandler *m_keyHandler;
     SignOn::AbstractKeyAuthorizer *m_keyAuthorizer;
     CAMConfiguration m_CAMConfiguration;
