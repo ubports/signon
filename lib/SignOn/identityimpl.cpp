@@ -58,8 +58,6 @@
 #define SIGNOND_IDENTITY_SIGN_OUT_METHOD \
     SIGNOND_NORMALIZE_METHOD_SIGNATURE("signOut()")
 
-using namespace SignOnCrypto;
-
 namespace SignOn {
 
     IdentityImpl::IdentityImpl(Identity *parent, const quint32 id)
@@ -260,19 +258,10 @@ namespace SignOn {
             return;
         }
 
-        QString encodedSecret(m_encryptor.encodeString(info.secret(), 0));
-
-        if (m_encryptor.status() != Encryptor::Ok) {
-            emit m_parent->error(
-                Error(Error::StoreFailed,
-                      QLatin1String("Data encryption failed")));
-            return;
-        }
-
         QList<QVariant> args;
         QVariantMap map = info.impl->toMap();
         map.insert(SIGNOND_IDENTITY_INFO_ID, m_identityInfo->id());
-        map.insert(SIGNOND_IDENTITY_INFO_SECRET, encodedSecret);
+        map.insert(SIGNOND_IDENTITY_INFO_SECRET, info.secret());
         args << map;
 
         bool result = sendRequest("store", args,
@@ -520,16 +509,7 @@ namespace SignOn {
                 break;
         }
 
-        QString encryptedSecret(m_encryptor.encodeString(secret, 0));
-
-        if (m_encryptor.status() != Encryptor::Ok) {
-            emit m_parent->error(
-                Error(Error::EncryptionFailure,
-                      QLatin1String("Data encryption failed")));
-            return;
-        }
-
-        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(encryptedSecret),
+        bool result = sendRequest(__func__, QList<QVariant>() << QVariant(secret),
                                   SLOT(verifySecretReply(const bool)));
         if (!result) {
             TRACE() << "Error occurred.";

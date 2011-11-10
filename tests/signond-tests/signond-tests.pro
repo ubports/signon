@@ -14,10 +14,6 @@ QT += core \
 
 QT -= gui
 
-PKGCONFIG += \
-    libcrypto \
-    libsignoncrypto-qt
-
 LIBS += -L/usr/lib \
         -lsignon-extension \
         -lsignon-qt
@@ -37,8 +33,7 @@ HEADERS += \
     backuptest.h \
     databasetest.h \
     $$TOP_SRC_DIR/src/signond/credentialsdb.h \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.h
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h
 
 SOURCES = \
     signond-tests.cpp \
@@ -47,7 +42,6 @@ SOURCES = \
     $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp \
     backuptest.cpp \
     databasetest.cpp \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/encrypteddevice.cpp \
            $$TOP_SRC_DIR/src/signond/credentialsdb.cpp
 
 contains(DEFINES, CAM_UNIT_TESTS_FIXED) {

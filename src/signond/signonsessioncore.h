@@ -26,8 +26,6 @@
 #include <QtCore>
 #include <QtDBus>
 
-#include <SignOnCrypto/Encryptor>
-
 /*
  * TODO: remove invocation of plugin operations into the main signond process
  * */
@@ -117,7 +115,6 @@ class SignonDaemon;
         PluginProxy *m_plugin;
         QQueue<RequestData> m_listOfRequests;
         SignonUiAdaptor *m_signonui;
-        SignOnCrypto::Encryptor *m_encryptor;
 
         QDBusPendingCallWatcher *m_watcher;
 

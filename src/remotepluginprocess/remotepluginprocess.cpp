@@ -37,7 +37,6 @@
 #include "SignOn/blobiohandler.h"
 #include "SignOn/ipc.h"
 
-#include "SignOnCrypto/Encryptor"
 using namespace SignOn;
 
 namespace RemotePluginProcessNS {

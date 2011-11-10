@@ -33,8 +33,6 @@
 #include <QQueue>
 #include <QDBusObjectPath>
 
-#include <SignOnCrypto/Encryptor>
-
 #include "libsignoncommon.h"
 #include "identity.h"
 #include "dbusinterface.h"
@@ -132,8 +130,6 @@ namespace SignOn {
         bool m_infoQueried;
         /* Marks this Identity as the one which requested the sign out */
         bool m_signOutRequestedByThisIdentity;
-
-        SignOnCrypto::Encryptor m_encryptor;
     };
 
 }  // namespace SignOn

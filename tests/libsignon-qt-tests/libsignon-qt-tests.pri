@@ -5,7 +5,6 @@ include( $$TOP_SRC_DIR/common-installs-config.pri )
 CONFIG += qtestlib \
           build_all \
           link_pkgconfig
-PKGCONFIG += libsignoncrypto-qt
 QT += core \
       dbus
 QT -= gui

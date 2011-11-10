@@ -7,7 +7,6 @@ qt_config=lex yacc warn_on debug uic resources qt warn_on incremental link_prl e
 Name: libsignon-qt
 Description: LibSignOn 
 Version: 0.0.1
-Requires: libsignoncrypto-qt
 Libs: -L${libdir} -lsignon-qt
 Libs.private: -L/usr/lib  -lQtSql -lQtCore -lpthread  
 Cflags: -I${includedir}/signon-qt -I${includedir}/signon-qt/SignOn
