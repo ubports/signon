@@ -25,6 +25,7 @@
 #define SIGNON_ENABLE_UNSTABLE_APIS
 #include "credentialsaccessmanager.h"
 
+#include "default-crypto-manager.h"
 #include "default-key-authorizer.h"
 #include "signond-common.h"
 
@@ -53,8 +54,6 @@ CAMConfiguration::CAMConfiguration()
         : m_storagePath(QLatin1String(signonDefaultStoragePath)),
           m_dbName(QLatin1String(signonDefaultDbName)),
           m_useEncryption(signonDefaultUseEncryption),
-          m_fileSystemType(QLatin1String(signonDefaultFileSystemType)),
-          m_fileSystemSize(signonMinumumDbSize),
           m_encryptionPassphrase(QByteArray())
 {}
 
@@ -70,10 +69,6 @@ void CAMConfiguration::serialize(QIODevice *device)
     QString buffer;
     QTextStream stream(&buffer);
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
-    stream << "File system mount name " << encryptedFSPath() << '\n';
-    stream << "File system format: " << m_fileSystemType << '\n';
-    stream << "File system size:" << m_fileSystemSize << "megabytes\n";
-
     const char *usingEncryption = m_useEncryption ? "true" : "false";
     stream << "Using encryption: " << usingEncryption << '\n';
     stream << "Credentials database name: " << m_dbName << '\n';
@@ -85,13 +80,6 @@ void CAMConfiguration::serialize(QIODevice *device)
 QString CAMConfiguration::metadataDBPath() const
 {
     return m_storagePath + QDir::separator() + m_dbName;
-}
-
-QString CAMConfiguration::encryptedFSPath() const
-{
-    return m_storagePath +
-        QDir::separator() +
-        QLatin1String(signonDefaultFileSystemName);
 }
 
 /* ---------------------- CredentialsAccessManager ---------------------- */
@@ -165,14 +153,12 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
-        m_pCryptoFileSystemManager = new SignOn::CryptoManager(this);
+        m_pCryptoFileSystemManager = new DefaultCryptoManager(this);
         QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemMounted()),
                          this, SLOT(onEncryptedFSMounted()));
         QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemUnmounting()),
                          this, SLOT(onEncryptedFSUnmounting()));
-        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
-        m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
-        m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
+        m_pCryptoFileSystemManager->initialize(m_CAMConfiguration.m_settings);
 
         if (m_keyAuthorizer == 0) {
             TRACE() << "No key authorizer set, using default";
@@ -253,6 +239,16 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
     }
 
     return extensionInUse;
+}
+
+QStringList CredentialsAccessManager::backupFiles() const
+{
+    QStringList files;
+
+    if (m_CAMConfiguration.m_useEncryption) {
+        files << m_pCryptoFileSystemManager->backupFiles();
+    }
+    return files;
 }
 
 bool CredentialsAccessManager::openSecretsDB()

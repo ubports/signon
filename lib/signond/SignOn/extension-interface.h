@@ -1,9 +1,10 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2010 Nokia Corporation.
+ * Copyright (C) 2010-2011 Nokia Corporation.
+ * Copyright (C) 2011 Canonical Ltd.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -34,6 +35,7 @@
 
 namespace SignOn {
 
+class AbstractCryptoManager;
 class AbstractKeyAuthorizer;
 class AbstractKeyManager;
 class KeyHandler;
@@ -73,11 +75,31 @@ public:
                                                  QObject *parent = 0) const = 0;
 };
 
+/*!
+ * @class ExtensionInterface3.
+ * Interface definition for signond extensions.
+ */
+class SIGNON_EXPORT ExtensionInterface3: public ExtensionInterface2
+{
+public:
+    virtual ~ExtensionInterface3() {}
+
+    /*!
+     * Gets the CryptoManager object, which will be used to setup the file
+     * system for the credentials storage.
+     *
+     * @return A CryptoManager object, or 0 if none is provided by this plugin
+     */
+    virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const = 0;
+};
+
 } // namespace
 
 Q_DECLARE_INTERFACE(SignOn::ExtensionInterface,
                     "com.nokia.SingleSignOn.ExtensionInterface/1.0")
 Q_DECLARE_INTERFACE(SignOn::ExtensionInterface2,
                     "com.nokia.SingleSignOn.ExtensionInterface/2.0")
+Q_DECLARE_INTERFACE(SignOn::ExtensionInterface3,
+                    "com.nokia.SingleSignOn.ExtensionInterface/3.0")
 
 #endif // SIGNON_EXTENSION_INTERFACE_H

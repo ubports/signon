@@ -37,11 +37,13 @@
 #include <QObject>
 #include <QPointer>
 #include <QFlags>
+#include <QStringList>
+#include <QVariantMap>
 
+#include "SignOn/AbstractCryptoManager"
 #include "SignOn/AbstractKeyAuthorizer"
 #include "SignOn/AbstractKeyManager"
 #include "SignOn/KeyHandler"
-#include "SignOn/crypto-manager.h"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
     Use this event type to signal the CAM when the secure storage is
@@ -116,17 +118,21 @@ struct CAMConfiguration
      */
     QString metadataDBPath() const;
 
-    /*!
-     * Returns the path of the encrypted FS.
-     */
-    QString encryptedFSPath() const;
+    void setStoragePath(const QString &storagePath) {
+        m_storagePath = storagePath;
+        // CryptoSetup extensions are given the m_settings dictionary only
+        addSetting(QLatin1String("StoragePath"), storagePath);
+    }
 
+    void addSetting(const QString &key, const QVariant &value) {
+        m_settings.insert(key, value);
+    }
     QString m_storagePath;      /*!< The base directory for storage. */
     QString m_dbName;           /*!< The database file name. */
     bool m_useEncryption;       /*!< Flag for encryption use, enables/disables all of the bellow. */
-    QString m_fileSystemType;   /*!< The encrypted file system type (ext2, ext3, ext4). */
-    quint32 m_fileSystemSize;   /*!< The encrypted file system size. */
     QByteArray m_encryptionPassphrase; /*!< Passphrase used for opening encrypted FS. */
+
+    QVariantMap m_settings;
 };
 
 /*!
@@ -165,7 +171,7 @@ enum CredentialsAccessError {
     @sa CredentialsDB
     @sa AccessControl
     @sa AccessCodeHandler
-    @sa CryptoManager
+    @sa AbstractCryptoManager
  */
 class CredentialsAccessManager : public QObject
 {
@@ -256,6 +262,8 @@ public:
      * @returns True if the extension provides objects that the CAM is using.
      */
     bool initExtension(QObject *object);
+
+    QStringList backupFiles() const;
 
     /*!
         Opens the credentials system, creates the CreadentialsDB object;
@@ -366,7 +374,7 @@ private:
     QList<SignOn::AbstractKeyManager *> keyManagers;
 
     CredentialsDB *m_pCredentialsDB;
-    SignOn::CryptoManager *m_pCryptoFileSystemManager;
+    SignOn::AbstractCryptoManager *m_pCryptoFileSystemManager;
     SignOn::KeyHandler *m_keyHandler;
     SignOn::AbstractKeyAuthorizer *m_keyAuthorizer;
     CAMConfiguration m_CAMConfiguration;
