@@ -153,7 +153,10 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
-        m_cryptoManager = new DefaultCryptoManager(this);
+        if (m_cryptoManager == 0) {
+            TRACE() << "No CryptoManager set, using default (dummy)";
+            m_cryptoManager = new DefaultCryptoManager(this);
+        }
         QObject::connect(m_cryptoManager, SIGNAL(fileSystemMounted()),
                          this, SLOT(onEncryptedFSMounted()));
         QObject::connect(m_cryptoManager, SIGNAL(fileSystemUnmounting()),
@@ -205,8 +208,14 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
 
     SignOn::ExtensionInterface *extension;
     SignOn::ExtensionInterface2 *extension2;
+    SignOn::ExtensionInterface3 *extension3;
 
-    extension2 = qobject_cast<SignOn::ExtensionInterface2 *>(plugin);
+    extension3 = qobject_cast<SignOn::ExtensionInterface3 *>(plugin);
+    if (extension3 != 0)
+        extension2 = extension3;
+    else
+        extension2 = qobject_cast<SignOn::ExtensionInterface2 *>(plugin);
+
     if (extension2 != 0)
         extension = extension2;
     else
@@ -234,6 +243,26 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
                 extensionInUse = true;
             } else {
                 TRACE() << "Key authorizer already set";
+                delete keyAuthorizer;
+            }
+        }
+    }
+
+    if (extension3 != 0) {
+        /* if encryption is disabled, the DefaultCryptoManager (which provides
+         * no encryption) must be used instead; in this case, don't even
+         * attempt to instantiate alternate CryptoManagers. */
+        if (m_CAMConfiguration.m_useEncryption) {
+            SignOn::AbstractCryptoManager *cryptoManager =
+                extension3->cryptoManager(this);
+            if (cryptoManager != 0) {
+                if (m_cryptoManager == 0) {
+                    m_cryptoManager = cryptoManager;
+                    extensionInUse = true;
+                } else {
+                    TRACE() << "Crypto manager already set";
+                    delete cryptoManager;
+                }
             }
         }
     }
