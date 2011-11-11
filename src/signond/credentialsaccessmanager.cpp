@@ -51,11 +51,12 @@ using namespace SignOn;
 /* ---------------------- CAMConfiguration ---------------------- */
 
 CAMConfiguration::CAMConfiguration()
-        : m_storagePath(QLatin1String(signonDefaultStoragePath)),
-          m_dbName(QLatin1String(signonDefaultDbName)),
+        : m_dbName(QLatin1String(signonDefaultDbName)),
           m_useEncryption(signonDefaultUseEncryption),
           m_encryptionPassphrase(QByteArray())
-{}
+{
+    setStoragePath(QLatin1String(signonDefaultStoragePath));
+}
 
 void CAMConfiguration::serialize(QIODevice *device)
 {
@@ -80,6 +81,14 @@ void CAMConfiguration::serialize(QIODevice *device)
 QString CAMConfiguration::metadataDBPath() const
 {
     return m_storagePath + QDir::separator() + m_dbName;
+}
+
+void CAMConfiguration::setStoragePath(const QString &storagePath) {
+    m_storagePath = storagePath;
+    if (m_storagePath.startsWith(QLatin1Char('~')))
+        m_storagePath.replace(0, 1, QDir::homePath());
+    // CryptoSetup extensions are given the m_settings dictionary only
+    addSetting(QLatin1String("StoragePath"), m_storagePath);
 }
 
 /* ---------------------- CredentialsAccessManager ---------------------- */

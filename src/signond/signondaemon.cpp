@@ -111,8 +111,6 @@ void SignonDaemonConfiguration::load()
 
         QString storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-        if (storagePath.startsWith(QLatin1Char('~')))
-            storagePath.replace(0, 1, QDir::homePath());
         m_camConfiguration.setStoragePath(storagePath);
 
         //Secure storage
