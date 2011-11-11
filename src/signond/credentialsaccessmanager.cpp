@@ -93,7 +93,7 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_error(NoError),
           keyManagers(),
           m_pCredentialsDB(NULL),
-          m_pCryptoFileSystemManager(NULL),
+          m_cryptoManager(NULL),
           m_keyHandler(NULL),
           m_keyAuthorizer(NULL),
           m_CAMConfiguration(CAMConfiguration())
@@ -121,8 +121,8 @@ void CredentialsAccessManager::finalize()
     if (m_systemOpened)
         closeCredentialsSystem();
 
-    if (m_pCryptoFileSystemManager)
-        delete m_pCryptoFileSystemManager;
+    if (m_cryptoManager)
+        delete m_cryptoManager;
 
     // Disconnect all key managers
     foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
@@ -153,12 +153,12 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     if (m_CAMConfiguration.m_useEncryption) {
         //Initialize CryptoManager
-        m_pCryptoFileSystemManager = new DefaultCryptoManager(this);
-        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemMounted()),
+        m_cryptoManager = new DefaultCryptoManager(this);
+        QObject::connect(m_cryptoManager, SIGNAL(fileSystemMounted()),
                          this, SLOT(onEncryptedFSMounted()));
-        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemUnmounting()),
+        QObject::connect(m_cryptoManager, SIGNAL(fileSystemUnmounting()),
                          this, SLOT(onEncryptedFSUnmounting()));
-        m_pCryptoFileSystemManager->initialize(m_CAMConfiguration.m_settings);
+        m_cryptoManager->initialize(m_CAMConfiguration.m_settings);
 
         if (m_keyAuthorizer == 0) {
             TRACE() << "No key authorizer set, using default";
@@ -183,7 +183,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
                          SLOT(onLastAuthorizedKeyRemoved(SignOn::Key)));
         QObject::connect(m_keyHandler, SIGNAL(keyRemoved(SignOn::Key)),
                          this, SLOT(onKeyRemoved(SignOn::Key)));
-        m_keyHandler->initialize(m_pCryptoFileSystemManager, keyManagers);
+        m_keyHandler->initialize(m_cryptoManager, keyManagers);
     }
 
     m_isInitialized = true;
@@ -246,7 +246,7 @@ QStringList CredentialsAccessManager::backupFiles() const
     QStringList files;
 
     if (m_CAMConfiguration.m_useEncryption) {
-        files << m_pCryptoFileSystemManager->backupFiles();
+        files << m_cryptoManager->backupFiles();
     }
     return files;
 }
@@ -257,11 +257,11 @@ bool CredentialsAccessManager::openSecretsDB()
     QString dbPath;
 
     if (m_CAMConfiguration.m_useEncryption) {
-        dbPath = m_pCryptoFileSystemManager->fileSystemMountPath()
+        dbPath = m_cryptoManager->fileSystemMountPath()
             + QDir::separator()
             + m_CAMConfiguration.m_dbName;
 
-        if (!m_pCryptoFileSystemManager->fileSystemIsMounted()) {
+        if (!m_cryptoManager->fileSystemIsMounted()) {
             /* Do not attempt to mount the FS; we know that it will be mounted
              * automatically, as soon as some encryption keys are provided */
             m_error = CredentialsDbNotMounted;
@@ -290,7 +290,7 @@ bool CredentialsAccessManager::closeSecretsDB()
     m_pCredentialsDB->closeSecretsDB();
 
     if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_pCryptoFileSystemManager->unmountFileSystem()) {
+        if (!m_cryptoManager->unmountFileSystem()) {
             m_error = CredentialsDbUnmountFailed;
             return false;
         }
@@ -350,8 +350,8 @@ bool CredentialsAccessManager::openCredentialsSystem()
 
     m_systemOpened = true;
 
-    if (m_pCryptoFileSystemManager == 0 ||
-        m_pCryptoFileSystemManager->fileSystemIsMounted()) {
+    if (m_cryptoManager == 0 ||
+        m_cryptoManager->fileSystemIsMounted()) {
         if (!openSecretsDB()) {
             BLAME() << "Failed to open secrets DB.";
             /* Even if the secrets DB couldn't be opened, signond is still
@@ -361,7 +361,7 @@ bool CredentialsAccessManager::openCredentialsSystem()
         /* The secrets DB will be opened as soon as the encrypted FS is
          * mounted.
          */
-        m_pCryptoFileSystemManager->mountFileSystem();
+        m_cryptoManager->mountFileSystem();
     }
 
     return true;
@@ -397,7 +397,7 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
     m_error = NoError;
 
     if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_pCryptoFileSystemManager->deleteFileSystem())
+        if (!m_cryptoManager->deleteFileSystem())
             m_error = CredentialsDbDeletionFailed;
     } else {
         QFile dbFile(m_CAMConfiguration.m_dbName);
@@ -435,7 +435,7 @@ void CredentialsAccessManager::onLastAuthorizedKeyRemoved(const SignOn::Key key)
 {
     Q_UNUSED(key);
     TRACE() << "All keys disabled. Closing secure storage.";
-    if (isSecretsDBOpen() || m_pCryptoFileSystemManager->fileSystemIsMounted())
+    if (isSecretsDBOpen() || m_cryptoManager->fileSystemIsMounted())
         if (!closeSecretsDB())
             BLAME() << "Error occurred while closing secure storage.";
 }
