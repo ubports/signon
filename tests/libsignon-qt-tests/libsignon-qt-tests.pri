@@ -1,5 +1,4 @@
-include( ../../common-project-config.pri )
-include( $$TOP_SRC_DIR/common-vars.pri )
+include( ../tests.pri )
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 CONFIG += qtestlib \
