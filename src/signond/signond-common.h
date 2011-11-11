@@ -62,6 +62,7 @@
  * Signon Daemon default configuration values
  */
 const char signonDefaultDbName[] = "signon.db";
+const char signonDefaultSecretsDbName[] = "signon-secrets.db";
 const bool signonDefaultUseEncryption = true;
 const char signonDefaultStoragePath[] = "~/.signon";
 
