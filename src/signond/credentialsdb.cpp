@@ -1228,7 +1228,7 @@ bool SecretsDB::updateCredentials(const quint32 id,
 
      } else {
         TRACE() << "INSERT:" << id;
-        query.prepare(S("INSERT INTO CREDENTIALS "
+        query.prepare(S("INSERT OR REPLACE INTO CREDENTIALS "
                         "(id, username, password) "
                         "VALUES(:id, :username, :password)"));
     }
