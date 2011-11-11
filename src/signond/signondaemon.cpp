@@ -167,6 +167,18 @@ void SignonDaemonConfiguration::load()
             QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
         m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
     }
+
+    if (environment.contains(QLatin1String("SSO_LOGGING_LEVEL"))) {
+        value = environment.value(
+            QLatin1String("SSO_LOGGING_LEVEL")).toInt(&isOk);
+        if (isOk)
+            setLoggingLevel(value);
+    }
+
+    if (environment.contains(QLatin1String("SSO_STORAGE_PATH"))) {
+        m_camConfiguration.setStoragePath(
+            environment.value(QLatin1String("SSO_STORAGE_PATH")));
+    }
 }
 
 /* ---------------------- SignonDaemon ---------------------- */
