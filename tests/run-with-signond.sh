@@ -11,6 +11,7 @@ trap "pkill -9 signond" EXIT
 
 export SSO_LOGGING_LEVEL=2
 export SSO_STORAGE_PATH="/tmp"
+export PATH="${BUILDDIR}/src/remotepluginprocess:$PATH"
 ${SRCDIR}/tests/signond.sh &
 sleep 2
 
