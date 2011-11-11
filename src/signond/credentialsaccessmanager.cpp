@@ -423,20 +423,8 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
         return false;
     }
 
-    m_error = NoError;
-
-    if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_cryptoManager->deleteFileSystem())
-            m_error = CredentialsDbDeletionFailed;
-    } else {
-        QFile dbFile(m_CAMConfiguration.m_dbName);
-        if (dbFile.exists()) {
-            if (!dbFile.remove())
-                m_error = CredentialsDbDeletionFailed;
-        }
-    }
-
-    return m_error == NoError;
+    BLAME() << "Not implemented";
+    return false;
 }
 
 CredentialsDB *CredentialsAccessManager::credentialsDB() const
