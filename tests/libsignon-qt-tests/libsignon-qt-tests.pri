@@ -28,6 +28,7 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
     $$TOP_SRC_DIR/src/plugins/ssotest2
 DEFINES += SSO_CI_TESTMANAGEMENT
+DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR}"
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 TARGET = libsignon-qt-tests

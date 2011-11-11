@@ -182,6 +182,16 @@ bool SsoTestClient::storeCredentialsPrivate(const SignOn::IdentityInfo &info)
     return ok;
 }
 
+QString SsoTestClient::pluginsDir() const
+{
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    if (env.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
+        return env.value(QLatin1String("SSO_PLUGINS_DIR"));
+    } else {
+        return QLatin1String(SIGNOND_PLUGINS_DIR);
+    }
+}
+
 void SsoTestClient::queryAvailableMetods()
 {
     TEST_START
@@ -1047,7 +1057,7 @@ void SsoTestClient::initAuthServiceTest()
 {
     //small params preparing
     m_numberOfInsertedCredentials = 5;
-    m_expectedNumberOfMethods = (QDir("/usr/lib/signon")).entryList(
+    m_expectedNumberOfMethods = (QDir(pluginsDir())).entryList(
             QStringList() << "*.so", QDir::Files).count();
     if(!m_expectedMechanisms.length())
         m_expectedMechanisms << "mech1" << "mech2" << "mech3" << "BLOB";

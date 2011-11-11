@@ -67,6 +67,7 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration()
     : m_loadedFromFile(false),
+      m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
       m_camConfiguration(),
       m_identityTimeout(300),//secs
       m_authSessionTimeout(300)//secs
@@ -178,6 +179,10 @@ void SignonDaemonConfiguration::load()
     if (environment.contains(QLatin1String("SSO_STORAGE_PATH"))) {
         m_camConfiguration.setStoragePath(
             environment.value(QLatin1String("SSO_STORAGE_PATH")));
+    }
+
+    if (environment.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
+        m_pluginsDir = environment.value(QLatin1String("SSO_PLUGINS_DIR"));
     }
 }
 
@@ -565,7 +570,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
 QStringList SignonDaemon::queryMethods()
 {
-    QDir pluginsDir(SIGNOND_PLUGINS_DIR);
+    QDir pluginsDir(m_configuration->pluginsDir());
     //TODO: in the future remove the sym links comment
     QStringList fileNames = pluginsDir.entryList(
             QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);

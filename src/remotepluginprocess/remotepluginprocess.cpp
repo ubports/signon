@@ -318,7 +318,10 @@ namespace RemotePluginProcessNS {
 
     QString RemotePluginProcess::getPluginName(const QString &type)
     {
-        QString fileName = QDir::cleanPath(SIGNON_PLUGINS_DIR) +
+        QString dirName = qgetenv("SSO_PLUGINS_DIR");
+        if (dirName.isEmpty())
+            dirName = QDir::cleanPath(SIGNOND_PLUGINS_DIR);
+        QString fileName = dirName +
                            QDir::separator() +
                            QString(SIGNON_PLUGIN_PREFIX) +
                            type +

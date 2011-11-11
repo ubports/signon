@@ -46,8 +46,8 @@ extern "C" {
 #include <signal.h>
 }
 
-#ifndef SIGNON_PLUGINS_DIR
-      #define SIGNON_PLUGINS_DIR "/usr/lib/signon"
+#ifndef SIGNOND_PLUGINS_DIR
+      #define SIGNOND_PLUGINS_DIR "/usr/lib/signon"
 #endif
 
 #ifndef SIGNON_PLUGIN_PREFIX

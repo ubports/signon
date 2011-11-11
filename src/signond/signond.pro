@@ -74,6 +74,8 @@ QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
+DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR}"
+
 #Trace defines can be overruled by signond's configuration file `LoggingLevel`
 DEFINES += SIGNOND_TRACE
 LIBS += \

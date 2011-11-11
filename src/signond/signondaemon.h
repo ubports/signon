@@ -38,7 +38,7 @@ extern "C" {
 #include "credentialsaccessmanager.h"
 
 #ifndef SIGNOND_PLUGINS_DIR
-    #define SIGNOND_PLUGINS_DIR QLatin1String("/usr/lib/signon")
+    #define SIGNOND_PLUGINS_DIR "/usr/lib/signon"
 #endif
 
 #ifndef SIGNOND_PLUGIN_PREFIX
@@ -73,11 +73,13 @@ public:
     bool useSecureStorage() const
         { return m_camConfiguration.m_useEncryption; }
 
+    QString pluginsDir() const { return m_pluginsDir; }
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
 
 private:
     bool m_loadedFromFile;
+    QString m_pluginsDir;
 
     // storage configuration
     CAMConfiguration m_camConfiguration;

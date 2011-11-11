@@ -43,5 +43,6 @@ QMAKE_CXXFLAGS += -fno-exceptions \
 #DEFINES += QT_NO_CAST_TO_ASCII \
 #    QT_NO_CAST_FROM_ASCII
 DEFINES += SIGNON_PLUGIN_TRACE
+DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR}"
 
 include( ../../common-installs-config.pri )
