@@ -52,6 +52,7 @@ using namespace SignOn;
 
 CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String(signonDefaultDbName)),
+          m_secretsDbName(QLatin1String(signonDefaultSecretsDbName)),
           m_useEncryption(signonDefaultUseEncryption),
           m_encryptionPassphrase(QByteArray())
 {
@@ -292,23 +293,16 @@ QStringList CredentialsAccessManager::backupFiles() const
 
 bool CredentialsAccessManager::openSecretsDB()
 {
-    //todo remove this variable after LUKS implementation becomes stable.
-    QString dbPath;
-
-    if (m_CAMConfiguration.m_useEncryption) {
-        dbPath = m_cryptoManager->fileSystemMountPath()
-            + QDir::separator()
-            + m_CAMConfiguration.m_dbName;
-
-        if (!m_cryptoManager->fileSystemIsMounted()) {
-            /* Do not attempt to mount the FS; we know that it will be mounted
-             * automatically, as soon as some encryption keys are provided */
-            m_error = CredentialsDbNotMounted;
-            return false;
-        }
-    } else {
-        dbPath = m_CAMConfiguration.metadataDBPath() + QLatin1String(".creds");
+    if (!m_cryptoManager->fileSystemIsMounted()) {
+        /* Do not attempt to mount the FS; we know that it will be mounted
+         * automatically, as soon as some encryption keys are provided */
+        m_error = CredentialsDbNotMounted;
+        return false;
     }
+
+    QString dbPath = m_cryptoManager->fileSystemMountPath()
+        + QDir::separator()
+        + m_CAMConfiguration.m_secretsDbName;
 
     TRACE() << "Database name: [" << dbPath << "]";
 
