@@ -52,7 +52,7 @@ void messageHandler(QtMsgType type, const char *msg)
         default: priority = LOG_INFO; break;
     }
 
-    syslog(priority, msg);
+    syslog(priority, "%s", msg);
 }
 
 int main(int argc, char *argv[])
