@@ -9,6 +9,7 @@ QT += core \
 QT -= gui
 
 LIBS *= -lsignon-qt
+QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 SOURCES += \
     testauthsession.cpp \
