@@ -118,11 +118,7 @@ struct CAMConfiguration
      */
     QString metadataDBPath() const;
 
-    void setStoragePath(const QString &storagePath) {
-        m_storagePath = storagePath;
-        // CryptoSetup extensions are given the m_settings dictionary only
-        addSetting(QLatin1String("StoragePath"), storagePath);
-    }
+    void setStoragePath(const QString &storagePath);
 
     void addSetting(const QString &key, const QVariant &value) {
         m_settings.insert(key, value);
