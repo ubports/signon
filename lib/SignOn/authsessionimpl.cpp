@@ -42,7 +42,6 @@
 #endif
 
 using namespace SignOn;
-using namespace SignOnCrypto;
 
 static QVariantMap sessionData2VariantMap(const SessionData &data)
 {
@@ -256,19 +255,8 @@ void AuthSessionImpl::process(const SessionData &sessionData, const QString &mec
     QVariantMap sessionDataVa = sessionData2VariantMap(sessionData);
     QString remoteFunctionName;
 
-    QVariantMap encodedSessionData(m_encryptor.encodeVariantMap(sessionDataVa, 0));
-    if (m_encryptor.status() != Encryptor::Ok ) {
-        qCritical() << "AuthSession: encryption failed";
-
-        emit m_parent->error(
-            Error(Error::EncryptionFailure,
-                QString(QLatin1String("AuthSession(%1) failed to encrypt its arguments"))
-                         .arg(m_methodName)));
-        return;
-    }
-
     QVariantList arguments;
-    arguments += encodedSessionData;
+    arguments += sessionDataVa;
     arguments += mechanism;
 
     remoteFunctionName = QLatin1String("process");
@@ -453,17 +441,7 @@ void AuthSessionImpl::responseSlot(const QVariantMap &sessionDataVa)
 {
     m_isBusy = false;
 
-    if (m_encryptor.isVariantMapEncrypted(sessionDataVa)) {
-        QVariantMap decodedData(m_encryptor.decodeVariantMap(sessionDataVa, 0));
-        if (m_encryptor.status() != Encryptor::Ok)
-            emit m_parent->error(
-                Error(Error::OperationFailed,
-                      QLatin1String("The response cannot be decrypted.")));
-        else
-            emit m_parent->response(SessionData(decodedData));
-    }
-    else
-        emit m_parent->response(SessionData(sessionDataVa));
+    emit m_parent->response(SessionData(sessionDataVa));
 }
 
 void AuthSessionImpl::stateSlot(int state, const QString &message)

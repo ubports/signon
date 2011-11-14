@@ -11,7 +11,6 @@ CONFIG += uitools \
     debug \
     link_pkgconfig
 
-PKGCONFIG += libsignoncrypto-qt
 CONFIG += qdbus
 
 # Input

@@ -47,8 +47,6 @@ CONFIG += qdbus \
     build_all \
     link_pkgconfig
     
-PKGCONFIG += libsignoncrypto-qt
-
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 DEFINES += \
