@@ -67,6 +67,7 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration()
     : m_loadedFromFile(false),
+      m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
       m_camConfiguration(),
       m_identityTimeout(300),//secs
       m_authSessionTimeout(300)//secs
@@ -111,9 +112,7 @@ void SignonDaemonConfiguration::load()
 
         QString storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-        if (storagePath.startsWith(QLatin1Char('~')))
-            storagePath.replace(0, 1, QDir::homePath());
-        m_camConfiguration.m_storagePath = storagePath;
+        m_camConfiguration.setStoragePath(storagePath);
 
         //Secure storage
         QString useSecureStorage =
@@ -127,18 +126,10 @@ void SignonDaemonConfiguration::load()
         if (m_camConfiguration.m_useEncryption) {
             settings.beginGroup(QLatin1String("SecureStorage"));
 
-            bool isOk = false;
-            quint32 storageSize =
-                settings.value(QLatin1String("Size")).toUInt(&isOk);
-            if (!isOk || storageSize < signonMinumumDbSize) {
-                storageSize = signonMinumumDbSize;
-                TRACE() << "Less than minimum possible storage size configured."
-                        << "Setting to the minimum of:" << signonMinumumDbSize << "Mb";
+            QVariantMap storageOptions;
+            foreach (const QString &key, settings.childKeys()) {
+                m_camConfiguration.addSetting(key, settings.value(key));
             }
-            m_camConfiguration.m_fileSystemSize = storageSize;
-
-            m_camConfiguration.m_fileSystemType = settings.value(
-                QLatin1String("FileSystemType")).toString();
 
             settings.endGroup();
         }
@@ -176,6 +167,22 @@ void SignonDaemonConfiguration::load()
         value = environment.value(
             QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
         m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
+    }
+
+    if (environment.contains(QLatin1String("SSO_LOGGING_LEVEL"))) {
+        value = environment.value(
+            QLatin1String("SSO_LOGGING_LEVEL")).toInt(&isOk);
+        if (isOk)
+            setLoggingLevel(value);
+    }
+
+    if (environment.contains(QLatin1String("SSO_STORAGE_PATH"))) {
+        m_camConfiguration.setStoragePath(
+            environment.value(QLatin1String("SSO_STORAGE_PATH")));
+    }
+
+    if (environment.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
+        m_pluginsDir = environment.value(QLatin1String("SSO_PLUGINS_DIR"));
     }
 }
 
@@ -240,7 +247,8 @@ void SignonDaemon::setupSignalHandlers()
 
 void SignonDaemon::signalHandler(int signal)
 {
-    ::write(sigFd[0], &signal, sizeof(signal));
+    int ret = ::write(sigFd[0], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 }
 
 void SignonDaemon::handleUnixSignal()
@@ -248,7 +256,8 @@ void SignonDaemon::handleUnixSignal()
     m_sigSn->setEnabled(false);
 
     int signal;
-    ::read(sigFd[1], &signal, sizeof(signal));
+    int ret = read(sigFd[1], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 
     TRACE() << "signal received: " << signal;
 
@@ -561,7 +570,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
 QStringList SignonDaemon::queryMethods()
 {
-    QDir pluginsDir(SIGNOND_PLUGINS_DIR);
+    QDir pluginsDir(m_configuration->pluginsDir());
     //TODO: in the future remove the sym links comment
     QStringList fileNames = pluginsDir.entryList(
             QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);
@@ -844,8 +853,7 @@ uchar SignonDaemon::backupStarts()
     /* do backup copy: prepare the list of files to be backed up */
     QStringList backupFiles;
     backupFiles << config.m_dbName;
-    if (m_configuration->useSecureStorage())
-        backupFiles << QLatin1String(signonDefaultFileSystemName);
+    backupFiles << m_pCAMManager->backupFiles();
 
     /* make sure that all the backup files and storage directory exist:
        create storage dir and empty files if not so, as backup/restore
@@ -917,8 +925,7 @@ uchar SignonDaemon::restoreFinished()
 
     QStringList backupFiles;
     backupFiles << config.m_dbName;
-    if (m_configuration->useSecureStorage())
-        backupFiles << QLatin1String(signonDefaultFileSystemName);
+    backupFiles << m_pCAMManager->backupFiles();
 
     /* perform the copy */
     if (!copyFromBackupDir(backupFiles)) {

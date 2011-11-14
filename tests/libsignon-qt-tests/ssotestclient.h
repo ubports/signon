@@ -120,6 +120,7 @@ private:
     static QString idErrCodeAsStr(const Identity::IdentityError);
     static QString errCodeAsStr(const Error::ErrorType);
     bool storeCredentialsPrivate(const SignOn::IdentityInfo &info);
+    QString pluginsDir() const;
 
 protected Q_SLOTS:
     void response(const SignOn::SessionData &data);

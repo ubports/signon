@@ -25,6 +25,7 @@
 #define SIGNON_ENABLE_UNSTABLE_APIS
 #include "credentialsaccessmanager.h"
 
+#include "default-crypto-manager.h"
 #include "default-key-authorizer.h"
 #include "signond-common.h"
 
@@ -50,13 +51,13 @@ using namespace SignOn;
 /* ---------------------- CAMConfiguration ---------------------- */
 
 CAMConfiguration::CAMConfiguration()
-        : m_storagePath(QLatin1String(signonDefaultStoragePath)),
-          m_dbName(QLatin1String(signonDefaultDbName)),
+        : m_dbName(QLatin1String(signonDefaultDbName)),
+          m_secretsDbName(QLatin1String(signonDefaultSecretsDbName)),
           m_useEncryption(signonDefaultUseEncryption),
-          m_fileSystemType(QLatin1String(signonDefaultFileSystemType)),
-          m_fileSystemSize(signonMinumumDbSize),
           m_encryptionPassphrase(QByteArray())
-{}
+{
+    setStoragePath(QLatin1String(signonDefaultStoragePath));
+}
 
 void CAMConfiguration::serialize(QIODevice *device)
 {
@@ -70,10 +71,6 @@ void CAMConfiguration::serialize(QIODevice *device)
     QString buffer;
     QTextStream stream(&buffer);
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
-    stream << "File system mount name " << encryptedFSPath() << '\n';
-    stream << "File system format: " << m_fileSystemType << '\n';
-    stream << "File system size:" << m_fileSystemSize << "megabytes\n";
-
     const char *usingEncryption = m_useEncryption ? "true" : "false";
     stream << "Using encryption: " << usingEncryption << '\n';
     stream << "Credentials database name: " << m_dbName << '\n';
@@ -87,11 +84,12 @@ QString CAMConfiguration::metadataDBPath() const
     return m_storagePath + QDir::separator() + m_dbName;
 }
 
-QString CAMConfiguration::encryptedFSPath() const
-{
-    return m_storagePath +
-        QDir::separator() +
-        QLatin1String(signonDefaultFileSystemName);
+void CAMConfiguration::setStoragePath(const QString &storagePath) {
+    m_storagePath = storagePath;
+    if (m_storagePath.startsWith(QLatin1Char('~')))
+        m_storagePath.replace(0, 1, QDir::homePath());
+    // CryptoSetup extensions are given the m_settings dictionary only
+    addSetting(QLatin1String("StoragePath"), m_storagePath);
 }
 
 /* ---------------------- CredentialsAccessManager ---------------------- */
@@ -105,7 +103,7 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_error(NoError),
           keyManagers(),
           m_pCredentialsDB(NULL),
-          m_pCryptoFileSystemManager(NULL),
+          m_cryptoManager(NULL),
           m_keyHandler(NULL),
           m_keyAuthorizer(NULL),
           m_CAMConfiguration(CAMConfiguration())
@@ -133,8 +131,8 @@ void CredentialsAccessManager::finalize()
     if (m_systemOpened)
         closeCredentialsSystem();
 
-    if (m_pCryptoFileSystemManager)
-        delete m_pCryptoFileSystemManager;
+    if (m_cryptoManager)
+        delete m_cryptoManager;
 
     // Disconnect all key managers
     foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
@@ -163,17 +161,21 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
         return false;
     }
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        //Initialize CryptoManager
-        m_pCryptoFileSystemManager = new SignOn::CryptoManager(this);
-        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemMounted()),
-                         this, SLOT(onEncryptedFSMounted()));
-        QObject::connect(m_pCryptoFileSystemManager, SIGNAL(fileSystemUnmounting()),
-                         this, SLOT(onEncryptedFSUnmounting()));
-        m_pCryptoFileSystemManager->setFileSystemPath(m_CAMConfiguration.encryptedFSPath());
-        m_pCryptoFileSystemManager->setFileSystemSize(m_CAMConfiguration.m_fileSystemSize);
-        m_pCryptoFileSystemManager->setFileSystemType(m_CAMConfiguration.m_fileSystemType);
+    //Initialize CryptoManager
+    if (m_cryptoManager == 0) {
+        TRACE() << "No CryptoManager set, using default (dummy)";
+        m_cryptoManager = new DefaultCryptoManager(this);
+    }
+    QObject::connect(m_cryptoManager, SIGNAL(fileSystemMounted()),
+                     this, SLOT(onEncryptedFSMounted()));
+    QObject::connect(m_cryptoManager, SIGNAL(fileSystemUnmounting()),
+                     this, SLOT(onEncryptedFSUnmounting()));
+    m_cryptoManager->initialize(m_CAMConfiguration.m_settings);
 
+    /* This check is an optimization: instantiating the KeyAuthorizer is
+     * probably not harmful if m_useEncryption is false, but it's certainly
+     * useless. */
+    if (m_CAMConfiguration.m_useEncryption) {
         if (m_keyAuthorizer == 0) {
             TRACE() << "No key authorizer set, using default";
             m_keyAuthorizer = new DefaultKeyAuthorizer(m_keyHandler, this);
@@ -197,7 +199,7 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
                          SLOT(onLastAuthorizedKeyRemoved(SignOn::Key)));
         QObject::connect(m_keyHandler, SIGNAL(keyRemoved(SignOn::Key)),
                          this, SLOT(onKeyRemoved(SignOn::Key)));
-        m_keyHandler->initialize(m_pCryptoFileSystemManager, keyManagers);
+        m_keyHandler->initialize(m_cryptoManager, keyManagers);
     }
 
     m_isInitialized = true;
@@ -219,8 +221,14 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
 
     SignOn::ExtensionInterface *extension;
     SignOn::ExtensionInterface2 *extension2;
+    SignOn::ExtensionInterface3 *extension3;
 
-    extension2 = qobject_cast<SignOn::ExtensionInterface2 *>(plugin);
+    extension3 = qobject_cast<SignOn::ExtensionInterface3 *>(plugin);
+    if (extension3 != 0)
+        extension2 = extension3;
+    else
+        extension2 = qobject_cast<SignOn::ExtensionInterface2 *>(plugin);
+
     if (extension2 != 0)
         extension = extension2;
     else
@@ -248,6 +256,26 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
                 extensionInUse = true;
             } else {
                 TRACE() << "Key authorizer already set";
+                delete keyAuthorizer;
+            }
+        }
+    }
+
+    if (extension3 != 0) {
+        /* if encryption is disabled, the DefaultCryptoManager (which provides
+         * no encryption) must be used instead; in this case, don't even
+         * attempt to instantiate alternate CryptoManagers. */
+        if (m_CAMConfiguration.m_useEncryption) {
+            SignOn::AbstractCryptoManager *cryptoManager =
+                extension3->cryptoManager(this);
+            if (cryptoManager != 0) {
+                if (m_cryptoManager == 0) {
+                    m_cryptoManager = cryptoManager;
+                    extensionInUse = true;
+                } else {
+                    TRACE() << "Crypto manager already set";
+                    delete cryptoManager;
+                }
             }
         }
     }
@@ -255,25 +283,26 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
     return extensionInUse;
 }
 
+QStringList CredentialsAccessManager::backupFiles() const
+{
+    QStringList files;
+
+    files << m_cryptoManager->backupFiles();
+    return files;
+}
+
 bool CredentialsAccessManager::openSecretsDB()
 {
-    //todo remove this variable after LUKS implementation becomes stable.
-    QString dbPath;
-
-    if (m_CAMConfiguration.m_useEncryption) {
-        dbPath = m_pCryptoFileSystemManager->fileSystemMountPath()
-            + QDir::separator()
-            + m_CAMConfiguration.m_dbName;
-
-        if (!m_pCryptoFileSystemManager->fileSystemIsMounted()) {
-            /* Do not attempt to mount the FS; we know that it will be mounted
-             * automatically, as soon as some encryption keys are provided */
-            m_error = CredentialsDbNotMounted;
-            return false;
-        }
-    } else {
-        dbPath = m_CAMConfiguration.metadataDBPath() + QLatin1String(".creds");
+    if (!m_cryptoManager->fileSystemIsMounted()) {
+        /* Do not attempt to mount the FS; we know that it will be mounted
+         * automatically, as soon as some encryption keys are provided */
+        m_error = CredentialsDbNotMounted;
+        return false;
     }
+
+    QString dbPath = m_cryptoManager->fileSystemMountPath()
+        + QDir::separator()
+        + m_CAMConfiguration.m_secretsDbName;
 
     TRACE() << "Database name: [" << dbPath << "]";
 
@@ -293,11 +322,9 @@ bool CredentialsAccessManager::closeSecretsDB()
 {
     m_pCredentialsDB->closeSecretsDB();
 
-    if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_pCryptoFileSystemManager->unmountFileSystem()) {
-            m_error = CredentialsDbUnmountFailed;
-            return false;
-        }
+    if (!m_cryptoManager->unmountFileSystem()) {
+        m_error = CredentialsDbUnmountFailed;
+        return false;
     }
 
     return true;
@@ -354,8 +381,7 @@ bool CredentialsAccessManager::openCredentialsSystem()
 
     m_systemOpened = true;
 
-    if (m_pCryptoFileSystemManager == 0 ||
-        m_pCryptoFileSystemManager->fileSystemIsMounted()) {
+    if (m_cryptoManager->fileSystemIsMounted()) {
         if (!openSecretsDB()) {
             BLAME() << "Failed to open secrets DB.";
             /* Even if the secrets DB couldn't be opened, signond is still
@@ -365,7 +391,7 @@ bool CredentialsAccessManager::openCredentialsSystem()
         /* The secrets DB will be opened as soon as the encrypted FS is
          * mounted.
          */
-        m_pCryptoFileSystemManager->mountFileSystem();
+        m_cryptoManager->mountFileSystem();
     }
 
     return true;
@@ -398,20 +424,8 @@ bool CredentialsAccessManager::deleteCredentialsSystem()
         return false;
     }
 
-    m_error = NoError;
-
-    if (m_CAMConfiguration.m_useEncryption) {
-        if (!m_pCryptoFileSystemManager->deleteFileSystem())
-            m_error = CredentialsDbDeletionFailed;
-    } else {
-        QFile dbFile(m_CAMConfiguration.m_dbName);
-        if (dbFile.exists()) {
-            if (!dbFile.remove())
-                m_error = CredentialsDbDeletionFailed;
-        }
-    }
-
-    return m_error == NoError;
+    BLAME() << "Not implemented";
+    return false;
 }
 
 CredentialsDB *CredentialsAccessManager::credentialsDB() const
@@ -439,7 +453,7 @@ void CredentialsAccessManager::onLastAuthorizedKeyRemoved(const SignOn::Key key)
 {
     Q_UNUSED(key);
     TRACE() << "All keys disabled. Closing secure storage.";
-    if (isSecretsDBOpen() || m_pCryptoFileSystemManager->fileSystemIsMounted())
+    if (isSecretsDBOpen() || m_cryptoManager->fileSystemIsMounted())
         if (!closeSecretsDB())
             BLAME() << "Error occurred while closing secure storage.";
 }

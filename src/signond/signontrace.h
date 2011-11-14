@@ -77,7 +77,7 @@ namespace SignOn {
                 default: priority = LOG_INFO; break;
             }
 
-            syslog(priority, msg);
+            syslog(priority, "%s", msg);
          }
 
     private:

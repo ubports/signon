@@ -47,8 +47,7 @@
 
 using namespace SignOn;
 
-//TODO get this from config
-#define REMOTEPLUGIN_BIN_PATH QLatin1String("/usr/bin/signonpluginprocess")
+#define REMOTEPLUGIN_BIN_PATH QLatin1String("signonpluginprocess")
 #define PLUGINPROCESS_START_TIMEOUT 5000
 #define PLUGINPROCESS_STOP_TIMEOUT 1000
 
