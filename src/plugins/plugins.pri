@@ -26,17 +26,7 @@ QMAKE_CXXFLAGS += -fno-exceptions \
 
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins
 
-exists( ../../meego-release ) {
-    ARCH = $$system(tail -n1 ../../meego-release)
-} else {
-    ARCH = $$system(uname -m)
-}
-contains( ARCH, x86_64 ) {
-    pkgconfig.path  = $${INSTALL_PREFIX}/lib64/pkgconfig
-    target.path = $${INSTALL_PREFIX}/lib64/signon
-} else {
-    pkgconfig.path  = $${INSTALL_PREFIX}/lib/pkgconfig
-    target.path = $${INSTALL_PREFIX}/lib/signon
-}
+pkgconfig.path = $${INSTALL_LIBDIR}/pkgconfig
 
+target.path = $${INSTALL_LIBDIR}/signon
 INSTALLS = target
