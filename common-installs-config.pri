@@ -19,6 +19,31 @@ isEmpty( PREFIX ) {
     message("==== install prefix set to `$${INSTALL_PREFIX}'")
 }
 
+# Setup the library installation directory
+exists( meego-release ) {
+    ARCH = $$system(tail -n1 meego-release)
+} else {
+    ARCH = $$system(uname -m)
+}
+
+contains( ARCH, x86_64 ) {
+    INSTALL_LIBDIR = $${INSTALL_PREFIX}/lib64
+} else {
+    INSTALL_LIBDIR = $${INSTALL_PREFIX}/lib
+}
+
+# default library directory can be overriden by defining LIBDIR when
+# running qmake
+isEmpty( LIBDIR ) {
+    message("====")
+    message("==== NOTE: To override the library installation path run: `qmake LIBDIR=/custom/path'")
+    message("==== (current installation path is `$${INSTALL_LIBDIR}')")
+} else {
+    INSTALL_LIBDIR = $${LIBDIR}
+    message("====")
+    message("==== library install path set to `$${INSTALL_LIBDIR}'")
+}
+
 
 #-----------------------------------------------------------------------------
 # default installation target for applications
@@ -35,24 +60,10 @@ contains( TEMPLATE, app ) {
 # default installation target for libraries
 #-----------------------------------------------------------------------------
 contains( TEMPLATE, lib ) {
-
-    exists( meego-release ) {
-        ARCH = $$system(tail -n1 meego-release)
-    } else {
-        ARCH = $$system(uname -m)
-    }
-    contains( ARCH, x86_64 ) {
-        target.path  = $${INSTALL_PREFIX}/lib64
-    } else {
-        target.path  = $${INSTALL_PREFIX}/lib
-    }
+    target.path  = $${INSTALL_LIBDIR}
     INSTALLS    += target
     message("====")
     message("==== INSTALLS += target")
-
-    # reset the .pc file's `prefix' variable
-    #include( tools/fix-pc-prefix.pri )
-
 }
 
 #-----------------------------------------------------------------------------

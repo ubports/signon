@@ -27,16 +27,7 @@ dbus_files.files = $$OTHER_FILES
 dbus_files.path =$${INSTALL_PREFIX}/share/dbus-1/interfaces
 
 pkgconfig.files = signond.pc
-exists( ../../meego-release ) {
-    ARCH = $$system(tail -n1 ../../meego-release)
-} else {
-    ARCH = $$system(uname -m)
-}
-contains( ARCH, x86_64 ) {
-    pkgconfig.path  = $${INSTALL_PREFIX}/lib64/pkgconfig
-} else {
-    pkgconfig.path  = $${INSTALL_PREFIX}/lib/pkgconfig
-}
+pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
 
 INSTALLS += headers dbus_files pkgconfig
 
