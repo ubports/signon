@@ -53,7 +53,6 @@ using namespace SignOn;
 CAMConfiguration::CAMConfiguration()
         : m_dbName(QLatin1String(signonDefaultDbName)),
           m_secretsDbName(QLatin1String(signonDefaultSecretsDbName)),
-          m_useEncryption(signonDefaultUseEncryption),
           m_encryptionPassphrase(QByteArray())
 {
     setStoragePath(QLatin1String(signonDefaultStoragePath));
@@ -71,7 +70,7 @@ void CAMConfiguration::serialize(QIODevice *device)
     QString buffer;
     QTextStream stream(&buffer);
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
-    const char *usingEncryption = m_useEncryption ? "true" : "false";
+    const char *usingEncryption = useEncryption() ? "true" : "false";
     stream << "Using encryption: " << usingEncryption << '\n';
     stream << "Credentials database name: " << m_dbName << '\n';
     stream << "======================================================\n\n";
@@ -82,6 +81,17 @@ void CAMConfiguration::serialize(QIODevice *device)
 QString CAMConfiguration::metadataDBPath() const
 {
     return m_storagePath + QDir::separator() + m_dbName;
+}
+
+QString CAMConfiguration::cryptoManagerName() const
+{
+    return m_settings.value(QLatin1String("CryptoManager"),
+                            QLatin1String("default")).toString();
+}
+
+bool CAMConfiguration::useEncryption() const
+{
+    return cryptoManagerName() != QLatin1String("default");
 }
 
 void CAMConfiguration::setStoragePath(const QString &storagePath) {
@@ -173,9 +183,9 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     m_cryptoManager->initialize(m_CAMConfiguration.m_settings);
 
     /* This check is an optimization: instantiating the KeyAuthorizer is
-     * probably not harmful if m_useEncryption is false, but it's certainly
+     * probably not harmful if useEncryption() is false, but it's certainly
      * useless. */
-    if (m_CAMConfiguration.m_useEncryption) {
+    if (m_CAMConfiguration.useEncryption()) {
         if (m_keyAuthorizer == 0) {
             TRACE() << "No key authorizer set, using default";
             m_keyAuthorizer = new DefaultKeyAuthorizer(m_keyHandler, this);
@@ -262,10 +272,9 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
     }
 
     if (extension3 != 0) {
-        /* if encryption is disabled, the DefaultCryptoManager (which provides
-         * no encryption) must be used instead; in this case, don't even
-         * attempt to instantiate alternate CryptoManagers. */
-        if (m_CAMConfiguration.m_useEncryption) {
+        /* Instantiate this plugin's CryptoManager only if it's the plugin
+         * requested in the config file. */
+        if (plugin->objectName() == m_CAMConfiguration.cryptoManagerName()) {
             SignOn::AbstractCryptoManager *cryptoManager =
                 extension3->cryptoManager(this);
             if (cryptoManager != 0) {

@@ -70,8 +70,6 @@ public:
 
     void load();
     bool loadedFromFile() const { return m_loadedFromFile; }
-    bool useSecureStorage() const
-        { return m_camConfiguration.m_useEncryption; }
 
     QString pluginsDir() const { return m_pluginsDir; }
     uint identityTimeout() const { return m_identityTimeout; }
