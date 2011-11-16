@@ -32,6 +32,7 @@ HEADERS += \
     backuptest.h \
     databasetest.h \
     $$TOP_SRC_DIR/src/signond/credentialsdb.h \
+    $$TOP_SRC_DIR/src/signond/default-secrets-storage.h \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn/blobiohandler.h
 
 SOURCES = \
@@ -41,7 +42,8 @@ SOURCES = \
     $$TOP_SRC_DIR/tests/pluginproxytest/include.cpp \
     backuptest.cpp \
     databasetest.cpp \
-           $$TOP_SRC_DIR/src/signond/credentialsdb.cpp
+    $$TOP_SRC_DIR/src/signond/credentialsdb.cpp \
+    $$TOP_SRC_DIR/src/signond/default-secrets-storage.cpp
 
 contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
  HEADERS *=$$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.h \

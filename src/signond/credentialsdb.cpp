@@ -23,6 +23,7 @@
  */
 
 #include "credentialsdb.h"
+#include "default-secrets-storage.h"
 #include "signond-common.h"
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
@@ -41,7 +42,7 @@ static const QString driver = QLatin1String("QSQLITE");
 SqlDatabase::SqlDatabase(const QString &databaseName,
                          const QString &connectionName,
                          int version):
-    m_lastError(QSqlError()),
+    m_lastError(SignOn::CredentialsDBError()),
     m_version(version),
     m_database(QSqlDatabase::addDatabase(driver, connectionName))
 
@@ -96,7 +97,7 @@ bool SqlDatabase::connect()
 {
     if (!m_database.open()) {
         TRACE() << "Could not open database connection.\n";
-        m_lastError = m_database.lastError();
+        setLastError(m_database.lastError());
         return false;
     }
     return true;
@@ -132,10 +133,10 @@ QSqlQuery SqlDatabase::exec(const QString &queryStr)
 
     if (!query.exec()) {
         TRACE() << "Query exec error: " << query.lastQuery();
-        m_lastError = query.lastError();
-        TRACE() << errorInfo(m_lastError);
+        setLastError(query.lastError());
+        TRACE() << errorInfo(query.lastError());
     } else
-        m_lastError.setType(QSqlError::NoError);
+        m_lastError.clear();
 
     return query;
 }
@@ -145,10 +146,10 @@ QSqlQuery SqlDatabase::exec(QSqlQuery &query)
 
     if (!query.exec()) {
         TRACE() << "Query exec error: " << query.lastQuery();
-        m_lastError = query.lastError();
-        TRACE() << errorInfo(m_lastError);
+        setLastError(query.lastError());
+        TRACE() << errorInfo(query.lastError());
     } else
-        m_lastError.setType(QSqlError::NoError);
+        m_lastError.clear();
 
     return query;
 }
@@ -157,7 +158,7 @@ QSqlQuery SqlDatabase::exec(QSqlQuery &query)
 bool SqlDatabase::transactionalExec(const QStringList &queryList)
 {
     if (!startTransaction()) {
-        m_lastError = m_database.lastError();
+        setLastError(m_database.lastError());
         TRACE() << "Could not start transaction";
         return false;
     }
@@ -184,9 +185,23 @@ bool SqlDatabase::transactionalExec(const QStringList &queryList)
     return false;
 }
 
-QSqlError SqlDatabase::lastError() const
+SignOn::CredentialsDBError SqlDatabase::lastError() const
 {
     return m_lastError;
+}
+
+void SqlDatabase::setLastError(const QSqlError &sqlError)
+{
+    if (sqlError.isValid()) {
+        if (sqlError.type() == QSqlError::ConnectionError) {
+            m_lastError.setType(SignOn::CredentialsDBError::ConnectionError);
+        } else {
+            m_lastError.setType(SignOn::CredentialsDBError::StatementError);
+        }
+        m_lastError.setText(sqlError.text());
+    } else {
+        m_lastError.clear();
+    }
 }
 
 QMap<QString, QString> SqlDatabase::configuration()
@@ -1147,291 +1162,14 @@ bool MetaDataDB::updateRealms(quint32 id, const QStringList &realms, bool isNew)
     return true;
 }
 
-bool SecretsDB::createTables()
-{
-    QStringList createTableQuery = QStringList()
-        <<  QString::fromLatin1(
-            "CREATE TABLE CREDENTIALS"
-            "(id INTEGER NOT NULL UNIQUE,"
-            "username TEXT,"
-            "password TEXT,"
-            "PRIMARY KEY (id))")
-        <<  QString::fromLatin1(
-            "CREATE TABLE STORE"
-            "(identity_id INTEGER,"
-            "method_id INTEGER,"
-            "key TEXT,"
-            "value BLOB,"
-            "PRIMARY KEY (identity_id, method_id, key))")
-
-        << QString::fromLatin1(
-            // Cascading Delete
-            "CREATE TRIGGER tg_delete_credentials "
-            "BEFORE DELETE ON CREDENTIALS "
-            "FOR EACH ROW BEGIN "
-            "    DELETE FROM STORE WHERE STORE.identity_id = OLD.id; "
-            "END; "
-        );
-
-   foreach (QString createTable, createTableQuery) {
-        QSqlQuery query = exec(createTable);
-        if (lastError().isValid()) {
-            TRACE() << "Error occurred while creating the database.";
-            return false;
-        }
-        query.clear();
-        commit();
-    }
-    return true;
-}
-
-bool SecretsDB::clear()
-{
-    TRACE();
-
-    QStringList clearCommands = QStringList()
-        << QLatin1String("DELETE FROM CREDENTIALS")
-        << QLatin1String("DELETE FROM STORE");
-
-    return transactionalExec(clearCommands);
-}
-
-bool SecretsDB::updateCredentials(const quint32 id,
-                                  const SignonIdentityInfo &info)
-{
-    if (!startTransaction()) {
-        TRACE() << "Could not start transaction. Error inserting credentials.";
-        return false;
-    }
-    QSqlQuery query = newQuery();
-    /* Credentials insert */
-    QString password;
-    if (info.storePassword())
-        password = info.password();
-
-
-    /* The identity might not be new and have no secret info stored at
-     * the same time - e.g. if the secrets db has been deleted */
-    bool hasSecretInfoStored = false;
-    QString queryStr = QString::fromLatin1(
-        "SELECT id FROM credentials WHERE id = %1").arg(info.id());
-
-    QSqlQuery selectQuery = exec(queryStr);
-    if (selectQuery.first())
-        hasSecretInfoStored = true;
-
-    if (!info.isNew() && hasSecretInfoStored) {
-        TRACE() << "UPDATE:" << id;
-        query.prepare(S("UPDATE CREDENTIALS SET username = :username, "
-                        "password = :password "
-                        "WHERE id = :id"));
-
-     } else {
-        TRACE() << "INSERT:" << id;
-        query.prepare(S("INSERT OR REPLACE INTO CREDENTIALS "
-                        "(id, username, password) "
-                        "VALUES(:id, :username, :password)"));
-    }
-
-    query.bindValue(S(":id"), id);
-    query.bindValue(S(":username"), info.userName());
-    query.bindValue(S(":password"), password);
-
-    exec(query);
-
-    if (errorOccurred()) {
-        rollback();
-        TRACE() << "Error occurred while storing crendentials";
-        return false;
-    }
-    return commit();
-}
-
-bool SecretsDB::removeCredentials(const quint32 id)
-{
-    TRACE();
-
-    QStringList queries = QStringList()
-        << QString::fromLatin1(
-            "DELETE FROM CREDENTIALS WHERE id = %1").arg(id)
-        << QString::fromLatin1(
-            "DELETE FROM STORE WHERE identity_id = %1").arg(id);
-
-    return transactionalExec(queries);
-}
-
-bool SecretsDB::loadCredentials(SignonIdentityInfo &info)
-{
-    TRACE();
-
-    QString queryStr =
-        QString::fromLatin1("SELECT username, password FROM credentials "
-                            "WHERE id = %1").arg(info.id());
-    QSqlQuery query = exec(queryStr);
-    if (!query.first()) {
-        TRACE() << "No result or invalid credentials query.";
-        return false;
-    }
-
-    QString username = query.value(0).toString();
-    if (info.isUserNameSecret())
-        info.setUserName(username);
-
-    QString password = query.value(1).toString();
-    info.setPassword(password);
-
-    return true;
-}
-
-bool SecretsDB::checkPassword(const quint32 id,
-                              const QString &username,
-                              const QString &password)
-{
-    QSqlQuery query = newQuery();
-    query.prepare(S("SELECT id FROM CREDENTIALS "
-                    "WHERE id = :id AND username = :username AND password = :password"));
-    query.bindValue(S(":id"), id);
-    query.bindValue(S(":username"), username);
-    query.bindValue(S(":password"), password);
-
-    QSqlQuery result = exec(query);
-
-    if (errorOccurred()) {
-        TRACE() << "Error occurred while checking password";
-        return false;
-    }
-    bool valid = false;
-    valid = result.first();
-    result.clear();
-
-    return valid;
-}
-
-QVariantMap SecretsDB::loadData(quint32 id, quint32 method)
-{
-    TRACE();
-
-    QSqlQuery q = newQuery();
-    q.prepare(S("SELECT key, value "
-                "FROM STORE WHERE identity_id = :id AND method_id = :method"));
-    q.bindValue(S(":id"), id);
-    q.bindValue(S(":method"), method);
-    exec(q);
-    if (errorOccurred())
-        return QVariantMap();
-
-    QVariantMap result;
-    while (q.next()) {
-        QByteArray array;
-        array = q.value(1).toByteArray();
-        QDataStream stream(array);
-        QVariant data;
-        stream >> data;
-        result.insert(q.value(0).toString(), data);
-    }
-    return result;
-}
-
-bool SecretsDB::storeData(quint32 id, quint32 method, const QVariantMap &data)
-{
-    TRACE();
-
-    if (!startTransaction()) {
-        TRACE() << "Could not start transaction. Error inserting data.";
-        return false;
-    }
-
-    bool allOk = true;
-    qint32 dataCounter = 0;
-    if (!(data.keys().empty())) {
-        QMapIterator<QString, QVariant> it(data);
-        while (it.hasNext()) {
-            it.next();
-
-            QByteArray array;
-            QDataStream stream(&array, QIODevice::WriteOnly);
-            stream << it.value();
-
-            dataCounter += it.key().size() +array.size();
-            if (dataCounter >= SSO_MAX_TOKEN_STORAGE) {
-                BLAME() << "storing data max size exceeded";
-                allOk = false;
-                break;
-            }
-            /* Key/value insert/replace/delete */
-            QSqlQuery query = newQuery();
-            if (it.value().isValid() && !it.value().isNull()) {
-                TRACE() << "insert";
-                query.prepare(S(
-                    "INSERT OR REPLACE INTO STORE "
-                    "(identity_id, method_id, key, value) "
-                    "VALUES(:id, :method, :key, :value)"));
-                query.bindValue(S(":value"), array);
-            } else {
-                TRACE() << "remove";
-                query.prepare(S(
-                    "DELETE FROM STORE WHERE identity_id = :id "
-                    "AND method_id = :method "
-                    "AND key = :key"));
-
-            }
-            query.bindValue(S(":id"), id);
-            query.bindValue(S(":method"), method);
-            query.bindValue(S(":key"), it.key());
-            exec(query);
-            if (errorOccurred()) {
-                allOk = false;
-                break;
-            }
-        }
-    }
-
-    if (allOk && commit()) {
-        TRACE() << "Data insertion ok.";
-        return true;
-    }
-    rollback();
-    TRACE() << "Data insertion failed.";
-    return false;
-}
-
-bool SecretsDB::removeData(quint32 id, quint32 method)
-{
-    TRACE();
-
-    if (!startTransaction()) {
-        TRACE() << "Could not start transaction. Error removing data.";
-        return false;
-    }
-
-    QSqlQuery q = newQuery();
-    if (method == 0) {
-        q.prepare(S("DELETE FROM STORE WHERE identity_id = :id"));
-    } else {
-        q.prepare(S("DELETE FROM STORE WHERE identity_id = :id "
-                    "AND method_id = :method"));
-        q.bindValue(S(":method"), method);
-    }
-    q.bindValue(S(":id"), id);
-    exec(q);
-    if (!errorOccurred() && commit()) {
-        TRACE() << "Data removal ok.";
-        return true;
-    } else {
-        rollback();
-        TRACE() << "Data removal failed.";
-        return false;
-    }
-}
-
 /* Error monitor class */
 
 CredentialsDB::ErrorMonitor::ErrorMonitor(CredentialsDB *db)
 {
-    db->_lastError.setType(QSqlError::NoError);
+    db->_lastError.setType(SignOn::CredentialsDBError::NoError);
     db->metaDataDB->clearError();
-    if (db->secretsDB != 0)
-        db->secretsDB->clearError();
+    if (db->secretsStorage != 0)
+        db->secretsStorage->clearError();
     _db = db;
 }
 
@@ -1443,8 +1181,9 @@ CredentialsDB::ErrorMonitor::~ErrorMonitor()
     if (_db->_lastError.isValid())
         return;
 
-    if (_db->secretsDB != 0 && _db->secretsDB->errorOccurred()) {
-        _db->_lastError = _db->secretsDB->lastError();
+    if (_db->secretsStorage != 0 &&
+        _db->secretsStorage->lastError().isValid()) {
+        _db->_lastError = _db->secretsStorage->lastError();
         return;
     }
 
@@ -1454,22 +1193,17 @@ CredentialsDB::ErrorMonitor::~ErrorMonitor()
 /*    -------   CredentialsDB  implementation   -------    */
 
 CredentialsDB::CredentialsDB(const QString &metaDataDbName):
-    secretsDB(0),
+    secretsStorage(0),
     metaDataDB(new MetaDataDB(metaDataDbName))
 {
-    noSecretsDB = QSqlError(QLatin1String("Secrets DB not opened"),
-                            QLatin1String("Secrets DB not opened"),
-                            QSqlError::ConnectionError);
+    noSecretsDB = SignOn::CredentialsDBError(
+        QLatin1String("Secrets DB not opened"),
+        SignOn::CredentialsDBError::ConnectionError);
 }
 
 CredentialsDB::~CredentialsDB()
 {
     TRACE();
-    if (secretsDB) {
-        QString connectionName = secretsDB->connectionName();
-        delete secretsDB;
-        QSqlDatabase::removeDatabase(connectionName);
-    }
     if (metaDataDB) {
         QString connectionName = metaDataDB->connectionName();
         delete metaDataDB;
@@ -1484,35 +1218,31 @@ bool CredentialsDB::init()
 
 bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
 {
-    secretsDB = new SecretsDB(secretsDbName);
+    if (secretsStorage == 0)
+        secretsStorage = new DefaultSecretsStorage(this);
 
-    if (!secretsDB->init()) {
-        TRACE() << SqlDatabase::errorInfo(lastError());
-        delete secretsDB;
-        secretsDB = 0;
+    QVariantMap configuration;
+    configuration.insert(QLatin1String("name"), secretsDbName);
+    if (!secretsStorage->initialize(configuration)) {
+        TRACE() << "SecretsStorage initialization failed: " <<
+            secretsStorage->lastError().text();
         return false;
     }
 
-    TRACE() << secretsDB->configuration();
     return true;
 }
 
 bool CredentialsDB::isSecretsDBOpen()
 {
-    return secretsDB != 0;
+    return secretsStorage != 0 && secretsStorage->isOpen();
 }
 
 void CredentialsDB::closeSecretsDB()
 {
-    if (secretsDB != 0) {
-        QString connectionName = secretsDB->connectionName();
-        delete secretsDB;
-        QSqlDatabase::removeDatabase(connectionName);
-        secretsDB = 0;
-    }
+    if (secretsStorage != 0) secretsStorage->close();
 }
 
-CredentialsDBError CredentialsDB::lastError() const
+SignOn::CredentialsDBError CredentialsDB::lastError() const
 {
     return _lastError;
 }
@@ -1529,7 +1259,7 @@ bool CredentialsDB::checkPassword(const quint32 id,
 {
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(false);
-    return secretsDB->checkPassword(id, username, password);
+    return secretsStorage->checkPassword(id, username, password);
 }
 
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
@@ -1538,7 +1268,11 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPasswo
     INIT_ERROR();
     SignonIdentityInfo info = metaDataDB->identity(id);
     if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
-        secretsDB->loadCredentials(info);
+        QString username, password;
+        secretsStorage->loadCredentials(id, username, password);
+        if (info.isUserNameSecret())
+            info.setUserName(username);
+        info.setPassword(password);
     }
     return info;
 }
@@ -1565,7 +1299,10 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
     if (id == 0) return id;
 
     if (storeSecret && isSecretsDBOpen()) {
-        secretsDB->updateCredentials(id, info);
+        QString password;
+        if (info.storePassword())
+            password = info.password();
+        secretsStorage->updateCredentials(id, info.userName(), password);
     }
 
     return id;
@@ -1579,7 +1316,7 @@ bool CredentialsDB::removeCredentials(const quint32 id)
      * available */
     RETURN_IF_NO_SECRETS_DB(false);
 
-    return secretsDB->removeCredentials(id) &&
+    return secretsStorage->removeCredentials(id) &&
         metaDataDB->removeIdentity(id);
 }
 
@@ -1592,7 +1329,7 @@ bool CredentialsDB::clear()
     /* We don't allow clearing the DB if the secrets DB is not available */
     RETURN_IF_NO_SECRETS_DB(false);
 
-    return secretsDB->clear() && metaDataDB->clear();
+    return secretsStorage->clear() && metaDataDB->clear();
 }
 
 QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
@@ -1606,7 +1343,7 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return QVariantMap();
 
-    return secretsDB->loadData(id, methodId);
+    return secretsStorage->loadData(id, methodId);
 }
 
 bool CredentialsDB::storeData(const quint32 id, const QString &method,
@@ -1621,7 +1358,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return false;
 
-    return secretsDB->storeData(id, methodId, data);
+    return secretsStorage->storeData(id, methodId, data);
 }
 
 bool CredentialsDB::removeData(const quint32 id, const QString &method)
@@ -1640,7 +1377,7 @@ bool CredentialsDB::removeData(const quint32 id, const QString &method)
         methodId = 0;
     }
 
-    return secretsDB->removeData(id, methodId);
+    return secretsStorage->removeData(id, methodId);
 }
 
 QStringList CredentialsDB::accessControlList(const quint32 identityId)
