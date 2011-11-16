@@ -17,6 +17,7 @@ HEADERS += \
     accesscontrolmanager.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
+    default-crypto-manager.h \
     default-key-authorizer.h \
     signonsessioncore.h \
     signonauthsessionadaptor.h \
@@ -37,6 +38,7 @@ SOURCES += \
     accesscontrolmanager.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
+    default-crypto-manager.cpp \
     default-key-authorizer.cpp \
     signonsessioncore.cpp \
     signonauthsessionadaptor.cpp \

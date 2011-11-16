@@ -34,7 +34,7 @@
 
 namespace SignOn {
 
-class CryptoManager;
+class AbstractCryptoManager;
 
 class KeyHandlerPrivate;
 typedef QList<SignOn::AbstractKeyManager *> KeyManagersList;
@@ -69,15 +69,15 @@ public:
     virtual ~KeyHandler();
 
     /*!
-     * This method initializes the key managers. 
+     * This method initializes the key managers.
      */
-    void initialize(CryptoManager *cryptoManager,
+    void initialize(AbstractCryptoManager *cryptoManager,
                     const KeyManagersList &keyManagers);
 
     /*!
      * @returns The CryptoManager.
      */
-    CryptoManager *cryptoManager() const;
+    AbstractCryptoManager *cryptoManager() const;
 
     /*!
      * True if all key managers have been initialized and have started

@@ -111,9 +111,7 @@ void SignonDaemonConfiguration::load()
 
         QString storagePath =
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-        if (storagePath.startsWith(QLatin1Char('~')))
-            storagePath.replace(0, 1, QDir::homePath());
-        m_camConfiguration.m_storagePath = storagePath;
+        m_camConfiguration.setStoragePath(storagePath);
 
         //Secure storage
         QString useSecureStorage =
@@ -127,18 +125,10 @@ void SignonDaemonConfiguration::load()
         if (m_camConfiguration.m_useEncryption) {
             settings.beginGroup(QLatin1String("SecureStorage"));
 
-            bool isOk = false;
-            quint32 storageSize =
-                settings.value(QLatin1String("Size")).toUInt(&isOk);
-            if (!isOk || storageSize < signonMinumumDbSize) {
-                storageSize = signonMinumumDbSize;
-                TRACE() << "Less than minimum possible storage size configured."
-                        << "Setting to the minimum of:" << signonMinumumDbSize << "Mb";
+            QVariantMap storageOptions;
+            foreach (const QString &key, settings.childKeys()) {
+                m_camConfiguration.addSetting(key, settings.value(key));
             }
-            m_camConfiguration.m_fileSystemSize = storageSize;
-
-            m_camConfiguration.m_fileSystemType = settings.value(
-                QLatin1String("FileSystemType")).toString();
 
             settings.endGroup();
         }
@@ -844,8 +834,7 @@ uchar SignonDaemon::backupStarts()
     /* do backup copy: prepare the list of files to be backed up */
     QStringList backupFiles;
     backupFiles << config.m_dbName;
-    if (m_configuration->useSecureStorage())
-        backupFiles << QLatin1String(signonDefaultFileSystemName);
+    backupFiles << m_pCAMManager->backupFiles();
 
     /* make sure that all the backup files and storage directory exist:
        create storage dir and empty files if not so, as backup/restore
@@ -917,8 +906,7 @@ uchar SignonDaemon::restoreFinished()
 
     QStringList backupFiles;
     backupFiles << config.m_dbName;
-    if (m_configuration->useSecureStorage())
-        backupFiles << QLatin1String(signonDefaultFileSystemName);
+    backupFiles << m_pCAMManager->backupFiles();
 
     /* perform the copy */
     if (!copyFromBackupDir(backupFiles)) {
