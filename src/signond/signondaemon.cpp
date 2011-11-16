@@ -113,25 +113,25 @@ void SignonDaemonConfiguration::load()
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
         m_camConfiguration.setStoragePath(storagePath);
 
-        //Secure storage
+        // Secure storage
+
+        // Support legacy setting "UseSecureStorage"
         QString useSecureStorage =
             settings.value(QLatin1String("UseSecureStorage")).toString();
-
-        if (!useSecureStorage.isEmpty())
-            m_camConfiguration.m_useEncryption =
-                (useSecureStorage == QLatin1String("yes")
-                || useSecureStorage == QLatin1String("true"));
-
-        if (m_camConfiguration.m_useEncryption) {
-            settings.beginGroup(QLatin1String("SecureStorage"));
-
-            QVariantMap storageOptions;
-            foreach (const QString &key, settings.childKeys()) {
-                m_camConfiguration.addSetting(key, settings.value(key));
-            }
-
-            settings.endGroup();
+        if (useSecureStorage == QLatin1String("yes") ||
+            useSecureStorage == QLatin1String("true")) {
+            m_camConfiguration.addSetting(QLatin1String("CryptoManager"),
+                                          QLatin1String("cryptsetup"));
         }
+
+        settings.beginGroup(QLatin1String("SecureStorage"));
+
+        QVariantMap storageOptions;
+        foreach (const QString &key, settings.childKeys()) {
+            m_camConfiguration.addSetting(key, settings.value(key));
+        }
+
+        settings.endGroup();
 
         //Timeouts
         settings.beginGroup(QLatin1String("ObjectTimeouts"));

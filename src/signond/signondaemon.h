@@ -70,8 +70,6 @@ public:
 
     void load();
     bool loadedFromFile() const { return m_loadedFromFile; }
-    bool useSecureStorage() const
-        { return m_camConfiguration.m_useEncryption; }
 
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }

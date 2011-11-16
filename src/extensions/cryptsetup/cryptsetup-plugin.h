@@ -34,6 +34,8 @@ class CryptsetupPlugin: public QObject, public SignOn::ExtensionInterface3
     Q_INTERFACES(SignOn::ExtensionInterface3)
 
 public:
+    CryptsetupPlugin();
+
     // reimplemented methods
     SignOn::AbstractCryptoManager *cryptoManager(QObject *parent = 0) const;
     SignOn::AbstractKeyAuthorizer *keyAuthorizer(SignOn::KeyHandler *keyHandler,
