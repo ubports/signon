@@ -55,10 +55,6 @@ public:
                          QString &username,
                          QString &password);
 
-    bool checkPassword(const quint32 id,
-                       const QString &username,
-                       const QString &password);
-
     QVariantMap loadData(quint32 id, quint32 method);
     bool storeData(quint32 id, quint32 method, const QVariantMap &data);
     bool removeData(quint32 id, quint32 method);

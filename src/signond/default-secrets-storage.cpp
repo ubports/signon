@@ -164,30 +164,6 @@ bool SecretsDB::loadCredentials(const quint32 id,
     return true;
 }
 
-bool SecretsDB::checkPassword(const quint32 id,
-                              const QString &username,
-                              const QString &password)
-{
-    QSqlQuery query = newQuery();
-    query.prepare(S("SELECT id FROM CREDENTIALS "
-                    "WHERE id = :id AND username = :username AND password = :password"));
-    query.bindValue(S(":id"), id);
-    query.bindValue(S(":username"), username);
-    query.bindValue(S(":password"), password);
-
-    QSqlQuery result = exec(query);
-
-    if (errorOccurred()) {
-        TRACE() << "Error occurred while checking password";
-        return false;
-    }
-    bool valid = false;
-    valid = result.first();
-    result.clear();
-
-    return valid;
-}
-
 QVariantMap SecretsDB::loadData(quint32 id, quint32 method)
 {
     TRACE();
