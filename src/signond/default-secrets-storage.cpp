@@ -94,28 +94,11 @@ bool SecretsDB::updateCredentials(const quint32 id,
         return false;
     }
     QSqlQuery query = newQuery();
-    /* The identity might not be new and have no secret info stored at
-     * the same time - e.g. if the secrets db has been deleted */
-    bool hasSecretInfoStored = false;
-    QString queryStr = QString::fromLatin1(
-        "SELECT id FROM credentials WHERE id = %1").arg(id);
 
-    QSqlQuery selectQuery = exec(queryStr);
-    if (selectQuery.first())
-        hasSecretInfoStored = true;
-
-    if (hasSecretInfoStored) {
-        TRACE() << "UPDATE:" << id;
-        query.prepare(S("UPDATE CREDENTIALS SET username = :username, "
-                        "password = :password "
-                        "WHERE id = :id"));
-
-     } else {
-        TRACE() << "INSERT:" << id;
-        query.prepare(S("INSERT OR REPLACE INTO CREDENTIALS "
-                        "(id, username, password) "
-                        "VALUES(:id, :username, :password)"));
-    }
+    TRACE() << "INSERT:" << id;
+    query.prepare(S("INSERT OR REPLACE INTO CREDENTIALS "
+                    "(id, username, password) "
+                    "VALUES(:id, :username, :password)"));
 
     query.bindValue(S(":id"), id);
     query.bindValue(S(":username"), username);
