@@ -2,6 +2,7 @@
 # Common configuration for all projects.
 #-----------------------------------------------------------------------------
 
+QT		-= gui
 CONFIG         += link_pkgconfig
 #MOC_DIR         = .moc
 #OBJECTS_DIR     = .obj
