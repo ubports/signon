@@ -41,3 +41,5 @@ LIBS += \
 
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
+target.path  = $${INSTALL_PREFIX}/lib/signon/extensions
+INSTALLS    += target
