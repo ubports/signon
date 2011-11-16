@@ -38,6 +38,7 @@ namespace SignOn {
 class AbstractCryptoManager;
 class AbstractKeyAuthorizer;
 class AbstractKeyManager;
+class AbstractSecretsStorage;
 class KeyHandler;
 
 /*!
@@ -91,6 +92,14 @@ public:
      * @return A CryptoManager object, or 0 if none is provided by this plugin
      */
     virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const = 0;
+
+    /*!
+     * Gets the SecretsStorage object, which is used to save and load the
+     * user's secrets, as well as authentication plugins' data.
+     *
+     * @return A SecretsStorage object, or 0 if none is provided by this plugin.
+     */
+    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const = 0;
 };
 
 } // namespace
