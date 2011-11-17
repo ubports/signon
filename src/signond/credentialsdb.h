@@ -276,7 +276,8 @@ class CredentialsDB : public QObject
     friend class ErrorMonitor;
 
 public:
-    CredentialsDB(const QString &metaDataDbName);
+    CredentialsDB(const QString &metaDataDbName,
+                  SignOn::AbstractSecretsStorage *secretsStorage);
     ~CredentialsDB();
 
     bool init();

@@ -33,7 +33,8 @@ void TestDatabase::initTestCase()
 {
     QFile::remove(dbFile);
     QFile::remove(secretsDbFile);
-    m_db = new CredentialsDB(dbFile);
+    m_secretsStorage = new DefaultSecretsStorage();
+    m_db = new CredentialsDB(dbFile, m_secretsStorage);
     m_meta = m_db->metaDataDB;
     QVERIFY(m_db != 0);
 
@@ -59,6 +60,8 @@ void TestDatabase::cleanupTestCase()
 {
     delete m_db;
     m_db = NULL;
+    delete m_secretsStorage;
+    m_secretsStorage = 0;
     //remove database file
     //QFile::remove(dbFile);
 }

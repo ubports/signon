@@ -43,6 +43,7 @@
 #include "SignOn/AbstractCryptoManager"
 #include "SignOn/AbstractKeyAuthorizer"
 #include "SignOn/AbstractKeyManager"
+#include "SignOn/AbstractSecretsStorage"
 #include "SignOn/KeyHandler"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
@@ -123,6 +124,11 @@ struct CAMConfiguration
      */
     QString cryptoManagerName() const;
     bool useEncryption() const;
+
+    /*!
+     * Returns the name of the SecretsStorage to use.
+     */
+    QString secretsStorageName() const;
 
     void setStoragePath(const QString &storagePath);
 
@@ -379,6 +385,7 @@ private:
     SignOn::AbstractCryptoManager *m_cryptoManager;
     SignOn::KeyHandler *m_keyHandler;
     SignOn::AbstractKeyAuthorizer *m_keyAuthorizer;
+    SignOn::AbstractSecretsStorage *m_secretsStorage;
     CAMConfiguration m_CAMConfiguration;
 
     /* List of all the senders of a SecureStorageEvent. */

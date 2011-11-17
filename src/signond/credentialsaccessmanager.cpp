@@ -27,6 +27,7 @@
 
 #include "default-crypto-manager.h"
 #include "default-key-authorizer.h"
+#include "default-secrets-storage.h"
 #include "signond-common.h"
 
 #include "SignOn/ExtensionInterface"
@@ -94,6 +95,12 @@ bool CAMConfiguration::useEncryption() const
     return cryptoManagerName() != QLatin1String("default");
 }
 
+QString CAMConfiguration::secretsStorageName() const
+{
+    return m_settings.value(QLatin1String("SecretsStorage"),
+                            QLatin1String("default")).toString();
+}
+
 void CAMConfiguration::setStoragePath(const QString &storagePath) {
     m_storagePath = storagePath;
     if (m_storagePath.startsWith(QLatin1Char('~')))
@@ -116,6 +123,7 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_cryptoManager(NULL),
           m_keyHandler(NULL),
           m_keyAuthorizer(NULL),
+          m_secretsStorage(NULL),
           m_CAMConfiguration(CAMConfiguration())
 {
     m_keyHandler = new SignOn::KeyHandler(this);
@@ -169,6 +177,15 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
     if (!createStorageDir()) {
         BLAME() << "Failed to create storage directory.";
         return false;
+    }
+
+    if (m_secretsStorage == 0) {
+        QString name = m_CAMConfiguration.secretsStorageName();
+        if (name != QLatin1String("default")) {
+            BLAME() << "Couldn't load SecretsStorage:" << name;
+        }
+        TRACE() << "No SecretsStorage set, using default (dummy)";
+        m_secretsStorage = new DefaultSecretsStorage(this);
     }
 
     //Initialize CryptoManager
@@ -287,6 +304,20 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
                 }
             }
         }
+
+        if (plugin->objectName() == m_CAMConfiguration.secretsStorageName()) {
+            SignOn::AbstractSecretsStorage *secretsStorage =
+                extension3->secretsStorage(this);
+            if (secretsStorage != 0) {
+                if (m_secretsStorage == 0) {
+                    m_secretsStorage = secretsStorage;
+                    extensionInUse = true;
+                } else {
+                    TRACE() << "SecretsStorage already set";
+                    delete secretsStorage;
+                }
+            }
+        }
     }
 
     return extensionInUse;
@@ -361,7 +392,7 @@ bool CredentialsAccessManager::openMetaDataDB()
 {
     QString dbPath = m_CAMConfiguration.metadataDBPath();
 
-    m_pCredentialsDB = new CredentialsDB(dbPath);
+    m_pCredentialsDB = new CredentialsDB(dbPath, m_secretsStorage);
 
     if (!m_pCredentialsDB->init()) {
         m_error = CredentialsDbConnectionError;

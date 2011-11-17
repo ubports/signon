@@ -23,7 +23,6 @@
  */
 
 #include "credentialsdb.h"
-#include "default-secrets-storage.h"
 #include "signond-common.h"
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
@@ -1192,8 +1191,9 @@ CredentialsDB::ErrorMonitor::~ErrorMonitor()
 
 /*    -------   CredentialsDB  implementation   -------    */
 
-CredentialsDB::CredentialsDB(const QString &metaDataDbName):
-    secretsStorage(0),
+CredentialsDB::CredentialsDB(const QString &metaDataDbName,
+                             SignOn::AbstractSecretsStorage *secretsStorage):
+    secretsStorage(secretsStorage),
     metaDataDB(new MetaDataDB(metaDataDbName))
 {
     noSecretsDB = SignOn::CredentialsDBError(
@@ -1218,9 +1218,6 @@ bool CredentialsDB::init()
 
 bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
 {
-    if (secretsStorage == 0)
-        secretsStorage = new DefaultSecretsStorage(this);
-
     QVariantMap configuration;
     configuration.insert(QLatin1String("name"), secretsDbName);
     if (!secretsStorage->initialize(configuration)) {

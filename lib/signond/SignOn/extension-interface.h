@@ -99,6 +99,9 @@ public:
     /*!
      * Gets the SecretsStorage object, which is used to save and load the
      * user's secrets, as well as authentication plugins' data.
+     * This object is instantiated only if the value of the "SecretsStorage"
+     * setting in the signond configuration matches the plugin's
+     * QObject::objectName().
      *
      * @return A SecretsStorage object, or 0 if none is provided by this plugin.
      */
