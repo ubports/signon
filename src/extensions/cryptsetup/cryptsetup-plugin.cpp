@@ -29,6 +29,12 @@
 
 using namespace SignOn;
 
+CryptsetupPlugin::CryptsetupPlugin():
+    QObject(0)
+{
+    setObjectName(QLatin1String("cryptsetup"));
+}
+
 AbstractCryptoManager *CryptsetupPlugin::cryptoManager(QObject *parent) const
 {
     qDebug() << Q_FUNC_INFO;
