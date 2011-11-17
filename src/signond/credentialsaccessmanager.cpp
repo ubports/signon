@@ -163,6 +163,10 @@ bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
 
     //Initialize CryptoManager
     if (m_cryptoManager == 0) {
+        QString name = m_CAMConfiguration.cryptoManagerName();
+        if (name != QLatin1String("default")) {
+            BLAME() << "Couldn't load CryptoManager:" << name;
+        }
         TRACE() << "No CryptoManager set, using default (dummy)";
         m_cryptoManager = new DefaultCryptoManager(this);
     }
