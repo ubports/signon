@@ -67,6 +67,7 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration()
     : m_loadedFromFile(false),
+      m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
       m_camConfiguration(),
       m_identityTimeout(300),//secs
       m_authSessionTimeout(300)//secs
@@ -167,6 +168,22 @@ void SignonDaemonConfiguration::load()
             QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
         m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
     }
+
+    if (environment.contains(QLatin1String("SSO_LOGGING_LEVEL"))) {
+        value = environment.value(
+            QLatin1String("SSO_LOGGING_LEVEL")).toInt(&isOk);
+        if (isOk)
+            setLoggingLevel(value);
+    }
+
+    if (environment.contains(QLatin1String("SSO_STORAGE_PATH"))) {
+        m_camConfiguration.setStoragePath(
+            environment.value(QLatin1String("SSO_STORAGE_PATH")));
+    }
+
+    if (environment.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
+        m_pluginsDir = environment.value(QLatin1String("SSO_PLUGINS_DIR"));
+    }
 }
 
 /* ---------------------- SignonDaemon ---------------------- */
@@ -230,7 +247,8 @@ void SignonDaemon::setupSignalHandlers()
 
 void SignonDaemon::signalHandler(int signal)
 {
-    ::write(sigFd[0], &signal, sizeof(signal));
+    int ret = ::write(sigFd[0], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 }
 
 void SignonDaemon::handleUnixSignal()
@@ -238,7 +256,8 @@ void SignonDaemon::handleUnixSignal()
     m_sigSn->setEnabled(false);
 
     int signal;
-    ::read(sigFd[1], &signal, sizeof(signal));
+    int ret = read(sigFd[1], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 
     TRACE() << "signal received: " << signal;
 
@@ -551,7 +570,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
 QStringList SignonDaemon::queryMethods()
 {
-    QDir pluginsDir(SIGNOND_PLUGINS_DIR);
+    QDir pluginsDir(m_configuration->pluginsDir());
     //TODO: in the future remove the sym links comment
     QStringList fileNames = pluginsDir.entryList(
             QStringList() << QLatin1String("*.so*"), QDir::Files | QDir::NoDotAndDotDot);

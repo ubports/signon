@@ -1,5 +1,4 @@
-include( ../../common-project-config.pri )
-include( ../../common-vars.pri )
+include( ../tests.pri )
 
 CONFIG += \
     qtestlib \

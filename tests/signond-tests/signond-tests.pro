@@ -1,5 +1,4 @@
-include( ../../common-project-config.pri )
-include( $$TOP_SRC_DIR/common-vars.pri )
+include( ../tests.pri )
 
 CONFIG += \
     qtestlib \
@@ -87,3 +86,5 @@ testsuite.files = tests.xml
 INSTALLS += target \
             testsuite \
             scripts
+
+check.commands = "$$RUN_WITH_SIGNOND ./signond-tests/signond-tests"

@@ -28,5 +28,10 @@ DEFINES += NO_SIGNON_USER
 
 # Default directory for signond extensions
 DEFINES += SIGNON_EXTENSIONS_DIR=\\\"/usr/lib/signon/extensions\\\"
-# End of File
 
+_PLUGINS = $$(SIGNOND_PLUGINS_DIR)
+isEmpty(_PLUGINS) {
+    SIGNOND_PLUGINS_DIR = \\\"/usr/lib/signon\\\"
+} else {
+    SIGNOND_PLUGINS_DIR = \\\"$$_PLUGINS\\\"
+}
