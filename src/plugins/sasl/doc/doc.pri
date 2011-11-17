@@ -45,6 +45,8 @@ doccleantarget.commands += rm -r -f doc/accounts.tags;
 doccleantarget.depends   = FORCE
 QMAKE_EXTRA_TARGETS     += doccleantarget
 
+include( ../../../../common-project-config.pri )
+include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 #-----------------------------------------------------------------------------
 # Installation target setup for documentation

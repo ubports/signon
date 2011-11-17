@@ -51,7 +51,8 @@ QMAKE_EXTRA_TARGETS     += doccleantarget
 # NOTE: remember to set headers.files before this include to have the headers
 # properly setup.
 #-----------------------------------------------------------------------------
-include( ../../../common-installs-config.pri )
+include( ../../../common-project-config.pri )
+include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 
 #-----------------------------------------------------------------------------

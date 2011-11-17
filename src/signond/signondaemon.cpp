@@ -420,7 +420,7 @@ void SignonDaemon::initExtensions()
     /* Scan the directory containing signond extensions and attempt loading
      * all of them.
      */
-    QDir dir(QString::fromLatin1(SIGNON_EXTENSIONS_DIR));
+    QDir dir(QString::fromLatin1(SIGNOND_EXTENSIONS_DIR));
     QStringList filters(QLatin1String("lib*.so"));
     QStringList extensionList = dir.entryList(filters, QDir::Files);
     foreach(QString filename, extensionList)

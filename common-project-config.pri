@@ -26,12 +26,59 @@ DEFINES += DEBUG_ENABLED
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 
+#-----------------------------------------------------------------------------
+# setup the installation prefix
+#-----------------------------------------------------------------------------
+INSTALL_PREFIX = /usr  # default installation prefix
+
+# default prefix can be overriden by defining PREFIX when running qmake
+isEmpty( PREFIX ) {
+    message("====")
+    message("==== NOTE: To override the installation path run: `qmake PREFIX=/custom/path'")
+    message("==== (current installation path is `$${INSTALL_PREFIX}')")
+} else {
+    INSTALL_PREFIX = $${PREFIX}
+    message("====")
+    message("==== install prefix set to `$${INSTALL_PREFIX}'")
+}
+
+# Setup the library installation directory
+exists( meego-release ) {
+    ARCH = $$system(tail -n1 meego-release)
+} else {
+    ARCH = $$system(uname -m)
+}
+
+contains( ARCH, x86_64 ) {
+    INSTALL_LIBDIR = $${INSTALL_PREFIX}/lib64
+} else {
+    INSTALL_LIBDIR = $${INSTALL_PREFIX}/lib
+}
+
+# default library directory can be overriden by defining LIBDIR when
+# running qmake
+isEmpty( LIBDIR ) {
+    message("====")
+    message("==== NOTE: To override the library installation path run: `qmake LIBDIR=/custom/path'")
+    message("==== (current installation path is `$${INSTALL_LIBDIR}')")
+} else {
+    INSTALL_LIBDIR = $${LIBDIR}
+    message("====")
+    message("==== library install path set to `$${INSTALL_LIBDIR}'")
+}
+
+
 # Default directory for signond extensions
-DEFINES += SIGNON_EXTENSIONS_DIR=\\\"/usr/lib/signon/extensions\\\"
+_EXTENSIONS = $$(SIGNOND_EXTENSIONS_DIR)
+isEmpty(_EXTENSIONS) {
+    SIGNOND_EXTENSIONS_DIR = \\\"$${INSTALL_LIBDIR}/signon/extensions\\\"
+} else {
+    SIGNOND_EXTENSIONS_DIR = \\\"$$_EXTENSIONS\\\"
+}
 
 _PLUGINS = $$(SIGNOND_PLUGINS_DIR)
 isEmpty(_PLUGINS) {
-    SIGNOND_PLUGINS_DIR = \\\"/usr/lib/signon\\\"
+    SIGNOND_PLUGINS_DIR = \\\"$${INSTALL_LIBDIR}/signon\\\"
 } else {
     SIGNOND_PLUGINS_DIR = \\\"$$_PLUGINS\\\"
 }
