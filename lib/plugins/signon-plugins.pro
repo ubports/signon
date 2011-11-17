@@ -22,8 +22,18 @@ headers.files = \
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
+PKGCONFIG_VARS = INSTALL_PREFIX INSTALL_LIBDIR SIGNOND_PLUGINS_DIR
+COMMAND = "cat signon-plugins.pc.in "
+for(var, PKGCONFIG_VARS) {
+   eval(VALUE = \$\${$${var}})
+   COMMAND += "| sed s,$${var},$${VALUE},"
+}
+COMMAND += " > signon-plugins.pc"
+
 pkgconfig.files = signon-plugins.pc
 pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
+pkgconfig.commands = $${COMMAND}
+QMAKE_EXTRA_TARGETS += pkgconfig
 INSTALLS += pkgconfig
 
 # configuration feature
