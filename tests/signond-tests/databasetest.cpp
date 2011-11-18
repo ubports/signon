@@ -33,7 +33,8 @@ void TestDatabase::initTestCase()
 {
     QFile::remove(dbFile);
     QFile::remove(secretsDbFile);
-    m_db = new CredentialsDB(dbFile);
+    m_secretsStorage = new DefaultSecretsStorage();
+    m_db = new CredentialsDB(dbFile, m_secretsStorage);
     m_meta = m_db->metaDataDB;
     QVERIFY(m_db != 0);
 
@@ -59,6 +60,8 @@ void TestDatabase::cleanupTestCase()
 {
     delete m_db;
     m_db = NULL;
+    delete m_secretsStorage;
+    m_secretsStorage = 0;
     //remove database file
     //QFile::remove(dbFile);
 }
@@ -81,7 +84,6 @@ void TestDatabase::createTableStructureTest()
 
     bool success = m_db->openSecretsDB(secretsDbFile);
     QVERIFY(success);
-    QVERIFY(m_db->secretsDB->hasTables());
 }
 
 void TestDatabase::queryListTest()
@@ -205,7 +207,6 @@ void TestDatabase::credentialsTest()
     QMap<QString, QString> filter;
     QList<SignonIdentityInfo> creds = m_db->credentials(filter);
     QVERIFY(creds.count() == 0);
-    quint32 id;
 
     //insert complete
     SignonIdentityInfo info =
@@ -217,10 +218,10 @@ void TestDatabase::credentialsTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    m_db->insertCredentials(info, true);
     creds = m_db->credentials(filter);
     QVERIFY(creds.count() == 1);
-    id = m_db->insertCredentials(info, true);
+    m_db->insertCredentials(info, true);
     creds = m_db->credentials(filter);
     QVERIFY(creds.count() == 2);
     foreach(SignonIdentityInfo info, creds) {
@@ -426,19 +427,6 @@ void TestDatabase::removeCredentialsTest()
            .arg(id);
     query = m_meta->exec(queryStr);
     QVERIFY(!query.first());
-
-    queryStr = QString::fromLatin1(
-            "SELECT * FROM CREDENTIALS WHERE identity_id = '%1'")
-           .arg(id);
-    query = m_db->secretsDB->exec(queryStr);
-    QVERIFY(!query.first());
-
-    queryStr = QString::fromLatin1(
-            "SELECT * FROM STORE WHERE identity_id = '%1'")
-           .arg(id);
-    query = m_db->secretsDB->exec(queryStr);
-    QVERIFY(!query.first());
-
 }
 
 void TestDatabase::clearTest()
@@ -453,9 +441,6 @@ void TestDatabase::clearTest()
 
     QVERIFY(m_db->clear());
     query = m_meta->exec(QLatin1String("SELECT * FROM credentials"));
-    QVERIFY(!query.first());
-
-    query = m_db->secretsDB->exec(QLatin1String("SELECT * FROM credentials"));
     QVERIFY(!query.first());
 }
 
