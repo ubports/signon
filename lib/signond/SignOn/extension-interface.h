@@ -87,6 +87,9 @@ public:
     /*!
      * Gets the CryptoManager object, which will be used to setup the file
      * system for the credentials storage.
+     * This object is instantiated only if the value of the "CryptoManager"
+     * setting in the signond configuration matches the plugin's
+     * QObject::objectName().
      *
      * @return A CryptoManager object, or 0 if none is provided by this plugin
      */

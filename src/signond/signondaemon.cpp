@@ -114,25 +114,25 @@ void SignonDaemonConfiguration::load()
             QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
         m_camConfiguration.setStoragePath(storagePath);
 
-        //Secure storage
+        // Secure storage
+
+        // Support legacy setting "UseSecureStorage"
         QString useSecureStorage =
             settings.value(QLatin1String("UseSecureStorage")).toString();
-
-        if (!useSecureStorage.isEmpty())
-            m_camConfiguration.m_useEncryption =
-                (useSecureStorage == QLatin1String("yes")
-                || useSecureStorage == QLatin1String("true"));
-
-        if (m_camConfiguration.m_useEncryption) {
-            settings.beginGroup(QLatin1String("SecureStorage"));
-
-            QVariantMap storageOptions;
-            foreach (const QString &key, settings.childKeys()) {
-                m_camConfiguration.addSetting(key, settings.value(key));
-            }
-
-            settings.endGroup();
+        if (useSecureStorage == QLatin1String("yes") ||
+            useSecureStorage == QLatin1String("true")) {
+            m_camConfiguration.addSetting(QLatin1String("CryptoManager"),
+                                          QLatin1String("cryptsetup"));
         }
+
+        settings.beginGroup(QLatin1String("SecureStorage"));
+
+        QVariantMap storageOptions;
+        foreach (const QString &key, settings.childKeys()) {
+            m_camConfiguration.addSetting(key, settings.value(key));
+        }
+
+        settings.endGroup();
 
         //Timeouts
         settings.beginGroup(QLatin1String("ObjectTimeouts"));
@@ -420,7 +420,7 @@ void SignonDaemon::initExtensions()
     /* Scan the directory containing signond extensions and attempt loading
      * all of them.
      */
-    QDir dir(QString::fromLatin1(SIGNON_EXTENSIONS_DIR));
+    QDir dir(QString::fromLatin1(SIGNOND_EXTENSIONS_DIR));
     QStringList filters(QLatin1String("lib*.so"));
     QStringList extensionList = dir.entryList(filters, QDir::Files);
     foreach(QString filename, extensionList)

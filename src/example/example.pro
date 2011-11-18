@@ -1,6 +1,7 @@
 include( ../../common-project-config.pri )
 include( ../../common-vars.pri )
 
+QT += gui
 TEMPLATE = app
 TARGET = signonclient
 DEPENDPATH += .

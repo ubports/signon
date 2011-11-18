@@ -51,6 +51,7 @@ QMAKE_EXTRA_TARGETS     += doccleantarget
 # NOTE: remember to set headers.files before this include to have the headers
 # properly setup.
 #-----------------------------------------------------------------------------
+include( ../common-project-config.pri )
 include( ../common-installs-config.pri )
 
 

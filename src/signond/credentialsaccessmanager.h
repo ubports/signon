@@ -118,6 +118,12 @@ struct CAMConfiguration
      */
     QString metadataDBPath() const;
 
+    /*!
+     * Returns the name of the CryptoManager to use.
+     */
+    QString cryptoManagerName() const;
+    bool useEncryption() const;
+
     void setStoragePath(const QString &storagePath);
 
     void addSetting(const QString &key, const QVariant &value) {
@@ -126,7 +132,6 @@ struct CAMConfiguration
     QString m_storagePath;      /*!< The base directory for storage. */
     QString m_dbName;           /*!< The database file name. */
     QString m_secretsDbName;    /*!< The credentials database file name. */
-    bool m_useEncryption;       /*!< Flag for encryption use, enables/disables all of the bellow. */
     QByteArray m_encryptionPassphrase; /*!< Passphrase used for opening encrypted FS. */
 
     QVariantMap m_settings;
