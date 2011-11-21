@@ -230,7 +230,8 @@ void SignonDaemon::setupSignalHandlers()
 
 void SignonDaemon::signalHandler(int signal)
 {
-    ::write(sigFd[0], &signal, sizeof(signal));
+    int ret = ::write(sigFd[0], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 }
 
 void SignonDaemon::handleUnixSignal()
@@ -238,7 +239,8 @@ void SignonDaemon::handleUnixSignal()
     m_sigSn->setEnabled(false);
 
     int signal;
-    ::read(sigFd[1], &signal, sizeof(signal));
+    int ret = read(sigFd[1], &signal, sizeof(signal));
+    Q_UNUSED(ret);
 
     TRACE() << "signal received: " << signal;
 
