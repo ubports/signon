@@ -1,5 +1,4 @@
-include( ../../common-project-config.pri )
-include( $$TOP_SRC_DIR/common-vars.pri )
+include( ../tests.pri )
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 CONFIG += qtestlib \
@@ -10,6 +9,7 @@ QT += core \
 QT -= gui
 
 LIBS *= -lsignon-qt
+QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 SOURCES += \
     testauthsession.cpp \
@@ -28,6 +28,7 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
     $$TOP_SRC_DIR/src/plugins/ssotest2
 DEFINES += SSO_CI_TESTMANAGEMENT
+DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR_QUOTED}"
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 TARGET = libsignon-qt-tests
