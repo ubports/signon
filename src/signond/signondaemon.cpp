@@ -65,12 +65,11 @@ namespace SignonDaemonNS {
 
 /* ---------------------- SignonDaemonConfiguration ---------------------- */
 
-SignonDaemonConfiguration::SignonDaemonConfiguration()
-    : m_loadedFromFile(false),
-      m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
-      m_camConfiguration(),
-      m_identityTimeout(300),//secs
-      m_authSessionTimeout(300)//secs
+SignonDaemonConfiguration::SignonDaemonConfiguration():
+    m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
+    m_camConfiguration(),
+    m_identityTimeout(300),//secs
+    m_authSessionTimeout(300)//secs
 {}
 
 SignonDaemonConfiguration::~SignonDaemonConfiguration()
@@ -104,7 +103,6 @@ void SignonDaemonConfiguration::load()
                        QLatin1String("/etc"));
 
     QSettings settings(QLatin1String("signond"));
-    m_loadedFromFile = true;
 
     int loggingLevel =
         settings.value(QLatin1String("LoggingLevel"), 1).toInt();
