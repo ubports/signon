@@ -100,62 +100,58 @@ void SignonDaemonConfiguration::load()
 {
     //Daemon configuration file
 
-    if (QFile::exists(QLatin1String("/etc/signond.conf"))) {
-        m_loadedFromFile = true;
+    QSettings::setPath(QSettings::NativeFormat, QSettings::SystemScope,
+                       QLatin1String("/etc"));
 
-        QSettings settings(QLatin1String("/etc/signond.conf"),
-                           QSettings::NativeFormat);
+    QSettings settings(QLatin1String("signond"));
+    m_loadedFromFile = true;
 
-        int loggingLevel =
-            settings.value(QLatin1String("LoggingLevel"), 1).toInt();
-        setLoggingLevel(loggingLevel);
+    int loggingLevel =
+        settings.value(QLatin1String("LoggingLevel"), 1).toInt();
+    setLoggingLevel(loggingLevel);
 
-        QString storagePath =
-            QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-        m_camConfiguration.setStoragePath(storagePath);
+    QString storagePath =
+        QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
+    m_camConfiguration.setStoragePath(storagePath);
 
-        // Secure storage
+    // Secure storage
 
-        // Support legacy setting "UseSecureStorage"
-        QString useSecureStorage =
-            settings.value(QLatin1String("UseSecureStorage")).toString();
-        if (useSecureStorage == QLatin1String("yes") ||
-            useSecureStorage == QLatin1String("true")) {
-            m_camConfiguration.addSetting(QLatin1String("CryptoManager"),
-                                          QLatin1String("cryptsetup"));
-        }
-
-        settings.beginGroup(QLatin1String("SecureStorage"));
-
-        QVariantMap storageOptions;
-        foreach (const QString &key, settings.childKeys()) {
-            m_camConfiguration.addSetting(key, settings.value(key));
-        }
-
-        settings.endGroup();
-
-        //Timeouts
-        settings.beginGroup(QLatin1String("ObjectTimeouts"));
-
-        bool isOk = false;
-        uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
-        if (isOk)
-            m_identityTimeout = aux;
-
-        aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
-        if (isOk)
-            m_authSessionTimeout = aux;
-
-        settings.endGroup();
-    } else {
-        TRACE() << "/etc/signond.conf not found. Using default daemon configuration.";
+    // Support legacy setting "UseSecureStorage"
+    QString useSecureStorage =
+        settings.value(QLatin1String("UseSecureStorage")).toString();
+    if (useSecureStorage == QLatin1String("yes") ||
+        useSecureStorage == QLatin1String("true")) {
+        m_camConfiguration.addSetting(QLatin1String("CryptoManager"),
+                                      QLatin1String("cryptsetup"));
     }
+
+    settings.beginGroup(QLatin1String("SecureStorage"));
+
+    QVariantMap storageOptions;
+    foreach (const QString &key, settings.childKeys()) {
+        m_camConfiguration.addSetting(key, settings.value(key));
+    }
+
+    settings.endGroup();
+
+    //Timeouts
+    settings.beginGroup(QLatin1String("ObjectTimeouts"));
+
+    bool isOk = false;
+    uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
+    if (isOk)
+        m_identityTimeout = aux;
+
+    aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
+    if (isOk)
+        m_authSessionTimeout = aux;
+
+    settings.endGroup();
 
     //Environment variables
 
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
     int value = 0;
-    bool isOk = false;
     if (environment.contains(QLatin1String("SSO_IDENTITY_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
