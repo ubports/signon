@@ -8,6 +8,7 @@ HEADERS = \
     abstract-crypto-manager.h \
     abstract-key-authorizer.h \
     abstract-key-manager.h \
+    abstract-secrets-storage.h \
     debug.h \
     export.h \
     extension-interface.h \
@@ -21,6 +22,7 @@ SOURCES += \
     abstract-crypto-manager.cpp \
     abstract-key-authorizer.cpp \
     abstract-key-manager.cpp \
+    abstract-secrets-storage.cpp \
     debug.cpp \
     key-handler.cpp \
     misc.cpp
@@ -48,6 +50,8 @@ headers.files = \
     abstract-key-authorizer.h \
     AbstractKeyManager \
     abstract-key-manager.h \
+    AbstractSecretsStorage \
+    abstract-secrets-storage.h \
     Debug \
     debug.h \
     export.h \

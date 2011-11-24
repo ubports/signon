@@ -28,6 +28,7 @@
 
 #include "signond/signoncommon.h"
 #include "credentialsdb.h"
+#include "default-secrets-storage.h"
 #include "signonidentityinfo.h"
 
 using namespace SignOn;
@@ -68,6 +69,7 @@ private Q_SLOTS:
 
 private:
     CredentialsDB *m_db;
+    DefaultSecretsStorage *m_secretsStorage;
     MetaDataDB *m_meta;
     QMap<QString,QVariant> testMethods;
     QStringList testRealms;

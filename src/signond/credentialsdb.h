@@ -34,6 +34,7 @@
 #include <QObject>
 #include <QtSql>
 
+#include "SignOn/abstract-secrets-storage.h"
 #include "signonidentityinfo.h"
 
 #define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
@@ -179,11 +180,12 @@ public:
     QMap<QString, QString> configuration();
 
     /*!
-        @returns the last occurred error if any. If not error occurred on the last performed operation the QSqlError object is invalid.
+        @returns the last occurred error if any. If not error occurred on the
+        last performed operation the error object is invalid.
     */
-    QSqlError lastError() const;
+    SignOn::CredentialsDBError lastError() const;
     bool errorOccurred() const { return lastError().isValid(); };
-    void clearError() { m_lastError.setType(QSqlError::NoError); }
+    void clearError() { m_lastError.clear(); }
 
     /*!
         Serializes a SQL error into a string.
@@ -197,9 +199,10 @@ public:
 protected:
     QStringList queryList(const QString &query_str);
     QStringList queryList(QSqlQuery &query);
+    void setLastError(const QSqlError &sqlError);
 
 private:
-    QSqlError m_lastError;
+    SignOn::CredentialsDBError m_lastError;
 protected:
     int m_version;
     QSqlDatabase m_database;
@@ -245,36 +248,11 @@ private:
     QStringList tableUpdates2();
 };
 
-class SecretsDB: public SqlDatabase
-{
-    friend class ::TestDatabase;
-public:
-    SecretsDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-secrets"), SSO_SECRETSDB_VERSION) {}
-
-    bool createTables();
-    bool clear();
-
-    bool updateCredentials(const quint32 id, const SignonIdentityInfo &info);
-    bool removeCredentials(const quint32 id);
-    bool loadCredentials(SignonIdentityInfo &info);
-
-    bool checkPassword(const quint32 id,
-                       const QString &username,
-                       const QString &password);
-
-    QVariantMap loadData(quint32 id, quint32 method);
-    bool storeData(quint32 id, quint32 method, const QVariantMap &data);
-    bool removeData(quint32 id, quint32 method);
-};
-
 /*!
     @class CredentialsDB
     Manages the credentials I/O.
     @ingroup Accounts_and_SSO_Framework
  */
-
-typedef QSqlError CredentialsDBError;
 
 class CredentialsDB : public QObject
 {
@@ -298,7 +276,8 @@ class CredentialsDB : public QObject
     friend class ErrorMonitor;
 
 public:
-    CredentialsDB(const QString &metaDataDbName);
+    CredentialsDB(const QString &metaDataDbName,
+                  SignOn::AbstractSecretsStorage *secretsStorage);
     ~CredentialsDB();
 
     bool init();
@@ -311,7 +290,7 @@ public:
     bool isSecretsDBOpen();
     void closeSecretsDB();
 
-    CredentialsDBError lastError() const;
+    SignOn::CredentialsDBError lastError() const;
     bool errorOccurred() const { return lastError().isValid(); };
 
     QStringList methods(const quint32 id, const QString &securityToken = QString());
@@ -338,10 +317,10 @@ public:
     QStringList references(const quint32 id, const QString &token = QString());
 
 private:
-    SecretsDB *secretsDB;
+    SignOn::AbstractSecretsStorage *secretsStorage;
     MetaDataDB *metaDataDB;
-    CredentialsDBError _lastError;
-    CredentialsDBError noSecretsDB;
+    SignOn::CredentialsDBError _lastError;
+    SignOn::CredentialsDBError noSecretsDB;
 };
 
 } // namespace SignonDaemonNS
