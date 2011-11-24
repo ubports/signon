@@ -89,4 +89,4 @@ INSTALLS += target \
             testsuite \
             scripts
 
-check.commands = "$$RUN_WITH_SIGNOND ./signond-tests/signond-tests"
+check.commands = "./signon-tests"

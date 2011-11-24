@@ -69,14 +69,12 @@ public:
         { m_camConfiguration.m_encryptionPassphrase = passphrase; }
 
     void load();
-    bool loadedFromFile() const { return m_loadedFromFile; }
 
     QString pluginsDir() const { return m_pluginsDir; }
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
 
 private:
-    bool m_loadedFromFile;
     QString m_pluginsDir;
 
     // storage configuration

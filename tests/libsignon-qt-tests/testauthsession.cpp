@@ -359,7 +359,7 @@ void TestAuthSession::process_with_unauthorized_method()
     QCOMPARE(spyResponseStoreCreds.count(), 1);
     QCOMPARE(spyErrorStoreCreds.count(), 0);
 
-    AuthSession *as = id->createSession(QLatin1String("sasl"));
+    AuthSession *as = id->createSession(QLatin1String("ssotest"));
 
     QSignalSpy spyResponse(as, SIGNAL(response(const SignOn::SessionData &)));
     QSignalSpy spyError(as, SIGNAL(error(const SignOn::Error &)));
@@ -369,18 +369,8 @@ void TestAuthSession::process_with_unauthorized_method()
     QObject::connect(as, SIGNAL(response(const SignOn::SessionData &)), &loop, SLOT(quit()));
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
-    // SASL plain wants parameter named Authname or else it fails so
-    // declare new version of SessionData that allows specifying that
-    // value.
-    class SessionDataWithAuthname : public SessionData
-    {
-    public:
-        SIGNON_SESSION_DECLARE_PROPERTY(QString, Authname);
-    };
-    SessionDataWithAuthname inData;
-    inData.setAuthname("testAuthname");
-
-    as->process(inData, "plain");
+    SessionData inData;
+    as->process(inData, "mech2");
     loop.exec();
 
     QCOMPARE(spyResponse.count(), 0);
