@@ -16,7 +16,3 @@ pkgconfig.files = signon-saslplugin.pc
 INSTALLS += pkgconfig
 
 include(doc/doc.pri)
-
-# override target paths, gets reset somewhere
-headers.path = $${INSTALL_PREFIX}/include/signon-plugins
-target.path  = $${INSTALL_LIBDIR}/signon
