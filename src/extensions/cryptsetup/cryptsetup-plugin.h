@@ -37,6 +37,7 @@ public:
     CryptsetupPlugin();
 
     // reimplemented methods
+    SignOn::AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const;
     SignOn::AbstractCryptoManager *cryptoManager(QObject *parent = 0) const;
     SignOn::AbstractKeyAuthorizer *keyAuthorizer(SignOn::KeyHandler *keyHandler,
                                                  QObject *parent = 0) const;

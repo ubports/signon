@@ -82,6 +82,7 @@ DEFINES += "SIGNOND_EXTENSIONS_DIR=$${SIGNOND_EXTENSIONS_DIR_QUOTED}"
 #Trace defines can be overruled by signond's configuration file `LoggingLevel`
 DEFINES += SIGNOND_TRACE
 LIBS += \
+    -lrt \
     -lsignon-plugins-common \
     -lsignon-extension
 
