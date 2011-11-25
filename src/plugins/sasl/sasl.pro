@@ -17,5 +17,6 @@ INSTALLS += pkgconfig
 
 include(doc/doc.pri)
 
-# override target path, it gets reset somewhere
+# override target paths, gets reset somewhere
+headers.path = $${INSTALL_PREFIX}/include/signon-plugins
 target.path  = $${INSTALL_LIBDIR}/signon
