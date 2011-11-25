@@ -7,7 +7,6 @@ HEADERS += saslplugin.h \
 
 SOURCES += saslplugin.cpp
 
-PKGCONFIG += sasl2
 LIBS += -lsasl2
 
 headers.files = $$HEADERS
@@ -17,3 +16,6 @@ pkgconfig.files = signon-saslplugin.pc
 INSTALLS += pkgconfig
 
 include(doc/doc.pri)
+
+# override target path, it gets reset somewhere
+target.path  = $${INSTALL_LIBDIR}/signon
