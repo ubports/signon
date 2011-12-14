@@ -326,7 +326,8 @@ void SignonDaemon::init()
 
     setupSignalHandlers();
     m_backup = app->arguments().contains(QLatin1String("-backup"));
-    m_pCAMManager = CredentialsAccessManager::instance();
+    m_pCAMManager =
+        new CredentialsAccessManager(m_configuration->camConfiguration());
 
     /* backup dbus interface */
     QDBusConnection sessionConnection = QDBusConnection::sessionBus();
@@ -448,8 +449,8 @@ bool SignonDaemon::initStorage()
     if (!m_pCAMManager->credentialsSystemOpened()) {
         m_pCAMManager->finalize();
 
-        if (!m_pCAMManager->init(m_configuration->camConfiguration())) {
-            qCritical("Signond: Cannot set proper configuration of CAM");
+        if (!m_pCAMManager->init()) {
+            BLAME() << "CAM initialization failed";
             return false;
         }
 

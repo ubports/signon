@@ -7,7 +7,6 @@ HEADERS += saslplugin.h \
 
 SOURCES += saslplugin.cpp
 
-PKGCONFIG += sasl2
 LIBS += -lsasl2
 
 headers.files = $$HEADERS

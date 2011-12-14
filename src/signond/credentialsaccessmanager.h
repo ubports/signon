@@ -186,12 +186,6 @@ class CredentialsAccessManager : public QObject
     Q_OBJECT
 
     /*!
-        Constructs a CredentialsAccessManager object with the given parent.
-        @param parent
-    */
-    CredentialsAccessManager(QObject *parent = 0);
-
-    /*!
        @enum KeySwapAuthorizingMech
        Core key authorization is performed through key swapping mechanisms.
        This feature becomes available when the number of inserted authorized keys
@@ -227,6 +221,13 @@ class CredentialsAccessManager : public QObject
     Q_DECLARE_FLAGS(StorageUiCleanupFlags, StorageUiCleanupFlag)
 
 public:
+    /*!
+        Constructs a CredentialsAccessManager object with the given parent.
+        @param configuration The configuration to use.
+        @param parent A parent QObject.
+    */
+    CredentialsAccessManager(const CAMConfiguration &configuration,
+                             QObject *parent = 0);
 
     /*!
         Destroys a CredentialsAccessManager.
@@ -240,16 +241,15 @@ public:
         Creates the CAM instance with the given parent.
         @param parent
     */
-    static CredentialsAccessManager *instance(QObject *parent = 0);
+    static CredentialsAccessManager *instance();
 
     /*!
         Initializes the CAM instance with the given configuration.
         If encryption is in use, this will start the key managers and
         create the CryptoManager object, preparing everything for the
         mounting of the encrypted file system.
-        @param configuration
     */
-    bool init(const CAMConfiguration &configuration = CAMConfiguration());
+    bool init();
 
     /*!
         Finalizes the CAM instance, this could include, closing the credentials system
