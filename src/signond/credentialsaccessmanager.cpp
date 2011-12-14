@@ -113,7 +113,8 @@ void CAMConfiguration::setStoragePath(const QString &storagePath) {
 
 CredentialsAccessManager *CredentialsAccessManager::m_pInstance = NULL;
 
-CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
+CredentialsAccessManager::CredentialsAccessManager(const CAMConfiguration &configuration,
+                                                   QObject *parent)
         : QObject(parent),
           m_isInitialized(false),
           m_systemOpened(false),
@@ -124,8 +125,14 @@ CredentialsAccessManager::CredentialsAccessManager(QObject *parent)
           m_keyHandler(NULL),
           m_keyAuthorizer(NULL),
           m_secretsStorage(NULL),
-          m_CAMConfiguration(CAMConfiguration())
+          m_CAMConfiguration(configuration)
 {
+    if (!m_pInstance) {
+        m_pInstance = this;
+    } else {
+        BLAME() << "Creating a second instance of the CAM";
+    }
+
     m_keyHandler = new SignOn::KeyHandler(this);
 }
 
@@ -136,11 +143,8 @@ CredentialsAccessManager::~CredentialsAccessManager()
     m_pInstance = NULL;
 }
 
-CredentialsAccessManager *CredentialsAccessManager::instance(QObject *parent)
+CredentialsAccessManager *CredentialsAccessManager::instance()
 {
-    if (!m_pInstance)
-        m_pInstance = new CredentialsAccessManager(parent);
-
     return m_pInstance;
 }
 
@@ -160,15 +164,13 @@ void CredentialsAccessManager::finalize()
     m_error = NoError;
 }
 
-bool CredentialsAccessManager::init(const CAMConfiguration &camConfiguration)
+bool CredentialsAccessManager::init()
 {
     if (m_isInitialized) {
         TRACE() << "CAM already initialized.";
         m_error = AlreadyInitialized;
         return false;
     }
-
-    m_CAMConfiguration = camConfiguration;
 
     QBuffer config;
     m_CAMConfiguration.serialize(&config);
