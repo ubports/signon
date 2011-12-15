@@ -45,6 +45,9 @@
 #include "SignOn/AbstractKeyManager"
 #include "SignOn/AbstractSecretsStorage"
 #include "SignOn/KeyHandler"
+#include "SignOn/AbstractAccessControlManager"
+
+#include "accesscontrolmanagerhelper.h"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
     Use this event type to signal the CAM when the secure storage is
@@ -123,6 +126,12 @@ struct CAMConfiguration
      * Returns the name of the CryptoManager to use.
      */
     QString cryptoManagerName() const;
+
+    /*!
+     * Returns the name of the AccessControlManager to use.
+     */
+    QString accessControlManagerName() const;
+
     bool useEncryption() const;
 
     /*!
@@ -135,6 +144,7 @@ struct CAMConfiguration
     void addSetting(const QString &key, const QVariant &value) {
         m_settings.insert(key, value);
     }
+
     QString m_storagePath;      /*!< The base directory for storage. */
     QString m_dbName;           /*!< The database file name. */
     QString m_secretsDbName;    /*!< The credentials database file name. */
@@ -387,6 +397,8 @@ private:
     SignOn::AbstractKeyAuthorizer *m_keyAuthorizer;
     SignOn::AbstractSecretsStorage *m_secretsStorage;
     CAMConfiguration m_CAMConfiguration;
+    SignOn::AbstractAccessControlManager *m_acManager;
+    AccessControlManagerHelper *m_acManagerHelper;
 
     /* List of all the senders of a SecureStorageEvent. */
     QList<EventSender> m_secureStorageEventNotifiers;

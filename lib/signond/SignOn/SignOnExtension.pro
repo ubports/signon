@@ -5,6 +5,7 @@ TEMPLATE = lib
 TARGET = signon-extension
 
 HEADERS = \
+    abstract-access-control-manager.h \
     abstract-crypto-manager.h \
     abstract-key-authorizer.h \
     abstract-key-manager.h \
@@ -19,6 +20,7 @@ INCLUDEPATH += \
     ..
 
 SOURCES += \
+    abstract-access-control-manager.cpp \
     abstract-crypto-manager.cpp \
     abstract-key-authorizer.cpp \
     abstract-key-manager.cpp \
@@ -27,7 +29,8 @@ SOURCES += \
     key-handler.cpp \
     misc.cpp
 
-QT += core
+QT += core \
+      dbus
 QT -= gui
 
 QMAKE_CXXFLAGS += \
@@ -44,6 +47,8 @@ DEFINES += \
 include( $${TOP_SRC_DIR}/common-installs-config.pri )
 
 headers.files = \
+    AbstractAccessControlManager \
+    abstract-access-control-manager.h \
     AbstractCryptoManager \
     abstract-crypto-manager.h \
     AbstractKeyAuthorizer \
