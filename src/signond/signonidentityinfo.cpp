@@ -214,8 +214,6 @@ namespace SignonDaemonNS {
                                                      const QString &mechanism,
                                                      QString &allowedMechanism)
     {
-        allowedMechanism.clear();
-
         // If no methods have been specified for an identity assume anything goes
         if (m_methods.isEmpty())
             return true;
