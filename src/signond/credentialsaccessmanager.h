@@ -31,6 +31,7 @@
 #ifndef CREDENTIALS_ACCESS_MANAGER_H
 #define CREDENTIALS_ACCESS_MANAGER_H
 
+#include "accesscontrolmanagerhelper.h"
 #include "credentialsdb.h"
 #include "signonui_interface.h"
 
@@ -40,14 +41,12 @@
 #include <QStringList>
 #include <QVariantMap>
 
+#include "SignOn/AbstractAccessControlManager"
 #include "SignOn/AbstractCryptoManager"
 #include "SignOn/AbstractKeyAuthorizer"
 #include "SignOn/AbstractKeyManager"
 #include "SignOn/AbstractSecretsStorage"
 #include "SignOn/KeyHandler"
-#include "SignOn/AbstractAccessControlManager"
-
-#include "accesscontrolmanagerhelper.h"
 
 /*! @def SIGNON_SECURE_STORAGE_NOT_AVAILABLE
     Use this event type to signal the CAM when the secure storage is

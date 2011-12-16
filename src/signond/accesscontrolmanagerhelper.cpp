@@ -34,134 +34,117 @@
 #include "signonidentity.h"
 
 
-namespace SignonDaemonNS {
+using namespace SignonDaemonNS;
 
 
-    AccessControlManagerHelper* AccessControlManagerHelper::m_pInstance = NULL;  
+AccessControlManagerHelper *AccessControlManagerHelper::m_pInstance = NULL;  
 
-    AccessControlManagerHelper* AccessControlManagerHelper::instance(SignOn::AbstractAccessControlManager *acManager)
-    {
+AccessControlManagerHelper *AccessControlManagerHelper::instance()
+{
+    return m_pInstance;
+}
 
-        if (!m_pInstance)  
-	      m_pInstance = new AccessControlManagerHelper(acManager);
-        Q_ASSERT(m_pInstance !=NULL);
-        Q_ASSERT(m_pInstance->m_acManager !=NULL);
-	 
-	return m_pInstance;
-        
-    }
-
-
-    AccessControlManagerHelper::AccessControlManagerHelper(SignOn::AbstractAccessControlManager *acManager) 
-    
-    {
+AccessControlManagerHelper::AccessControlManagerHelper(SignOn::AbstractAccessControlManager *acManager) 
+{
+    if (!m_pInstance) {
+        m_pInstance = this;
         m_acManager = acManager;
-
+    } else {
+        BLAME() << "Creating a second instance of the CAM";
     }
+}
 
-    AccessControlManagerHelper::~AccessControlManagerHelper() 
-    
-    {
-        m_acManager = NULL;
-        m_pInstance = NULL;
-
-    }
+AccessControlManagerHelper::~AccessControlManagerHelper() 
+{
+    m_acManager = NULL;
+    m_pInstance = NULL;
+}
 
 
-    bool AccessControlManagerHelper::isPeerAllowedToUseIdentity(const QDBusMessage &peerMessage,
-                                                          const quint32 identityId)
-    {
-        // TODO - improve this, the error handling and more precise behaviour
+bool AccessControlManagerHelper::isPeerAllowedToUseIdentity(const QDBusMessage &peerMessage,
+                                                  const quint32 identityId)
+{
+    // TODO - improve this, the error handling and more precise behaviour
 
-        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        if (db == 0) {
-            TRACE() << "NULL db pointer, secure storage might be unavailable,";
-            return false;
-        }
-        QStringList acl = db->accessControlList(identityId);
-
-        TRACE() << QString(QLatin1String("Access control list of identity: "
-                                         "%1: [%2].Tokens count: %3\t"))
-            .arg(identityId)
-            .arg(acl.join(QLatin1String(", ")))
-            .arg(acl.size());
-
-        if (db->errorOccurred())
-            return false;
-
-        if (acl.isEmpty())
-            return true;
-
-        return peerHasOneOfAccesses(peerMessage, acl);
-    }
-
-    AccessControlManagerHelper::IdentityOwnership AccessControlManagerHelper::isPeerOwnerOfIdentity(
-                                                                       const QDBusMessage &peerMessage,
-                                                                       const quint32 identityId)
-    {
-
-        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
-        if (db == 0) {
-            TRACE() << "NULL db pointer, secure storage might be unavailable,";
-            return ApplicationIsNotOwner;
-        }
-        QStringList ownerSecContexts = db->ownerList(identityId);
-
-        if (db->errorOccurred())
-            return ApplicationIsNotOwner;
-
-        if (ownerSecContexts.isEmpty())
-            return IdentityDoesNotHaveOwner;
-
-        return peerHasOneOfAccesses(peerMessage, ownerSecContexts) ? ApplicationIsOwner : ApplicationIsNotOwner;
-    }
-
-    bool AccessControlManagerHelper::isPeerKeychainWidget(const QDBusMessage &peerMessage)
-    {
-
-        static QString keychainWidgetAppId = m_acManager->keychainWidgetAppId();
-        QString peerAppId = m_acManager->appIdOfPeer(peerMessage);
-        if (peerAppId == keychainWidgetAppId)
-                return true;
-        else
-                return false;
-    }
-
-    QString AccessControlManagerHelper::appIdOfPeer(const QDBusMessage &peerMessage)
-    {
-        TRACE() << m_acManager->appIdOfPeer(peerMessage);
-        return m_acManager->appIdOfPeer(peerMessage);
-    }
-
-    bool AccessControlManagerHelper::peerHasOneOfAccesses(const QDBusMessage &peerMessage,
-                                                  const QStringList secContexts)
-    {
-
-        foreach(QString securityContext, secContexts)
-        {
-            TRACE() << securityContext;
-            if (m_acManager->isPeerAllowedToAccess(peerMessage, securityContext))
-                return true;
-        }
-
-        BLAME() << "given peer does not have needed permissions";
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    if (db == 0) {
+        TRACE() << "NULL db pointer, secure storage might be unavailable,";
         return false;
     }
+    QStringList acl = db->accessControlList(identityId);
 
+    TRACE() << QString(QLatin1String("Access control list of identity: "
+                                 "%1: [%2].Tokens count: %3\t"))
+                                .arg(identityId)
+                                .arg(acl.join(QLatin1String(", ")))
+                                .arg(acl.size());
 
-    bool AccessControlManagerHelper::isPeerAllowedToAccess(const QDBusMessage &peerMessage,
-                                               const QString securityContext)
+    if (db->errorOccurred())
+        return false;
+
+    if (acl.isEmpty())
+        return true;
+
+    return peerHasOneOfAccesses(peerMessage, acl);
+}
+
+AccessControlManagerHelper::IdentityOwnership AccessControlManagerHelper::isPeerOwnerOfIdentity(
+                                                               const QDBusMessage &peerMessage,
+                                                               const quint32 identityId)
+{
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    if (db == 0) {
+        TRACE() << "NULL db pointer, secure storage might be unavailable,";
+        return ApplicationIsNotOwner;
+    }
+    QStringList ownerSecContexts = db->ownerList(identityId);
+
+    if (db->errorOccurred())
+        return ApplicationIsNotOwner;
+
+    if (ownerSecContexts.isEmpty())
+        return IdentityDoesNotHaveOwner;
+
+    return peerHasOneOfAccesses(peerMessage, ownerSecContexts) ? ApplicationIsOwner : ApplicationIsNotOwner;
+}
+
+bool AccessControlManagerHelper::isPeerKeychainWidget(const QDBusMessage &peerMessage)
+{
+    static QString keychainWidgetAppId = m_acManager->keychainWidgetAppId();
+    QString peerAppId = m_acManager->appIdOfPeer(peerMessage);
+    return (peerAppId == keychainWidgetAppId);
+}
+
+QString AccessControlManagerHelper::appIdOfPeer(const QDBusMessage &peerMessage)
+{
+    TRACE() << m_acManager->appIdOfPeer(peerMessage);
+    return m_acManager->appIdOfPeer(peerMessage);
+}
+
+bool AccessControlManagerHelper::peerHasOneOfAccesses(const QDBusMessage &peerMessage,
+                                          const QStringList secContexts)
+{
+    foreach(QString securityContext, secContexts)
     {
         TRACE() << securityContext;
-        return m_acManager->isPeerAllowedToAccess(peerMessage, securityContext);
+        if (m_acManager->isPeerAllowedToAccess(peerMessage, securityContext))
+            return true;
     }
 
+    BLAME() << "given peer does not have needed permissions";
+    return false;
+}
 
-    pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)
-    {
-        QString service = peerContext.message().service();
-        return peerContext.connection().interface()->servicePid(service).value();
-    }
+bool AccessControlManagerHelper::isPeerAllowedToAccess(const QDBusMessage &peerMessage,
+                                       const QString securityContext)
+{
+    TRACE() << securityContext;
+    return m_acManager->isPeerAllowedToAccess(peerMessage, securityContext);
+}
 
+pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)
+{
+    QString service = peerContext.message().service();
+    return peerContext.connection().interface()->servicePid(service).value();
+}
 
-} //namespace SignonDaemonNS
