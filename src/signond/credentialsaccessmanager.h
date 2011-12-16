@@ -248,8 +248,7 @@ public:
     ~CredentialsAccessManager();
 
     /*!
-        Creates the CAM instance with the given configuration and parent.
-        @param parent
+        Returns CAM instance.
     */
     static CredentialsAccessManager *instance();
 
