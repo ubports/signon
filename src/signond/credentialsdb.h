@@ -222,6 +222,7 @@ public:
 
     QStringList methods(const quint32 id,
                         const QString &securityToken = QString());
+    quint32 insertMethod(const QString &method, bool *ok = 0);
     quint32 methodId(const QString &method);
     SignonIdentityInfo identity(const quint32 id);
     QList<SignonIdentityInfo> identities(const QMap<QString, QString> &filter);
