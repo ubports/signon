@@ -25,8 +25,8 @@
  * @ingroup Accounts_and_SSO_Framework
  */
 
-#ifndef ABSTRACT_ACCESS_CONTROL_MANAGER_H
-#define ABSTRACT_ACCESS_CONTROL_MANAGER_H
+#ifndef SIGNON_ABSTRACT_ACCESS_CONTROL_MANAGER_H
+#define SIGNON_ABSTRACT_ACCESS_CONTROL_MANAGER_H
 
 #include <SignOn/extension-interface.h>
 
@@ -51,12 +51,12 @@ public:
     /*!
      * Constructs a AbstractAccessControlManager object with the given parent.
      * @param parent
-    */
+     */
     explicit AbstractAccessControlManager(QObject *parent = 0);
 
     /*!
      * Destructor.
-    */
+     */
     virtual ~AbstractAccessControlManager();              
 
     /*!
@@ -65,7 +65,7 @@ public:
      * @param peerMessage, the request message sent over DBUS by the process.
      * @param securityContext, the securityContext to be checked against.
      * @returns true, if the peer is allowed, false otherwise.
-    */
+     */
     virtual bool isPeerAllowedToAccess(const QDBusMessage &peerMessage,
                                        const QString &securityContext);
 
@@ -73,12 +73,12 @@ public:
      * Looks up for the application identifier of a specific client process.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @returns the application identifier of the process, or an empty string if none found.
-    */
+     */
     virtual QString appIdOfPeer(const QDBusMessage &peerMessage);
 
     /*!
      * @returns the application identifier of the keychain widget
-    */
+     */
     virtual QString keychainWidgetAppId();
 
 
@@ -86,4 +86,4 @@ public:
 
 } // namespace
 
-#endif // ABSTRACT_ACCESS_CONTROL_MANAGER_H
+#endif // SIGNON_ABSTRACT_ACCESS_CONTROL_MANAGER_H

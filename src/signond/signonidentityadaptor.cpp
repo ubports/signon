@@ -63,7 +63,7 @@ namespace SignonDaemonNS {
     quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return 0;
@@ -75,7 +75,7 @@ namespace SignonDaemonNS {
     QList<QVariant> SignonIdentityAdaptor::queryInfo()
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return QList<QVariant>();
@@ -87,7 +87,7 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::addReference(const QString &reference)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return;
@@ -103,7 +103,7 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::removeReference(const QString &reference)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return;
@@ -120,7 +120,7 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::verifyUser(const QVariantMap &params)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
@@ -132,7 +132,7 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::verifySecret(const QString &secret)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
@@ -145,13 +145,13 @@ namespace SignonDaemonNS {
     {
         /* Access Control */
         AccessControlManagerHelper::IdentityOwnership ownership =
-                AccessControlManagerHelper::instance(NULL)->isPeerOwnerOfIdentity(
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
                             parentDBusContext().message(), m_parent->id());
 
         if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
             //Identity has an owner
             if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
-                && !AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
+                && !AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                 securityErrorReply(__func__);
                 return;
@@ -164,7 +164,7 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::signOut()
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
@@ -179,13 +179,13 @@ namespace SignonDaemonNS {
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
         AccessControlManagerHelper::IdentityOwnership ownership =
-                AccessControlManagerHelper::instance(NULL)->isPeerOwnerOfIdentity(
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
                             parentDBusContext().message(), m_parent->id());
 
             if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
                 //Identity has an owner
                 if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
-                    && !AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
+                    && !AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                     securityErrorReply(__func__);
                     return 0;
@@ -207,14 +207,14 @@ namespace SignonDaemonNS {
     {
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
-       AccessControlManagerHelper::IdentityOwnership ownership =
-                AccessControlManagerHelper::instance(NULL)->isPeerOwnerOfIdentity(
+        AccessControlManagerHelper::IdentityOwnership ownership =
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
                             parentDBusContext().message(), m_parent->id());
 
             if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
                 //Identity has an owner
                 if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
-                    && AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
+                    && AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                     securityErrorReply(__func__);
                     return 0;

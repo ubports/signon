@@ -181,7 +181,7 @@ namespace SignonDaemonNS {
             BLAME() << "NULL database handler object.";
             return false;
         }
-        QString appId = AccessControlManagerHelper::instance(NULL)->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
         keepInUse();
         return db->addReference(m_id, appId, reference);
     }
@@ -197,7 +197,7 @@ namespace SignonDaemonNS {
             BLAME() << "NULL database handler object.";
             return false;
         }
-        QString appId = AccessControlManagerHelper::instance(NULL)->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
         keepInUse();
         return db->removeReference(m_id, appId, reference);
     }
@@ -382,7 +382,7 @@ namespace SignonDaemonNS {
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
         QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
-        QString appId = AccessControlManagerHelper::instance(NULL)->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
 
         bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
@@ -441,7 +441,7 @@ namespace SignonDaemonNS {
         keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
-        QString appId = AccessControlManagerHelper::instance(NULL)->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
 
         QStringList accessControlListLocal = accessControlList;
 
