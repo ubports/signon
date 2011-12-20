@@ -1087,6 +1087,20 @@ bool MetaDataDB::insertMethods(QMap<QString, QStringList> methods)
     return allOk;
 }
 
+quint32 MetaDataDB::insertMethod(const QString &method, bool *ok)
+{
+    QSqlQuery q = newQuery();
+    q.prepare(S("INSERT INTO METHODS (method) VALUES(:method)"));
+    q.bindValue(S(":method"), method);
+    exec(q);
+
+    if (errorOccurred()) {
+        if (ok != 0) *ok = false;
+        return 0;
+    }
+    return q.lastInsertId().toUInt(ok);
+}
+
 quint32 MetaDataDB::updateCredentials(const SignonIdentityInfo &info)
 {
     quint32 id;
@@ -1353,7 +1367,12 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
     if (id == 0) return false;
 
     quint32 methodId = metaDataDB->methodId(method);
-    if (methodId == 0) return false;
+    if (methodId == 0) {
+        bool ok = false;
+        methodId = metaDataDB->insertMethod(method, &ok);
+        if (!ok)
+            return false;
+    }
 
     return secretsStorage->storeData(id, methodId, data);
 }
