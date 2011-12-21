@@ -30,6 +30,7 @@ for(var, PKGCONFIG_VARS) {
 }
 COMMAND += " > signon-plugins.pc"
 
+pkgconfig.CONFIG = no_check_exist
 pkgconfig.files = signon-plugins.pc
 pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
 pkgconfig.commands = $${COMMAND}
