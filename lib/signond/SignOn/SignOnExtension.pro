@@ -70,6 +70,7 @@ for(var, PKGCONFIG_VARS) {
 }
 COMMAND += " > SignOnExtension.pc"
 
+pkgconfig.CONFIG = no_check_exist
 pkgconfig.files = SignOnExtension.pc
 pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
 pkgconfig.commands = $${COMMAND}
