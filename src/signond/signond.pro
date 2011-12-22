@@ -14,7 +14,7 @@ system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp 
     ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
 
 HEADERS += \
-    accesscontrolmanager.h \
+    accesscontrolmanagerhelper.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
     default-crypto-manager.h \
@@ -36,7 +36,7 @@ HEADERS += \
     backupifadaptor.h \
     signonsessioncoretools.h
 SOURCES += \
-    accesscontrolmanager.cpp \
+    accesscontrolmanagerhelper.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
     default-crypto-manager.cpp \
@@ -88,14 +88,6 @@ LIBS += \
 
 QMAKE_CLEAN += backupifadaptor.cpp \
                backupifadaptor.h
-
-exists(/usr/include/sys/creds.h) {
-    DEFINES += HAVE_LIBCREDS=1
-    LIBS += -lcreds
-} else {
-    DEFINES += HAVE_LIBCREDS=0
-    DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
-}
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )

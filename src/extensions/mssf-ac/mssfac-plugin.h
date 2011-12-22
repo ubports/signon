@@ -2,10 +2,9 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
+ * Contact: Elena Reshetova <elena.reshetova@intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,19 +21,19 @@
  * 02110-1301 USA
  */
 
-#ifndef CRYPTSETUP_PLUGIN_H
-#define CRYPTSETUP_PLUGIN_H
+#ifndef MSSFAC_PLUGIN_H
+#define MSSFAC_PLUGIN_H
 
 #include <QObject>
 #include <SignOn/ExtensionInterface>
 
-class CryptsetupPlugin: public QObject, public SignOn::ExtensionInterface3
+class MSSFAccessControlPlugin: public QObject, public SignOn::ExtensionInterface3
 {
     Q_OBJECT
     Q_INTERFACES(SignOn::ExtensionInterface3)
 
 public:
-    CryptsetupPlugin();
+    MSSFAccessControlPlugin();
 
     // reimplemented methods
     SignOn::AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
@@ -45,5 +44,5 @@ public:
     SignOn::AbstractKeyManager *keyManager(QObject *parent = 0) const;
 };
 
-#endif // CRYPTSETUP_PLUGIN_H
+#endif // MSSFAC_PLUGIN_H
 

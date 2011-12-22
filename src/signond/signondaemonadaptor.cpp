@@ -2,9 +2,11 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +25,7 @@
 
 #include "signondaemonadaptor.h"
 #include "signondisposable.h"
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 
 namespace SignonDaemonNS {
 
@@ -61,8 +63,8 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), id)) {
+        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), id)) {
             securityErrorReply(__func__);
             return;
         }
@@ -83,8 +85,8 @@ namespace SignonDaemonNS {
 
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
-            if (!AccessControlManager::isPeerAllowedToUseAuthSession(
-                                            parentDBusContext(), id)) {
+            if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseAuthSession(
+                                            parentDBusContext().message(), id)) {
                 securityErrorReply(__func__);
                 return QString();
             }
@@ -102,7 +104,7 @@ namespace SignonDaemonNS {
     QList<QVariant> SignonDaemonAdaptor::queryIdentities(const QMap<QString, QVariant> &filter)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+        if (!AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
             securityErrorReply(__func__);
             return QList<QVariant>();
         }
@@ -113,7 +115,7 @@ namespace SignonDaemonNS {
     bool SignonDaemonAdaptor::clear()
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+        if (!AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
             securityErrorReply(__func__);
             return false;
         }
