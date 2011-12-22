@@ -208,13 +208,13 @@ bool CredentialsAccessManager::init()
         if (name != QLatin1String("default")) {
             BLAME() << "Couldn't load AccessControlManager:" << name;
         }
-        TRACE() << "No AcessControlManager set, using default (dummy)";
+        TRACE() << "No AccessControlManager set, using default (dummy)";
         m_acManager = new SignOn::AbstractAccessControlManager(this);
     }
 
     //Initialize AccessControlManagerHelper
     if (m_acManagerHelper == 0) {
-        m_acManagerHelper = AccessControlManagerHelper::instance(m_acManager);
+        m_acManagerHelper = new AccessControlManagerHelper(m_acManager);
     }
 
     //Initialize CryptoManager
@@ -353,7 +353,6 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
             }
         }
 
-        TRACE() << plugin->objectName().toUtf8().data();
         /* Instantiate this plugin's AccessControlManager only if it's the plugin
          * requested in the config file. */
         if (plugin->objectName() == m_CAMConfiguration.accessControlManagerName()) {

@@ -72,11 +72,6 @@ static QString sessionName(const quint32 id, const QString &method)
    return QString::number(id) + QLatin1String("+") + method;
 }
 
-static pid_t pidOfContext(const QDBusConnection &connection, const QDBusMessage &message)
-{
-    return connection.interface()->servicePid(message.service()).value();
-}
-
 SignonSessionCore::SignonSessionCore(quint32 id,
                                      const QString &method,
                                      int timeout,
@@ -364,12 +359,12 @@ void SignonSessionCore::startProcess()
                 parameters[SSO_KEY_USERNAME] = info.userName();
             }
 
-	    QStringList paramsTokenList;
-            QStringList identityAclList = info.accessControlList();	
+            QStringList paramsTokenList;
+            QStringList identityAclList = info.accessControlList();
 
             foreach(QString acl, identityAclList)
-		if (AccessControlManagerHelper::instance(NULL)->isPeerAllowedToAccess(data.m_msg, acl))
-			paramsTokenList.append(acl);
+                if (AccessControlManagerHelper::instance()->isPeerAllowedToAccess(data.m_msg, acl))
+                    paramsTokenList.append(acl);
 
             if (!paramsTokenList.isEmpty()) {
                 parameters[SSO_ACCESS_CONTROL_TOKENS] = paramsTokenList;

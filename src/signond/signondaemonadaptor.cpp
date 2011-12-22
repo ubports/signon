@@ -63,7 +63,7 @@ namespace SignonDaemonNS {
 
     void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
     {
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseIdentity(
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), id)) {
             securityErrorReply(__func__);
             return;
@@ -85,7 +85,7 @@ namespace SignonDaemonNS {
 
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
-            if (!AccessControlManagerHelper::instance(NULL)->isPeerAllowedToUseAuthSession(
+            if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseAuthSession(
                                             parentDBusContext().message(), id)) {
                 securityErrorReply(__func__);
                 return QString();
@@ -104,7 +104,7 @@ namespace SignonDaemonNS {
     QList<QVariant> SignonDaemonAdaptor::queryIdentities(const QMap<QString, QVariant> &filter)
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
+        if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
             securityErrorReply(__func__);
             return QList<QVariant>();
         }
@@ -115,7 +115,7 @@ namespace SignonDaemonNS {
     bool SignonDaemonAdaptor::clear()
     {
         /* Access Control */
-        if (!AccessControlManagerHelper::instance(NULL)->isPeerKeychainWidget(parentDBusContext().message())) {
+        if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
             securityErrorReply(__func__);
             return false;
         }
