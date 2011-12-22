@@ -248,13 +248,13 @@ public:
     ~CredentialsAccessManager();
 
     /*!
-        Creates the CAM instance with the given parent.
+        Creates the CAM instance with the given configuration and parent.
         @param parent
     */
     static CredentialsAccessManager *instance();
 
     /*!
-        Initializes the CAM instance with the given configuration.
+        Initializes the CAM instance.
         If encryption is in use, this will start the key managers and
         create the CryptoManager object, preparing everything for the
         mounting of the encrypted file system.

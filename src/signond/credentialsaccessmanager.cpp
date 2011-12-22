@@ -75,7 +75,10 @@ void CAMConfiguration::serialize(QIODevice *device)
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
     const char *usingEncryption = useEncryption() ? "true" : "false";
     stream << "Using encryption: " << usingEncryption << '\n';
-    stream << "Credentials database name: " << m_dbName << '\n';
+    stream << "Metadata DB path: " << metadataDBPath() << '\n';
+    stream << "Cryptomanager name: " << cryptoManagerName() << '\n';
+    stream << "ACL manager name: " << accessControlManagerName() << '\n';
+    stream << "Secrets storage name: " << secretsStorageName() << '\n';
     stream << "======================================================\n\n";
     device->write(buffer.toUtf8());
     device->close();
@@ -160,11 +163,10 @@ CredentialsAccessManager *CredentialsAccessManager::instance()
 
 void CredentialsAccessManager::finalize()
 {
+    TRACE() << "Enter";
+
     if (m_systemOpened)
         closeCredentialsSystem();
-
-    if (m_cryptoManager)
-        delete m_cryptoManager;
 
     // Disconnect all key managers
     foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
