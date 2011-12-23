@@ -26,6 +26,7 @@ SOURCES += \
     abstract-key-manager.cpp \
     abstract-secrets-storage.cpp \
     debug.cpp \
+    extension-interface.cpp \
     key-handler.cpp \
     misc.cpp
 

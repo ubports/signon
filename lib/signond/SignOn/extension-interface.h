@@ -58,7 +58,7 @@ public:
      *
      * @return A key manager object, or 0 if none is provided by this plugin
      */
-    virtual AbstractKeyManager *keyManager(QObject *parent = 0) const = 0;
+    virtual AbstractKeyManager *keyManager(QObject *parent = 0) const;
 };
 
 /*!
@@ -76,7 +76,7 @@ public:
      * @return A key authorizer object, or 0 if none is provided by this plugin
      */
     virtual AbstractKeyAuthorizer *keyAuthorizer(KeyHandler *keyHandler,
-                                                 QObject *parent = 0) const = 0;
+                                                 QObject *parent = 0) const;
 };
 
 /*!
@@ -97,7 +97,7 @@ public:
      *
      * @return A CryptoManager object, or 0 if none is provided by this plugin
      */
-    virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const = 0;
+    virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const;
 
     /*!
      * Gets the SecretsStorage object, which is used to save and load the
@@ -108,7 +108,7 @@ public:
      *
      * @return A SecretsStorage object, or 0 if none is provided by this plugin.
      */
-    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const = 0;
+    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const;
 
     /*!
      * Gets the AbstractAccessControlManager object, which will be used to check
@@ -119,7 +119,7 @@ public:
      *
      * @return An AbstractAccessControlManager object, or 0 if none is provided by this plugin
      */
-    virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const = 0;
+    virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
 };
 
 } // namespace
