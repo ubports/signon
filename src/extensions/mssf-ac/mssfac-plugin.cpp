@@ -40,26 +40,5 @@ AbstractAccessControlManager *MSSFAccessControlPlugin::accessControlManager(QObj
     return new MSSFAccessControlManager(parent);
 }
 
-AbstractSecretsStorage *MSSFAccessControlPlugin::secretsStorage(QObject *parent) const
-{
-    return 0;
-}
-
-AbstractCryptoManager *MSSFAccessControlPlugin::cryptoManager(QObject *parent) const
-{
-    return 0;
-}
-
-AbstractKeyAuthorizer *MSSFAccessControlPlugin::keyAuthorizer(KeyHandler *,
-                                                       QObject *) const
-{
-    return 0;
-}
-
-AbstractKeyManager *MSSFAccessControlPlugin::keyManager(QObject *) const
-{
-    return 0;
-}
-
 Q_EXPORT_PLUGIN2(mssf-ac, MSSFAccessControlPlugin);
 

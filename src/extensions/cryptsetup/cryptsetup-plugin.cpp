@@ -35,31 +35,10 @@ CryptsetupPlugin::CryptsetupPlugin():
     setObjectName(QLatin1String("cryptsetup"));
 }
 
-AbstractAccessControlManager *CryptsetupPlugin::accessControlManager(QObject *parent) const
-{
-    return 0;
-}
-
-AbstractSecretsStorage *CryptsetupPlugin::secretsStorage(QObject *parent) const
-{
-    return 0;
-}
-
 AbstractCryptoManager *CryptsetupPlugin::cryptoManager(QObject *parent) const
 {
     qDebug() << Q_FUNC_INFO;
     return new CryptoManager(parent);
-}
-
-AbstractKeyAuthorizer *CryptsetupPlugin::keyAuthorizer(KeyHandler *,
-                                                       QObject *) const
-{
-    return 0;
-}
-
-AbstractKeyManager *CryptsetupPlugin::keyManager(QObject *) const
-{
-    return 0;
 }
 
 Q_EXPORT_PLUGIN2(cryptsetup, CryptsetupPlugin);
