@@ -2,8 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -26,7 +28,7 @@
 #include "signonidentity.h"
 #include "signonauthsessionadaptor.h"
 #include "signonui_interface.h"
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 
 #include "SignOn/uisessiondata_priv.h"
 #include "SignOn/authpluginif.h"
@@ -68,11 +70,6 @@ static QVariantMap filterVariantMap(const QVariantMap &other)
 static QString sessionName(const quint32 id, const QString &method)
 {
    return QString::number(id) + QLatin1String("+") + method;
-}
-
-static pid_t pidOfContext(const QDBusConnection &connection, const QDBusMessage &message)
-{
-    return connection.interface()->servicePid(message.service()).value();
 }
 
 SignonSessionCore::SignonSessionCore(quint32 id,
@@ -363,15 +360,17 @@ void SignonSessionCore::startProcess()
                 parameters[SSO_KEY_USERNAME] = info.userName();
             }
 
-            pid_t pid = pidOfContext(data.m_conn, data.m_msg);
-            QSet<QString> clientTokenSet = AccessControlManager::accessTokens(pid).toSet();
-            QSet<QString> identityAclTokenSet = info.accessControlList().toSet();
-            QSet<QString> paramsTokenSet = clientTokenSet.intersect(identityAclTokenSet);
+            QStringList paramsTokenList;
+            QStringList identityAclList = info.accessControlList();
 
-            if (!paramsTokenSet.isEmpty()) {
-                QStringList tokenList = paramsTokenSet.toList();
-                parameters[SSO_ACCESS_CONTROL_TOKENS] = tokenList;
+            foreach(QString acl, identityAclList)
+                if (AccessControlManagerHelper::instance()->isPeerAllowedToAccess(data.m_msg, acl))
+                    paramsTokenList.append(acl);
+
+            if (!paramsTokenList.isEmpty()) {
+                parameters[SSO_ACCESS_CONTROL_TOKENS] = paramsTokenList;
             }
+         
         } else {
             BLAME() << "Error occurred while getting data from credentials database.";
         }

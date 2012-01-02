@@ -43,7 +43,7 @@ extern "C" {
 #include "signondaemonadaptor.h"
 #include "signonidentity.h"
 #include "signonauthsession.h"
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 #include "backupifadaptor.h"
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
@@ -668,7 +668,7 @@ bool SignonDaemon::clear()
 QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString type)
 {
     bool supportsAuthMethod = false;
-    pid_t ownerPid = AccessControlManager::pidOfPeer(*this);
+    pid_t ownerPid = AccessControlManagerHelper::pidOfPeer(*this);
     QString objectPath =
         SignonAuthSession::getAuthSessionObjectPath(id, type, this,
                                                     supportsAuthMethod,

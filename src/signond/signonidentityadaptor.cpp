@@ -2,9 +2,11 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -24,7 +26,7 @@
 #include "signonidentityadaptor.h"
 
 #include "signonidentity.h"
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 
 namespace SignonDaemonNS {
 
@@ -61,8 +63,8 @@ namespace SignonDaemonNS {
     quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return 0;
         }
@@ -73,8 +75,8 @@ namespace SignonDaemonNS {
     QList<QVariant> SignonIdentityAdaptor::queryInfo()
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return QList<QVariant>();
         }
@@ -85,8 +87,8 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::addReference(const QString &reference)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return;
         }
@@ -101,8 +103,8 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::removeReference(const QString &reference)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return;
         }
@@ -118,8 +120,8 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::verifyUser(const QVariantMap &params)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
         }
@@ -130,8 +132,8 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::verifySecret(const QString &secret)
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
         }
@@ -142,14 +144,14 @@ namespace SignonDaemonNS {
     void SignonIdentityAdaptor::remove()
     {
         /* Access Control */
-        AccessControlManager::IdentityOwnership ownership =
-                AccessControlManager::isPeerOwnerOfIdentity(
-                            parentDBusContext(), m_parent->id());
+        AccessControlManagerHelper::IdentityOwnership ownership =
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
+                            parentDBusContext().message(), m_parent->id());
 
-        if (ownership != AccessControlManager::IdentityDoesNotHaveOwner) {
+        if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
             //Identity has an owner
-            if (ownership == AccessControlManager::ApplicationIsNotOwner
-                && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+            if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
+                && !AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                 securityErrorReply(__func__);
                 return;
@@ -162,8 +164,8 @@ namespace SignonDaemonNS {
     bool SignonIdentityAdaptor::signOut()
     {
         /* Access Control */
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        parentDBusContext(), m_parent->id())) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
             return false;
         }
@@ -176,14 +178,14 @@ namespace SignonDaemonNS {
         quint32 id = info.value(QLatin1String("Id"), SIGNOND_NEW_IDENTITY).toInt();
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
-            AccessControlManager::IdentityOwnership ownership =
-                    AccessControlManager::isPeerOwnerOfIdentity(
-                                                parentDBusContext(), m_parent->id());
+        AccessControlManagerHelper::IdentityOwnership ownership =
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
+                            parentDBusContext().message(), m_parent->id());
 
-            if (ownership != AccessControlManager::IdentityDoesNotHaveOwner) {
+            if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
                 //Identity has an owner
-                if (ownership == AccessControlManager::ApplicationIsNotOwner
-                    && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+                if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
+                    && !AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                     securityErrorReply(__func__);
                     return 0;
@@ -205,14 +207,14 @@ namespace SignonDaemonNS {
     {
         /* Access Control */
         if (id != SIGNOND_NEW_IDENTITY) {
-            AccessControlManager::IdentityOwnership ownership =
-                    AccessControlManager::isPeerOwnerOfIdentity(
-                                                parentDBusContext(), m_parent->id());
+        AccessControlManagerHelper::IdentityOwnership ownership =
+                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
+                            parentDBusContext().message(), m_parent->id());
 
-            if (ownership != AccessControlManager::IdentityDoesNotHaveOwner) {
+            if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
                 //Identity has an owner
-                if (ownership == AccessControlManager::ApplicationIsNotOwner
-                    && !AccessControlManager::isPeerKeychainWidget(parentDBusContext())) {
+                if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
+                    && AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
 
                     securityErrorReply(__func__);
                     return 0;

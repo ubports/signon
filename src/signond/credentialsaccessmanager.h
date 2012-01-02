@@ -31,6 +31,7 @@
 #ifndef CREDENTIALS_ACCESS_MANAGER_H
 #define CREDENTIALS_ACCESS_MANAGER_H
 
+#include "accesscontrolmanagerhelper.h"
 #include "credentialsdb.h"
 #include "signonui_interface.h"
 
@@ -40,6 +41,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
+#include "SignOn/AbstractAccessControlManager"
 #include "SignOn/AbstractCryptoManager"
 #include "SignOn/AbstractKeyAuthorizer"
 #include "SignOn/AbstractKeyManager"
@@ -123,6 +125,12 @@ struct CAMConfiguration
      * Returns the name of the CryptoManager to use.
      */
     QString cryptoManagerName() const;
+
+    /*!
+     * Returns the name of the AccessControlManager to use.
+     */
+    QString accessControlManagerName() const;
+
     bool useEncryption() const;
 
     /*!
@@ -135,6 +143,7 @@ struct CAMConfiguration
     void addSetting(const QString &key, const QVariant &value) {
         m_settings.insert(key, value);
     }
+
     QString m_storagePath;      /*!< The base directory for storage. */
     QString m_dbName;           /*!< The database file name. */
     QString m_secretsDbName;    /*!< The credentials database file name. */
@@ -238,13 +247,12 @@ public:
     ~CredentialsAccessManager();
 
     /*!
-        Creates the CAM instance with the given parent.
-        @param parent
+        Returns CAM instance.
     */
     static CredentialsAccessManager *instance();
 
     /*!
-        Initializes the CAM instance with the given configuration.
+        Initializes the CAM instance.
         If encryption is in use, this will start the key managers and
         create the CryptoManager object, preparing everything for the
         mounting of the encrypted file system.
@@ -387,6 +395,8 @@ private:
     SignOn::AbstractKeyAuthorizer *m_keyAuthorizer;
     SignOn::AbstractSecretsStorage *m_secretsStorage;
     CAMConfiguration m_CAMConfiguration;
+    SignOn::AbstractAccessControlManager *m_acManager;
+    AccessControlManagerHelper *m_acManagerHelper;
 
     /* List of all the senders of a SecureStorageEvent. */
     QList<EventSender> m_secureStorageEventNotifiers;

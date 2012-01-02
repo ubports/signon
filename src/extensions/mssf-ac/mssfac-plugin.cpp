@@ -2,10 +2,9 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Elena Reshetova <elena.reshetova@intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,24 +21,24 @@
  * 02110-1301 USA
  */
 
-#include "cryptsetup-plugin.h"
-#include "crypto-manager.h"
+#include "mssfac-plugin.h"
+#include "mssf-access-control-manager.h"
 
 #include <QDebug>
 
 using namespace SignOn;
 
-CryptsetupPlugin::CryptsetupPlugin():
+MSSFAccessControlPlugin::MSSFAccessControlPlugin():
     QObject(0)
 {
-    setObjectName(QLatin1String("cryptsetup"));
+    setObjectName(QLatin1String("mssf-ac"));
 }
 
-AbstractCryptoManager *CryptsetupPlugin::cryptoManager(QObject *parent) const
+AbstractAccessControlManager *MSSFAccessControlPlugin::accessControlManager(QObject *parent) const
 {
     qDebug() << Q_FUNC_INFO;
-    return new CryptoManager(parent);
+    return new MSSFAccessControlManager(parent);
 }
 
-Q_EXPORT_PLUGIN2(cryptsetup, CryptsetupPlugin);
+Q_EXPORT_PLUGIN2(mssf-ac, MSSFAccessControlPlugin);
 

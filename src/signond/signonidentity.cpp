@@ -2,9 +2,11 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +33,7 @@
 #include "SignOn/uisessiondata_priv.h"
 #include "signoncommon.h"
 
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 #include "signonidentityadaptor.h"
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
@@ -179,9 +181,9 @@ namespace SignonDaemonNS {
             BLAME() << "NULL database handler object.";
             return false;
         }
-        QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
         keepInUse();
-        return db->addReference(m_id, aegisIdToken, reference);
+        return db->addReference(m_id, appId, reference);
     }
 
     bool SignonIdentity::removeReference(const QString &reference)
@@ -195,9 +197,9 @@ namespace SignonDaemonNS {
             BLAME() << "NULL database handler object.";
             return false;
         }
-        QString aegisIdToken = AccessControlManager::idTokenOfPeer(static_cast<QDBusContext>(*this));
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
         keepInUse();
-        return db->removeReference(m_id, aegisIdToken, reference);
+        return db->removeReference(m_id, appId, reference);
     }
 
     quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
@@ -379,16 +381,8 @@ namespace SignonDaemonNS {
         keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
-        /*
-         * TODO: optimize the interaction with security framework: have 1 less call
-         * In order to have this we need to fetch all tokens once, and parse them
-         * in 'decodeString' and 'idTokenOfPid' as argument, but not pidOfPeer
-         * */
-
-        pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
         QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
-
-        QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
 
         bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
@@ -396,8 +390,8 @@ namespace SignonDaemonNS {
 
         //Add creator to owner list if it has AID
         QStringList ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
-        if (!aegisIdToken.isNull())
-            ownerList.append(aegisIdToken);
+        if (!appId.isNull())
+            ownerList.append(appId);
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(info);
@@ -447,19 +441,12 @@ namespace SignonDaemonNS {
         keepInUse();
         SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
-        /*
-         * TODO: optimize the interaction with security framework: have 1 less call
-         * In order to have this we need to fetch all tokens once, and parse them
-         * in 'decodeString' and 'idTokenOfPid' as argument, but not pidOfPeer
-         * */
-
-        pid_t pidOfPeer = AccessControlManager::pidOfPeer(static_cast<QDBusContext>(*this));
-        QString aegisIdToken = AccessControlManager::idTokenOfPid(pidOfPeer);
+        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
 
         QStringList accessControlListLocal = accessControlList;
 
-        if (!aegisIdToken.isNull())
-            accessControlListLocal.append(aegisIdToken);
+        if (!appId.isNull())
+            accessControlListLocal.append(appId);
 
         //this method is deprecated, so it will set acl as owner list
         if (m_pInfo == 0) {

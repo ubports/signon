@@ -3,8 +3,10 @@
  *
  * Copyright (C) 2010-2011 Nokia Corporation.
  * Copyright (C) 2011 Canonical Ltd.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -40,6 +42,7 @@ class AbstractKeyAuthorizer;
 class AbstractKeyManager;
 class AbstractSecretsStorage;
 class KeyHandler;
+class AbstractAccessControlManager;
 
 /*!
  * @class ExtensionInterface.
@@ -55,7 +58,7 @@ public:
      *
      * @return A key manager object, or 0 if none is provided by this plugin
      */
-    virtual AbstractKeyManager *keyManager(QObject *parent = 0) const = 0;
+    virtual AbstractKeyManager *keyManager(QObject *parent = 0) const;
 };
 
 /*!
@@ -73,7 +76,7 @@ public:
      * @return A key authorizer object, or 0 if none is provided by this plugin
      */
     virtual AbstractKeyAuthorizer *keyAuthorizer(KeyHandler *keyHandler,
-                                                 QObject *parent = 0) const = 0;
+                                                 QObject *parent = 0) const;
 };
 
 /*!
@@ -94,7 +97,7 @@ public:
      *
      * @return A CryptoManager object, or 0 if none is provided by this plugin
      */
-    virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const = 0;
+    virtual AbstractCryptoManager *cryptoManager(QObject *parent = 0) const;
 
     /*!
      * Gets the SecretsStorage object, which is used to save and load the
@@ -105,7 +108,18 @@ public:
      *
      * @return A SecretsStorage object, or 0 if none is provided by this plugin.
      */
-    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const = 0;
+    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const;
+
+    /*!
+     * Gets the AbstractAccessControlManager object, which will be used to check
+     * accesses to the credential database
+     * This object is instantiated only if the value of the "AccessControlManager"
+     * setting in the signond configuration matches the plugin's
+     * QObject::objectName().
+     *
+     * @return An AbstractAccessControlManager object, or 0 if none is provided by this plugin
+     */
+    virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
 };
 
 } // namespace

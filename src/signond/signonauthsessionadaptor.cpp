@@ -2,8 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -21,7 +23,7 @@
  */
 
 #include "signonauthsessionadaptor.h"
-#include "accesscontrolmanager.h"
+#include "accesscontrolmanagerhelper.h"
 #include "credentialsaccessmanager.h"
 #include "credentialsdb.h"
 
@@ -49,7 +51,7 @@ namespace SignonDaemonNS {
         TRACE();
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
-        if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
+        if (AccessControlManagerHelper::pidOfPeer(dbusContext) != parent()->ownerPid()) {
             TRACE() << "queryAvailableMechanisms called from peer that doesn't own the AuthSession object\n";
             QString errMsg;
             QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
@@ -91,7 +93,7 @@ namespace SignonDaemonNS {
         }
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
-        if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
+        if (AccessControlManagerHelper::pidOfPeer(dbusContext) != parent()->ownerPid()) {
             TRACE() << "process called from peer that doesn't own the AuthSession object\n";
             QString errMsg;
             QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
@@ -108,7 +110,7 @@ namespace SignonDaemonNS {
         TRACE();
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
-        if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
+        if (AccessControlManagerHelper::pidOfPeer(dbusContext) != parent()->ownerPid()) {
             TRACE() << "cancel called from peer that doesn't own the AuthSession object\n";
             return;
         }
@@ -121,12 +123,12 @@ namespace SignonDaemonNS {
         TRACE();
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
-        if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
+        if (AccessControlManagerHelper::pidOfPeer(dbusContext) != parent()->ownerPid()) {
             TRACE() << "setId called from peer that doesn't own the AuthSession object\n";
             return;
         }
-        if (!AccessControlManager::isPeerAllowedToUseIdentity(
-                                        dbusContext, id)) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        dbusContext.message(), id)) {
             TRACE() << "setId called with an identifier the peer is not allowed to use";
             return;
         }
@@ -139,7 +141,7 @@ namespace SignonDaemonNS {
         TRACE();
 
         QDBusContext &dbusContext = *static_cast<QDBusContext *>(parent());
-        if (AccessControlManager::pidOfPeer(dbusContext) != parent()->ownerPid()) {
+        if (AccessControlManagerHelper::pidOfPeer(dbusContext) != parent()->ownerPid()) {
             TRACE() << "objectUnref called from peer that doesn't own the AuthSession object\n";
             return;
         }

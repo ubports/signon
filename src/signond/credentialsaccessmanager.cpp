@@ -3,9 +3,11 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <mailto:ext-Aurel.Popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -73,7 +75,10 @@ void CAMConfiguration::serialize(QIODevice *device)
     stream << "\n\n====== Credentials Access Manager Configuration ======\n\n";
     const char *usingEncryption = useEncryption() ? "true" : "false";
     stream << "Using encryption: " << usingEncryption << '\n';
-    stream << "Credentials database name: " << m_dbName << '\n';
+    stream << "Metadata DB path: " << metadataDBPath() << '\n';
+    stream << "Cryptomanager name: " << cryptoManagerName() << '\n';
+    stream << "ACL manager name: " << accessControlManagerName() << '\n';
+    stream << "Secrets storage name: " << secretsStorageName() << '\n';
     stream << "======================================================\n\n";
     device->write(buffer.toUtf8());
     device->close();
@@ -87,6 +92,12 @@ QString CAMConfiguration::metadataDBPath() const
 QString CAMConfiguration::cryptoManagerName() const
 {
     return m_settings.value(QLatin1String("CryptoManager"),
+                            QLatin1String("default")).toString();
+}
+
+QString CAMConfiguration::accessControlManagerName() const
+{
+    return m_settings.value(QLatin1String("AccessControlManager"),
                             QLatin1String("default")).toString();
 }
 
@@ -125,7 +136,9 @@ CredentialsAccessManager::CredentialsAccessManager(const CAMConfiguration &confi
           m_keyHandler(NULL),
           m_keyAuthorizer(NULL),
           m_secretsStorage(NULL),
-          m_CAMConfiguration(configuration)
+          m_CAMConfiguration(configuration),
+          m_acManager(NULL),
+          m_acManagerHelper(NULL)
 {
     if (!m_pInstance) {
         m_pInstance = this;
@@ -150,11 +163,10 @@ CredentialsAccessManager *CredentialsAccessManager::instance()
 
 void CredentialsAccessManager::finalize()
 {
+    TRACE() << "Enter";
+
     if (m_systemOpened)
         closeCredentialsSystem();
-
-    if (m_cryptoManager)
-        delete m_cryptoManager;
 
     // Disconnect all key managers
     foreach (SignOn::AbstractKeyManager *keyManager, keyManagers)
@@ -188,6 +200,21 @@ bool CredentialsAccessManager::init()
         }
         TRACE() << "No SecretsStorage set, using default (dummy)";
         m_secretsStorage = new DefaultSecretsStorage(this);
+    }
+
+    //Initialize AccessControlManager
+    if (m_acManager == 0) {
+        QString name = m_CAMConfiguration.accessControlManagerName();
+        if (name != QLatin1String("default")) {
+            BLAME() << "Couldn't load AccessControlManager:" << name;
+        }
+        TRACE() << "No AccessControlManager set, using default (dummy)";
+        m_acManager = new SignOn::AbstractAccessControlManager(this);
+    }
+
+    //Initialize AccessControlManagerHelper
+    if (m_acManagerHelper == 0) {
+        m_acManagerHelper = new AccessControlManagerHelper(m_acManager);
     }
 
     //Initialize CryptoManager
@@ -257,6 +284,7 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
     SignOn::ExtensionInterface3 *extension3;
 
     extension3 = qobject_cast<SignOn::ExtensionInterface3 *>(plugin);
+
     if (extension3 != 0)
         extension2 = extension3;
     else
@@ -324,8 +352,23 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
                 }
             }
         }
-    }
 
+        /* Instantiate this plugin's AccessControlManager only if it's the plugin
+         * requested in the config file. */
+        if (plugin->objectName() == m_CAMConfiguration.accessControlManagerName()) {
+            SignOn::AbstractAccessControlManager *acManager =
+                extension3->accessControlManager(this);
+            if (acManager != 0) {
+                if (m_acManager == 0) {
+                    m_acManager = acManager;
+                    extensionInUse = true;
+                } else {
+                    TRACE() << "Access control manager already set";
+                    delete acManager;
+                }
+            }
+        }
+    }
     return extensionInUse;
 }
 

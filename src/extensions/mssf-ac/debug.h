@@ -1,10 +1,8 @@
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file is part of signon
  *
  * Copyright (C) 2010 Nokia Corporation.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -21,25 +19,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-
-#include "cryptsetup-plugin.h"
-#include "crypto-manager.h"
+#ifndef SIGNON_DEBUG_H
+#define SIGNON_DEBUG_H
 
 #include <QDebug>
 
-using namespace SignOn;
+#ifndef TRACE
+#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+#endif
 
-CryptsetupPlugin::CryptsetupPlugin():
-    QObject(0)
-{
-    setObjectName(QLatin1String("cryptsetup"));
-}
+#ifndef BLAME
+#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#endif
 
-AbstractCryptoManager *CryptsetupPlugin::cryptoManager(QObject *parent) const
-{
-    qDebug() << Q_FUNC_INFO;
-    return new CryptoManager(parent);
-}
-
-Q_EXPORT_PLUGIN2(cryptsetup, CryptsetupPlugin);
+#endif // SIGNON_DEBUG_H
 
