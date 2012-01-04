@@ -121,7 +121,7 @@ class SignonDaemon;
 
         QString m_canceled;
 
-        quint32 m_id;
+        uint m_id;
         QString m_method;
         QString m_passwordUpdate;
 
