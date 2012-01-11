@@ -39,25 +39,4 @@ AbstractAccessControlManager *SmackAccessControlPlugin::accessControlManager(QOb
     return new SmackAccessControlManager(parent);
 }
 
-AbstractSecretsStorage *SmackAccessControlPlugin::secretsStorage(QObject *parent) const
-{
-    return 0;
-}
-
-AbstractCryptoManager *SmackAccessControlPlugin::cryptoManager(QObject *parent) const
-{
-    return 0;
-}
-
-AbstractKeyAuthorizer *SmackAccessControlPlugin::keyAuthorizer(KeyHandler *,
-                                                       QObject *) const
-{
-    return 0;
-}
-
-AbstractKeyManager *SmackAccessControlPlugin::keyManager(QObject *) const
-{
-    return 0;
-}
-
 Q_EXPORT_PLUGIN2(smack-ac, SmackAccessControlPlugin);
