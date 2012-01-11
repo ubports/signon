@@ -108,11 +108,7 @@ public:
      *
      * @return A SecretsStorage object, or 0 if none is provided by this plugin.
      */
-<<<<<<< HEAD
     virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const;
-=======
-    virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const = 0;
->>>>>>> d06904e2322c8a5ee362057dd2b3b74eba62dce0
 
     /*!
      * Gets the AbstractAccessControlManager object, which will be used to check
@@ -123,11 +119,7 @@ public:
      *
      * @return An AbstractAccessControlManager object, or 0 if none is provided by this plugin
      */
-<<<<<<< HEAD
     virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
-=======
-    virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const = 0;
->>>>>>> d06904e2322c8a5ee362057dd2b3b74eba62dce0
 };
 
 } // namespace
