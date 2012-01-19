@@ -1,4 +1,3 @@
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file is part of signon
  *
@@ -21,23 +20,23 @@
  * 02110-1301 USA
  */
 
-#ifndef MSSFAC_PLUGIN_H
-#define MSSFAC_PLUGIN_H
+#ifndef SMACKAC_PLUGIN_H
+#define SMACKAC_PLUGIN_H
 
 #include <QObject>
 #include <SignOn/ExtensionInterface>
 
-class MSSFAccessControlPlugin: public QObject, public SignOn::ExtensionInterface3
+class SmackAccessControlPlugin: public QObject, public SignOn::ExtensionInterface3
 {
     Q_OBJECT
     Q_INTERFACES(SignOn::ExtensionInterface3)
 
 public:
-    MSSFAccessControlPlugin();
+    SmackAccessControlPlugin();
 
     // reimplemented methods
     SignOn::AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
 };
 
-#endif // MSSFAC_PLUGIN_H
+#endif // SMACKAC_PLUGIN_H
 

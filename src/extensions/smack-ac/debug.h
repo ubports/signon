@@ -1,10 +1,9 @@
-/* -*- Mode: C++; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * This file is part of signon
  *
- * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2010 Nokia Corporation.
  *
- * Contact: Elena Reshetova <elena.reshetova@intel.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -20,24 +19,18 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
+#ifndef SIGNON_DEBUG_H
+#define SIGNON_DEBUG_H
 
-#ifndef MSSFAC_PLUGIN_H
-#define MSSFAC_PLUGIN_H
+#include <QDebug>
 
-#include <QObject>
-#include <SignOn/ExtensionInterface>
+#ifndef TRACE
+#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+#endif
 
-class MSSFAccessControlPlugin: public QObject, public SignOn::ExtensionInterface3
-{
-    Q_OBJECT
-    Q_INTERFACES(SignOn::ExtensionInterface3)
+#ifndef BLAME
+#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#endif
 
-public:
-    MSSFAccessControlPlugin();
-
-    // reimplemented methods
-    SignOn::AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
-};
-
-#endif // MSSFAC_PLUGIN_H
+#endif // SIGNON_DEBUG_H
 
