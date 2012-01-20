@@ -35,8 +35,6 @@ QMAKE_LIBDIR += \
 
 LIBS += -lsignon-plugins-common
 
-PKGCONFIG += signon-plugins-common
-
 QMAKE_CXXFLAGS += -fno-exceptions \
                   -fno-rtti
 
