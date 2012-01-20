@@ -1313,7 +1313,12 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
         QString password;
         if (info.storePassword())
             password = info.password();
-        secretsStorage->updateCredentials(id, info.userName(), password);
+
+        QString userName;
+        if (info.isUserNameSecret())
+            userName = info.userName();
+
+        secretsStorage->updateCredentials(id, userName, password);
     }
 
     return id;
