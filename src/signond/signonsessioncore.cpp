@@ -753,6 +753,7 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
             m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = false;
         else
             m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
+        m_listOfRequests.head().m_params[SSOUI_KEY_IDENTITY] = m_id;
 
         CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
         CredentialsDB *db = camManager->credentialsDB();
