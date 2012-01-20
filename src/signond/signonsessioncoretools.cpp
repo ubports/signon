@@ -53,7 +53,6 @@ StoreOperation::StoreOperation(const StoreType type) : m_storeType(type)
 
 StoreOperation::StoreOperation(const StoreOperation &src)
     : m_storeType(src.m_storeType),
-      m_credsData(src.m_credsData),
       m_info(src.m_info),
       m_authMethod(src.m_authMethod),
       m_blobData(src.m_blobData)
