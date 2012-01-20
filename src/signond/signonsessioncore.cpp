@@ -80,7 +80,6 @@ SignonSessionCore::SignonSessionCore(quint32 id,
       m_windowId(0),
       m_id(id),
       m_method(method),
-      m_passwordUpdate(QString()),
       m_queryCredsUiDisplayed(false)
 {
     m_signonui = NULL;
@@ -546,9 +545,6 @@ void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
                 && !data[SSO_KEY_USERNAME].toString().isEmpty())
             info.setUserName(data[SSO_KEY_USERNAME].toString());
 
-        if (!m_passwordUpdate.isEmpty())
-            info.setPassword(m_passwordUpdate);
-
         if (data.contains(SSO_KEY_PASSWORD)
             && !data[SSO_KEY_PASSWORD].toString().isEmpty())
             info.setPassword(data[SSO_KEY_PASSWORD].toString());
@@ -669,7 +665,6 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
     TRACE();
 
     keepInUse();
-    m_passwordUpdate.clear();
     if (m_id == SIGNOND_NEW_IDENTITY) {
         BLAME() << "Cannot store without identity";
         return;
@@ -927,8 +922,6 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             m_plugin->processRefresh(m_listOfRequests.head().m_cancelKey,
                                      m_listOfRequests.head().m_params);
         } else {
-            if (m_listOfRequests.head().m_params.contains(SSO_KEY_PASSWORD))
-                m_passwordUpdate = m_listOfRequests.head().m_params[SSO_KEY_PASSWORD].toString();
             m_plugin->processUi(m_listOfRequests.head().m_cancelKey,
                                 m_listOfRequests.head().m_params);
         }
