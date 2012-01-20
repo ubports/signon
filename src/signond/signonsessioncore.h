@@ -123,7 +123,6 @@ class SignonDaemon;
 
         uint m_id;
         QString m_method;
-        QString m_passwordUpdate;
 
         //Queues store operations when the secure storage is unavailable
         QQueue<StoreOperation> m_storeQueue;

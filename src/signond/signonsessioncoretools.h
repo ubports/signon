@@ -57,7 +57,6 @@ struct StoreOperation {
 
 public:
     StoreType m_storeType;
-    QVariantMap m_credsData;
     SignonIdentityInfo m_info;
     //Blob store related
     QString m_authMethod;
