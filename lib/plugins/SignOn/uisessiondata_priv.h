@@ -46,6 +46,7 @@
 #define SSOUI_KEY_WATCHDOG        QLatin1String("watchdog")         // automatic behavior of dialog
 #define SSOUI_KEY_STORED_IDENTITY QLatin1String("StoredIdentity") /* flag whether
                                                                      the credentials are stored or not */
+#define SSOUI_KEY_IDENTITY        QLatin1String("Identity") // Credentials ID
 #define SSOUI_KEY_FORGOTPASSWORD    QLatin1String("ForgotPassword")
 #define SSOUI_KEY_FORGOTPASSWORDURL QLatin1String("ForgotPasswordUrl")
 #define SSOUI_KEY_REPLYCOOKIES      QLatin1String("ReplyCookies")
