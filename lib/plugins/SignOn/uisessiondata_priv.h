@@ -55,6 +55,11 @@
 #define SSOUI_KEY_ICON              QLatin1String("Icon")
 #define SSOUI_KEY_TITLE             QLatin1String("Title")
 #define SSOUI_KEY_CONFIRMCOUNT      QLatin1String("ConfirmCount")
+/* Embed the signon-ui in the window given by SSOUI_KEY_WINDOWID */
+#define SSOUI_KEY_EMBEDDED          QLatin1String("Embedded")
+
+/* Contains the original request parameters, as sent from the application */
+#define SSOUI_KEY_CLIENT_DATA       QLatin1String("ClientData")
 
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
