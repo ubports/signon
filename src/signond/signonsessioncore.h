@@ -115,7 +115,6 @@ class SignonDaemon;
         PluginProxy *m_plugin;
         QQueue<RequestData> m_listOfRequests;
         SignonUiAdaptor *m_signonui;
-        quint32 m_windowId;
 
         QDBusPendingCallWatcher *m_watcher;
 

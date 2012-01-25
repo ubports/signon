@@ -77,7 +77,6 @@ SignonSessionCore::SignonSessionCore(quint32 id,
                                      int timeout,
                                      SignonDaemon *parent)
     : SignonDisposable(timeout, parent),
-      m_windowId(0),
       m_id(id),
       m_method(method),
       m_queryCredsUiDisplayed(false)
@@ -395,10 +394,6 @@ void SignonSessionCore::startProcess()
     if (parameters.contains(SSOUI_KEY_UIPOLICY)
         && parameters[SSOUI_KEY_UIPOLICY] == RequestPasswordPolicy) {
         parameters.remove(SSO_KEY_PASSWORD);
-    }
-
-    if (parameters.contains(SSOUI_KEY_WINDOWID)) {
-        m_windowId = parameters[SSOUI_KEY_WINDOWID].toUInt();
     }
 
     /* Temporary caching, if credentials are valid
@@ -751,11 +746,6 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
                 m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.caption());
                 TRACE() << "Got caption: " << info.caption();
             }
-        }
-
-        /* Set the parent window ID */
-        if (!data.contains(SSOUI_KEY_WINDOWID) && m_windowId != 0) {
-            m_listOfRequests.head().m_params.insert(SSOUI_KEY_WINDOWID, m_windowId);
         }
 
         /*
