@@ -56,6 +56,9 @@
 #define SSOUI_KEY_TITLE             QLatin1String("Title")
 #define SSOUI_KEY_CONFIRMCOUNT      QLatin1String("ConfirmCount")
 
+/* Contains the original request parameters, as sent from the application */
+#define SSOUI_KEY_CLIENT_DATA       QLatin1String("ClientData")
+
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
 #define SSOUI_KEY_SLOT_REFRESH "refresh"

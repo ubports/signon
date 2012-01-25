@@ -326,6 +326,10 @@ void SignonSessionCore::startProcess()
     RequestData data = m_listOfRequests.head();
     QVariantMap parameters = data.m_params;
 
+    /* save the client data; this should not be modified during the processing
+     * of this request */
+    m_clientData = parameters;
+
     if (m_id) {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         Q_ASSERT(db != 0);
@@ -733,6 +737,7 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
         else
             m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
         m_listOfRequests.head().m_params[SSOUI_KEY_IDENTITY] = m_id;
+        m_listOfRequests.head().m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
 
         CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
         CredentialsDB *db = camManager->credentialsDB();

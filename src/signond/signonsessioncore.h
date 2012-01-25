@@ -122,6 +122,9 @@ class SignonDaemon;
 
         uint m_id;
         QString m_method;
+        /* the original request parameters, for the request currently being
+         * processed */
+        QVariantMap m_clientData;
 
         //Queues store operations when the secure storage is unavailable
         QQueue<StoreOperation> m_storeQueue;
