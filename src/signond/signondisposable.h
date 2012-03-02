@@ -73,6 +73,18 @@ public:
     void setAutoDestruct(bool value = true) const;
 
     /*!
+     * Invoke the specified method on @object when there are no
+     * disposable objects for more than @maxInactivity seconds.
+     *
+     * To keep the implementation simpler, this function can be called only
+     * once, and the @member variable must still be accessible when the method
+     * will be invoked (use a static string).
+     */
+    static void invokeOnIdle(int maxInactivity,
+                             QObject *object, const char *member);
+
+public Q_SLOTS:
+    /*!
      * Deletes all disposable object for which the inactivity time has
      * elapsed.
      */

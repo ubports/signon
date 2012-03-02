@@ -72,6 +72,7 @@ public:
 
     QString pluginsDir() const { return m_pluginsDir; }
     QString extensionsDir() const { return m_extensionsDir; }
+    uint daemonTimeout() const { return m_daemonTimeout; }
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
 
@@ -83,6 +84,7 @@ private:
     CAMConfiguration m_camConfiguration;
 
     //object timeouts
+    uint m_daemonTimeout;
     uint m_identityTimeout;
     uint m_authSessionTimeout;
 };

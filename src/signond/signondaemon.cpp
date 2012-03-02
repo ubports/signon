@@ -69,6 +69,7 @@ SignonDaemonConfiguration::SignonDaemonConfiguration():
     m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
     m_extensionsDir(QLatin1String(SIGNOND_EXTENSIONS_DIR)),
     m_camConfiguration(),
+    m_daemonTimeout(0), // 0 = no timeout
     m_identityTimeout(300),//secs
     m_authSessionTimeout(300)//secs
 {}
@@ -151,6 +152,12 @@ void SignonDaemonConfiguration::load()
 
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
     int value = 0;
+    if (environment.contains(QLatin1String("SSO_DAEMON_TIMEOUT"))) {
+        value = environment.value(
+            QLatin1String("SSO_DAEMON_TIMEOUT")).toInt(&isOk);
+        if (value > 0 && isOk) m_daemonTimeout = value;
+    }
+
     if (environment.contains(QLatin1String("SSO_IDENTITY_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
@@ -415,6 +422,11 @@ void SignonDaemon::init()
         BLAME() << "Signond: Cannot initialize credentials storage.";
 
     Q_UNUSED(AuthCoreCache::instance(this));
+
+    if (m_configuration->daemonTimeout() > 0) {
+        SignonDisposable::invokeOnIdle(m_configuration->daemonTimeout(),
+                                       this, SLOT(deleteLater()));
+    }
 
     TRACE() << "Signond SUCCESSFULLY initialized.";
 }
