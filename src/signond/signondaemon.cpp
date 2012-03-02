@@ -232,6 +232,10 @@ SignonDaemon::~SignonDaemon()
     }
 
     delete m_configuration;
+
+    QMetaObject::invokeMethod(QCoreApplication::instance(),
+                              "quit",
+                              Qt::QueuedConnection);
 }
 
 void SignonDaemon::setupSignalHandlers()
