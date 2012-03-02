@@ -72,6 +72,7 @@ void SignonDisposable::destroyUnused()
         if (object->autoDestruct  && (ts.tv_sec - object->lastActivity > object->maxInactivity)) {
             TRACE() << "Object unused, deleting: " << object;
             object->destroy();
+            disposableObjects.removeOne(object);
         }
     }
 }
