@@ -67,6 +67,7 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration():
     m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
+    m_extensionsDir(QLatin1String(SIGNOND_EXTENSIONS_DIR)),
     m_camConfiguration(),
     m_identityTimeout(300),//secs
     m_authSessionTimeout(300)//secs
@@ -177,6 +178,11 @@ void SignonDaemonConfiguration::load()
 
     if (environment.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
         m_pluginsDir = environment.value(QLatin1String("SSO_PLUGINS_DIR"));
+    }
+
+    if (environment.contains(QLatin1String("SSO_EXTENSIONS_DIR"))) {
+        m_extensionsDir =
+            environment.value(QLatin1String("SSO_EXTENSIONS_DIR"));
     }
 }
 
@@ -415,7 +421,7 @@ void SignonDaemon::initExtensions()
     /* Scan the directory containing signond extensions and attempt loading
      * all of them.
      */
-    QDir dir(QString::fromLatin1(SIGNOND_EXTENSIONS_DIR));
+    QDir dir(m_configuration->extensionsDir());
     QStringList filters(QLatin1String("lib*.so"));
     QStringList extensionList = dir.entryList(filters, QDir::Files);
     foreach(QString filename, extensionList)

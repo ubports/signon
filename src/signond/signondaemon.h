@@ -71,11 +71,13 @@ public:
     void load();
 
     QString pluginsDir() const { return m_pluginsDir; }
+    QString extensionsDir() const { return m_extensionsDir; }
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
 
 private:
     QString m_pluginsDir;
+    QString m_extensionsDir;
 
     // storage configuration
     CAMConfiguration m_camConfiguration;
