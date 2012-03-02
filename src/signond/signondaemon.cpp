@@ -154,14 +154,13 @@ void SignonDaemonConfiguration::load()
     if (environment.contains(QLatin1String("SSO_IDENTITY_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
-
-        m_identityTimeout = (value > 0) && isOk ? value : m_identityTimeout;
+        if (value > 0 && isOk) m_identityTimeout = value;
     }
 
     if (environment.contains(QLatin1String("SSO_AUTHSESSION_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
-        m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
+        if (value > 0 && isOk) m_authSessionTimeout = value;
     }
 
     if (environment.contains(QLatin1String("SSO_LOGGING_LEVEL"))) {
