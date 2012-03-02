@@ -1270,7 +1270,13 @@ bool CredentialsDB::checkPassword(const quint32 id,
 {
     INIT_ERROR();
     RETURN_IF_NO_SECRETS_DB(false);
-    return secretsStorage->checkPassword(id, username, password);
+    SignonIdentityInfo info = metaDataDB->identity(id);
+    if (info.isUserNameSecret()) {
+        return secretsStorage->checkPassword(id, username, password);
+    } else {
+        return username == info.userName() &&
+            secretsStorage->checkPassword(id, QString(), password);
+    }
 }
 
 SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
