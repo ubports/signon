@@ -67,7 +67,9 @@ namespace SignonDaemonNS {
 
 SignonDaemonConfiguration::SignonDaemonConfiguration():
     m_pluginsDir(QLatin1String(SIGNOND_PLUGINS_DIR)),
+    m_extensionsDir(QLatin1String(SIGNOND_EXTENSIONS_DIR)),
     m_camConfiguration(),
+    m_daemonTimeout(0), // 0 = no timeout
     m_identityTimeout(300),//secs
     m_authSessionTimeout(300)//secs
 {}
@@ -150,17 +152,22 @@ void SignonDaemonConfiguration::load()
 
     QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
     int value = 0;
+    if (environment.contains(QLatin1String("SSO_DAEMON_TIMEOUT"))) {
+        value = environment.value(
+            QLatin1String("SSO_DAEMON_TIMEOUT")).toInt(&isOk);
+        if (value > 0 && isOk) m_daemonTimeout = value;
+    }
+
     if (environment.contains(QLatin1String("SSO_IDENTITY_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_IDENTITY_TIMEOUT")).toInt(&isOk);
-
-        m_identityTimeout = (value > 0) && isOk ? value : m_identityTimeout;
+        if (value > 0 && isOk) m_identityTimeout = value;
     }
 
     if (environment.contains(QLatin1String("SSO_AUTHSESSION_TIMEOUT"))) {
         value = environment.value(
             QLatin1String("SSO_AUTHSESSION_TIMEOUT")).toInt(&isOk);
-        m_authSessionTimeout = (value > 0) && isOk ? value : m_authSessionTimeout;
+        if (value > 0 && isOk) m_authSessionTimeout = value;
     }
 
     if (environment.contains(QLatin1String("SSO_LOGGING_LEVEL"))) {
@@ -177,6 +184,11 @@ void SignonDaemonConfiguration::load()
 
     if (environment.contains(QLatin1String("SSO_PLUGINS_DIR"))) {
         m_pluginsDir = environment.value(QLatin1String("SSO_PLUGINS_DIR"));
+    }
+
+    if (environment.contains(QLatin1String("SSO_EXTENSIONS_DIR"))) {
+        m_extensionsDir =
+            environment.value(QLatin1String("SSO_EXTENSIONS_DIR"));
     }
 }
 
@@ -227,6 +239,10 @@ SignonDaemon::~SignonDaemon()
     }
 
     delete m_configuration;
+
+    QMetaObject::invokeMethod(QCoreApplication::instance(),
+                              "quit",
+                              Qt::QueuedConnection);
 }
 
 void SignonDaemon::setupSignalHandlers()
@@ -407,6 +423,11 @@ void SignonDaemon::init()
 
     Q_UNUSED(AuthCoreCache::instance(this));
 
+    if (m_configuration->daemonTimeout() > 0) {
+        SignonDisposable::invokeOnIdle(m_configuration->daemonTimeout(),
+                                       this, SLOT(deleteLater()));
+    }
+
     TRACE() << "Signond SUCCESSFULLY initialized.";
 }
 
@@ -415,7 +436,7 @@ void SignonDaemon::initExtensions()
     /* Scan the directory containing signond extensions and attempt loading
      * all of them.
      */
-    QDir dir(QString::fromLatin1(SIGNOND_EXTENSIONS_DIR));
+    QDir dir(m_configuration->extensionsDir());
     QStringList filters(QLatin1String("lib*.so"));
     QStringList extensionList = dir.entryList(filters, QDir::Files);
     foreach(QString filename, extensionList)
