@@ -53,10 +53,11 @@ namespace SignonDaemonNS {
                              << "Method:"
                              << failedMethodName;
 
+        QDBusMessage msg = parentDBusContext().message();
+        msg.setDelayedReply(true);
         QDBusMessage errReply =
-                    parentDBusContext().message().createErrorReply(
-                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
-                                            errMsg);
+                    msg.createErrorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME,
+                                         errMsg);
         SIGNOND_BUS.send(errReply);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
