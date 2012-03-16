@@ -1,9 +1,0 @@
-prefix=/usr
-exec_prefix=${prefix}
-libdir=${prefix}/lib/
-includedir=${prefix}/include
-Name: signon-saslplugin
-Description: Signon SASL plugin
-Version: 0.0.1
-Requires: signon-plugins
-Libs.private: -L/usr/lib  -lQtCore
