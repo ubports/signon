@@ -1,7 +1,6 @@
 TEMPLATE = subdirs
 CONFIG   += ordered
-SUBDIRS = sasl \
-          password \
+SUBDIRS = password \
           example \
           ssotest \
           ssotest2
