@@ -7,7 +7,6 @@ QT += core \
     xml \
     network \
     dbus
-QT -= gui
 
 #generate adaptor for backup
 system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
@@ -69,8 +68,6 @@ QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_BUILD_DIR}/lib/signond/SignOn
 
-QMAKE_CXXFLAGS += -fno-exceptions \
-    -fno-rtti
 DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
 DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR_QUOTED}"

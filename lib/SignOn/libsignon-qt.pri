@@ -41,14 +41,10 @@ SOURCES += identityinfo.cpp \
 QT += core \
     dbus
 
-QT -= gui
-
 CONFIG += qdbus \
     build_all \
     link_pkgconfig
     
-QMAKE_CXXFLAGS += -fno-exceptions \
-    -fno-rtti
 DEFINES += \
     QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII \
