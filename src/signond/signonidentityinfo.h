@@ -33,6 +33,7 @@ namespace SignonDaemonNS {
 
     typedef QString MethodName;
     typedef QStringList MechanismsList;
+    typedef QMap<MethodName, MechanismsList> MethodMap;
 
     /*!
      * @struct SignonIdentityInfo

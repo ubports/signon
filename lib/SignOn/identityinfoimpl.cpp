@@ -24,6 +24,7 @@
 #include "identityinfo.h"
 #include "signond/signoncommon.h"
 
+#include <QDBusMetaType>
 #include <QVariant>
 #include <QVariantMap>
 
@@ -36,7 +37,7 @@ namespace SignOn {
           m_secret(QString()),
           m_storeSecret(false),
           m_caption(QString()),
-          m_authMethods(QMap<MethodName, QVariant>()),
+          m_authMethods(QMap<MethodName, MechanismsList>()),
           m_realms(QStringList()),
           m_accessControlList(QStringList()),
           m_owner(QString()),
@@ -44,6 +45,7 @@ namespace SignOn {
           m_refCount(0),
           m_isEmpty(true)
     {
+        qDBusRegisterMetaType<SignOn::MethodMap>();
     }
 
     IdentityInfoImpl::~IdentityInfoImpl()
@@ -52,13 +54,13 @@ namespace SignOn {
 
     void IdentityInfoImpl::addMethod(const MethodName &method, const MechanismsList &mechanismsList)
     {
-        m_authMethods.insert(method, QVariant(mechanismsList));
+        m_authMethods.insert(method, mechanismsList);
     }
 
     void IdentityInfoImpl::updateMethod(const MethodName &method, const MechanismsList &mechanismsList)
     {
         m_authMethods.remove(method);
-        m_authMethods.insert(method, QVariant(mechanismsList));
+        m_authMethods.insert(method, mechanismsList);
     }
 
     void IdentityInfoImpl::removeMethod(const MethodName &method)
@@ -136,7 +138,8 @@ namespace SignOn {
         values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_secret);
         values.insert(SIGNOND_IDENTITY_INFO_STORESECRET, m_storeSecret);
         values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
-        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS, m_authMethods);
+        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
+                      QVariant::fromValue(m_authMethods));
         values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
         values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
         //signond side uses list of owners

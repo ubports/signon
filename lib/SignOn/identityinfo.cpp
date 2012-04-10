@@ -63,12 +63,7 @@ namespace SignOn {
         impl->m_caption = caption;
         impl->m_userName = userName;
         impl->m_isEmpty = false;
-
-        QMapIterator<QString, QStringList> it(methods);
-        while (it.hasNext()) {
-            it.next();
-            impl->m_authMethods.insert(it.key(), QVariant(it.value()));
-        }
+        impl->m_authMethods = methods;
     }
 
     IdentityInfo::~IdentityInfo()
@@ -190,7 +185,7 @@ namespace SignOn {
 
     MechanismsList IdentityInfo::mechanisms(const MethodName &method) const
     {
-        return impl->m_authMethods.value(method, QVariant(QStringList())).toStringList();
+        return impl->m_authMethods.value(method, QStringList());
     }
 
     void IdentityInfo::setRefCount(qint32 refCount)

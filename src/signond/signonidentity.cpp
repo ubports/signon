@@ -386,7 +386,8 @@ namespace SignonDaemonNS {
 
         bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
-        QVariantMap methods = qdbus_cast<QVariantMap>(container.value<QDBusArgument>());
+        MethodMap methods =
+            qdbus_cast<MethodMap>(container.value<QDBusArgument>());
 
         //Add creator to owner list if it has AID
         QStringList ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
@@ -395,7 +396,7 @@ namespace SignonDaemonNS {
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(info);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setMethods(methods);
             m_pInfo->setOwnerList(ownerList);
         } else {
             QString userName = info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
@@ -406,7 +407,7 @@ namespace SignonDaemonNS {
 
             m_pInfo->setUserName(userName);
             m_pInfo->setCaption(caption);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setMethods(methods);
             m_pInfo->setRealms(realms);
             m_pInfo->setAccessControlList(accessControlList);
             m_pInfo->setOwnerList(ownerList);
