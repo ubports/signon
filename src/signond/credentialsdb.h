@@ -175,11 +175,6 @@ public:
     static QStringList supportedDrivers() { return QSqlDatabase::drivers(); }
 
     /*!
-        @returns the current object configuration as a property, value strings map.
-    */
-    QMap<QString, QString> configuration();
-
-    /*!
         @returns the last occurred error if any. If not error occurred on the
         last performed operation the error object is invalid.
     */

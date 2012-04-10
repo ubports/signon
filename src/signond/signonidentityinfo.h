@@ -62,7 +62,6 @@ namespace SignonDaemonNS {
         static const QMap<QString, QVariant> mapListToMapVariant(const QMap<QString, QStringList> &mapList);
         static const QMap<QString, QStringList> mapVariantToMapList(const QMap<QString, QVariant> &mapList);
 
-        const QString serialize();
         bool operator== (const SignonIdentityInfo &other) const;
         SignonIdentityInfo &operator=(const SignonIdentityInfo &other);
 

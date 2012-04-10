@@ -203,18 +203,6 @@ void SqlDatabase::setLastError(const QSqlError &sqlError)
     }
 }
 
-QMap<QString, QString> SqlDatabase::configuration()
-{
-    QMap<QString, QString> map;
-
-    map.insert(QLatin1String("Database Name"), m_database.databaseName());
-    map.insert(QLatin1String("Host Name"), m_database.hostName());
-    map.insert(QLatin1String("Username"), m_database.databaseName());
-    map.insert(QLatin1String("Password"), m_database.password());
-    map.insert(QLatin1String("Tables"), m_database.tables().join(QLatin1String(" ")));
-    return map;
-}
-
 QString SqlDatabase::errorInfo(const QSqlError &error)
 {
     if (!error.isValid())

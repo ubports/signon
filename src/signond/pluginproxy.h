@@ -46,8 +46,6 @@ namespace SignonDaemonNS {
 
         PluginProcess(QObject* parent = NULL);
         ~PluginProcess();
-
-        virtual void setupChildProcess();
     };
 
     /*!

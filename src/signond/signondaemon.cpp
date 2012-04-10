@@ -488,16 +488,6 @@ bool SignonDaemon::initStorage()
     return true;
 }
 
-void SignonDaemon::unregisterIdentity(SignonIdentity *identity)
-{
-    if (m_storedIdentities.contains(identity->id()))
-        m_storedIdentities.remove(identity->id());
-    else
-        m_unstoredIdentities.remove(identity->objectName());
-
-    identity->deleteLater();
-}
-
 void SignonDaemon::identityStored(SignonIdentity *identity)
 {
     if (m_unstoredIdentities.contains(identity->objectName())) {
@@ -961,17 +951,6 @@ uchar SignonDaemon::restoreFinished()
     }
 
     return 0;
-}
-
-void SignonDaemon::listDBusInterfaces()
-{
-    QDBusReply<QStringList> reply = SIGNOND_BUS.interface()->registeredServiceNames();
-    QStringList list = reply.value();
-
-    QString servicesList = QLatin1String("DBUS registered services: \n");
-    servicesList += list.join(QLatin1String("\n"));
-
-    TRACE() << "\n\n" << servicesList.toAscii().data() << "\n";
 }
 
 void SignonDaemon::onDisconnected()

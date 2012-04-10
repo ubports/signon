@@ -65,32 +65,6 @@ namespace SignonDaemonNS {
     {
     }
 
-    void PluginProcess::setupChildProcess()
-    {
-        // Drop all root privileges in the child process and switch to signon user
-#ifndef NO_SIGNON_USER
-        //get uid and gid
-        struct passwd *passwdRecord = getpwnam("signon");
-        if ( !passwdRecord ){
-            fprintf(stderr, "failed to get user: signon\n");
-            emit QProcess::finished(2, QProcess::NormalExit);
-            exit(2);
-        }
-#ifdef SIGNOND_TRACE
-        //this is run in remote plugin process, so trace should go to stderr
-        fprintf(stderr, "got user: %s with uid: %d\n", passwdRecord->pw_name, passwdRecord->pw_uid);
-#endif
-        if (( ::setgid(passwdRecord->pw_gid))
-                || (::setuid(passwdRecord->pw_uid))
-                || (::getuid() != passwdRecord->pw_uid)
-                ) {
-            fprintf(stderr, "failed to set user: %s with uid: %d", passwdRecord->pw_name, passwdRecord->pw_uid);
-            emit QProcess::finished(2, QProcess::NormalExit);
-            exit(2);
-        }
- #endif
-    }
-
     /* ---------------------- PluginProxy ---------------------- */
 
     PluginProxy::PluginProxy(QString type, QObject *parent)

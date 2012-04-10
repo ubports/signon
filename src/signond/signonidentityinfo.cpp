@@ -157,30 +157,6 @@ namespace SignonDaemonNS {
     return mapList;
     }
 
-    const QString SignonIdentityInfo::serialize()
-    {
-        QString serialized;
-        QTextStream stream(&serialized);
-        stream << QString::fromLatin1("SignondIdentityInfo serialized:\nID = %1, ").arg(m_id);
-        stream << QString::fromLatin1("username = %1, ").arg(m_userName);
-        stream << QString::fromLatin1("password = %1, ").arg(m_password);
-        stream << QString::fromLatin1("caption = %1, ").arg(m_caption);
-        stream << QString::fromLatin1("realms = %1, \n").arg(m_realms.join(QLatin1String(" ")));
-        stream << QString::fromLatin1("acl = %1, \n").arg(m_accessControlList.join(QLatin1String(" ")));
-        stream << QString::fromLatin1("type = %1, \n").arg(m_type);
-        stream << QString::fromLatin1("refcount = %1, \n").arg(m_refCount);
-        stream << QString::fromLatin1("validated = %1, \n").arg(m_validated);
-
-        stream << "methods (";
-        for (QMap<QString, QStringList>::iterator it = m_methods.begin();
-             it != m_methods.end(); ++it) {
-            stream << QString::fromLatin1("(%1, (%2))").arg(it.key()).arg(it.value().join(QLatin1String(",")));
-        }
-        stream << ")";
-
-        return serialized;
-    }
-
     bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
     {
         //do not care about list element order

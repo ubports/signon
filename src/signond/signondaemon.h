@@ -144,10 +144,8 @@ private:
     void initExtension(const QString &filePath);
     bool initStorage();
 
-    void unregisterIdentity(SignonIdentity *identity);
     void identityStored(SignonIdentity *identity);
     void setupSignalHandlers();
-    void listDBusInterfaces();
 
     void eraseBackupDir() const;
     bool copyToBackupDir(const QStringList &fileNames) const;
