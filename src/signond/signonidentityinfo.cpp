@@ -65,8 +65,8 @@ namespace SignonDaemonNS {
         m_password = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
         m_storePassword = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         m_caption = info.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
-        QVariantMap methods = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS).toMap();
-        m_methods = mapVariantToMapList(methods);
+        m_methods =
+            info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS).value<MethodMap>();
 
         m_realms = info.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
         m_accessControlList = info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
@@ -81,7 +81,7 @@ namespace SignonDaemonNS {
                                 const QString &password,
                                 const bool storePassword,
                                 const QString &caption,
-                                const QMap<QString, QVariant> &methods,
+                                const MethodMap &methods,
                                 const QStringList &realms,
                                 const QStringList &accessControlList,
                                 const QStringList &ownerList,
@@ -93,7 +93,7 @@ namespace SignonDaemonNS {
           m_password(password),
           m_storePassword(storePassword),
           m_caption(caption),
-          m_methods(mapVariantToMapList(methods)),
+          m_methods(methods),
           m_realms(realms),
           m_accessControlList(accessControlList),
           m_ownerList(ownerList),
@@ -112,7 +112,7 @@ namespace SignonDaemonNS {
              << m_password
              << m_caption
              << m_realms
-             << QVariant(mapListToMapVariant(m_methods))
+             << QVariant::fromValue(m_methods)
              << m_accessControlList
              << m_type
              << m_refCount
@@ -129,32 +129,6 @@ namespace SignonDaemonNS {
         foreach(SignonIdentityInfo info, list)
             variantList.append(QVariant(info.toVariantList())) ;
         return variantList;
-    }
-
-    const QMap<QString, QVariant> SignonIdentityInfo::mapListToMapVariant(
-            const QMap<QString, QStringList> &mapList)
-    {
-        QMap<QString, QVariant> mapVariant;
-
-        QMapIterator<QString, QStringList> it(mapList);
-        while (it.hasNext()) {
-            it.next();
-            mapVariant.insert(it.key(), QVariant(it.value()));
-        }
-        return mapVariant;
-    }
-
-    const QMap<QString, QStringList> SignonIdentityInfo::mapVariantToMapList(
-            const QMap<QString, QVariant> &mapVariant)
-    {
-        QMap<QString, QStringList> mapList;
-
-        QMapIterator<QString, QVariant> it(mapVariant);
-        while (it.hasNext()) {
-            it.next();
-            mapList.insert(it.key(), it.value().toStringList());
-        }
-    return mapList;
     }
 
     bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const

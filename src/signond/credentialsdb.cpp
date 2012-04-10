@@ -676,7 +676,7 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
         securityTokens.append(query.value(0).toString());
     }
     query.clear();
-    QMap<QString, QVariant> methods;
+    MethodMap methods;
     query_str = QString::fromLatin1(
             "SELECT DISTINCT ACL.method_id, METHODS.method FROM "
             "( ACL JOIN METHODS ON ACL.method_id = METHODS.id ) "

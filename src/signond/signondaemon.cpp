@@ -31,6 +31,7 @@ extern "C" {
 #include <QDir>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
@@ -206,6 +207,9 @@ SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
 {
     // Files created by signond must be unreadable by "other"
     umask(S_IROTH | S_IWOTH);
+
+    // Register D-Bus meta types
+    qDBusRegisterMetaType<MethodMap>();
 }
 
 SignonDaemon::~SignonDaemon()

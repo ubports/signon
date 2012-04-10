@@ -848,11 +848,11 @@ namespace SignOn {
 
         if (!infoData.isEmpty()) {
             QDBusArgument arg(infoData.takeFirst().value<QDBusArgument>());
-            QMap<QString, QVariant> map = qdbus_cast<QMap<QString, QVariant> >(arg);
-            QMapIterator<QString, QVariant> it(map);
+            MethodMap map = qdbus_cast<MethodMap>(arg);
+            QMapIterator<MethodName,MechanismsList> it(map);
             while (it.hasNext()) {
                 it.next();
-                m_identityInfo->setMethod(it.key(), it.value().toStringList());
+                m_identityInfo->setMethod(it.key(), it.value());
             }
         }
 

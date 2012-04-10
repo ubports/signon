@@ -261,7 +261,7 @@ void TestDatabase::insertCredentialsTest()
     QVERIFY(retInfo == info);
 
     //insert with empty methods
-    QMap<MethodName,QVariant> methods2;
+    MethodMap methods2;
     info =
         SignonIdentityInfo(0,
                            QLatin1String("User"),
@@ -347,7 +347,7 @@ void TestDatabase::updateCredentialsTest()
         QLatin1String("URealm2.com") <<
         QLatin1String("Realm3.com");
 
-    QMap<MethodName,QVariant> umethods;
+    MethodMap umethods;
     QStringList umechs = QStringList() << QString::fromLatin1("UMech1") << QString::fromLatin1("Mech2") ;
     umethods.insert(QLatin1String("Method1"), umechs);
     umethods.insert(QLatin1String("UMethod2"), umechs);

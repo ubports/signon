@@ -71,15 +71,6 @@ namespace SignonDaemonNS {
         void remove();
         bool signOut();
         quint32 store(const QVariantMap &info);
-        quint32 storeCredentials(const quint32 id,
-                                 const QString &userName,
-                                 const QString &secret,
-                                 const bool storeSecret,
-                                 const QMap<QString, QVariant> &methods,
-                                 const QString &caption,
-                                 const QStringList &realms,
-                                 const QStringList &accessControlList,
-                                 const int type);
         void queryUiSlot(QDBusPendingCallWatcher *call);
         void verifyUiSlot(QDBusPendingCallWatcher *call);
     Q_SIGNALS:

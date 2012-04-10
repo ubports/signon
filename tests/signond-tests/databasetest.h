@@ -71,7 +71,7 @@ private:
     CredentialsDB *m_db;
     DefaultSecretsStorage *m_secretsStorage;
     MetaDataDB *m_meta;
-    QMap<QString,QVariant> testMethods;
+    MethodMap testMethods;
     QStringList testRealms;
     QStringList testAcl;
 };

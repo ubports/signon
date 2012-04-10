@@ -32,19 +32,6 @@
       <arg type="a{sv}" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.In4" value="QVariantMap"/>
     </method>
-    <method name="storeCredentials">
-      <arg type="u" direction="out"/>
-      <arg name="id" type="u" direction="in"/>
-      <arg name="userName" type="s" direction="in"/>
-      <arg name="secret" type="s" direction="in"/>
-      <arg name="storeSecret" type="b" direction="in"/>
-      <arg name="methods" type="a{sv}" direction="in"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In4" value="QVariantMap"/>
-      <arg name="caption" type="s" direction="in"/>
-      <arg name="realms" type="as" direction="in"/>
-      <arg name="accessControlList" type="as" direction="in"/>
-      <arg name="type" type="i" direction="in"/>
-    </method>
     <method name="addReference">
       <arg type="i" direction="out"/>
       <arg name="reference" type="s" direction="in"/>

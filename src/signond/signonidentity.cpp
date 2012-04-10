@@ -429,52 +429,6 @@ namespace SignonDaemonNS {
         return m_id;
     }
 
-    quint32 SignonIdentity::storeCredentials(const quint32 id,
-                                             const QString &userName,
-                                             const QString &secret,
-                                             const bool storeSecret,
-                                             const QMap<QString, QVariant> &methods,
-                                             const QString &caption,
-                                             const QStringList &realms,
-                                             const QStringList &accessControlList,
-                                             const int type)
-    {
-        keepInUse();
-        SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
-
-        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
-
-        QStringList accessControlListLocal = accessControlList;
-
-        if (!appId.isNull())
-            accessControlListLocal.append(appId);
-
-        //this method is deprecated, so it will set acl as owner list
-        if (m_pInfo == 0) {
-            m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
-                                             caption, methods, realms,
-                                             accessControlListLocal, accessControlListLocal,
-                                             type);
-        } else {
-            m_pInfo->setUserName(userName);
-            m_pInfo->setPassword(secret);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
-            m_pInfo->setCaption(caption);
-            m_pInfo->setRealms(realms);
-            m_pInfo->setAccessControlList(accessControlListLocal);
-            m_pInfo->setType(type);
-        }
-
-        storeCredentials(*m_pInfo, storeSecret);
-
-        if (m_id == SIGNOND_NEW_IDENTITY) {
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
-        }
-
-        return m_id;
-    }
-
     quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info, bool storeSecret)
     {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
