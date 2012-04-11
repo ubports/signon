@@ -1229,7 +1229,6 @@ void SsoTestClient::queryMechanisms()
 
 void SsoTestClient::queryIdentities()
 {
-    QSKIP("Skipping until secure storage gets stabilized.", SkipSingle);
     TEST_START
     m_serviceResult.reset();
 
@@ -1237,8 +1236,7 @@ void SsoTestClient::queryIdentities()
 
     QEventLoop loop;
 
-    connect(
-            &service,
+    connect(&service,
             SIGNAL(identities(const QList<SignOn::IdentityInfo> &)),
             &m_serviceResult,
             SLOT(identities(const QList<SignOn::IdentityInfo> &)));
@@ -1257,10 +1255,10 @@ void SsoTestClient::queryIdentities()
 
     END_SERVICE_TEST_IF_UNTRUSTED;
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
+    if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         QListIterator<IdentityInfo> it(m_serviceResult.m_identities);
-        while(it.hasNext())
+        while (it.hasNext())
         {
             IdentityInfo info = it.next();
             qDebug() << "Identity record: "
@@ -1273,7 +1271,8 @@ void SsoTestClient::queryIdentities()
                 qDebug() << QPair<QString, QStringList>(method, info.mechanisms(method));
 
         }
-        QCOMPARE(m_serviceResult.m_identities.count(), m_numberOfInsertedCredentials);
+        QCOMPARE(m_serviceResult.m_identities.count(),
+                 m_numberOfInsertedCredentials);
     }
     else
     {

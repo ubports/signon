@@ -141,15 +141,6 @@ namespace SignonDaemonNS {
         return values;
     }
 
-    const QList<QVariant> SignonIdentityInfo::listToVariantList(
-            const QList<SignonIdentityInfo> &list)
-    {
-        QList<QVariant> variantList;
-        foreach(SignonIdentityInfo info, list)
-            variantList.append(QVariant(info.toVariantList())) ;
-        return variantList;
-    }
-
     bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const
     {
         //do not care about list element order

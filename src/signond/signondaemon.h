@@ -130,7 +130,7 @@ public Q_SLOTS:
 
     QStringList queryMethods();
     QStringList queryMechanisms(const QString &method);
-    QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
+    QList<QVariantMap> queryIdentities(const QVariantMap &filter);
     bool clear();
     void onDisconnected();
 

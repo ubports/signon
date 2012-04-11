@@ -59,7 +59,6 @@ namespace SignonDaemonNS {
 
         const QList<QVariant> toVariantList();
         const QVariantMap toMap() const;
-        static const QList<QVariant> listToVariantList(const QList<SignonIdentityInfo> &list);
 
         bool operator== (const SignonIdentityInfo &other) const;
         SignonIdentityInfo &operator=(const SignonIdentityInfo &other);

@@ -27,7 +27,7 @@
       <arg name="method" type="s" direction="in"/>
     </method>
     <method name="queryIdentities">
-      <arg type="av" direction="out"/>
+      <arg type="aa{sv}" direction="out"/>
       <arg name="filter" type="a{sv}" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QVariantMap"/>
     </method>

@@ -210,6 +210,7 @@ SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
 
     // Register D-Bus meta types
     qDBusRegisterMetaType<MethodMap>();
+    qDBusRegisterMetaType<MapList>();
 }
 
 SignonDaemon::~SignonDaemon()
@@ -673,16 +674,16 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 }
 
 
-QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &filter)
+QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
 {
-    SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
+    SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariantMap>());
 
-    TRACE() << "\n\n\n Querying identities\n\n";
+    TRACE() << "Querying identities";
 
     CredentialsDB *db = m_pCAMManager->credentialsDB();
     if (!db) {
         qCritical() << Q_FUNC_INFO << m_pCAMManager->lastError();
-        return QList<QVariant>();
+        return QList<QVariantMap>();
     }
 
     QMap<QString, QString> filterLocal;
@@ -699,10 +700,14 @@ QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &fil
                 internalServerErrName,
                 internalServerErrStr + QLatin1String("Querying database error occurred."));
         SIGNOND_BUS.send(errReply);
-        return QList<QVariant>();
+        return QList<QVariantMap>();
     }
 
-    return SignonIdentityInfo::listToVariantList(credentials);
+    QList<QVariantMap> mapList;
+    foreach (SignonIdentityInfo info, credentials) {
+        mapList.append(info.toMap());
+    }
+    return mapList;
 }
 
 bool SignonDaemon::clear()

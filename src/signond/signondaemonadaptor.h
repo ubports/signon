@@ -33,6 +33,8 @@
 
 namespace SignonDaemonNS {
 
+    typedef QList<QVariantMap> MapList;
+
     class SignonDaemonAdaptor: public QDBusAbstractAdaptor
     {
         Q_OBJECT
@@ -54,7 +56,7 @@ namespace SignonDaemonNS {
 
         QStringList queryMethods();
         QStringList queryMechanisms(const QString &method);
-        QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
+        void queryIdentities(const QVariantMap &filter);
         bool clear();
 
     private:
@@ -65,5 +67,7 @@ namespace SignonDaemonNS {
     }; //class SignonDaemonAdaptor
 
 } //namespace SignonDaemonNS
+
+Q_DECLARE_METATYPE(SignonDaemonNS::MapList)
 
 #endif /* SIGNONDAEMONADAPTER_H_ */
