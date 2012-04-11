@@ -9,6 +9,11 @@
       <arg name="objectPath" type="o" direction="out"/>
       <arg name="identityData" type="av" direction="out"/>
     </method>
+    <method name="getIdentity">
+      <arg name="id" type="u" direction="in"/>
+      <arg name="objectPath" type="o" direction="out"/>
+      <arg name="identityData" type="a{sv}" direction="out"/>
+    </method>
     <method name="getAuthSessionObjectPath">
       <arg type="s" direction="out"/>
       <arg name="id" type="u" direction="in"/>

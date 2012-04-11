@@ -633,7 +633,7 @@ namespace SignOn {
         emit m_parent->referenceRemoved();
     }
 
-    void IdentityImpl::queryInfoReply(const QList<QVariant> &infoData)
+    void IdentityImpl::getInfoReply(const QVariantMap &infoData)
     {
         updateCachedData(infoData);
         updateState(Ready);
@@ -757,8 +757,8 @@ namespace SignOn {
 
     void IdentityImpl::updateContents()
     {
-        bool result = sendRequest("queryInfo", QList<QVariant>(),
-                                  SLOT(queryInfoReply(const QList<QVariant> &)));
+        bool result = sendRequest("getInfo", QList<QVariant>(),
+                                  SLOT(getInfoReply(const QVariantMap &)));
 
         if (!result) {
             TRACE() << "Error occurred.";
@@ -792,10 +792,10 @@ namespace SignOn {
             SLOT(registerReply(const QDBusObjectPath &));
 
         if (id() != SIGNOND_NEW_IDENTITY) {
-            registerMethodName = QLatin1String("registerStoredIdentity");
+            registerMethodName = QLatin1String("getIdentity");
             args << m_identityInfo->id();
             registerReplyMethodName =
-                SLOT(registerReply(const QDBusObjectPath &, const QList<QVariant> &));
+                SLOT(registerReply(const QDBusObjectPath &, const QVariantMap &));
         }
 
         QDBusMessage registerCall = QDBusMessage::createMethodCall(
@@ -828,40 +828,9 @@ namespace SignOn {
         return true;
     }
 
-    void IdentityImpl::updateCachedData(const QList<QVariant> &infoDataConst)
+    void IdentityImpl::updateCachedData(const QVariantMap &infoData)
     {
-        QList<QVariant> infoData = infoDataConst;
-        if (!infoData.isEmpty())
-            m_identityInfo->setId(infoData.takeFirst().toUInt());
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setUserName(infoData.takeFirst().toString());
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setSecret(infoData.takeFirst().toString());
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setCaption(infoData.takeFirst().toString());
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setRealms(infoData.takeFirst().toStringList());
-
-        if (!infoData.isEmpty()) {
-            QDBusArgument arg(infoData.takeFirst().value<QDBusArgument>());
-            MethodMap map = qdbus_cast<MethodMap>(arg);
-            QMapIterator<MethodName,MechanismsList> it(map);
-            while (it.hasNext()) {
-                it.next();
-                m_identityInfo->setMethod(it.key(), it.value());
-            }
-        }
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setType((IdentityInfo::CredentialsType)(infoData.takeFirst().toInt()));
-
-        if (!infoData.isEmpty())
-            m_identityInfo->setRefCount((infoData.takeFirst().toInt()));
-
+        m_identityInfo->impl->updateFromMap(infoData);
     }
 
     void IdentityImpl::checkConnection()
@@ -880,10 +849,11 @@ namespace SignOn {
 
     void IdentityImpl::registerReply(const QDBusObjectPath &objectPath)
     {
-        registerReply(objectPath, QList<QVariant>());
+        registerReply(objectPath, QVariantMap());
     }
 
-    void IdentityImpl::registerReply(const QDBusObjectPath &objectPath, const QList<QVariant> &infoData)
+    void IdentityImpl::registerReply(const QDBusObjectPath &objectPath,
+                                     const QVariantMap &infoData)
     {
         m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
                                             objectPath.path(),

@@ -75,6 +75,21 @@ namespace SignonDaemonNS {
         SignonDisposable::destroyUnused();
     }
 
+    void SignonDaemonAdaptor::getIdentity(const quint32 id,
+                                          QDBusObjectPath &objectPath,
+                                          QVariantMap &identityData)
+    {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                        parentDBusContext().message(), id)) {
+            securityErrorReply(__func__);
+            return;
+        }
+
+        m_parent->getIdentity(id, objectPath, identityData);
+
+        SignonDisposable::destroyUnused();
+    }
+
     QStringList SignonDaemonAdaptor::queryMethods()
     {
         return m_parent->queryMethods();

@@ -124,6 +124,8 @@ public Q_SLOTS:
     void registerNewIdentity(QDBusObjectPath &objectPath);
     void registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath,
                                 QList<QVariant> &identityData);
+    void getIdentity(const quint32 id, QDBusObjectPath &objectPath,
+                     QVariantMap &identityData);
     QString getAuthSessionObjectPath(const quint32 id, const QString type);
 
     QStringList queryMethods();

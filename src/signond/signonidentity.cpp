@@ -270,6 +270,34 @@ namespace SignonDaemonNS {
         return info.toVariantList();
     }
 
+    QVariantMap SignonIdentity::getInfo()
+    {
+        TRACE() << "QUERYING INFO";
+
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QVariantMap());
+
+        bool ok;
+        SignonIdentityInfo info = queryInfo(ok, false);
+
+        if (!ok) {
+            TRACE();
+            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
+                       QLatin1String("Database querying error occurred."));
+            return QVariantMap();
+        }
+
+        if (info.isNew()) {
+            TRACE();
+            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            return QVariantMap();
+        }
+
+        keepInUse();
+        return info.toMap();
+    }
+
     void SignonIdentity::queryUserPassword(const QVariantMap &params) {
         TRACE() << "Waiting for reply from signon-ui";
         QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(

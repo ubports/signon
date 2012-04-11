@@ -66,6 +66,7 @@ namespace SignOn {
         bool hasMethod(const MethodName &method) const;
         void clear();
         QVariantMap toMap() const;
+        void updateFromMap(const QVariantMap &map);
 
     private:
         void copy(const IdentityInfoImpl &other);

@@ -13,6 +13,9 @@
     <method name="queryInfo">
       <arg type="av" direction="out"/>
     </method>
+    <method name="getInfo">
+      <arg type="a{sv}" direction="out"/>
+    </method>
     <method name="verifyUser">
       <arg type="b" direction="out"/>
       <arg name="params" type="a{sv}" direction="in"/>

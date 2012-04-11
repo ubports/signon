@@ -78,7 +78,7 @@ namespace SignOn {
         void removeReply();
         void addReferenceReply();
         void removeReferenceReply();
-        void queryInfoReply(const QList<QVariant> &infoData);
+        void getInfoReply(const QVariantMap &infoData);
         void verifyUserReply(const bool valid);
         void verifySecretReply(const bool valid);
         void signOutReply();
@@ -98,7 +98,8 @@ namespace SignOn {
         void verifySecret(const QString &secret);
         void signOut();
         void authSessionCancelReply(const SignOn::Error &err);
-        void registerReply(const QDBusObjectPath &objectPath, const QList<QVariant> &infoData);
+        void registerReply(const QDBusObjectPath &objectPath,
+                           const QVariantMap &infoData);
         void registerReply(const QDBusObjectPath &objectPath);
 
     private:
@@ -110,7 +111,7 @@ namespace SignOn {
 
         bool sendRegisterRequest();
         void updateContents();
-        void updateCachedData(const QList<QVariant> &infoData);
+        void updateCachedData(const QVariantMap &infoData);
         void clearAuthSessionsCache();
 
     private:

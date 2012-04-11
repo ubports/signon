@@ -84,6 +84,18 @@ namespace SignonDaemonNS {
         return m_parent->queryInfo();
     }
 
+    QVariantMap SignonIdentityAdaptor::getInfo()
+    {
+        /* Access Control */
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+            parentDBusContext().message(), m_parent->id())) {
+            securityErrorReply(__func__);
+            return QVariantMap();
+        }
+
+        return m_parent->getInfo();
+    }
+
     void SignonIdentityAdaptor::addReference(const QString &reference)
     {
         /* Access Control */

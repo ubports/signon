@@ -79,6 +79,8 @@
 #define SIGNOND_IDENTITY_INFO_TYPE SIGNOND_STRING("Type")
 #define SIGNOND_IDENTITY_INFO_REFCOUNT SIGNOND_STRING("RefCount")
 #define SIGNOND_IDENTITY_INFO_VALIDATED SIGNOND_STRING("Validated")
+#define SIGNOND_IDENTITY_INFO_USERNAME_IS_SECRET \
+    SIGNOND_STRING("UserNameSecret")
 
 /*
  * Common server/client sides error names and messages

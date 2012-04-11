@@ -122,6 +122,25 @@ namespace SignonDaemonNS {
         return list;
     }
 
+    const QVariantMap SignonIdentityInfo::toMap() const
+    {
+        QVariantMap values;
+        values.insert(SIGNOND_IDENTITY_INFO_ID, m_id);
+        values.insert(SIGNOND_IDENTITY_INFO_USERNAME, m_userName);
+        values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_password);
+        values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
+        values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
+        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
+                      QVariant::fromValue(m_methods));
+        values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
+        values.insert(SIGNOND_IDENTITY_INFO_TYPE, m_type);
+        values.insert(SIGNOND_IDENTITY_INFO_REFCOUNT, m_refCount);
+        values.insert(SIGNOND_IDENTITY_INFO_VALIDATED, m_validated);
+        values.insert(SIGNOND_IDENTITY_INFO_USERNAME_IS_SECRET,
+                      m_isUserNameSecret);
+        return values;
+    }
+
     const QList<QVariant> SignonIdentityInfo::listToVariantList(
             const QList<SignonIdentityInfo> &list)
     {
