@@ -2,8 +2,9 @@
  * This file is part of signon
  *
  * Copyright (C) 2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -36,7 +37,7 @@ class TimeoutsTest: public QObject
 
 public Q_SLOTS:
     void credentialsStored(const quint32 id);
-    void identityError(Identity::IdentityError code, const QString &message);
+    void identityError(const SignOn::Error &error);
 
 #if defined(SSO_CI_TESTMANAGEMENT)
      void runAllTests();
@@ -58,7 +59,6 @@ private:
     bool triggerDisposableCleanup();
     bool identityAlive(const QString &path);
 
-    QProcess *daemonProcess;
     bool completed;
 };
 
