@@ -233,7 +233,7 @@ bool TimeoutsTest::identityAlive(const QString &path)
 {
     QDBusConnection conn = SIGNOND_BUS;
 
-    QString interface = QLatin1String("com.nokia.SingleSignOn.Identity");
+    QString interface = QLatin1String("com.google.code.AccountsSSO.SingleSignOn.Identity");
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       path,
                                                       interface,

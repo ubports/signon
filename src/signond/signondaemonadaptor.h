@@ -2,9 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -38,7 +39,7 @@ namespace SignonDaemonNS {
     class SignonDaemonAdaptor: public QDBusAbstractAdaptor
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthService")
+        Q_CLASSINFO("D-Bus Interface", "com.google.code.AccountsSSO.SingleSignOn.AuthService")
 
     public:
         SignonDaemonAdaptor(SignonDaemon *parent);
