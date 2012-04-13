@@ -49,10 +49,10 @@ extern "C" {
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
-            QDBusMessage errReply = message().createErrorReply(            \
-                    internalServerErrName,                                 \
-                    internalServerErrStr + QLatin1String("Could not access Signon Database.")); \
-            SIGNOND_BUS.send(errReply); \
+            sendErrorReply(internalServerErrName,                          \
+                           internalServerErrStr +                          \
+                           QLatin1String("Could not access Signon "        \
+                                         "Database."));                    \
             return _ret_arg_;           \
         }                               \
     } while(0)
@@ -508,10 +508,10 @@ void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
     SignonIdentity *identity = SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
     if (identity == NULL) {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Could not create remote Identity object."));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Could not create remote Identity "
+                                     "object."));
         return;
     }
 
@@ -551,10 +551,10 @@ void SignonDaemon::getIdentity(const quint32 id,
 
     if (identity == NULL)
     {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Could not create remote Identity object."));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Could not create remote Identity "
+                                     "object."));
         return;
     }
 
@@ -563,11 +563,8 @@ void SignonDaemon::getIdentity(const quint32 id,
 
     if (info.isNew())
     {
-        QDBusMessage errReply = message().createErrorReply(
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
-        SIGNOND_BUS.send(errReply);
-        objectPath = QDBusObjectPath();
+        sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
         return;
     }
 
@@ -614,11 +611,11 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
     if (!plugin) {
         TRACE() << "Could not load plugin of type: " << method;
-        QDBusMessage errReply = message().createErrorReply(
-                SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                QString(SIGNOND_METHOD_NOT_KNOWN_ERR_STR
-                        + QLatin1String("Method %1 is not known or could not load specific configuration.")).arg(method));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR +
+                       QString::fromLatin1("Method %1 is not known or could "
+                                           "not load specific configuration.").
+                       arg(method));
         return QStringList();
     }
 
@@ -651,10 +648,9 @@ QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
     QList<SignonIdentityInfo> credentials = db->credentials(filterLocal);
 
     if (db->errorOccurred()) {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Querying database error occurred."));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Querying database error occurred."));
         return QList<QVariantMap>();
     }
 
@@ -677,11 +673,9 @@ bool SignonDaemon::clear()
     }
 
     if (!db->clear()) {
-        QDBusMessage errReply = message().createErrorReply(
-                                                SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                                                QString(SIGNOND_INTERNAL_SERVER_ERR_STR
-                                                        + QLatin1String("Database error occurred.")));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                       SIGNOND_INTERNAL_SERVER_ERR_STR +
+                       QLatin1String("Database error occurred."));
         return false;
     }
     return true;
@@ -696,10 +690,8 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString t
                                                     supportsAuthMethod,
                                                     ownerPid);
     if (objectPath.isEmpty() && !supportsAuthMethod) {
-        QDBusMessage errReply = message().createErrorReply(
-                                                SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                                                SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
         return QString();
     }
     return objectPath;

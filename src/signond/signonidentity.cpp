@@ -38,9 +38,9 @@
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
         if (!(CredentialsAccessManager::instance()->credentialsSystemOpened())) { \
-            replyError(internalServerErrName, \
-                       internalServerErrStr + \
-                       QLatin1String("Could not access Signon Database.")); \
+            sendErrorReply(internalServerErrName, \
+                           internalServerErrStr + \
+                           QLatin1String("Could not access Signon Database."));\
             return _ret_arg_;           \
         }                               \
     } while(0)
@@ -130,13 +130,6 @@ namespace SignonDaemonNS {
         return identity;
     }
 
-    void SignonIdentity::replyError(const QString &name, const QString &msg)
-    {
-        setDelayedReply(true);
-        QDBusMessage errReply = message().createErrorReply(name, msg);
-        connection().send(errReply);
-    }
-
     void SignonIdentity::destroy()
     {
         if (m_registered)
@@ -211,14 +204,14 @@ namespace SignonDaemonNS {
 
         if (!ok) {
             BLAME() << "Identity not found.";
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return SIGNOND_NEW_IDENTITY;
         }
         if (!info.storePassword()) {
             BLAME() << "Password cannot be stored.";
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
+            sendErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                           SIGNOND_STORE_FAILED_ERR_STR);
             return SIGNOND_NEW_IDENTITY;
         }
 
@@ -253,16 +246,16 @@ namespace SignonDaemonNS {
 
         if (!ok) {
             TRACE();
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
-                       QLatin1String("Database querying error occurred."));
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
+                           QLatin1String("Database querying error occurred."));
             return QVariantMap();
         }
 
         if (info.isNew()) {
             TRACE();
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return QVariantMap();
         }
 
@@ -289,14 +282,14 @@ namespace SignonDaemonNS {
 
         if (!ok) {
             BLAME() << "Identity not found.";
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return false;
         }
         if (!info.storePassword() || info.password().isEmpty()) {
             BLAME() << "Password is not stored.";
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
             return false;
         }
 
@@ -323,9 +316,9 @@ namespace SignonDaemonNS {
         queryInfo(ok);
         if (!ok) {
             TRACE();
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
-                       QLatin1String("Database querying error occurred."));
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
+                           QLatin1String("Database querying error occurred."));
             return false;
         }
 
@@ -343,9 +336,9 @@ namespace SignonDaemonNS {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         if ((db == 0) || !db->removeCredentials(m_id)) {
             TRACE() << "Error occurred while inserting/updating credentials.";
-            replyError(SIGNOND_REMOVE_FAILED_ERR_NAME,
-                       SIGNOND_REMOVE_FAILED_ERR_STR +
-                       QLatin1String("Database error occurred."));
+            sendErrorReply(SIGNOND_REMOVE_FAILED_ERR_NAME,
+                           SIGNOND_REMOVE_FAILED_ERR_STR +
+                           QLatin1String("Database error occurred."));
             return;
         }
         emit infoUpdated((int)SignOn::IdentityRemoved);
@@ -422,8 +415,8 @@ namespace SignonDaemonNS {
         m_id = storeCredentials(*m_pInfo, storeSecret);
 
         if (m_id == SIGNOND_NEW_IDENTITY) {
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
+            sendErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                           SIGNOND_STORE_FAILED_ERR_STR);
         }
 
         return m_id;

@@ -82,7 +82,6 @@ namespace SignonDaemonNS {
         SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
         bool init();
         bool credentialsStored() const { return m_id > 0 ? true : false; }
-        void replyError(const QString &name, const QString &msg);
         void queryUserPassword(const QVariantMap &params);
 
     private:
