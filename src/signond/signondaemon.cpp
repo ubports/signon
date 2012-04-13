@@ -534,51 +534,6 @@ int SignonDaemon::authSessionTimeout() const
                                      m_configuration->authSessionTimeout());
 }
 
-void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
-{
-    SIGNON_RETURN_IF_CAM_UNAVAILABLE();
-
-    TRACE() << "Registering identity:" << id;
-
-    //1st check if the existing identity is in cache
-    SignonIdentity *identity = m_storedIdentities.value(id, NULL);
-
-    //if not create it
-    if (identity == NULL)
-        identity = SignonIdentity::createIdentity(id, this);
-
-    if (identity == NULL)
-    {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Could not create remote Identity object."));
-        SIGNOND_BUS.send(errReply);
-        return;
-    }
-
-    bool ok;
-    SignonIdentityInfo info = identity->queryInfo(ok, false);
-
-    if (info.isNew())
-    {
-        QDBusMessage errReply = message().createErrorReply(
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
-        SIGNOND_BUS.send(errReply);
-        objectPath = QDBusObjectPath();
-        return;
-    }
-
-    //cache the identity as stored
-    m_storedIdentities.insert(identity->id(), identity);
-    identity->keepInUse();
-
-    identityData = info.toVariantList();
-
-    TRACE() << "DONE REGISTERING IDENTITY";
-    objectPath = QDBusObjectPath(identity->objectName());
-}
-
 void SignonDaemon::getIdentity(const quint32 id,
                                QDBusObjectPath &objectPath,
                                QVariantMap &identityData)

@@ -84,7 +84,7 @@ void TimeoutsTest::identityTimeout()
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       SIGNOND_DAEMON_OBJECTPATH,
                                                       SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
+                                                      "getIdentity");
     QList<QVariant> args;
     args << identity->id();
     msg.setArguments(args);
@@ -148,7 +148,7 @@ void TimeoutsTest::identityRegisterTwice()
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       SIGNOND_DAEMON_OBJECTPATH,
                                                       SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
+                                                      "getIdentity");
     QList<QVariant> args;
     args << identity->id();
     msg.setArguments(args);

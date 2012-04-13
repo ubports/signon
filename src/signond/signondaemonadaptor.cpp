@@ -62,19 +62,6 @@ namespace SignonDaemonNS {
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
-    void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
-    {
-        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
-                                        parentDBusContext().message(), id)) {
-            securityErrorReply(__func__);
-            return;
-        }
-
-        m_parent->registerStoredIdentity(id, objectPath, identityData);
-
-        SignonDisposable::destroyUnused();
-    }
-
     void SignonDaemonAdaptor::getIdentity(const quint32 id,
                                           QDBusObjectPath &objectPath,
                                           QVariantMap &identityData)
