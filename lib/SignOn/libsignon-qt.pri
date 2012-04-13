@@ -62,5 +62,5 @@ headers.path = $${INSTALL_PREFIX}/include/signon-qt/SignOn
 INSTALLS += headers
 
 pkgconfig.files = libsignon-qt.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig

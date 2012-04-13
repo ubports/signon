@@ -2,7 +2,8 @@ TEMPLATE = lib
 TARGET = signon-plugins
 
 include( ../../common-project-config.pri )
-include( ../../common-installs-config.pri )
+include($${TOP_SRC_DIR}/common-installs-config.pri)
+include($${TOP_SRC_DIR}/common-vars.pri)
 
 CONFIG += static
 
@@ -22,19 +23,8 @@ headers.files = \
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
-PKGCONFIG_VARS = INSTALL_PREFIX INSTALL_LIBDIR SIGNOND_PLUGINS_DIR
-COMMAND = "cat signon-plugins.pc.in "
-for(var, PKGCONFIG_VARS) {
-   eval(VALUE = \$\${$${var}})
-   COMMAND += "| sed s,$${var},$${VALUE},"
-}
-COMMAND += " > signon-plugins.pc"
-
-pkgconfig.CONFIG = no_check_exist
 pkgconfig.files = signon-plugins.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
-pkgconfig.commands = $${COMMAND}
-QMAKE_EXTRA_TARGETS += pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig
 
 # configuration feature

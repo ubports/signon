@@ -27,19 +27,8 @@ headers.path = $${INSTALL_PREFIX}/include/signond
 dbus_files.files = $$OTHER_FILES
 dbus_files.path =$${INSTALL_PREFIX}/share/dbus-1/interfaces
 
-PKGCONFIG_VARS = INSTALL_PREFIX INSTALL_LIBDIR PROJECT_VERSION
-COMMAND = "cat signond.pc.in "
-for(var, PKGCONFIG_VARS) {
-   eval(VALUE = \$\${$${var}})
-   COMMAND += "| sed s,$${var},$${VALUE},"
-}
-COMMAND += " > signond.pc"
-
-pkgconfig.CONFIG = no_check_exist
 pkgconfig.files = signond.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
-pkgconfig.commands = $${COMMAND}
-QMAKE_EXTRA_TARGETS += pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 
 INSTALLS += headers dbus_files pkgconfig
 
