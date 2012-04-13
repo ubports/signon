@@ -72,18 +72,6 @@ namespace SignonDaemonNS {
         return m_parent->requestCredentialsUpdate(msg);
     }
 
-    QList<QVariant> SignonIdentityAdaptor::queryInfo()
-    {
-        /* Access Control */
-        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
-                                        parentDBusContext().message(), m_parent->id())) {
-            securityErrorReply(__func__);
-            return QList<QVariant>();
-        }
-
-        return m_parent->queryInfo();
-    }
-
     QVariantMap SignonIdentityAdaptor::getInfo()
     {
         /* Access Control */

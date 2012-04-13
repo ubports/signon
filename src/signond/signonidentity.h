@@ -63,7 +63,6 @@ namespace SignonDaemonNS {
 
     public Q_SLOTS:
         quint32 requestCredentialsUpdate(const QString &message);
-        QList<QVariant> queryInfo();
         QVariantMap getInfo();
         bool addReference(const QString &reference);
         bool removeReference(const QString &reference);

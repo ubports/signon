@@ -242,34 +242,6 @@ namespace SignonDaemonNS {
         return 0;
     }
 
-    QList<QVariant> SignonIdentity::queryInfo()
-    {
-        TRACE() << "QUERYING INFO";
-
-        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
-
-        bool ok;
-        SignonIdentityInfo info = queryInfo(ok, false);
-
-        if (!ok) {
-            TRACE();
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
-                       QLatin1String("Database querying error occurred."));
-            return QList<QVariant>();
-        }
-
-        if (info.isNew()) {
-            TRACE();
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
-            return QList<QVariant>();
-        }
-
-        keepInUse();
-        return info.toVariantList();
-    }
-
     QVariantMap SignonIdentity::getInfo()
     {
         TRACE() << "QUERYING INFO";

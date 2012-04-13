@@ -10,9 +10,6 @@
       <arg type="u" direction="out"/>
       <arg name="message" type="s" direction="in"/>
     </method>
-    <method name="queryInfo">
-      <arg type="av" direction="out"/>
-    </method>
     <method name="getInfo">
       <arg type="a{sv}" direction="out"/>
     </method>

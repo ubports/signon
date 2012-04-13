@@ -218,7 +218,7 @@ bool TimeoutsTest::identityAlive(const QString &path)
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       path,
                                                       interface,
-                                                      "queryInfo");
+                                                      "getInfo");
     QDBusMessage reply = conn.call(msg);
     return (reply.type() == QDBusMessage::ReplyMessage);
 }
