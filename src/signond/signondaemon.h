@@ -2,9 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -99,7 +100,6 @@ class SignonIdentity;
 class SignonDaemon: public QObject, protected QDBusContext
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.AuthService")
 
     friend class SignonIdentity;
     friend class SignonSessionCore;
@@ -122,13 +122,13 @@ public Q_SLOTS:
     /* Immediate reply calls */
 
     void registerNewIdentity(QDBusObjectPath &objectPath);
-    void registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath,
-                                QList<QVariant> &identityData);
+    void getIdentity(const quint32 id, QDBusObjectPath &objectPath,
+                     QVariantMap &identityData);
     QString getAuthSessionObjectPath(const quint32 id, const QString type);
 
     QStringList queryMethods();
     QStringList queryMechanisms(const QString &method);
-    QList<QVariant> queryIdentities(const QMap<QString, QVariant> &filter);
+    QList<QVariantMap> queryIdentities(const QVariantMap &filter);
     bool clear();
     void onDisconnected();
 
@@ -144,10 +144,8 @@ private:
     void initExtension(const QString &filePath);
     bool initStorage();
 
-    void unregisterIdentity(SignonIdentity *identity);
     void identityStored(SignonIdentity *identity);
     void setupSignalHandlers();
-    void listDBusInterfaces();
 
     void eraseBackupDir() const;
     bool copyToBackupDir(const QStringList &fileNames) const;

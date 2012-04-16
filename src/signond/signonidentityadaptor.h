@@ -2,9 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -35,7 +36,7 @@ namespace SignonDaemonNS {
     class SignonIdentityAdaptor : public QDBusAbstractAdaptor
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.Identity")
+        Q_CLASSINFO("D-Bus Interface", "com.google.code.AccountsSSO.SingleSignOn.Identity")
 
     public:
         SignonIdentityAdaptor(SignonIdentity *parent);
@@ -46,7 +47,7 @@ namespace SignonDaemonNS {
 
     public Q_SLOTS:
         quint32 requestCredentialsUpdate(const QString &message);
-        QList<QVariant> queryInfo();
+        QVariantMap getInfo();
         void addReference(const QString &reference);
         void removeReference(const QString &reference);
 
@@ -56,15 +57,6 @@ namespace SignonDaemonNS {
         bool signOut();
         quint32 store(const QVariantMap &info);
 
-        quint32 storeCredentials(const quint32 id,
-                                 const QString &userName,
-                                 const QString &secret,
-                                 const bool storeSecret,
-                                 const QMap<QString, QVariant> &methods,
-                                 const QString &caption,
-                                 const QStringList &realms,
-                                 const QStringList &accessControlList,
-                                 const int type);
     Q_SIGNALS:
         void unregistered();
         void infoUpdated(int);

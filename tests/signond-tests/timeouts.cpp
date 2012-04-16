@@ -2,8 +2,9 @@
  * This file is part of signon
  *
  * Copyright (C) 2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -39,27 +40,10 @@ using namespace SignOn;
 
 void TimeoutsTest::initTestCase()
 {
-    /* Kill any running instances of signond */
-    QProcess::execute("pkill -9 signond");
-
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert(QLatin1String("SSO_IDENTITY_TIMEOUT"), QLatin1String("5"));
-    daemonProcess = new QProcess();
-    daemonProcess->setProcessEnvironment(env);
-    daemonProcess->start("signond");
-    daemonProcess->waitForStarted(10 * 1000);
-    /*
-     * 1 second is still required as the signon daemon needs time to be started
-     * */
-    sleep(1);
 }
 
 void TimeoutsTest::cleanupTestCase()
 {
-    daemonProcess->kill();
-    daemonProcess->waitForFinished();
-
-    delete daemonProcess;
 }
 
 void TimeoutsTest::init()
@@ -86,9 +70,9 @@ void TimeoutsTest::identityTimeout()
                      this,
                      SLOT(credentialsStored(const quint32)));
     QObject::connect(identity,
-                     SIGNAL(error(Identity::IdentityError,const QString&)),
+                     SIGNAL(error(const SignOn::Error&)),
                      this,
-                     SLOT(identityError(Identity::IdentityError,const QString&)));
+                     SLOT(identityError(const SignOn::Error&)));
 
     identity->storeCredentials();
 
@@ -100,13 +84,13 @@ void TimeoutsTest::identityTimeout()
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       SIGNOND_DAEMON_OBJECTPATH,
                                                       SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
+                                                      "getIdentity");
     QList<QVariant> args;
     args << identity->id();
     msg.setArguments(args);
 
     QDBusMessage reply = conn.call(msg);
-    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+    QCOMPARE(reply.type(), QDBusMessage::ReplyMessage);
 
     QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
     QString path = objectPath.path();
@@ -150,9 +134,9 @@ void TimeoutsTest::identityRegisterTwice()
                      this,
                      SLOT(credentialsStored(const quint32)));
     QObject::connect(identity,
-                     SIGNAL(error(Identity::IdentityError,const QString&)),
+                     SIGNAL(error(const SignOn::Error &)),
                      this,
-                     SLOT(identityError(Identity::IdentityError,const QString&)));
+                     SLOT(identityError(const SignOn::Error &)));
 
     identity->storeCredentials();
 
@@ -164,13 +148,13 @@ void TimeoutsTest::identityRegisterTwice()
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       SIGNOND_DAEMON_OBJECTPATH,
                                                       SIGNOND_DAEMON_INTERFACE,
-                                                      "registerStoredIdentity");
+                                                      "getIdentity");
     QList<QVariant> args;
     args << identity->id();
     msg.setArguments(args);
 
     QDBusMessage reply = conn.call(msg);
-    QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
+    QCOMPARE(reply.type(), QDBusMessage::ReplyMessage);
 
     QDBusObjectPath objectPath = reply.arguments()[0].value<QDBusObjectPath>();
     QString path = objectPath.path();
@@ -205,14 +189,11 @@ void TimeoutsTest::identityRegisterTwice()
     QVERIFY(identityAlive(path));
 }
 
-void TimeoutsTest::identityError(Identity::IdentityError code,
-                                 const QString &message)
+void TimeoutsTest::identityError(const SignOn::Error &error)
 {
-    qDebug() << Q_FUNC_INFO << message;
+    qDebug() << Q_FUNC_INFO << error.message();
     QFAIL("Unexpected error!");
     emit finished();
-
-    Q_UNUSED(code);
 }
 
 bool TimeoutsTest::triggerDisposableCleanup()
@@ -233,11 +214,11 @@ bool TimeoutsTest::identityAlive(const QString &path)
 {
     QDBusConnection conn = SIGNOND_BUS;
 
-    QString interface = QLatin1String("com.nokia.SingleSignOn.Identity");
+    QString interface = QLatin1String("com.google.code.AccountsSSO.SingleSignOn.Identity");
     QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
                                                       path,
                                                       interface,
-                                                      "queryInfo");
+                                                      "getInfo");
     QDBusMessage reply = conn.call(msg);
     return (reply.type() == QDBusMessage::ReplyMessage);
 }

@@ -6,7 +6,7 @@ plugindir=SIGNOND_EXTENSIONS_DIR
 
 Name: SignOnExtension
 Description: SignOn extension development 
-Version: 0.1
+Version: PROJECT_VERSION
 Requires: QtCore
 Libs: -L${libdir} -lsignon-extension
 Libs.private: -L/usr/lib -lQtCore

@@ -16,6 +16,12 @@ QMAKE_CXXFLAGS -= -Werror -Wno-write-strings
 # Disable RTTI
 QMAKE_CXXFLAGS += -fno-exceptions -fno-rtti
 
+CONFIG(coverage) {
+    message("        ---- Coverage")
+    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage -O0
+    QMAKE_LFLAGS += -fprofile-arcs
+}
+
 TOP_SRC_DIR     = $$PWD
 TOP_BUILD_DIR   = $${TOP_SRC_DIR}/$(BUILD_DIR)
 QMAKE_LIBDIR   += $${TOP_BUILD_DIR}/lib/SignOn

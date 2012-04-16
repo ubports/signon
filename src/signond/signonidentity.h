@@ -2,9 +2,10 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -47,7 +48,6 @@ namespace SignonDaemonNS {
     class SignonIdentity: public SignonDisposable, protected QDBusContext
     {
         Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.nokia.SingleSignOn.Identity")
 
         friend class SignonIdentityAdaptor;
 
@@ -63,7 +63,7 @@ namespace SignonDaemonNS {
 
     public Q_SLOTS:
         quint32 requestCredentialsUpdate(const QString &message);
-        QList<QVariant> queryInfo();
+        QVariantMap getInfo();
         bool addReference(const QString &reference);
         bool removeReference(const QString &reference);
         bool verifyUser(const QVariantMap &params);
@@ -71,15 +71,6 @@ namespace SignonDaemonNS {
         void remove();
         bool signOut();
         quint32 store(const QVariantMap &info);
-        quint32 storeCredentials(const quint32 id,
-                                 const QString &userName,
-                                 const QString &secret,
-                                 const bool storeSecret,
-                                 const QMap<QString, QVariant> &methods,
-                                 const QString &caption,
-                                 const QStringList &realms,
-                                 const QStringList &accessControlList,
-                                 const int type);
         void queryUiSlot(QDBusPendingCallWatcher *call);
         void verifyUiSlot(QDBusPendingCallWatcher *call);
     Q_SIGNALS:
@@ -91,7 +82,6 @@ namespace SignonDaemonNS {
         SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
         bool init();
         bool credentialsStored() const { return m_id > 0 ? true : false; }
-        void replyError(const QString &name, const QString &msg);
         void queryUserPassword(const QVariantMap &params);
 
     private:

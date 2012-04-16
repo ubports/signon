@@ -53,15 +53,18 @@ namespace SignonDaemonNS {
                              << "Method:"
                              << failedMethodName;
 
+        QDBusMessage msg = parentDBusContext().message();
+        msg.setDelayedReply(true);
         QDBusMessage errReply =
-                    parentDBusContext().message().createErrorReply(
-                                            SIGNOND_PERMISSION_DENIED_ERR_NAME,
-                                            errMsg);
+                    msg.createErrorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME,
+                                         errMsg);
         SIGNOND_BUS.send(errReply);
         TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
     }
 
-    void SignonDaemonAdaptor::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
+    void SignonDaemonAdaptor::getIdentity(const quint32 id,
+                                          QDBusObjectPath &objectPath,
+                                          QVariantMap &identityData)
     {
         if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
                                         parentDBusContext().message(), id)) {
@@ -69,7 +72,7 @@ namespace SignonDaemonNS {
             return;
         }
 
-        m_parent->registerStoredIdentity(id, objectPath, identityData);
+        m_parent->getIdentity(id, objectPath, identityData);
 
         SignonDisposable::destroyUnused();
     }
@@ -101,15 +104,19 @@ namespace SignonDaemonNS {
         return m_parent->queryMechanisms(method);
     }
 
-    QList<QVariant> SignonDaemonAdaptor::queryIdentities(const QMap<QString, QVariant> &filter)
+    void SignonDaemonAdaptor::queryIdentities(const QVariantMap &filter)
     {
         /* Access Control */
         if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
             securityErrorReply(__func__);
-            return QList<QVariant>();
+            return;
         }
 
-        return m_parent->queryIdentities(filter);
+        QDBusMessage msg = parentDBusContext().message();
+        msg.setDelayedReply(true);
+        MapList identities = m_parent->queryIdentities(filter);
+        QDBusMessage reply = msg.createReply(QVariant::fromValue(identities));
+        SIGNOND_BUS.send(reply);
     }
 
     bool SignonDaemonAdaptor::clear()

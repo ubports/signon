@@ -33,6 +33,7 @@ namespace SignonDaemonNS {
 
     typedef QString MethodName;
     typedef QStringList MechanismsList;
+    typedef QMap<MethodName, MechanismsList> MethodMap;
 
     /*!
      * @struct SignonIdentityInfo
@@ -48,7 +49,7 @@ namespace SignonDaemonNS {
                            const QString &password,
                            const bool storePassword,
                            const QString &caption,
-                           const QMap<QString, QVariant> &methods,
+                           const MethodMap &methods,
                            const QStringList &realms = QStringList(),
                            const QStringList &accessControlList = QStringList(),
                            const QStringList &ownerList = QStringList(),
@@ -56,13 +57,9 @@ namespace SignonDaemonNS {
                            int refCount = 0,
                            bool validated = false);
 
-
         const QList<QVariant> toVariantList();
-        static const QList<QVariant> listToVariantList(const QList<SignonIdentityInfo> &list);
-        static const QMap<QString, QVariant> mapListToMapVariant(const QMap<QString, QStringList> &mapList);
-        static const QMap<QString, QStringList> mapVariantToMapList(const QMap<QString, QVariant> &mapList);
+        const QVariantMap toMap() const;
 
-        const QString serialize();
         bool operator== (const SignonIdentityInfo &other) const;
         SignonIdentityInfo &operator=(const SignonIdentityInfo &other);
 
@@ -86,9 +83,9 @@ namespace SignonDaemonNS {
         void setRealms(const QStringList &realms) { m_realms = realms; }
         QStringList realms() const { return m_realms; }
 
-        void setMethods(const QMap<MethodName, MechanismsList> &methods)
+        void setMethods(const MethodMap &methods)
             { m_methods = methods; }
-        QMap<MethodName, MechanismsList> methods() const { return m_methods; }
+        MethodMap methods() const { return m_methods; }
 
         void setAccessControlList(const QStringList &acl)
             { m_accessControlList = acl; }
@@ -113,7 +110,7 @@ namespace SignonDaemonNS {
         QString m_password;
         bool m_storePassword;
         QString m_caption;
-        QMap<MethodName, MechanismsList> m_methods;
+        MethodMap m_methods;
         QStringList m_realms;
         QStringList m_accessControlList;
         QStringList m_ownerList;
@@ -124,5 +121,7 @@ namespace SignonDaemonNS {
     }; //struct SignonIdentityInfo
 
 } //namespace SignonDaemonNS
+
+Q_DECLARE_METATYPE(SignonDaemonNS::MethodMap)
 
 #endif // SIGNONIDENTITYINFO_H

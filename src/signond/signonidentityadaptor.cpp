@@ -72,16 +72,16 @@ namespace SignonDaemonNS {
         return m_parent->requestCredentialsUpdate(msg);
     }
 
-    QList<QVariant> SignonIdentityAdaptor::queryInfo()
+    QVariantMap SignonIdentityAdaptor::getInfo()
     {
         /* Access Control */
         if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
-                                        parentDBusContext().message(), m_parent->id())) {
+            parentDBusContext().message(), m_parent->id())) {
             securityErrorReply(__func__);
-            return QList<QVariant>();
+            return QVariantMap();
         }
 
-        return m_parent->queryInfo();
+        return m_parent->getInfo();
     }
 
     void SignonIdentityAdaptor::addReference(const QString &reference)
@@ -193,44 +193,6 @@ namespace SignonDaemonNS {
             }
         }
         return m_parent->store(info);
-    }
-
-    quint32 SignonIdentityAdaptor::storeCredentials(const quint32 id,
-                                                    const QString &userName,
-                                                    const QString &secret,
-                                                    const bool storeSecret,
-                                                    const QMap<QString, QVariant> &methods,
-                                                    const QString &caption,
-                                                    const QStringList &realms,
-                                                    const QStringList &accessControlList,
-                                                    const int type)
-    {
-        /* Access Control */
-        if (id != SIGNOND_NEW_IDENTITY) {
-        AccessControlManagerHelper::IdentityOwnership ownership =
-                AccessControlManagerHelper::instance()->isPeerOwnerOfIdentity(
-                            parentDBusContext().message(), m_parent->id());
-
-            if (ownership != AccessControlManagerHelper::IdentityDoesNotHaveOwner) {
-                //Identity has an owner
-                if (ownership == AccessControlManagerHelper::ApplicationIsNotOwner
-                    && AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
-
-                    securityErrorReply(__func__);
-                    return 0;
-                }
-            }
-        }
-
-        return m_parent->storeCredentials(id,
-                                          userName,
-                                          secret,
-                                          storeSecret,
-                                          methods,
-                                          caption,
-                                          realms,
-                                          accessControlList,
-                                          type);
     }
 
 } //namespace SignonDaemonNS

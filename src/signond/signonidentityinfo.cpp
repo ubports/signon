@@ -65,8 +65,8 @@ namespace SignonDaemonNS {
         m_password = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
         m_storePassword = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         m_caption = info.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
-        QVariantMap methods = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS).toMap();
-        m_methods = mapVariantToMapList(methods);
+        m_methods =
+            info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS).value<MethodMap>();
 
         m_realms = info.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
         m_accessControlList = info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
@@ -81,7 +81,7 @@ namespace SignonDaemonNS {
                                 const QString &password,
                                 const bool storePassword,
                                 const QString &caption,
-                                const QMap<QString, QVariant> &methods,
+                                const MethodMap &methods,
                                 const QStringList &realms,
                                 const QStringList &accessControlList,
                                 const QStringList &ownerList,
@@ -93,7 +93,7 @@ namespace SignonDaemonNS {
           m_password(password),
           m_storePassword(storePassword),
           m_caption(caption),
-          m_methods(mapVariantToMapList(methods)),
+          m_methods(methods),
           m_realms(realms),
           m_accessControlList(accessControlList),
           m_ownerList(ownerList),
@@ -112,7 +112,7 @@ namespace SignonDaemonNS {
              << m_password
              << m_caption
              << m_realms
-             << QVariant(mapListToMapVariant(m_methods))
+             << QVariant::fromValue(m_methods)
              << m_accessControlList
              << m_type
              << m_refCount
@@ -122,63 +122,23 @@ namespace SignonDaemonNS {
         return list;
     }
 
-    const QList<QVariant> SignonIdentityInfo::listToVariantList(
-            const QList<SignonIdentityInfo> &list)
+    const QVariantMap SignonIdentityInfo::toMap() const
     {
-        QList<QVariant> variantList;
-        foreach(SignonIdentityInfo info, list)
-            variantList.append(QVariant(info.toVariantList())) ;
-        return variantList;
-    }
-
-    const QMap<QString, QVariant> SignonIdentityInfo::mapListToMapVariant(
-            const QMap<QString, QStringList> &mapList)
-    {
-        QMap<QString, QVariant> mapVariant;
-
-        QMapIterator<QString, QStringList> it(mapList);
-        while (it.hasNext()) {
-            it.next();
-            mapVariant.insert(it.key(), QVariant(it.value()));
-        }
-        return mapVariant;
-    }
-
-    const QMap<QString, QStringList> SignonIdentityInfo::mapVariantToMapList(
-            const QMap<QString, QVariant> &mapVariant)
-    {
-        QMap<QString, QStringList> mapList;
-
-        QMapIterator<QString, QVariant> it(mapVariant);
-        while (it.hasNext()) {
-            it.next();
-            mapList.insert(it.key(), it.value().toStringList());
-        }
-    return mapList;
-    }
-
-    const QString SignonIdentityInfo::serialize()
-    {
-        QString serialized;
-        QTextStream stream(&serialized);
-        stream << QString::fromLatin1("SignondIdentityInfo serialized:\nID = %1, ").arg(m_id);
-        stream << QString::fromLatin1("username = %1, ").arg(m_userName);
-        stream << QString::fromLatin1("password = %1, ").arg(m_password);
-        stream << QString::fromLatin1("caption = %1, ").arg(m_caption);
-        stream << QString::fromLatin1("realms = %1, \n").arg(m_realms.join(QLatin1String(" ")));
-        stream << QString::fromLatin1("acl = %1, \n").arg(m_accessControlList.join(QLatin1String(" ")));
-        stream << QString::fromLatin1("type = %1, \n").arg(m_type);
-        stream << QString::fromLatin1("refcount = %1, \n").arg(m_refCount);
-        stream << QString::fromLatin1("validated = %1, \n").arg(m_validated);
-
-        stream << "methods (";
-        for (QMap<QString, QStringList>::iterator it = m_methods.begin();
-             it != m_methods.end(); ++it) {
-            stream << QString::fromLatin1("(%1, (%2))").arg(it.key()).arg(it.value().join(QLatin1String(",")));
-        }
-        stream << ")";
-
-        return serialized;
+        QVariantMap values;
+        values.insert(SIGNOND_IDENTITY_INFO_ID, m_id);
+        values.insert(SIGNOND_IDENTITY_INFO_USERNAME, m_userName);
+        values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_password);
+        values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
+        values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
+        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
+                      QVariant::fromValue(m_methods));
+        values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
+        values.insert(SIGNOND_IDENTITY_INFO_TYPE, m_type);
+        values.insert(SIGNOND_IDENTITY_INFO_REFCOUNT, m_refCount);
+        values.insert(SIGNOND_IDENTITY_INFO_VALIDATED, m_validated);
+        values.insert(SIGNOND_IDENTITY_INFO_USERNAME_IS_SECRET,
+                      m_isUserNameSecret);
+        return values;
     }
 
     bool SignonIdentityInfo::operator== (const SignonIdentityInfo &other) const

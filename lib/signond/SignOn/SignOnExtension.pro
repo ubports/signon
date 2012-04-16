@@ -32,11 +32,8 @@ SOURCES += \
 
 QT += core \
       dbus
-QT -= gui
 
 QMAKE_CXXFLAGS += \
-    -fno-exceptions \
-    -fno-rtti \
     -fvisibility=hidden
 
 DEFINES += QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_ASCII
@@ -68,17 +65,7 @@ headers.files = \
 headers.path = $${INSTALL_PREFIX}/include/$${TARGET}/SignOn
 INSTALLS += headers
 
-PKGCONFIG_VARS = INSTALL_PREFIX INSTALL_LIBDIR SIGNOND_EXTENSIONS_DIR
-COMMAND = "cat SignOnExtension.pc.in "
-for(var, PKGCONFIG_VARS) {
-   eval(VALUE = \$\${$${var}})
-   COMMAND += "| sed s,$${var},$${VALUE},"
-}
-COMMAND += " > SignOnExtension.pc"
-
-pkgconfig.CONFIG = no_check_exist
 pkgconfig.files = SignOnExtension.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
-pkgconfig.commands = $${COMMAND}
-QMAKE_EXTRA_TARGETS += pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
+
 INSTALLS += pkgconfig

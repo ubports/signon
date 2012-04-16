@@ -41,14 +41,10 @@ SOURCES += identityinfo.cpp \
 QT += core \
     dbus
 
-QT -= gui
-
 CONFIG += qdbus \
     build_all \
     link_pkgconfig
     
-QMAKE_CXXFLAGS += -fno-exceptions \
-    -fno-rtti
 DEFINES += \
     QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII \
@@ -66,5 +62,5 @@ headers.path = $${INSTALL_PREFIX}/include/signon-qt/SignOn
 INSTALLS += headers
 
 pkgconfig.files = libsignon-qt.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig

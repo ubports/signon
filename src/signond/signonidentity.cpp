@@ -38,9 +38,9 @@
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                          \
         if (!(CredentialsAccessManager::instance()->credentialsSystemOpened())) { \
-            replyError(internalServerErrName, \
-                       internalServerErrStr + \
-                       QLatin1String("Could not access Signon Database.")); \
+            sendErrorReply(internalServerErrName, \
+                           internalServerErrStr + \
+                           QLatin1String("Could not access Signon Database."));\
             return _ret_arg_;           \
         }                               \
     } while(0)
@@ -130,13 +130,6 @@ namespace SignonDaemonNS {
         return identity;
     }
 
-    void SignonIdentity::replyError(const QString &name, const QString &msg)
-    {
-        setDelayedReply(true);
-        QDBusMessage errReply = message().createErrorReply(name, msg);
-        connection().send(errReply);
-    }
-
     void SignonIdentity::destroy()
     {
         if (m_registered)
@@ -211,14 +204,14 @@ namespace SignonDaemonNS {
 
         if (!ok) {
             BLAME() << "Identity not found.";
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return SIGNOND_NEW_IDENTITY;
         }
         if (!info.storePassword()) {
             BLAME() << "Password cannot be stored.";
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
+            sendErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                           SIGNOND_STORE_FAILED_ERR_STR);
             return SIGNOND_NEW_IDENTITY;
         }
 
@@ -242,32 +235,32 @@ namespace SignonDaemonNS {
         return 0;
     }
 
-    QList<QVariant> SignonIdentity::queryInfo()
+    QVariantMap SignonIdentity::getInfo()
     {
         TRACE() << "QUERYING INFO";
 
-        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
+        SIGNON_RETURN_IF_CAM_UNAVAILABLE(QVariantMap());
 
         bool ok;
         SignonIdentityInfo info = queryInfo(ok, false);
 
         if (!ok) {
             TRACE();
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
-                       QLatin1String("Database querying error occurred."));
-            return QList<QVariant>();
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
+                           QLatin1String("Database querying error occurred."));
+            return QVariantMap();
         }
 
         if (info.isNew()) {
             TRACE();
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
-            return QList<QVariant>();
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            return QVariantMap();
         }
 
         keepInUse();
-        return info.toVariantList();
+        return info.toMap();
     }
 
     void SignonIdentity::queryUserPassword(const QVariantMap &params) {
@@ -289,14 +282,14 @@ namespace SignonDaemonNS {
 
         if (!ok) {
             BLAME() << "Identity not found.";
-            replyError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+            sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                           SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
             return false;
         }
         if (!info.storePassword() || info.password().isEmpty()) {
             BLAME() << "Password is not stored.";
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR);
             return false;
         }
 
@@ -323,9 +316,9 @@ namespace SignonDaemonNS {
         queryInfo(ok);
         if (!ok) {
             TRACE();
-            replyError(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
-                       SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
-                       QLatin1String("Database querying error occurred."));
+            sendErrorReply(SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_NAME,
+                           SIGNOND_CREDENTIALS_NOT_AVAILABLE_ERR_STR +
+                           QLatin1String("Database querying error occurred."));
             return false;
         }
 
@@ -343,9 +336,9 @@ namespace SignonDaemonNS {
         CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
         if ((db == 0) || !db->removeCredentials(m_id)) {
             TRACE() << "Error occurred while inserting/updating credentials.";
-            replyError(SIGNOND_REMOVE_FAILED_ERR_NAME,
-                       SIGNOND_REMOVE_FAILED_ERR_STR +
-                       QLatin1String("Database error occurred."));
+            sendErrorReply(SIGNOND_REMOVE_FAILED_ERR_NAME,
+                           SIGNOND_REMOVE_FAILED_ERR_STR +
+                           QLatin1String("Database error occurred."));
             return;
         }
         emit infoUpdated((int)SignOn::IdentityRemoved);
@@ -386,7 +379,8 @@ namespace SignonDaemonNS {
 
         bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
-        QVariantMap methods = qdbus_cast<QVariantMap>(container.value<QDBusArgument>());
+        MethodMap methods =
+            qdbus_cast<MethodMap>(container.value<QDBusArgument>());
 
         //Add creator to owner list if it has AID
         QStringList ownerList = info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
@@ -395,7 +389,7 @@ namespace SignonDaemonNS {
 
         if (m_pInfo == 0) {
             m_pInfo = new SignonIdentityInfo(info);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setMethods(methods);
             m_pInfo->setOwnerList(ownerList);
         } else {
             QString userName = info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
@@ -406,7 +400,7 @@ namespace SignonDaemonNS {
 
             m_pInfo->setUserName(userName);
             m_pInfo->setCaption(caption);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
+            m_pInfo->setMethods(methods);
             m_pInfo->setRealms(realms);
             m_pInfo->setAccessControlList(accessControlList);
             m_pInfo->setOwnerList(ownerList);
@@ -421,54 +415,8 @@ namespace SignonDaemonNS {
         m_id = storeCredentials(*m_pInfo, storeSecret);
 
         if (m_id == SIGNOND_NEW_IDENTITY) {
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
-        }
-
-        return m_id;
-    }
-
-    quint32 SignonIdentity::storeCredentials(const quint32 id,
-                                             const QString &userName,
-                                             const QString &secret,
-                                             const bool storeSecret,
-                                             const QMap<QString, QVariant> &methods,
-                                             const QString &caption,
-                                             const QStringList &realms,
-                                             const QStringList &accessControlList,
-                                             const int type)
-    {
-        keepInUse();
-        SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
-
-        QString appId = AccessControlManagerHelper::instance()->appIdOfPeer((static_cast<QDBusContext>(*this)).message());
-
-        QStringList accessControlListLocal = accessControlList;
-
-        if (!appId.isNull())
-            accessControlListLocal.append(appId);
-
-        //this method is deprecated, so it will set acl as owner list
-        if (m_pInfo == 0) {
-            m_pInfo = new SignonIdentityInfo(id, userName, secret, storeSecret,
-                                             caption, methods, realms,
-                                             accessControlListLocal, accessControlListLocal,
-                                             type);
-        } else {
-            m_pInfo->setUserName(userName);
-            m_pInfo->setPassword(secret);
-            m_pInfo->setMethods(SignonIdentityInfo::mapVariantToMapList(methods));
-            m_pInfo->setCaption(caption);
-            m_pInfo->setRealms(realms);
-            m_pInfo->setAccessControlList(accessControlListLocal);
-            m_pInfo->setType(type);
-        }
-
-        storeCredentials(*m_pInfo, storeSecret);
-
-        if (m_id == SIGNOND_NEW_IDENTITY) {
-            replyError(SIGNOND_STORE_FAILED_ERR_NAME,
-                       SIGNOND_STORE_FAILED_ERR_STR);
+            sendErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+                           SIGNOND_STORE_FAILED_ERR_STR);
         }
 
         return m_id;

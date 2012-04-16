@@ -31,6 +31,7 @@ extern "C" {
 #include <QDir>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
@@ -48,10 +49,10 @@ extern "C" {
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
-            QDBusMessage errReply = message().createErrorReply(            \
-                    internalServerErrName,                                 \
-                    internalServerErrStr + QLatin1String("Could not access Signon Database.")); \
-            SIGNOND_BUS.send(errReply); \
+            sendErrorReply(internalServerErrName,                          \
+                           internalServerErrStr +                          \
+                           QLatin1String("Could not access Signon "        \
+                                         "Database."));                    \
             return _ret_arg_;           \
         }                               \
     } while(0)
@@ -206,6 +207,10 @@ SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
 {
     // Files created by signond must be unreadable by "other"
     umask(S_IROTH | S_IWOTH);
+
+    // Register D-Bus meta types
+    qDBusRegisterMetaType<MethodMap>();
+    qDBusRegisterMetaType<MapList>();
 }
 
 SignonDaemon::~SignonDaemon()
@@ -488,16 +493,6 @@ bool SignonDaemon::initStorage()
     return true;
 }
 
-void SignonDaemon::unregisterIdentity(SignonIdentity *identity)
-{
-    if (m_storedIdentities.contains(identity->id()))
-        m_storedIdentities.remove(identity->id());
-    else
-        m_unstoredIdentities.remove(identity->objectName());
-
-    identity->deleteLater();
-}
-
 void SignonDaemon::identityStored(SignonIdentity *identity)
 {
     if (m_unstoredIdentities.contains(identity->objectName())) {
@@ -513,10 +508,10 @@ void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
     SignonIdentity *identity = SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
     if (identity == NULL) {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Could not create remote Identity object."));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Could not create remote Identity "
+                                     "object."));
         return;
     }
 
@@ -539,7 +534,9 @@ int SignonDaemon::authSessionTimeout() const
                                      m_configuration->authSessionTimeout());
 }
 
-void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &objectPath, QList<QVariant> &identityData)
+void SignonDaemon::getIdentity(const quint32 id,
+                               QDBusObjectPath &objectPath,
+                               QVariantMap &identityData)
 {
     SIGNON_RETURN_IF_CAM_UNAVAILABLE();
 
@@ -554,10 +551,10 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
     if (identity == NULL)
     {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Could not create remote Identity object."));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Could not create remote Identity "
+                                     "object."));
         return;
     }
 
@@ -566,11 +563,8 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
 
     if (info.isNew())
     {
-        QDBusMessage errReply = message().createErrorReply(
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                                                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
-        SIGNOND_BUS.send(errReply);
-        objectPath = QDBusObjectPath();
+        sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
         return;
     }
 
@@ -578,7 +572,7 @@ void SignonDaemon::registerStoredIdentity(const quint32 id, QDBusObjectPath &obj
     m_storedIdentities.insert(identity->id(), identity);
     identity->keepInUse();
 
-    identityData = info.toVariantList();
+    identityData = info.toMap();
 
     TRACE() << "DONE REGISTERING IDENTITY";
     objectPath = QDBusObjectPath(identity->objectName());
@@ -617,11 +611,11 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
     if (!plugin) {
         TRACE() << "Could not load plugin of type: " << method;
-        QDBusMessage errReply = message().createErrorReply(
-                SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                QString(SIGNOND_METHOD_NOT_KNOWN_ERR_STR
-                        + QLatin1String("Method %1 is not known or could not load specific configuration.")).arg(method));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR +
+                       QString::fromLatin1("Method %1 is not known or could "
+                                           "not load specific configuration.").
+                       arg(method));
         return QStringList();
     }
 
@@ -632,16 +626,16 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 }
 
 
-QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &filter)
+QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
 {
-    SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariant>());
+    SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariantMap>());
 
-    TRACE() << "\n\n\n Querying identities\n\n";
+    TRACE() << "Querying identities";
 
     CredentialsDB *db = m_pCAMManager->credentialsDB();
     if (!db) {
         qCritical() << Q_FUNC_INFO << m_pCAMManager->lastError();
-        return QList<QVariant>();
+        return QList<QVariantMap>();
     }
 
     QMap<QString, QString> filterLocal;
@@ -654,14 +648,17 @@ QList<QVariant> SignonDaemon::queryIdentities(const QMap<QString, QVariant> &fil
     QList<SignonIdentityInfo> credentials = db->credentials(filterLocal);
 
     if (db->errorOccurred()) {
-        QDBusMessage errReply = message().createErrorReply(
-                internalServerErrName,
-                internalServerErrStr + QLatin1String("Querying database error occurred."));
-        SIGNOND_BUS.send(errReply);
-        return QList<QVariant>();
+        sendErrorReply(internalServerErrName,
+                       internalServerErrStr +
+                       QLatin1String("Querying database error occurred."));
+        return QList<QVariantMap>();
     }
 
-    return SignonIdentityInfo::listToVariantList(credentials);
+    QList<QVariantMap> mapList;
+    foreach (SignonIdentityInfo info, credentials) {
+        mapList.append(info.toMap());
+    }
+    return mapList;
 }
 
 bool SignonDaemon::clear()
@@ -676,11 +673,9 @@ bool SignonDaemon::clear()
     }
 
     if (!db->clear()) {
-        QDBusMessage errReply = message().createErrorReply(
-                                                SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                                                QString(SIGNOND_INTERNAL_SERVER_ERR_STR
-                                                        + QLatin1String("Database error occurred.")));
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                       SIGNOND_INTERNAL_SERVER_ERR_STR +
+                       QLatin1String("Database error occurred."));
         return false;
     }
     return true;
@@ -695,10 +690,8 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id, const QString t
                                                     supportsAuthMethod,
                                                     ownerPid);
     if (objectPath.isEmpty() && !supportsAuthMethod) {
-        QDBusMessage errReply = message().createErrorReply(
-                                                SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                                                SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
         return QString();
     }
     return objectPath;
@@ -961,17 +954,6 @@ uchar SignonDaemon::restoreFinished()
     }
 
     return 0;
-}
-
-void SignonDaemon::listDBusInterfaces()
-{
-    QDBusReply<QStringList> reply = SIGNOND_BUS.interface()->registeredServiceNames();
-    QStringList list = reply.value();
-
-    QString servicesList = QLatin1String("DBUS registered services: \n");
-    servicesList += list.join(QLatin1String("\n"));
-
-    TRACE() << "\n\n" << servicesList.toAscii().data() << "\n";
 }
 
 void SignonDaemon::onDisconnected()

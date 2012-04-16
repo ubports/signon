@@ -13,10 +13,10 @@ QT += core \
 
 QT -= gui
 
-LIBS += -L/usr/lib \
+LIBS += \
         -lsignon-extension \
         -lsignon-qt
-
+QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/signond/SignOn
 
@@ -89,4 +89,4 @@ INSTALLS += target \
             testsuite \
             scripts
 
-check.commands = "./signon-tests"
+check.commands = "SSO_PLUGINS_DIR=$${TOP_BUILD_DIR}/src/plugins/ssotest SSO_EXTENSIONS_DIR=$${TOP_BUILD_DIR}/non-existing-dir $$RUN_WITH_SIGNOND ./signon-tests"

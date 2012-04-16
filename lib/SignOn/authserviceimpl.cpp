@@ -22,12 +22,14 @@
  */
 #include <QDBusArgument>
 #include <QDBusConnectionInterface>
+#include <QDBusMetaType>
 #include <QTimer>
 
 #include "signond/signoncommon.h"
 
 #include "libsignoncommon.h"
 #include "identityinfo.h"
+#include "identityinfoimpl.h"
 #include "authserviceimpl.h"
 #include "authservice.h"
 #include "signonerror.h"
@@ -70,6 +72,8 @@ namespace SignOn {
         if (!m_DBusInterface->isValid())
             BLAME() << "Signon Daemon not started. Start on demand "
                        "could delay the first call's result.";
+
+        qDBusRegisterMetaType<MapList>();
     }
 
     AuthServiceImpl::~AuthServiceImpl()
@@ -155,7 +159,7 @@ namespace SignOn {
             timeout = SIGNOND_MAX_TIMEOUT;
 
         result = sendRequest(QString::fromLatin1(__func__),
-                             SLOT(queryIdentitiesReply(const QList<QVariant> &)),
+                             SLOT(queryIdentitiesReply(const QDBusMessage &)),
                              args,
                              timeout);
         if (!result) {
@@ -220,43 +224,22 @@ namespace SignOn {
         emit m_parent->mechanismsAvailable(method, mechs);
     }
 
-    void AuthServiceImpl::queryIdentitiesReply(const QList<QVariant> &identitiesData)
+    void AuthServiceImpl::queryIdentitiesReply(const QDBusMessage &msg)
     {
+        QList<QVariant> args = msg.arguments();
+        if (args.isEmpty()) {
+            BLAME() << "Invalid reply: no arguments";
+            return;
+        }
+
+        QDBusArgument arg = args[0].value<QDBusArgument>();
+        MapList identitiesData = qdbus_cast<MapList>(arg);
+
         QList<IdentityInfo> infoList;
-
-        QList<QVariant> nonConstData = identitiesData;
-        while (!nonConstData.empty()) {
-            QDBusArgument arg(nonConstData.takeFirst().value<QDBusArgument>());
-            QList<QVariant> identityData = qdbus_cast<QList<QVariant> >(arg);
-
-            quint32 id = identityData.takeFirst().toUInt();
-            QString username = identityData.takeFirst().toString();
-            QString password = identityData.takeFirst().toString();
-            QString caption = identityData.takeFirst().toString();
-            QStringList realms = identityData.takeFirst().toStringList();
-
-            arg = QDBusArgument(identityData.takeFirst().value<QDBusArgument>());
-            QMap<QString, QVariant> map = qdbus_cast<QMap<QString, QVariant> >(arg);
-            QMapIterator<QString, QVariant> it(map);
-            QMap<QString, QStringList> authMethods;
-            while (it.hasNext()) {
-                it.next();
-                authMethods.insert(it.key(), it.value().toStringList());
-            }
-
-            QStringList accessControlList = identityData.takeFirst().toStringList();
-            int type = identityData.takeFirst().toInt();
-
-            IdentityInfo info(caption,
-                              username,
-                              authMethods);
-            info.setId(id);
-            info.setSecret(password);
-            info.setRealms(realms);
-            info.setAccessControlList(accessControlList);
-            info.setType((IdentityInfo::CredentialsType)type);
-
-            infoList << info;
+        foreach (const QVariantMap &map, identitiesData) {
+            IdentityInfo info;
+            info.impl->updateFromMap(map);
+            infoList.append(info);
         }
 
         emit m_parent->identities(infoList);

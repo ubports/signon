@@ -39,6 +39,8 @@ namespace SignOn {
 
     class IdentityInfo;
 
+    typedef QList<QVariantMap> MapList;
+
     /*!
      * @class AuthServiceImpl
      * AuthService class implementation
@@ -64,7 +66,7 @@ namespace SignOn {
     public Q_SLOTS:
         void errorReply(const QDBusError &err);
         void queryMechanismsReply(const QStringList &mechs);
-        void queryIdentitiesReply(const QList<QVariant> &msg);
+        void queryIdentitiesReply(const QDBusMessage &msg);
         void queryMethodsReply(const QStringList &methods);
         void clearReply();
 
@@ -81,5 +83,7 @@ namespace SignOn {
     };
 
 } // namespace SignOn
+
+Q_DECLARE_METATYPE(SignOn::MapList)
 
 #endif /* AUTHSERVICEIMPL_H */

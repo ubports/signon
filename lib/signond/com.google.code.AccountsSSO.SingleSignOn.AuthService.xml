@@ -1,13 +1,13 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
-  <interface name="com.nokia.SingleSignOn.AuthService">
+  <interface name="com.google.code.AccountsSSO.SingleSignOn.AuthService">
     <method name="registerNewIdentity">
       <arg name="objectPath" type="o" direction="out"/>
     </method>
-    <method name="registerStoredIdentity">
+    <method name="getIdentity">
       <arg name="id" type="u" direction="in"/>
       <arg name="objectPath" type="o" direction="out"/>
-      <arg name="identityData" type="av" direction="out"/>
+      <arg name="identityData" type="a{sv}" direction="out"/>
     </method>
     <method name="getAuthSessionObjectPath">
       <arg type="s" direction="out"/>
@@ -22,7 +22,7 @@
       <arg name="method" type="s" direction="in"/>
     </method>
     <method name="queryIdentities">
-      <arg type="av" direction="out"/>
+      <arg type="aa{sv}" direction="out"/>
       <arg name="filter" type="a{sv}" direction="in"/>
       <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QVariantMap"/>
     </method>

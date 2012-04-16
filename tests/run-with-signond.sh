@@ -18,7 +18,7 @@ export PATH="${BUILDDIR}/src/remotepluginprocess:$PATH"
 if command -v dbus-test-runner > /dev/null ; then
     echo "Using dbus-test-runner"
     dbus-test-runner -m 180 -t ${SRCDIR}/tests/signond.sh \
-        -t "$@" -f com.nokia.SingleSignOn
+        -t "$@" -f com.google.code.AccountsSSO.SingleSignOn
 else
     echo "Using existing D-Bus session"
     pkill signond || true

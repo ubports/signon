@@ -203,18 +203,6 @@ void SqlDatabase::setLastError(const QSqlError &sqlError)
     }
 }
 
-QMap<QString, QString> SqlDatabase::configuration()
-{
-    QMap<QString, QString> map;
-
-    map.insert(QLatin1String("Database Name"), m_database.databaseName());
-    map.insert(QLatin1String("Host Name"), m_database.hostName());
-    map.insert(QLatin1String("Username"), m_database.databaseName());
-    map.insert(QLatin1String("Password"), m_database.password());
-    map.insert(QLatin1String("Tables"), m_database.tables().join(QLatin1String(" ")));
-    return map;
-}
-
 QString SqlDatabase::errorInfo(const QSqlError &error)
 {
     if (!error.isValid())
@@ -688,7 +676,7 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
         securityTokens.append(query.value(0).toString());
     }
     query.clear();
-    QMap<QString, QVariant> methods;
+    MethodMap methods;
     query_str = QString::fromLatin1(
             "SELECT DISTINCT ACL.method_id, METHODS.method FROM "
             "( ACL JOIN METHODS ON ACL.method_id = METHODS.id ) "

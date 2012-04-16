@@ -36,6 +36,8 @@
 
 namespace SignOn {
 
+    typedef QMap<MethodName, MechanismsList> MethodMap;
+
     /*!
      * @class IdentityInfoImpl
      * IdentityInfo class implementation.
@@ -64,6 +66,7 @@ namespace SignOn {
         bool hasMethod(const MethodName &method) const;
         void clear();
         QVariantMap toMap() const;
+        void updateFromMap(const QVariantMap &map);
 
     private:
         void copy(const IdentityInfoImpl &other);
@@ -76,7 +79,7 @@ namespace SignOn {
         QString m_secret;
         bool m_storeSecret;
         QString m_caption;
-        QMap<MethodName, QVariant> m_authMethods; //The variant is holding the MechanismsList
+        MethodMap m_authMethods;
         QStringList m_realms;
         QStringList m_accessControlList;
         QString m_owner;
@@ -87,7 +90,6 @@ namespace SignOn {
 
 } //namespace SignOn
 
-//Q_DECLARE_METATYPE(SignOn::MethodsData)
-
+Q_DECLARE_METATYPE(SignOn::MethodMap)
 
 #endif // IDENTITYINFOIMPL_H

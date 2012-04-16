@@ -24,6 +24,7 @@
 #include "identityinfo.h"
 #include "signond/signoncommon.h"
 
+#include <QDBusMetaType>
 #include <QVariant>
 #include <QVariantMap>
 
@@ -36,7 +37,7 @@ namespace SignOn {
           m_secret(QString()),
           m_storeSecret(false),
           m_caption(QString()),
-          m_authMethods(QMap<MethodName, QVariant>()),
+          m_authMethods(QMap<MethodName, MechanismsList>()),
           m_realms(QStringList()),
           m_accessControlList(QStringList()),
           m_owner(QString()),
@@ -44,6 +45,7 @@ namespace SignOn {
           m_refCount(0),
           m_isEmpty(true)
     {
+        qDBusRegisterMetaType<SignOn::MethodMap>();
     }
 
     IdentityInfoImpl::~IdentityInfoImpl()
@@ -52,13 +54,13 @@ namespace SignOn {
 
     void IdentityInfoImpl::addMethod(const MethodName &method, const MechanismsList &mechanismsList)
     {
-        m_authMethods.insert(method, QVariant(mechanismsList));
+        m_authMethods.insert(method, mechanismsList);
     }
 
     void IdentityInfoImpl::updateMethod(const MethodName &method, const MechanismsList &mechanismsList)
     {
         m_authMethods.remove(method);
-        m_authMethods.insert(method, QVariant(mechanismsList));
+        m_authMethods.insert(method, mechanismsList);
     }
 
     void IdentityInfoImpl::removeMethod(const MethodName &method)
@@ -136,7 +138,8 @@ namespace SignOn {
         values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_secret);
         values.insert(SIGNOND_IDENTITY_INFO_STORESECRET, m_storeSecret);
         values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
-        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS, m_authMethods);
+        values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
+                      QVariant::fromValue(m_authMethods));
         values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
         values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
         //signond side uses list of owners
@@ -144,6 +147,36 @@ namespace SignOn {
         values.insert(SIGNOND_IDENTITY_INFO_TYPE, m_type);
         values.insert(SIGNOND_IDENTITY_INFO_REFCOUNT, m_refCount);
         return values;
+    }
+
+    void IdentityInfoImpl::updateFromMap(const QVariantMap &map)
+    {
+        if (map.contains(SIGNOND_IDENTITY_INFO_ID))
+            m_id = map.value(SIGNOND_IDENTITY_INFO_ID).toUInt();
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_USERNAME))
+            m_userName = map.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_SECRET))
+            m_secret = map.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_CAPTION))
+            m_caption = map.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_REALMS))
+            m_realms = map.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_AUTHMETHODS)) {
+            QVariant value = map.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
+            m_authMethods = qdbus_cast<MethodMap>(value.value<QDBusArgument>());
+        }
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_TYPE))
+            m_type = IdentityInfo::CredentialsType(
+                map.value(SIGNOND_IDENTITY_INFO_TYPE).toInt());
+
+        if (map.contains(SIGNOND_IDENTITY_INFO_REFCOUNT))
+            m_refCount = map.value(SIGNOND_IDENTITY_INFO_REFCOUNT).toInt();
     }
 
 } //namespace SignOn

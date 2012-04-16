@@ -2,8 +2,9 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -51,10 +52,10 @@
 /*
  * Common DBUS definitions
  * */
-#define SIGNOND_SERVICE_PREFIX     "com.nokia.SingleSignOn"
+#define SIGNOND_SERVICE_PREFIX     "com.google.code.AccountsSSO.SingleSignOn"
 #define SIGNOND_SERVICE            SIGNOND_STRING(SIGNOND_SERVICE_PREFIX)
 
-#define SIGNOND_DAEMON_OBJECTPATH       SIGNOND_STRING("/com/nokia/SingleSignOn")
+#define SIGNOND_DAEMON_OBJECTPATH       SIGNOND_STRING("/com/google/code/AccountsSSO/SingleSignOn")
 #define SIGNOND_DAEMON_INTERFACE_C        SIGNOND_SERVICE_PREFIX ".AuthService"
 #define SIGNOND_IDENTITY_INTERFACE_C      SIGNOND_SERVICE_PREFIX ".Identity"
 #define SIGNOND_AUTH_SESSION_INTERFACE_C  SIGNOND_SERVICE_PREFIX ".AuthSession"
@@ -79,6 +80,8 @@
 #define SIGNOND_IDENTITY_INFO_TYPE SIGNOND_STRING("Type")
 #define SIGNOND_IDENTITY_INFO_REFCOUNT SIGNOND_STRING("RefCount")
 #define SIGNOND_IDENTITY_INFO_VALIDATED SIGNOND_STRING("Validated")
+#define SIGNOND_IDENTITY_INFO_USERNAME_IS_SECRET \
+    SIGNOND_STRING("UserNameSecret")
 
 /*
  * Common server/client sides error names and messages

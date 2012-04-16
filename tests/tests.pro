@@ -5,7 +5,6 @@ TEMPLATE = subdirs
 
 CONFIG  += ordered
 
-SUBDIRS += saslplugintest/saslplugintest.pro
 SUBDIRS += passwordplugintest/passwordplugintest.pro
 SUBDIRS += pluginproxytest/pluginproxytest.pro
 SUBDIRS += libsignon-qt-tests/libsignon-qt-tests.pro
