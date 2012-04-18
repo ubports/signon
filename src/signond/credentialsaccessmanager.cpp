@@ -6,7 +6,7 @@
  * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <mailto:ext-Aurel.Popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
