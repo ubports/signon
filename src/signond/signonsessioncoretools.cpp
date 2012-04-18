@@ -28,10 +28,9 @@
 
 using namespace SignonDaemonNS;
 
-
-QVariantMap SignonDaemonNS::mergeVariantMaps(const QVariantMap &map1, const QVariantMap &map2)
+QVariantMap SignonDaemonNS::mergeVariantMaps(const QVariantMap &map1,
+                                             const QVariantMap &map2)
 {
-
     if (map1.isEmpty()) return map2;
     if (map2.isEmpty()) return map1;
 
@@ -48,18 +47,22 @@ QVariantMap SignonDaemonNS::mergeVariantMaps(const QVariantMap &map1, const QVar
 
 /* --------------------- StoreOperation ---------------------- */
 
-StoreOperation::StoreOperation(const StoreType type) : m_storeType(type)
-{}
+StoreOperation::StoreOperation(const StoreType type):
+    m_storeType(type)
+{
+}
 
-StoreOperation::StoreOperation(const StoreOperation &src)
-    : m_storeType(src.m_storeType),
-      m_info(src.m_info),
-      m_authMethod(src.m_authMethod),
-      m_blobData(src.m_blobData)
-{}
+StoreOperation::StoreOperation(const StoreOperation &src):
+    m_storeType(src.m_storeType),
+    m_info(src.m_info),
+    m_authMethod(src.m_authMethod),
+    m_blobData(src.m_blobData)
+{
+}
 
 StoreOperation::~StoreOperation()
-{}
+{
+}
 
 /* --------------------- RequestData ---------------------- */
 
@@ -67,41 +70,47 @@ RequestData::RequestData(const QDBusConnection &conn,
                          const QDBusMessage &msg,
                          const QVariantMap &params,
                          const QString &mechanism,
-                         const QString &cancelKey)
-    : m_conn(conn),
-      m_msg(msg),
-      m_params(params),
-      m_mechanism(mechanism),
-      m_cancelKey(cancelKey)
-{}
+                         const QString &cancelKey):
+    m_conn(conn),
+    m_msg(msg),
+    m_params(params),
+    m_mechanism(mechanism),
+    m_cancelKey(cancelKey)
+{
+}
 
-RequestData::RequestData(const RequestData &other)
-    : m_conn(other.m_conn),
-      m_msg(other.m_msg),
-      m_params(other.m_params),
-      m_mechanism(other.m_mechanism),
-      m_cancelKey(other.m_cancelKey)
-{}
+RequestData::RequestData(const RequestData &other):
+    m_conn(other.m_conn),
+    m_msg(other.m_msg),
+    m_params(other.m_params),
+    m_mechanism(other.m_mechanism),
+    m_cancelKey(other.m_cancelKey)
+{
+}
 
 RequestData::~RequestData()
-{}
+{
+}
 
 /* --------------------- AuthCoreCache ---------------------- */
 
 AuthCoreCache *AuthCoreCache::m_instance = 0;
 
 AuthCoreCache::AuthCache::AuthCache()
-{}
+{
+}
 
 AuthCoreCache::AuthCache::~AuthCache()
-{}
+{
+}
 
 bool AuthCoreCache::AuthCache::isEmpty() const
 {
     return (m_password.isEmpty() && m_blobData.isEmpty());
 }
 
-AuthCoreCache::AuthCoreCache(QObject *parent) : QObject(parent)
+AuthCoreCache::AuthCoreCache(QObject *parent):
+    QObject(parent)
 {
 }
 
@@ -144,7 +153,8 @@ void AuthCoreCache::insert(const CacheId &id, AuthCache *cache)
         if (cache->m_password.isEmpty())
             cache->m_password = data->m_password;
 
-        cache->m_blobData = mergeVariantMaps(data->m_blobData, cache->m_blobData);
+        cache->m_blobData =
+            mergeVariantMaps(data->m_blobData, cache->m_blobData);
 
         delete data;
         m_cache.insert(id.first, cache);

@@ -40,7 +40,7 @@ class TestDatabase: public QObject
 
 public Q_SLOTS:
 #if defined(SSO_CI_TESTMANAGEMENT)
-     void runAllTests();
+    void runAllTests();
 #endif
 
 private Q_SLOTS:
@@ -75,6 +75,5 @@ private:
     QStringList testRealms;
     QStringList testAcl;
 };
-
 
 #endif //DATABASETEST_H_

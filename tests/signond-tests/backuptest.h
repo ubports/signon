@@ -36,7 +36,7 @@ class TestBackup: public QObject
 
 public Q_SLOTS:
 #if defined(SSO_CI_TESTMANAGEMENT)
-     void runAllTests();
+    void runAllTests();
 #endif
 
 private Q_SLOTS:
@@ -55,6 +55,5 @@ private Q_SLOTS:
 private:
     QProcess *daemonProcess;
 };
-
 
 #endif //BACKUPTEST_H_

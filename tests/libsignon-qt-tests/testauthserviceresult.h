@@ -61,7 +61,8 @@ public:
 public Q_SLOTS:
     void error(const SignOn::Error &err);
     void methodsAvailable(const QStringList &methods);
-    void mechanismsAvailable(const QString &method, const QStringList &mechanisms);
+    void mechanismsAvailable(const QString &method,
+                             const QStringList &mechanisms);
     void identities(const QList<SignOn::IdentityInfo> &identityList);
     void cleared();
 

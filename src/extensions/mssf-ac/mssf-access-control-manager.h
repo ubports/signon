@@ -36,7 +36,7 @@
  * MSSF implementation of AbstractAccessControlManager
  * @ingroup Accounts_and_SSO_Framework
  */
-class MSSFAccessControlManager : public SignOn::AbstractAccessControlManager
+class MSSFAccessControlManager: public SignOn::AbstractAccessControlManager
 {
     Q_OBJECT
 
@@ -55,8 +55,10 @@ public:
     // reimplemented virtual methods
 
     /*!
-     * Checks if a client process is allowed to access objects with a certain security context. 
-     * The notion of access type doesn't exists in MSSF, instead only token possesion is checked.  
+     * Checks if a client process is allowed to access objects with a certain
+     * security context.
+     * The notion of access type doesn't exists in MSSF, instead only token
+     * possesion is checked.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @param securityContext, the securityContext to be checked against.
      * @returns true, if the peer is allowed, false otherwise.
@@ -67,7 +69,8 @@ public:
     /*!
      * Looks up for the application identifier of a specific client process.
      * @param peerMessage, the request message sent over DBUS by the process.
-     * @returns the application identifier of the process, or an empty string if none found.
+     * @returns the application identifier of the process, or an empty string
+     * if none found.
      */
     QString appIdOfPeer(const QDBusMessage &peerMessage);
 
@@ -75,7 +78,6 @@ public:
      * @returns the application identifier of the keychain widget
      */
     QString keychainWidgetAppId();
-
 };
 
 #endif // MSSF_ACCESS_CONTROL_MANAGER_H

@@ -30,10 +30,10 @@ static QList<SignonDisposable *> disposableObjects;
 static QPointer<QTimer> notifyTimer = 0;
 static QPointer<QTimer> disposeTimer = 0;
 
-SignonDisposable::SignonDisposable(int maxInactivity, QObject *parent)
-    : QObject(parent)
-    , maxInactivity(maxInactivity)
-    , autoDestruct(true)
+SignonDisposable::SignonDisposable(int maxInactivity, QObject *parent):
+    QObject(parent),
+    maxInactivity(maxInactivity),
+    autoDestruct(true)
 {
     disposableObjects.append(this);
 
@@ -116,7 +116,8 @@ void SignonDisposable::destroyUnused()
     }
 
     foreach (SignonDisposable *object, disposableObjects) {
-        if (object->autoDestruct  && (ts.tv_sec - object->lastActivity > object->maxInactivity)) {
+        if (object->autoDestruct &&
+            (ts.tv_sec - object->lastActivity > object->maxInactivity)) {
             TRACE() << "Object unused, deleting: " << object;
             object->destroy();
             disposableObjects.removeOne(object);

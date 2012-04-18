@@ -29,7 +29,7 @@
 
 /*
  * TODO: remove invocation of plugin operations into the main signond process
- * */
+ */
 #include "signond-common.h"
 #include "signonsessioncore.h"
 
@@ -37,57 +37,60 @@ using namespace SignOn;
 
 namespace SignonDaemonNS {
 
-    /*!
-     * @class SignonAuthSession
-     * Daemon side representation of authentication session.
-     * @todo description.
-     */
-    class SignonAuthSession: public QObject, protected QDBusContext
+/*!
+ * @class SignonAuthSession
+ * Daemon side representation of authentication session.
+ * @todo description.
+ */
+class SignonAuthSession: public QObject, protected QDBusContext
+{
+    Q_OBJECT
+
+public:
+    inline SignonSessionCore *parent() const
     {
-        Q_OBJECT
+        return static_cast<SignonSessionCore *>(QObject::parent());
+    }
 
-    public:
-        inline SignonSessionCore *parent() const
-        {
-            return static_cast<SignonSessionCore *>(QObject::parent());
-        }
+    friend class SignonAuthSessionAdaptor;
 
-        friend class SignonAuthSessionAdaptor;
+    static QString getAuthSessionObjectPath(const quint32 id,
+                                            const QString &method,
+                                            SignonDaemon *parent,
+                                            bool &supportsAuthMethod,
+                                            pid_t ownerPid);
+    static void stopAllAuthSessions();
+    quint32 id() const;
+    QString method() const;
+    void objectRegistered();
+    pid_t ownerPid() const;
 
-        static QString getAuthSessionObjectPath(const quint32 id,
-                                                const QString &method,
-                                                SignonDaemon *parent,
-                                                bool &supportsAuthMethod,
-                                                pid_t ownerPid);
-        static void stopAllAuthSessions();
-        quint32 id() const;
-        QString method() const;
-        void objectRegistered();
-        pid_t ownerPid() const;
+public Q_SLOTS:
+    QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
+    QVariantMap process(const QVariantMap &sessionDataVa,
+                        const QString &mechanism);
+    void cancel();
+    void setId(quint32 id);
+    void objectUnref();
 
-    public Q_SLOTS:
-        QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
-        QVariantMap process(const QVariantMap &sessionDataVa, const QString &mechanism);
-        void cancel();
-        void setId(quint32 id);
-        void objectUnref();
+Q_SIGNALS:
+    void stateChanged(int state, const QString &message);
+    void unregistered();
 
-    Q_SIGNALS:
-        void stateChanged(int state, const QString &message);
-        void unregistered();
+private Q_SLOTS:
+    void stateChangedSlot(const QString &sessionKey,
+                          int state,
+                          const QString &message);
 
-    private Q_SLOTS:
-        void stateChangedSlot(const QString &sessionKey, int state, const QString &message);
+protected:
+    SignonAuthSession(quint32 id, const QString &method, pid_t ownerPid);
+    virtual ~SignonAuthSession();
 
-    protected:
-        SignonAuthSession(quint32 id, const QString &method, pid_t ownerPid);
-        virtual ~SignonAuthSession();
-
-    private:
-        quint32 m_id;
-        QString m_method;
-        bool m_registered;
-        pid_t m_ownerPid;
+private:
+    quint32 m_id;
+    QString m_method;
+    bool m_registered;
+    pid_t m_ownerPid;
 
     Q_DISABLE_COPY(SignonAuthSession)
 }; //class SignonDaemon

@@ -23,9 +23,9 @@
  */
 
 /*!
-  @file cryptomanager.h
-  Definition of the CryptoManager object.
-  @ingroup Accounts_and_SSO_Framework
+ * @file cryptomanager.h
+ * Definition of the CryptoManager object.
+ * @ingroup Accounts_and_SSO_Framework
  */
 
 #ifndef SIGNON_CRYPTO_MANAGER_H
@@ -38,11 +38,11 @@
 #define MINUMUM_ENCRYPTED_FILE_SYSTEM_SIZE 4
 
 /*!
-    @class CryptoManager
-    Encrypted file system manager. Uses cryptsetup and LUKS.
-    @ingroup Accounts_and_SSO_Framework
-*/
-class CryptoManager : public SignOn::AbstractCryptoManager
+ * @class CryptoManager
+ * Encrypted file system manager. Uses cryptsetup and LUKS.
+ * @ingroup Accounts_and_SSO_Framework
+ */
+class CryptoManager: public SignOn::AbstractCryptoManager
 {
     Q_OBJECT
 
@@ -64,9 +64,9 @@ public:
     bool initialize(const QVariantMap &configuration);
 
     /*!
-      @enum FileSystemType
-      Supported encrypted partion filesystem type.
-    */
+     * @enum FileSystemType
+     * Supported encrypted partion filesystem type.
+     */
     enum FileSystemType {
         Ext2 = 0,
         Ext3,
@@ -74,48 +74,50 @@ public:
     };
 
     /*!
-        Constructs a CryptoManager object with the given parent.
-        @param parent
-    */
+     * Constructs a CryptoManager object with the given parent.
+     * @param parent
+     */
     CryptoManager(QObject *parent = 0);
 
     /*!
-        Destroys a CryptoManager object.
-    */
+     * Destroys a CryptoManager object.
+     */
     ~CryptoManager();
 
     /*!
-        Sets up an encrypted file system. This method is to be called only at the file system creation/foramtting.
-        Use mountFileSystem() on subsequent uses. This method handles also the mounting so when using it, a call
-        to mountFileSystem() is not necessary.
-        @returns true, if successful, false otherwise.
-        @warning this method will always format the file system, use carefully.
-    */
+     * Sets up an encrypted file system. This method is to be called only at
+     * the file system creation/formatting.
+     * Use mountFileSystem() on subsequent uses. This method handles also the
+     * mounting so when using it, a call
+     * to mountFileSystem() is not necessary.
+     * @returns true, if successful, false otherwise.
+     * @warning this method will always format the file system, use carefully.
+     */
     bool setupFileSystem();
 
     /*!
-        Deletes the encrypted file system.
-        @returns true, if successful, false otherwise.
-        @warning use this carefully, this will lead to data loss.
-        @todo finish implemetation.
-    */
+     * Deletes the encrypted file system.
+     * @returns true, if successful, false otherwise.
+     * @warning use this carefully, this will lead to data loss.
+     * @todo finish implemetation.
+     */
     bool deleteFileSystem();
 
     /*!
-        Mounts the encrypted file system.
-        @returns true, if successful, false otherwise.
-    */
+     * Mounts the encrypted file system.
+     * @returns true, if successful, false otherwise.
+     */
     bool mountFileSystem();
 
     /*!
-        Unmounts the encrypted file system.
-        @returns true, if successful, false otherwise.
-    */
+     * Unmounts the encrypted file system.
+     * @returns true, if successful, false otherwise.
+     */
     bool unmountFileSystem();
 
     /*!
-        @returns the path of the mounted file system.
-    */
+     * @returns the path of the mounted file system.
+     */
     QString fileSystemMountPath() const;
 
     /*!
@@ -124,31 +126,33 @@ public:
     QStringList backupFiles() const;
 
     /*!
-        @attention if the file system is not mounted and the encryption
-        key can access it, this method will cause the file system to be
-        mounted.
-        @returns whether the key `key` is occupying a keyslot in the encrypted file system.
-    */
+     * @attention if the file system is not mounted and the encryption
+     * key can access it, this method will cause the file system to be
+     * mounted.
+     * @returns whether the key `key` is occupying a keyslot in the encrypted
+     * file system.
+     */
     bool encryptionKeyInUse(const SignOn::Key &key);
 
     /*!
-        Adds an encryption key to one of the available keyslots of the LUKS partition's header.
-        Use the `keyTag` parameter in order to store and keep track of the key.
-        @sa isEncryptionKey(const SignOn::Key &key)
-        @param key The key to be added/set.
-        @param existingKey An already existing key.
-        @returns true, if succeeded, false otherwise.
-    */
+     * Adds an encryption key to one of the available keyslots of the LUKS
+     * partition's header.
+     * Use the `keyTag` parameter in order to store and keep track of the key.
+     * @sa isEncryptionKey(const SignOn::Key &key)
+     * @param key The key to be added/set.
+     * @param existingKey An already existing key.
+     * @returns true, if succeeded, false otherwise.
+     */
     bool addEncryptionKey(const SignOn::Key &key,
                           const SignOn::Key &existingKey);
 
     /*!
-        Releases an existing used keyslot in the LUKS partition's header.
-        @param key The key to be removed.
-        @param remainingKey Another valid key
-        @attention The system cannot remain keyless.
-        @returns true, if succeeded, false otherwise.
-    */
+     * Releases an existing used keyslot in the LUKS partition's header.
+     * @param key The key to be removed.
+     * @param remainingKey Another valid key
+     * @attention The system cannot remain keyless.
+     * @returns true, if succeeded, false otherwise.
+     */
     bool removeEncryptionKey(const SignOn::Key &key,
                              const SignOn::Key &remainingKey);
 

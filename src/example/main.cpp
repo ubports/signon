@@ -23,6 +23,7 @@
 #include <QtGui>
 
 #include "signonclient.h"
+
 using namespace SignOn;
 
 int main(int argc, char *argv[])

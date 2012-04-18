@@ -28,7 +28,7 @@
 
 /*
  * TODO: remove invocation of plugin operations into the main signond process
- * */
+ */
 
 #include "pluginproxy.h"
 #include "signondisposable.h"
@@ -42,104 +42,117 @@ namespace SignonDaemonNS {
 
 class SignonDaemon;
 
-    /*!
-     * @class SignonSessionCore
-     * Daemon side representation of authentication session.
-     * @todo description.
+/*!
+ * @class SignonSessionCore
+ * Daemon side representation of authentication session.
+ * @todo description.
+ */
+class SignonSessionCore: public SignonDisposable
+{
+    Q_OBJECT
+
+public:
+    static SignonSessionCore *sessionCore(const quint32 id,
+                                          const QString &method,
+                                          SignonDaemon *parent);
+    virtual ~SignonSessionCore();
+    quint32 id() const;
+    QString method() const;
+    bool setupPlugin();
+    /*
+     * just for any case
+     * */
+    static void stopAllAuthSessions();
+    static QStringList loadedPluginMethods(const QString &method);
+
+    void destroy();
+
+public Q_SLOTS:
+    QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
+
+    void process(const QDBusConnection &connection,
+                 const QDBusMessage &message,
+                 const QVariantMap &sessionDataVa,
+                 const QString &mechanism,
+                 const QString &cancelKey);
+
+    void cancel(const QString &cancelKey);
+    void setId(quint32 id);
+
+    /* When the credentials system is ready, session processing will begin.
+     * This mechanism helps avoiding the display of eroneous secure storage
+     * related messages on query credentials dialogs (e.g. The `No key present`
+     * scenario - keys might actually be present but the querying of them is
+     * not complete at the time of the auth. session processing).
      */
-    class SignonSessionCore: public SignonDisposable
-    {
-        Q_OBJECT
+    void credentialsSystemReady();
 
-    public:
-        static SignonSessionCore *sessionCore(const quint32 id, const QString &method, SignonDaemon *parent);
-        virtual ~SignonSessionCore();
-        quint32 id() const;
-        QString method() const;
-        bool setupPlugin();
-        /*
-         * just for any case
-         * */
-        static void stopAllAuthSessions();
-        static QStringList loadedPluginMethods(const QString &method);
+Q_SIGNALS:
+    void stateChanged(const QString &requestId,
+                      int state,
+                      const QString &message);
 
-        void destroy();
+private Q_SLOTS:
+    void startNewRequest();
 
-    public Q_SLOTS:
-        QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
+    void processResultReply(const QString &cancelKey, const QVariantMap &data);
+    void processStore(const QString &cancelKey, const QVariantMap &data);
+    void processUiRequest(const QString &cancelKey, const QVariantMap &data);
+    void processRefreshRequest(const QString &cancelKey,
+                               const QVariantMap &data);
+    void processError(const QString &cancelKey, int err, const QString &message);
+    void stateChangedSlot(const QString &cancelKey,
+                          int state,
+                          const QString &message);
 
-        void process(const QDBusConnection &connection,
-                     const QDBusMessage &message,
-                     const QVariantMap &sessionDataVa,
-                     const QString &mechanism,
-                     const QString &cancelKey);
+    void queryUiSlot(QDBusPendingCallWatcher *call);
 
-        void cancel(const QString &cancelKey);
-        void setId(quint32 id);
+protected:
+    SignonSessionCore(quint32 id,
+                      const QString &method,
+                      int timeout,
+                      SignonDaemon *parent);
 
-        /* When the credentials system is ready, session processing will begin.
-         * This mechanism helps avoiding the display of eroneous secure storage
-         * related messages on query credentials dialogs (e.g. The `No key present`
-         * scenario - keys might actually be present but the querying of them is
-         * not complete at the time of the auth. session processing).
-         */
-        void credentialsSystemReady();
+    void childEvent(QChildEvent *ce);
+    void customEvent(QEvent *event);
 
-    Q_SIGNALS:
-        void stateChanged(const QString &requestId, int state, const QString &message);
+private:
+    void startProcess();
+    void replyError(const QDBusConnection &conn,
+                    const QDBusMessage &msg,
+                    int err,
+                    const QString &message);
+    void processStoreOperation(const StoreOperation &operation);
 
-    private Q_SLOTS:
-        void startNewRequest();
+private:
+    PluginProxy *m_plugin;
+    QQueue<RequestData> m_listOfRequests;
+    SignonUiAdaptor *m_signonui;
 
-        void processResultReply(const QString &cancelKey, const QVariantMap &data);
-        void processStore(const QString &cancelKey, const QVariantMap &data);
-        void processUiRequest(const QString &cancelKey, const QVariantMap &data);
-        void processRefreshRequest(const QString &cancelKey, const QVariantMap &data);
-        void processError(const QString &cancelKey, int err, const QString &message);
-        void stateChangedSlot(const QString &cancelKey, int state, const QString &message);
+    QDBusPendingCallWatcher *m_watcher;
 
-        void queryUiSlot(QDBusPendingCallWatcher *call);
+    QString m_canceled;
 
-    protected:
-        SignonSessionCore(quint32 id, const QString &method, int timeout, SignonDaemon *parent);
+    uint m_id;
+    QString m_method;
+    /* the original request parameters, for the request currently being
+     * processed */
+    QVariantMap m_clientData;
 
-        void childEvent(QChildEvent *ce);
-        void customEvent(QEvent *event);
+    //Queues store operations when the secure storage is unavailable
+    QQueue<StoreOperation> m_storeQueue;
 
-    private:
-        void startProcess();
-        void replyError(const QDBusConnection &conn, const QDBusMessage &msg, int err, const QString &message);
-        void processStoreOperation(const StoreOperation &operation);
+    //Temporary caching
+    QString m_tmpUsername;
+    QString m_tmpPassword;
 
-    private:
-        PluginProxy *m_plugin;
-        QQueue<RequestData> m_listOfRequests;
-        SignonUiAdaptor *m_signonui;
+    /* Flag used for handling post ui querying results' processing.
+     * Secure storage not available events won't be posted if the current
+     * session processing was not preceded by a signon UI query credentials
+     * interaction, when this flag is set to true. */
+    bool m_queryCredsUiDisplayed;
 
-        QDBusPendingCallWatcher *m_watcher;
-
-        QString m_canceled;
-
-        uint m_id;
-        QString m_method;
-        /* the original request parameters, for the request currently being
-         * processed */
-        QVariantMap m_clientData;
-
-        //Queues store operations when the secure storage is unavailable
-        QQueue<StoreOperation> m_storeQueue;
-
-        //Temporary caching
-        QString m_tmpUsername;
-        QString m_tmpPassword;
-
-        /* Flag used for handling post ui querying results' processing.
-         * Secure storage not available events won't be posted if the current
-         * session processing was not preceded by a signon UI query credentials
-         * interaction, when this flag is set to true. */
-        bool m_queryCredsUiDisplayed;
-
-        Q_DISABLE_COPY(SignonSessionCore)
+    Q_DISABLE_COPY(SignonSessionCore)
 }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

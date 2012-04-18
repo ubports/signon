@@ -29,8 +29,7 @@ DBusInterface::DBusInterface(const QString &service,
                              const char *interface,
                              const QDBusConnection &connection,
                              QObject *parent):
-    QDBusAbstractInterface(service, path, interface, connection,
-                           parent)
+    QDBusAbstractInterface(service, path, interface, connection, parent)
 {
 }
 

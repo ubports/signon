@@ -34,62 +34,62 @@
 
 namespace SignOn {
 
-    template <typename T = void>
-    class SignonTrace
+template <typename T = void>
+class SignonTrace
+{
+    SignonTrace() {}
+
+public:
+    ~SignonTrace()
     {
-        SignonTrace() {}
-
-    public:
-        ~SignonTrace()
-        {
-            m_pInstance = NULL;
-            closelog();
-        }
-
-        static void initialize()
-        {
-            if (m_pInstance)
-                return;
-
-            m_pInstance = new SignonTrace<T>();
-            openlog(NULL, LOG_PID, LOG_DAEMON);
-            qInstallMsgHandler(output);
-        }
-
-        static void output(QtMsgType type, const char *msg)
-        {
-            if (!m_pInstance)
-                return;
-
-            if (!criticalsEnabled()) {
-                if (type <= QtCriticalMsg) return;
-            } else if (!debugEnabled()) {
-                if (type <= QtDebugMsg) return;
-            }
-
-            int priority;
-            switch (type) {
-                case QtWarningMsg: priority = LOG_WARNING; break;
-                case QtCriticalMsg: priority = LOG_CRIT; break;
-                case QtFatalMsg: priority = LOG_EMERG; break;
-                case QtDebugMsg:
-                    /* fall through */
-                default: priority = LOG_INFO; break;
-            }
-
-            syslog(priority, "%s", msg);
-         }
-
-    private:
-        static SignonTrace<T> *m_pInstance;
-    };
-
-    static void initializeTrace() {
-        SignonTrace<>::initialize();
+        m_pInstance = NULL;
+        closelog();
     }
 
+    static void initialize()
+    {
+        if (m_pInstance)
+            return;
+
+        m_pInstance = new SignonTrace<T>();
+        openlog(NULL, LOG_PID, LOG_DAEMON);
+        qInstallMsgHandler(output);
+    }
+
+    static void output(QtMsgType type, const char *msg)
+    {
+        if (!m_pInstance)
+            return;
+
+        if (!criticalsEnabled()) {
+            if (type <= QtCriticalMsg) return;
+        } else if (!debugEnabled()) {
+            if (type <= QtDebugMsg) return;
+        }
+
+        int priority;
+        switch (type) {
+            case QtWarningMsg: priority = LOG_WARNING; break;
+            case QtCriticalMsg: priority = LOG_CRIT; break;
+            case QtFatalMsg: priority = LOG_EMERG; break;
+            case QtDebugMsg:
+                /* fall through */
+            default: priority = LOG_INFO; break;
+        }
+
+        syslog(priority, "%s", msg);
+     }
+
+private:
+    static SignonTrace<T> *m_pInstance;
+};
+
+static void initializeTrace() {
+    SignonTrace<>::initialize();
+}
+
 template <typename T>
-    SignonTrace<T> *SignonTrace<T>::m_pInstance = 0;
+SignonTrace<T> *SignonTrace<T>::m_pInstance = 0;
 
 } //namespace SignOn
 

@@ -38,7 +38,7 @@
  * Smack implementation of AbstractAccessControlManager
  * ingroup Accounts_and_SSO_Framework
  */
-class SmackAccessControlManager : public SignOn::AbstractAccessControlManager
+class SmackAccessControlManager: public SignOn::AbstractAccessControlManager
 {
     Q_OBJECT
 
@@ -56,19 +56,21 @@ public:
 
     // reimplemented virtual methods
     /*!
-     * Checks if a client process is allowed to access objects with a certain security context. 
-     * The access type to be checked is read or execute. 
+     * Checks if a client process is allowed to access objects with a certain
+     * security context.
+     * The access type to be checked is read or execute.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @param securityContext, the securityContext to be checked against.
      * @returns true, if the peer is allowed, false otherwise.
      */
     bool isPeerAllowedToAccess(const QDBusMessage &peerMessage,
-                                       const QString &securityContext);
+                               const QString &securityContext);
 
     /*!
      * Looks up for the application identifier of a specific client process.
      * @param peerMessage, the request message sent over DBUS by the process.
-     * @returns the application identifier of the process, or an empty string if none found.
+     * @returns the application identifier of the process, or an empty string
+     * if none found.
      */
      QString appIdOfPeer(const QDBusMessage &peerMessage);
 

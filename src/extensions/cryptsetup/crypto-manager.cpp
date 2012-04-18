@@ -107,10 +107,12 @@ bool CryptoManager::initialize(const QVariantMap &configuration)
         storagePath.replace(0, 1, QDir::homePath());
 
     QString encryptedFSPath =
-        storagePath + QDir::separator() + QLatin1String(signonDefaultFileSystemName);
+        storagePath + QDir::separator() +
+        QLatin1String(signonDefaultFileSystemName);
 
     bool isOk = false;
-    quint32 storageSize = configuration.value(QLatin1String("Size")).toUInt(&isOk);
+    quint32 storageSize =
+        configuration.value(QLatin1String("Size")).toUInt(&isOk);
     if (!isOk || storageSize < signonMinumumDbSize) {
         storageSize = signonMinumumDbSize;
         TRACE() << "Less than minimum possible storage size configured."
@@ -195,7 +197,8 @@ bool CryptoManager::setupFileSystem()
         return false;
     }
 
-    if (!PartitionHandler::createPartitionFile(m_fileSystemPath, m_fileSystemSize)) {
+    if (!PartitionHandler::createPartitionFile(m_fileSystemPath,
+                                               m_fileSystemSize)) {
         BLAME() << "Could not create partition file.";
         unmountFileSystem();
         return false;
@@ -250,7 +253,8 @@ bool CryptoManager::setupFileSystem()
     return true;
 }
 
-//TODO - add checking for LUKS header in case of preavious app run formatting failure
+//TODO - add checking for LUKS header in case of preavious app run formatting
+//failure
 bool CryptoManager::mountFileSystem()
 {
     if (m_mountState == Mounted) {
@@ -458,7 +462,8 @@ bool CryptoManager::removeEncryptionKey(const SignOn::Key &key,
             removeKeyFromKeychain(key);
             return true;
     }
-    TRACE() << "FAILED to release key slot from the encrypted file system header.";
+    TRACE() << "FAILED to release key slot from the encrypted file system "
+        "header.";
     return false;
 }
 

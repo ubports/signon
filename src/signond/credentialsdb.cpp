@@ -705,7 +705,8 @@ SignonIdentityInfo MetaDataDB::identity(const quint32 id)
     return info;
 }
 
-QList<SignonIdentityInfo> MetaDataDB::identities(const QMap<QString, QString> &filter)
+QList<SignonIdentityInfo> MetaDataDB::identities(const QMap<QString,
+                                                 QString> &filter)
 {
     TRACE();
     Q_UNUSED(filter)
@@ -938,9 +939,10 @@ QStringList MetaDataDB::ownerList(const quint32 identityId)
             .arg(identityId));
 }
 
-bool MetaDataDB::addReference(const quint32 id, const QString &token, const QString &reference)
+bool MetaDataDB::addReference(const quint32 id,
+                              const QString &token,
+                              const QString &reference)
 {
-
     if (!startTransaction()) {
         TRACE() << "Could not start transaction. Error inserting data.";
         return false;
@@ -984,7 +986,9 @@ bool MetaDataDB::addReference(const quint32 id, const QString &token, const QStr
     return false;
 }
 
-bool MetaDataDB::removeReference(const quint32 id, const QString &token, const QString &reference)
+bool MetaDataDB::removeReference(const quint32 id,
+                                 const QString &token,
+                                 const QString &reference)
 {
     TRACE() << "Removing:" << id << ", " << token << ", " << reference;
     //check that there is references
@@ -1246,7 +1250,8 @@ SignOn::CredentialsDBError CredentialsDB::lastError() const
     return _lastError;
 }
 
-QStringList CredentialsDB::methods(const quint32 id, const QString &securityToken)
+QStringList CredentialsDB::methods(const quint32 id,
+                                   const QString &securityToken)
 {
     INIT_ERROR();
     return metaDataDB->methods(id, securityToken);
@@ -1267,7 +1272,8 @@ bool CredentialsDB::checkPassword(const quint32 id,
     }
 }
 
-SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPassword)
+SignonIdentityInfo CredentialsDB::credentials(const quint32 id,
+                                              bool queryPassword)
 {
     TRACE() << "id:" << id << "queryPassword:" << queryPassword;
     INIT_ERROR();
@@ -1282,13 +1288,15 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id, bool queryPasswo
     return info;
 }
 
-QList<SignonIdentityInfo> CredentialsDB::credentials(const QMap<QString, QString> &filter)
+QList<SignonIdentityInfo>
+CredentialsDB::credentials(const QMap<QString, QString> &filter)
 {
     INIT_ERROR();
     return metaDataDB->identities(filter);
 }
 
-quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info, bool storeSecret)
+quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info,
+                                         bool storeSecret)
 {
     SignonIdentityInfo newInfo = info;
     if (!info.isNew())
@@ -1414,13 +1422,17 @@ QString CredentialsDB::credentialsOwnerSecurityToken(const quint32 identityId)
     return owners.count() ? owners.at(0) : QString();
 }
 
-bool CredentialsDB::addReference(const quint32 id, const QString &token, const QString &reference)
+bool CredentialsDB::addReference(const quint32 id,
+                                 const QString &token,
+                                 const QString &reference)
 {
     INIT_ERROR();
     return metaDataDB->addReference(id, token, reference);
 }
 
-bool CredentialsDB::removeReference(const quint32 id, const QString &token, const QString &reference)
+bool CredentialsDB::removeReference(const quint32 id,
+                                    const QString &token,
+                                    const QString &reference)
 {
     INIT_ERROR();
     return metaDataDB->removeReference(id, token, reference);

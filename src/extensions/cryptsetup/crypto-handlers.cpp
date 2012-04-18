@@ -43,7 +43,8 @@
 
 #define SIGNON_LUKS_CIPHER_NAME   "aes"
 #define SIGNON_LUKS_CIPHER_MODE   "xts-plain"
-#define SIGNON_LUKS_CIPHER        SIGNON_LUKS_CIPHER_NAME "-" SIGNON_LUKS_CIPHER_MODE
+#define SIGNON_LUKS_CIPHER        \
+    SIGNON_LUKS_CIPHER_NAME "-" SIGNON_LUKS_CIPHER_MODE
 #define SIGNON_LUKS_KEY_SIZE      256
 #define SIGNON_LUKS_BASE_KEYSLOT  0
 
@@ -52,7 +53,7 @@
 #define KILO_BYTE_SIZE 1024
 #define MEGA_BYTE_SIZE (KILO_BYTE_SIZE * 1024)
 
-/*  ------------------- SystemCommandLineCallHandler implementation ------------------- */
+/*  ------------- SystemCommandLineCallHandler implementation -------------- */
 
 SystemCommandLineCallHandler::SystemCommandLineCallHandler()
 {
@@ -107,9 +108,10 @@ void SystemCommandLineCallHandler::error(QProcess::ProcessError err)
 }
 
 
-/*  ------------------------ PartitionHandler implementation ------------------------ */
+/*  ------------------ PartitionHandler implementation --------------------- */
 
-bool PartitionHandler::createPartitionFile(const QString &fileName, const quint32 fileSize)
+bool PartitionHandler::createPartitionFile(const QString &fileName,
+                                           const quint32 fileSize)
 {
     int fd = open(fileName.toLatin1().data(),
                   O_RDWR | O_CREAT,
@@ -137,7 +139,8 @@ bool PartitionHandler::createPartitionFile(const QString &fileName, const quint3
     return true;
 }
 
-bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint32 fileSystemType)
+bool PartitionHandler::formatPartitionFile(const QString &fileName,
+                                           const quint32 fileSystemType)
 {
     QString mkfsApp = QString::fromLatin1("/sbin/mkfs.ext2");
     switch (fileSystemType) {
@@ -154,14 +157,17 @@ bool PartitionHandler::formatPartitionFile(const QString &fileName, const quint3
 }
 
 
-/*  ------------------------ MountHandler implementation ------------------------ */
+/*  --------------------- MountHandler implementation ---------------------- */
 
-bool MountHandler::mount(const QString &toMount, const QString &mountPath, const QString &fileSystemTtpe)
+bool MountHandler::mount(const QString &toMount,
+                         const QString &mountPath,
+                         const QString &fileSystemTtpe)
 {
     /* Mount a filesystem.  */
-    return  (::mount(toMount.toUtf8().constData(), mountPath.toUtf8().constData(),
-                 fileSystemTtpe.toUtf8().constData(),
-                 MS_SYNCHRONOUS | MS_NOEXEC, NULL) == 0);
+    return (::mount(toMount.toUtf8().constData(),
+                    mountPath.toUtf8().constData(),
+                    fileSystemTtpe.toUtf8().constData(),
+                    MS_SYNCHRONOUS | MS_NOEXEC, NULL) == 0);
 }
 
 bool MountHandler::umount(const QString &mountPath)
@@ -175,15 +181,15 @@ bool MountHandler::umount(const QString &mountPath)
     TRACE() << ret;
 
     switch (errno) {
-        case EAGAIN: TRACE() << "EAGAIN"; break;
-        case EBUSY: TRACE() << "EBUSY"; break;
-        case EFAULT: TRACE() << "EFAULT"; break;
-        case EINVAL: TRACE() << "EINVAL"; break;
-        case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
-        case ENOENT: TRACE() << "ENOENT"; break;
-        case ENOMEM: TRACE() << "ENOMEM"; break;
-        case EPERM: TRACE() << "EPERM"; break;
-        default: TRACE() << "umount unknown error - ignoring.";
+    case EAGAIN: TRACE() << "EAGAIN"; break;
+    case EBUSY: TRACE() << "EBUSY"; break;
+    case EFAULT: TRACE() << "EFAULT"; break;
+    case EINVAL: TRACE() << "EINVAL"; break;
+    case ENAMETOOLONG: TRACE() << "ENAMETOOLONG"; break;
+    case ENOENT: TRACE() << "ENOENT"; break;
+    case ENOMEM: TRACE() << "ENOMEM"; break;
+    case EPERM: TRACE() << "EPERM"; break;
+    default: TRACE() << "umount unknown error - ignoring.";
     }
 
     //TODO - Remove 1st, uncommend 2nd lines after the fix above.
@@ -194,7 +200,8 @@ bool MountHandler::umount(const QString &mountPath)
 
 /*  ----------------------- LosetupHandler implementation ----------------------- */
 
-bool LosetupHandler::setupDevice(const QString &deviceName, const QString &blockDevice)
+bool LosetupHandler::setupDevice(const QString &deviceName,
+                                 const QString &blockDevice)
 {
     SystemCommandLineCallHandler handler;
     return handler.makeCall(
@@ -222,12 +229,12 @@ QString LosetupHandler::findAvailableDevice()
 bool LosetupHandler::releaseDevice(const QString &deviceName)
 {
     SystemCommandLineCallHandler handler;
-    return handler.makeCall(
-                        QLatin1String("/sbin/losetup"),
-                        QStringList() << QString::fromLatin1("-d") << deviceName);
+    return handler.makeCall(QLatin1String("/sbin/losetup"),
+                            QStringList() <<
+                            QString::fromLatin1("-d") << deviceName);
 }
 
-/*  ----------------------- CrytpsetupHandler implementation ----------------------- */
+/*  -------------------- CrytpsetupHandler implementation ------------------ */
 
 /*
     Callbacks for the interface callbacks struct in crypt_options struct.
@@ -265,7 +272,9 @@ static int yesDialog_wrapper(const char *msg, void *usrptr)
     return xyesDialog((char*)msg);
 }
 
-int crypt_luksFormatBinary(struct crypt_options *options, const char *pwd, unsigned int pwdLen)
+int crypt_luksFormatBinary(struct crypt_options *options,
+                           const char *pwd,
+                           unsigned int pwdLen)
 {
     struct crypt_device *cd = NULL;
     struct crypt_params_luks1 cp = {
@@ -278,14 +287,16 @@ int crypt_luksFormatBinary(struct crypt_options *options, const char *pwd, unsig
         return -EINVAL;
 
     crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
-    crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+    crypt_set_confirm_callback(cd, yesDialog_wrapper,
+                               (void*) options->icb->yesDialog);
 
     crypt_set_timeout(cd, options->timeout);
     crypt_set_password_retry(cd, options->tries);
     crypt_set_iterarion_time(cd, options->iteration_time ?: 1000);
     crypt_set_password_verify(cd, options->flags & CRYPT_FLAG_VERIFY);
 
-    r = crypt_format(cd, CRYPT_LUKS1, SIGNON_LUKS_CIPHER_NAME, SIGNON_LUKS_CIPHER_MODE,
+    r = crypt_format(cd, CRYPT_LUKS1,
+                     SIGNON_LUKS_CIPHER_NAME, SIGNON_LUKS_CIPHER_MODE,
                      NULL, NULL, options->key_size, &cp);
     if (r < 0)
         goto out;
@@ -299,7 +310,8 @@ out:
 
 }
 
-bool CryptsetupHandler::formatFile(const QByteArray &key, const QString &deviceName)
+bool CryptsetupHandler::formatFile(const QByteArray &key,
+                                   const QString &deviceName)
 {
     struct crypt_options options;
 
@@ -348,7 +360,8 @@ bool CryptsetupHandler::formatFile(const QByteArray &key, const QString &deviceN
     return (ret == 0);
 }
 
-int crypt_luksOpenBinary(struct crypt_options *options, const char *pwd, unsigned int pwdLen)
+int crypt_luksOpenBinary(struct crypt_options *options,
+                         const char *pwd, unsigned int pwdLen)
 {
     struct crypt_device *cd = NULL;
     uint32_t flags = 0;
@@ -358,7 +371,8 @@ int crypt_luksOpenBinary(struct crypt_options *options, const char *pwd, unsigne
         return -EINVAL;
 
     crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
-    crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+    crypt_set_confirm_callback(cd, yesDialog_wrapper,
+                               (void*) options->icb->yesDialog);
 
     crypt_set_timeout(cd, options->timeout);
     crypt_set_password_retry(cd, options->tries);
@@ -466,7 +480,8 @@ bool CryptsetupHandler::closeFile(const QString &deviceMap)
     int ret = crypt_remove_device(&options);
 
     if (ret != 0)
-        TRACE() << "Cryptsetup remove API call result:" << ret << "." <<  error();
+        TRACE() << "Cryptsetup remove API call result:" << ret <<
+            "." <<  error();
 
     if (localDeviceMap)
         free(localDeviceMap);
@@ -492,7 +507,8 @@ int crypt_luksAddKeyBinary(struct crypt_options *options,
         return -EINVAL;
 
     crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
-    crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+    crypt_set_confirm_callback(cd, yesDialog_wrapper,
+                               (void*) options->icb->yesDialog);
 
     crypt_set_timeout(cd, options->timeout);
     crypt_set_password_retry(cd, options->tries);
@@ -543,20 +559,23 @@ bool CryptsetupHandler::addKeySlot(const QString &deviceName,
     options.icb = &cmd_icb;
 
     int ret = crypt_luksAddKeyBinary(&options,
-                                     existingKey.constData(), existingKey.length(),
+                                     existingKey.constData(),
+                                     existingKey.length(),
                                      key.constData(), key.length());
 
     if (localDeviceName)
         free(localDeviceName);
 
     if (ret != 0)
-        TRACE() << "Cryptsetup add key API call result:" << ret << "." <<  error();
+        TRACE() << "Cryptsetup add key API call result:" << ret <<
+            "." <<  error();
 
     return (ret == 0);
 }
 
 int crypt_luksRemoveKeyBinary(struct crypt_options *options,
-                              const char *pwdToRemove, unsigned int pwdToRemoveLen)
+                              const char *pwdToRemove,
+                              unsigned int pwdToRemoveLen)
 {
     struct crypt_device *cd = NULL;
     int key_slot;
@@ -566,7 +585,8 @@ int crypt_luksRemoveKeyBinary(struct crypt_options *options,
         return -EINVAL;
 
     crypt_set_log_callback(cd, log_wrapper, (void*) options->icb->log);
-    crypt_set_confirm_callback(cd, yesDialog_wrapper, (void*) options->icb->yesDialog);
+    crypt_set_confirm_callback(cd, yesDialog_wrapper,
+                               (void*) options->icb->yesDialog);
 
     crypt_set_timeout(cd, options->timeout);
     crypt_set_password_retry(cd, options->tries);
@@ -623,7 +643,8 @@ bool CryptsetupHandler::removeKeySlot(const QString &deviceName,
         free(localDeviceName);
 
     if (ret != 0)
-        TRACE() << "Cryptsetup remove key API call result:" << ret << "." <<  error();
+        TRACE() << "Cryptsetup remove key API call result:" << ret <<
+            "." <<  error();
 
     return (ret == 0);
 }

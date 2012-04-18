@@ -28,7 +28,7 @@
  * @class ExampleData
  * Data container to hold values for example authentication session.
  */
-class ExampleData : public SignOn::SessionData
+class ExampleData: public SignOn::SessionData
 {
 public:
     /*!

@@ -62,7 +62,7 @@ public:
      * Constructor
      */
     explicit AbstractKeyManager(QObject *parent = 0);
-	
+
     /*!
      * Destructor
      */

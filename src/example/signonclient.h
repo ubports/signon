@@ -29,7 +29,7 @@
 
 namespace SignOn {
 
-class SignonClient : public QWidget
+class SignonClient: public QWidget
 {
     Q_OBJECT
 

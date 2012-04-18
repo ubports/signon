@@ -65,9 +65,12 @@ public:
     SignonDaemonConfiguration();
     ~SignonDaemonConfiguration();
 
-    const CAMConfiguration &camConfiguration() const { return m_camConfiguration; }
-    void setEncryptionPassphrase(const QByteArray &passphrase)
-        { m_camConfiguration.m_encryptionPassphrase = passphrase; }
+    const CAMConfiguration &camConfiguration() const {
+        return m_camConfiguration;
+    }
+    void setEncryptionPassphrase(const QByteArray &passphrase) {
+        m_camConfiguration.m_encryptionPassphrase = passphrase;
+    }
 
     void load();
 

@@ -49,4 +49,3 @@ enum PluginResponse {
 };
 
 #endif // SIGNON_PLUGINS_COMMON_IPC_H
-

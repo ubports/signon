@@ -42,7 +42,9 @@ public:
         UnknownError
     };
     CredentialsDBError(const QString &text = QString(),
-                       ErrorType type = NoError) { m_text = text; m_type = type; }
+                       ErrorType type = NoError) {
+        m_text = text; m_type = type;
+    }
     ~CredentialsDBError() {};
 
     void setType(ErrorType type) { m_type = type; }

@@ -31,7 +31,7 @@
 
 namespace SsoTestPluginNS {
 
-class SsoTestPlugin : public AuthPluginInterface
+class SsoTestPlugin: public AuthPluginInterface
 {
     Q_OBJECT
     Q_INTERFACES(AuthPluginInterface)
@@ -43,7 +43,8 @@ public Q_SLOTS:
     QString type() const { return m_type; }
     QStringList mechanisms() const { return m_mechanisms; }
     void cancel();
-    void process(const SignOn::SessionData &inData, const QString &mechanism = 0);
+    void process(const SignOn::SessionData &inData,
+                 const QString &mechanism = 0);
     void userActionFinished(const SignOn::UiSessionData &data);
 
 private:
@@ -51,7 +52,8 @@ private:
     QStringList m_mechanisms;
 
 private Q_SLOTS:
-        void execProcess(const SignOn::SessionData &inData, const QString &mechanism);
+    void execProcess(const SignOn::SessionData &inData,
+                     const QString &mechanism);
 };
 
 } //namespace SsoTestPluginNS

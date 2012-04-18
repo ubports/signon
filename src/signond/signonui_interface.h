@@ -44,16 +44,19 @@ class SignonUiAdaptor: public QDBusAbstractInterface
     friend class SignonSecureStorageUiAdaptor;
 
 public:
-    static inline const char *staticInterfaceName()
-    { return "com.nokia.singlesignonui"; }
+    static inline const char *staticInterfaceName() {
+        return "com.nokia.singlesignonui";
+    }
 
 public:
 
-    SignonUiAdaptor(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent = 0);
+    SignonUiAdaptor(const QString &service,
+                    const QString &path,
+                    const QDBusConnection &connection,
+                    QObject *parent = 0);
     ~SignonUiAdaptor();
 
 public Q_SLOTS: // METHODS
-
     QDBusPendingCall queryDialog(const QVariantMap &parameters);
     QDBusPendingCall refreshDialog(const QVariantMap &parameters);
 

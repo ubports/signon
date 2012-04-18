@@ -34,37 +34,38 @@
 
 namespace SignonDaemonNS {
 
-    typedef QList<QVariantMap> MapList;
+typedef QList<QVariantMap> MapList;
 
-    class SignonDaemonAdaptor: public QDBusAbstractAdaptor
-    {
-        Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.google.code.AccountsSSO.SingleSignOn.AuthService")
+class SignonDaemonAdaptor: public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface",
+                "com.google.code.AccountsSSO.SingleSignOn.AuthService")
 
-    public:
-        SignonDaemonAdaptor(SignonDaemon *parent);
-        virtual ~SignonDaemonAdaptor();
+public:
+    SignonDaemonAdaptor(SignonDaemon *parent);
+    virtual ~SignonDaemonAdaptor();
 
-        inline const QDBusContext &parentDBusContext() const
-            { return *static_cast<QDBusContext *>(m_parent); }
+    inline const QDBusContext &parentDBusContext() const
+        { return *static_cast<QDBusContext *>(m_parent); }
 
-    public Q_SLOTS:
-        void registerNewIdentity(QDBusObjectPath &objectPath);
-        void getIdentity(const quint32 id, QDBusObjectPath &objectPath,
-                         QVariantMap &identityData);
-        QString getAuthSessionObjectPath(const quint32 id, const QString &type);
+public Q_SLOTS:
+    void registerNewIdentity(QDBusObjectPath &objectPath);
+    void getIdentity(const quint32 id, QDBusObjectPath &objectPath,
+                     QVariantMap &identityData);
+    QString getAuthSessionObjectPath(const quint32 id, const QString &type);
 
-        QStringList queryMethods();
-        QStringList queryMechanisms(const QString &method);
-        void queryIdentities(const QVariantMap &filter);
-        bool clear();
+    QStringList queryMethods();
+    QStringList queryMechanisms(const QString &method);
+    void queryIdentities(const QVariantMap &filter);
+    bool clear();
 
-    private:
-        void securityErrorReply(const char *failedMethodName);
+private:
+    void securityErrorReply(const char *failedMethodName);
 
-    private:
-        SignonDaemon *m_parent;
-    }; //class SignonDaemonAdaptor
+private:
+    SignonDaemon *m_parent;
+}; //class SignonDaemonAdaptor
 
 } //namespace SignonDaemonNS
 

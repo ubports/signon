@@ -37,7 +37,7 @@
     #define SSOTESTCLIENT_USES_AUTHSESSION
 #endif
 
-class SsoTestClient : public QObject
+class SsoTestClient: public QObject
 {
     Q_OBJECT
 

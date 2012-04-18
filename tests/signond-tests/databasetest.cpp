@@ -133,7 +133,8 @@ void TestDatabase::insertMethodsTest()
     QVERIFY(list.count() == 0);
 
     //test real list
-    QStringList mechs = QStringList() << QLatin1String("M1")<< QLatin1String("M2");
+    QStringList mechs =
+        QStringList() << QLatin1String("M1")<< QLatin1String("M2");
     methods.insert(QLatin1String("Test"), mechs);
     methods.insert(QLatin1String("Test2"), mechs);
     m_meta->insertMethods(methods);
@@ -348,7 +349,9 @@ void TestDatabase::updateCredentialsTest()
         QLatin1String("Realm3.com");
 
     MethodMap umethods;
-    QStringList umechs = QStringList() << QString::fromLatin1("UMech1") << QString::fromLatin1("Mech2") ;
+    QStringList umechs =
+        QStringList() << QString::fromLatin1("UMech1") <<
+        QString::fromLatin1("Mech2") ;
     umethods.insert(QLatin1String("Method1"), umechs);
     umethods.insert(QLatin1String("UMethod2"), umechs);
     umethods.insert(QLatin1String("Method3"), QStringList());
@@ -556,40 +559,44 @@ void TestDatabase::referenceTest()
     id = m_db->insertCredentials(info, true);
 
     //add reference
-    bool ret = m_db->addReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1") );
+    bool ret = m_db->addReference(id, QLatin1String("AID::12345678"),
+                                  QLatin1String("ref1"));
     QVERIFY(ret);
     QStringList refs = m_db->references(id);
     qDebug() << refs;
-    QVERIFY(refs.contains(QLatin1String("ref1")) );
-    refs = m_db->references(id,QLatin1String("AID::12345678")  );
-    QVERIFY(refs.contains(QLatin1String("ref1")) );
-    refs = m_db->references(id,QLatin1String("AID::1234567")  );
-    QVERIFY(!refs.contains(QLatin1String("ref1")) );
+    QVERIFY(refs.contains(QLatin1String("ref1")));
+    refs = m_db->references(id,QLatin1String("AID::12345678"));
+    QVERIFY(refs.contains(QLatin1String("ref1")));
+    refs = m_db->references(id,QLatin1String("AID::1234567"));
+    QVERIFY(!refs.contains(QLatin1String("ref1")));
 
     //remove references
-    ret = m_db->removeReference(id, QLatin1String("AID::12345678") );
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678"));
     QVERIFY(ret);
     refs = m_db->references(id);
     qDebug() << refs;
-    QVERIFY(!refs.contains(QLatin1String("ref1")) );
+    QVERIFY(!refs.contains(QLatin1String("ref1")));
 
     //add new and remove nonexisting reference
-    ret = m_db->addReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1") );
+    ret = m_db->addReference(id, QLatin1String("AID::12345678"),
+                             QLatin1String("ref1"));
     QVERIFY(ret);
-    ret = m_db->removeReference(id, QLatin1String("AID::12345678") , QLatin1String("ref2"));
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678"),
+                                QLatin1String("ref2"));
     QVERIFY(!ret);
 
     refs = m_db->references(id);
     qDebug() << refs;
-    QVERIFY(refs.contains(QLatin1String("ref1")) );
+    QVERIFY(refs.contains(QLatin1String("ref1")));
 
     //remove specific reference
-    ret = m_db->removeReference(id, QLatin1String("AID::12345678") , QLatin1String("ref1"));
+    ret = m_db->removeReference(id, QLatin1String("AID::12345678"),
+                                QLatin1String("ref1"));
     QVERIFY(ret);
 
     refs = m_db->references(id);
     qDebug() << refs;
-    QVERIFY(!refs.contains(QLatin1String("ref1")) );
+    QVERIFY(!refs.contains(QLatin1String("ref1")));
 
 }
 

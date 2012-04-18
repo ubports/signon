@@ -33,7 +33,8 @@ SmackAccessControlPlugin::SmackAccessControlPlugin():
     setObjectName(QLatin1String("smack-ac"));
 }
 
-AbstractAccessControlManager *SmackAccessControlPlugin::accessControlManager(QObject *parent) const
+AbstractAccessControlManager *
+SmackAccessControlPlugin::accessControlManager(QObject *parent) const
 {
     qDebug() << Q_FUNC_INFO;
     return new SmackAccessControlManager(parent);

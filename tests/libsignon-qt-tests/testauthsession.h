@@ -68,60 +68,59 @@ using namespace SignOn;
 
 class TestAuthSession: public QObject
 {
-     Q_OBJECT
+    Q_OBJECT
 
 #if defined(SSO_CI_TESTMANAGEMENT) || defined(SSOTESTCLIENT_USES_AUTHSESSION)
-    public Q_SLOTS:
+public Q_SLOTS:
 #else
-    private Q_SLOTS:
+private Q_SLOTS:
 #endif
-      /*
-      * Start the signon daemon
-      * */
-     void initTestCase();
+    /*
+     * Start the signon daemon
+     */
+    void initTestCase();
 
-     /*
-      * End the signon daemon
-      * */
-     void cleanupTestCase();
+    /*
+     * End the signon daemon
+     */
+    void cleanupTestCase();
 
-     /*
-      * UIless
-      * AuthSession API related test cases
-      * */
+    /*
+     * UIless
+     * AuthSession API related test cases
+     */
+    void queryMechanisms_existing_method();
+    void queryMechanisms_nonexisting_method();
 
-     void queryMechanisms_existing_method();
-     void queryMechanisms_nonexisting_method();
+    void process_with_new_identity();
+    void process_with_existing_identity();
+    void process_with_nonexisting_type();
+    void process_with_nonexisting_method();
+    void process_with_unauthorized_method();
+    void process_from_other_process();
+    void process_many_times_after_auth();
+    void process_many_times_before_auth();
+    void process_with_big_session_data();
 
+    void cancel_immidiately();
+    void cancel_with_delay();
+    void cancel_without_process();
 
-     void process_with_new_identity();
-     void process_with_existing_identity();
-     void process_with_nonexisting_type();
-     void process_with_nonexisting_method();
-     void process_with_unauthorized_method();
-     void process_from_other_process();
-     void process_many_times_after_auth();
-     void process_many_times_before_auth();
-     void process_with_big_session_data();
+    void handle_destroyed_signal();
 
-     void cancel_immidiately();
-     void cancel_with_delay();
-     void cancel_without_process();
-
-     void handle_destroyed_signal();
-
-     void multi_thread_test();
+    void multi_thread_test();
 
 #ifdef SSOUI_TESTS_ENABLED
-     void processUi_with_existing_identity();
-     void processUi_and_cancel();
+    void processUi_with_existing_identity();
+    void processUi_and_cancel();
 #endif
-    private Q_SLOTS:
-        void cancel();
-        void response(const SignOn::SessionData &data);
- };
 
-/**
+private Q_SLOTS:
+    void cancel();
+    void response(const SignOn::SessionData &data);
+};
+
+/*
  * The SlotMachine class is used by process_from_other_process
  * test to receive signals regarding the completion of D-Bus
  * calls. The QSignalSpy classes cannot be used because the

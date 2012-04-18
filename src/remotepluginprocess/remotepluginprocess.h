@@ -70,85 +70,86 @@ namespace RemotePluginProcessNS {
  * @class CancelEventThread
  * Thread to enable cancel functionality.
  */
- class CancelEventThread : public QThread
+class CancelEventThread: public QThread
 {
     Q_OBJECT
 
-    public:
-        CancelEventThread(AuthPluginInterface *plugin);
-        ~CancelEventThread();
+public:
+    CancelEventThread(AuthPluginInterface *plugin);
+    ~CancelEventThread();
 
-        void run();
+    void run();
 
-    public Q_SLOTS:
-        void cancel();
+public Q_SLOTS:
+    void cancel();
 
-    private:
-        AuthPluginInterface *m_plugin;
-        QSocketNotifier *m_cancelNotifier;
+private:
+    AuthPluginInterface *m_plugin;
+    QSocketNotifier *m_cancelNotifier;
 };
 
 /*!
  * @class RemotePluginProcess
  * Class to execute plugin process.
  */
-class RemotePluginProcess : public QObject
+class RemotePluginProcess: public QObject
 {
     Q_OBJECT
 
-    public:
-        RemotePluginProcess(QObject *parent);
-        ~RemotePluginProcess();
+public:
+    RemotePluginProcess(QObject *parent);
+    ~RemotePluginProcess();
 
-        static RemotePluginProcess* createRemotePluginProcess(QString &type, QObject *parent);
+    static RemotePluginProcess* createRemotePluginProcess(QString &type,
+                                                          QObject *parent);
 
-        bool loadPlugin(QString &type);
-        bool setupDataStreams();
-        bool setupProxySettings();
+    bool loadPlugin(QString &type);
+    bool setupDataStreams();
+    bool setupProxySettings();
 
-    public Q_SLOTS:
-        void startTask();
-        void sessionDataReceived(const QVariantMap &sessionDataMap);
+public Q_SLOTS:
+    void startTask();
+    void sessionDataReceived(const QVariantMap &sessionDataMap);
 
-    private:
-        AuthPluginInterface *m_plugin;
+private:
+    AuthPluginInterface *m_plugin;
 
-        QFile m_inFile;
-        QFile m_outFile;
+    QFile m_inFile;
+    QFile m_outFile;
 
-        QSocketNotifier *m_readnotifier;
-        QSocketNotifier *m_errnotifier;
+    QSocketNotifier *m_readnotifier;
+    QSocketNotifier *m_errnotifier;
 
-        BlobIOHandler *m_blobIOHandler;
+    BlobIOHandler *m_blobIOHandler;
 
-        //Requiered for async session data reading
-        quint32 m_currentOperation;
-        QString m_currentMechanism;
+    //Requiered for async session data reading
+    quint32 m_currentOperation;
+    QString m_currentMechanism;
 
-    private:
-        QString getPluginName(const QString &type);
-        void type();
-        void mechanism();
-        void mechanisms();
+private:
+    QString getPluginName(const QString &type);
+    void type();
+    void mechanism();
+    void mechanisms();
 
-        void process();
-        void userActionFinished();
-        void refresh();
+    void process();
+    void userActionFinished();
+    void refresh();
 
-        void enableCancelThread();
-        void disableCancelThread();
+    void enableCancelThread();
+    void disableCancelThread();
 
-    private Q_SLOTS:
-        void result(const SignOn::SessionData &data);
-        void store(const SignOn::SessionData &data);
-        void error(const SignOn::Error &err);
-        void userActionRequired(const SignOn::UiSessionData &data);
-        void refreshed(const SignOn::UiSessionData &data);
-        void statusChanged(const AuthPluginState state, const QString &message);
-        void blobIOError();
+private Q_SLOTS:
+    void result(const SignOn::SessionData &data);
+    void store(const SignOn::SessionData &data);
+    void error(const SignOn::Error &err);
+    void userActionRequired(const SignOn::UiSessionData &data);
+    void refreshed(const SignOn::UiSessionData &data);
+    void statusChanged(const AuthPluginState state, const QString &message);
+    void blobIOError();
 
-    Q_SIGNALS :
-        void processStopped();
+Q_SIGNALS :
+    void processStopped();
 };
 
 } //namespace RemotePluginProcessNS

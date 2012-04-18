@@ -31,35 +31,36 @@
 
 namespace SignonDaemonNS {
 
-    class SignonAuthSessionAdaptor: public QDBusAbstractAdaptor
-    {
-        Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.google.code.AccountsSSO.SingleSignOn.AuthSession")
+class SignonAuthSessionAdaptor: public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface",
+                "com.google.code.AccountsSSO.SingleSignOn.AuthSession")
 
-    public:
-            SignonAuthSessionAdaptor(SignonAuthSession *parent);
-            virtual ~SignonAuthSessionAdaptor();
+public:
+    SignonAuthSessionAdaptor(SignonAuthSession *parent);
+    virtual ~SignonAuthSessionAdaptor();
 
-            inline SignonAuthSession *parent() const
-            {
-                return static_cast<SignonAuthSession *>(QObject::parent());
-            }
+    inline SignonAuthSession *parent() const {
+        return static_cast<SignonAuthSession *>(QObject::parent());
+    }
 
-    private:
-        void errorReply(const QString &name, const QString &message);
+private:
+    void errorReply(const QString &name, const QString &message);
 
-    public Q_SLOTS:
-        QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
-        QVariantMap process(const QVariantMap &sessionDataVa, const QString &mechanism);
+public Q_SLOTS:
+    QStringList queryAvailableMechanisms(const QStringList &wantedMechanisms);
+    QVariantMap process(const QVariantMap &sessionDataVa,
+                        const QString &mechanism);
 
-        Q_NOREPLY void cancel();
-        Q_NOREPLY void setId(quint32 id);
-        Q_NOREPLY void objectUnref();
+    Q_NOREPLY void cancel();
+    Q_NOREPLY void setId(quint32 id);
+    Q_NOREPLY void objectUnref();
 
-    Q_SIGNALS:
-        void stateChanged(int state, const QString &message);
-        void unregistered();
-    };
+Q_SIGNALS:
+    void stateChanged(int state, const QString &message);
+    void unregistered();
+};
 
 } //namespace SignonDaemonNS
 

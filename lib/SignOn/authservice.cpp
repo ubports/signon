@@ -25,37 +25,39 @@
 
 namespace SignOn {
 
-    AuthService::AuthService(QObject *parent)
-        : QObject(parent), impl(new AuthServiceImpl(this))
-    {
-        qRegisterMetaType<Error>("SignOn::Error");
-        qRegisterMetaType<Error>("Error");
+AuthService::AuthService(QObject *parent): QObject(parent),
+    impl(new AuthServiceImpl(this))
+{
+    qRegisterMetaType<Error>("SignOn::Error");
+    qRegisterMetaType<Error>("Error");
 
-        if (qMetaTypeId<Error>() < QMetaType::User)
-            BLAME() << "AuthService::AuthService() - SignOn::Error meta type not registered.";
-    }
+    if (qMetaTypeId<Error>() < QMetaType::User)
+        BLAME() << "AuthService::AuthService() - "
+            "SignOn::Error meta type not registered.";
+}
 
-    AuthService::~AuthService()
-    {}
+AuthService::~AuthService()
+{
+}
 
-    void AuthService::queryMethods()
-    {
-        impl->queryMethods();
-    }
+void AuthService::queryMethods()
+{
+    impl->queryMethods();
+}
 
-    void AuthService::queryMechanisms(const QString &method)
-    {
-        impl->queryMechanisms(method);
-    }
+void AuthService::queryMechanisms(const QString &method)
+{
+    impl->queryMechanisms(method);
+}
 
-    void AuthService::queryIdentities(const IdentityFilter &filter)
-    {
-        impl->queryIdentities(filter);
-    }
+void AuthService::queryIdentities(const IdentityFilter &filter)
+{
+    impl->queryIdentities(filter);
+}
 
-    void AuthService::clear()
-    {
-        impl->clear();
-    }
+void AuthService::clear()
+{
+    impl->clear();
+}
 
 } //namespace SignOn

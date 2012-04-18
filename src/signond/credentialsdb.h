@@ -23,9 +23,9 @@
  */
 
 /*!
-  @file credentialsdb.h
-  Definition of the CredentialsDB object.
-  @ingroup Accounts_and_SSO_Framework
+ * @file credentialsdb.h
+ * Definition of the CredentialsDB object.
+ * @ingroup Accounts_and_SSO_Framework
  */
 
 #ifndef CREDENTIALS_DB_H
@@ -56,24 +56,24 @@ enum IdentityFlags {
 };
 
 /*!
-    @class SqlDatabase
-    Will be used manage the SQL database interaction.
-    @ingroup Accounts_and_SSO_Framework
+ * @class SqlDatabase
+ * Will be used manage the SQL database interaction.
+ * @ingroup Accounts_and_SSO_Framework
  */
 class SqlDatabase
 {
     friend class ::TestDatabase;
 public:
     /*!
-        Constructs a SqlDatabase object using the given hostname.
-        @param hostname
-    */
+     * Constructs a SqlDatabase object using the given hostname.
+     * @param hostname
+     */
     SqlDatabase(const QString &hostname, const QString &connectionName,
                 int version);
 
     /*!
-        Destroys the SqlDatabase object, closing the database connection.
-    */
+     * Destroys the SqlDatabase object, closing the database connection.
+     */
     virtual ~SqlDatabase();
 
     /*!
@@ -86,13 +86,13 @@ public:
     virtual bool updateDB(int version);
 
     /*!
-        Creates the database connection.
-        @returns true if successful, false otherwise.
-    */
+     * Creates the database connection.
+     * @returns true if successful, false otherwise.
+     */
     bool connect();
     /*!
-        Destroys the database connection.
-    */
+     * Destroys the database connection.
+     */
     void disconnect();
 
     bool startTransaction();
@@ -100,93 +100,107 @@ public:
     void rollback();
 
     /*!
-        @returns true if database connection is opened, false otherwise.
-    */
+     * @returns true if database connection is opened, false otherwise.
+     */
     bool connected() { return m_database.isOpen(); }
 
     /*!
-        Sets the database name.
-        @param databseName
-    */
-    void setDatabaseName(const QString &databaseName) { m_database.setDatabaseName(databaseName); }
+     * Sets the database name.
+     * @param databseName
+     */
+    void setDatabaseName(const QString &databaseName) {
+        m_database.setDatabaseName(databaseName);
+    }
 
     /*!
-        Sets the username for the database connection.
-        @param username
-    */
-    void setUsername(const QString &username) { m_database.setUserName(username); }
+     * Sets the username for the database connection.
+     * @param username
+     */
+    void setUsername(const QString &username) {
+        m_database.setUserName(username);
+    }
 
     /*!
-        Sets the password for the database connection.
-        @param password
-    */
-    void setPassword(const QString &password) { m_database.setPassword(password); }
+     * Sets the password for the database connection.
+     * @param password
+     */
+    void setPassword(const QString &password) {
+        m_database.setPassword(password);
+    }
 
     /*!
-        @returns the database name.
-    */
+     * @returns the database name.
+     */
     QString databaseName() const { return m_database.databaseName(); }
 
     /*!
-        @returns the username for the database connection.
-    */
+     * @returns the username for the database connection.
+     */
     QString username() const { return m_database.userName(); }
 
     /*!
-        @returns the password for the database connection.
-    */
+     * @returns the password for the database connection.
+     */
     QString password() const { return m_database.password(); }
 
     QSqlQuery newQuery() const { return QSqlQuery(m_database); }
 
     /*!
-        Executes a specific database query.
-        If an error occurres the lastError() method can be used for handling decissions.
-        @param query, the query string.
-        @returns the resulting sql query, which can be process in the case of a 'SELECT' statement.
-    */
+     * Executes a specific database query.
+     * If an error occurres the lastError() method can be used for handling
+     * decissions.
+     * @param query, the query string.
+     * @returns the resulting sql query, which can be process in the case of a
+     * 'SELECT' statement.
+     */
     QSqlQuery exec(const QString &query);
 
     /*!
-        Executes a specific database query.
-        If an error occurres the lastError() method can be used for handling decissions.
-        @param query, the query.
-        @returns the resulting sql query, which can be process in the case of a 'SELECT' statement.
-    */
+     * Executes a specific database query.
+     * If an error occurres the lastError() method can be used for handling
+     * decissions.
+     * @param query, the query.
+     * @returns the resulting sql query, which can be process in the case of a
+     * 'SELECT' statement.
+     */
     QSqlQuery exec(QSqlQuery &query);
 
-     /*!
-        Executes a specific database set of queryes (INSERTs, UPDATEs, DELETEs) in a transaction
-        context (No nested transactions supported - sqlite reasons).
-        If an error occurres the lastError() method can be used for handling decissions.
-        @param queryList, the query list to be executed.
-        @returns true if the transaction commits successfully, false otherwise.
-    */
+    /*!
+     * Executes a specific database set of queryes (INSERTs, UPDATEs, DELETEs)
+     * in a transaction context (No nested transactions supported - sqlite
+     * reasons).
+     * If an error occurres the lastError() method can be used for handling
+     * decissions.
+     * @param queryList, the query list to be executed.
+     * @returns true if the transaction commits successfully, false otherwise.
+     */
     bool transactionalExec(const QStringList &queryList);
 
     /*!
-        @returns true, if the database has any tables created, false otherwise.
-    */
-    bool hasTables() const { return m_database.tables().count() > 0 ? true : false; }
+     * @returns true, if the database has any tables created, false otherwise.
+     */
+    bool hasTables() const {
+        return m_database.tables().count() > 0 ? true : false;
+    }
 
     /*!
-        @returns a list of the supported drivers on the specific OS.
-    */
+     * @returns a list of the supported drivers on the specific OS.
+     */
     static QStringList supportedDrivers() { return QSqlDatabase::drivers(); }
 
     /*!
-        @returns the last occurred error if any. If not error occurred on the
-        last performed operation the error object is invalid.
-    */
+     * @returns the last occurred error if any. If not error occurred on the
+     * last performed operation the error object is invalid.
+     */
     SignOn::CredentialsDBError lastError() const;
     bool errorOccurred() const { return lastError().isValid(); };
     void clearError() { m_lastError.clear(); }
 
     /*!
-        Serializes a SQL error into a string.
-        @param error, method will fail if an error object is passed.
-        @returns the error information as string.
-    */
+     * Serializes a SQL error into a string.
+     * @param error, method will fail if an error object is passed.
+     * @returns the error information as string.
+     */
     static QString errorInfo(const QSqlError &error);
 
     QString connectionName() const { return m_database.connectionName(); }
@@ -198,6 +212,7 @@ protected:
 
 private:
     SignOn::CredentialsDBError m_lastError;
+
 protected:
     int m_version;
     QSqlDatabase m_database;
@@ -210,7 +225,8 @@ class MetaDataDB: public SqlDatabase
     friend class ::TestDatabase;
 public:
     MetaDataDB(const QString &name):
-        SqlDatabase(name, QLatin1String("SSO-metadata"), SSO_METADATADB_VERSION) {}
+        SqlDatabase(name, QLatin1String("SSO-metadata"),
+                    SSO_METADATADB_VERSION) {}
 
     bool createTables();
     bool updateDB(int version);
@@ -237,6 +253,7 @@ public:
                          const QString &token,
                          const QString &reference = QString());
     QStringList references(const quint32 id, const QString &token = QString());
+
 private:
     bool insertMethods(QMap<QString, QStringList> methods);
     quint32 updateCredentials(const SignonIdentityInfo &info);
@@ -245,12 +262,12 @@ private:
 };
 
 /*!
-    @class CredentialsDB
-    Manages the credentials I/O.
-    @ingroup Accounts_and_SSO_Framework
+ * @class CredentialsDB
+ * Manages the credentials I/O.
+ * @ingroup Accounts_and_SSO_Framework
  */
 
-class CredentialsDB : public QObject
+class CredentialsDB: public QObject
 {
     Q_OBJECT
     Q_DISABLE_COPY(CredentialsDB)
@@ -289,13 +306,17 @@ public:
     SignOn::CredentialsDBError lastError() const;
     bool errorOccurred() const { return lastError().isValid(); };
 
-    QStringList methods(const quint32 id, const QString &securityToken = QString());
-    bool checkPassword(const quint32 id, const QString &username, const QString &password);
+    QStringList methods(const quint32 id,
+                        const QString &securityToken = QString());
+    bool checkPassword(const quint32 id,
+                       const QString &username, const QString &password);
     SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
     QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
 
-    quint32 insertCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
-    quint32 updateCredentials(const SignonIdentityInfo &info, bool storeSecret = true);
+    quint32 insertCredentials(const SignonIdentityInfo &info,
+                              bool storeSecret = true);
+    quint32 updateCredentials(const SignonIdentityInfo &info,
+                              bool storeSecret = true);
     bool removeCredentials(const quint32 id);
 
     bool clear();
@@ -305,12 +326,19 @@ public:
     QString credentialsOwnerSecurityToken(const quint32 identityId);
 
     QVariantMap loadData(const quint32 id, const QString &method);
-    bool storeData(const quint32 id, const QString &method, const QVariantMap &data);
+    bool storeData(const quint32 id,
+                   const QString &method,
+                   const QVariantMap &data);
     bool removeData(const quint32 id, const QString &method = QString());
 
-    bool addReference(const quint32 id, const QString &token, const QString &reference);
-    bool removeReference(const quint32 id, const QString &token, const QString &reference = QString());
-    QStringList references(const quint32 id, const QString &token = QString());
+    bool addReference(const quint32 id,
+                      const QString &token,
+                      const QString &reference);
+    bool removeReference(const quint32 id,
+                         const QString &token,
+                         const QString &reference = QString());
+    QStringList references(const quint32 id,
+                           const QString &token = QString());
 
 private:
     SignOn::AbstractSecretsStorage *secretsStorage;

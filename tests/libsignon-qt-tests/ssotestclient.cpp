@@ -115,35 +115,35 @@ void SsoTestClient::cleanupTestCase()
 QString SsoTestClient::errCodeAsStr(const Error::ErrorType err)
 {
     switch(err) {
-        case Error::Unknown: return "Unknown";
-        case Error::InternalServer: return "InternalServer";
-        case Error::InternalCommunication: return "InternalCommunication";
-        case Error::PermissionDenied: return "PermissionDenied";
-        case Error::MethodNotKnown: return "MethodNotKnown";
-        case Error::ServiceNotAvailable: return "ServiceNotAvailable";
-        case Error::InvalidQuery: return "InvalidQuery";
-        case Error::MethodNotAvailable: return "MethodNotAvailable";
-        case Error::IdentityNotFound: return "IdentityNotFound";
-        case Error::StoreFailed: return "StoreFailed";
-        case Error::RemoveFailed: return "RemoveFailed";
-        case Error::SignOutFailed: return "SignOutFailed";
-        case Error::IdentityOperationCanceled: return "IdentityOperationCanceled";
-        case Error::CredentialsNotAvailable: return "CredentialsNotAvailable";
-        case Error::AuthSessionErr: return "AuthSessionErr";
-        case Error::MechanismNotAvailable: return "MechanismNotAvailable";
-        case Error::MissingData: return "MissingData";
-        case Error::InvalidCredentials: return "InvalidCredentials";
-        case Error::WrongState: return "WrongState";
-        case Error::OperationNotSupported: return "OperationNotSupported";
-        case Error::NoConnection: return "NoConnection";
-        case Error::Network: return "Network";
-        case Error::Ssl: return "Ssl";
-        case Error::Runtime: return "Runtime";
-        case Error::SessionCanceled: return "SessionCanceled";
-        case Error::TimedOut: return "TimedOut";
-        case Error::UserInteraction: return "UserInteraction";
-        case Error::OperationFailed: return "OperationFailed";
-        default: return "DEFAULT error type reached.";
+    case Error::Unknown: return "Unknown";
+    case Error::InternalServer: return "InternalServer";
+    case Error::InternalCommunication: return "InternalCommunication";
+    case Error::PermissionDenied: return "PermissionDenied";
+    case Error::MethodNotKnown: return "MethodNotKnown";
+    case Error::ServiceNotAvailable: return "ServiceNotAvailable";
+    case Error::InvalidQuery: return "InvalidQuery";
+    case Error::MethodNotAvailable: return "MethodNotAvailable";
+    case Error::IdentityNotFound: return "IdentityNotFound";
+    case Error::StoreFailed: return "StoreFailed";
+    case Error::RemoveFailed: return "RemoveFailed";
+    case Error::SignOutFailed: return "SignOutFailed";
+    case Error::IdentityOperationCanceled: return "IdentityOperationCanceled";
+    case Error::CredentialsNotAvailable: return "CredentialsNotAvailable";
+    case Error::AuthSessionErr: return "AuthSessionErr";
+    case Error::MechanismNotAvailable: return "MechanismNotAvailable";
+    case Error::MissingData: return "MissingData";
+    case Error::InvalidCredentials: return "InvalidCredentials";
+    case Error::WrongState: return "WrongState";
+    case Error::OperationNotSupported: return "OperationNotSupported";
+    case Error::NoConnection: return "NoConnection";
+    case Error::Network: return "Network";
+    case Error::Ssl: return "Ssl";
+    case Error::Runtime: return "Runtime";
+    case Error::SessionCanceled: return "SessionCanceled";
+    case Error::TimedOut: return "TimedOut";
+    case Error::UserInteraction: return "UserInteraction";
+    case Error::OperationFailed: return "OperationFailed";
+    default: return "DEFAULT error type reached.";
     }
 }
 
@@ -166,14 +166,11 @@ bool SsoTestClient::storeCredentialsPrivate(const SignOn::IdentityInfo &info)
     loop.exec();
 
     bool ok = false;
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         m_storedIdentityInfo = info;
         m_storedIdentityId = identity->id();
         ok = true;
-    }
-    else
-    {
+    } else {
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
         ok = false;
@@ -206,12 +203,12 @@ void SsoTestClient::queryAvailableMetods()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying available methods.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     m_identityResult.reset();
@@ -231,20 +228,18 @@ void SsoTestClient::queryAvailableMetods()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         qDebug() << "Remote:" << m_identityResult.m_methods;
         qDebug() << "Local:" << m_storedIdentityInfo.methods();
 
         QVERIFY(m_identityResult.m_methods == m_storedIdentityInfo.methods());
-    }
-    else
-    {
+    } else {
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
         QVERIFY(false);
@@ -260,7 +255,7 @@ void SsoTestClient::requestCredentialsUpdate()
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     m_identityResult.reset();
@@ -279,11 +274,14 @@ void SsoTestClient::requestCredentialsUpdate()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp, "A response was not received.");
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
+             "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
+    QVERIFY(m_identityResult.m_responseReceived ==
+            TestIdentityResult::NormalResp);
     TEST_DONE
 }
 
@@ -291,11 +289,11 @@ void SsoTestClient::storeCredentials()
 {
     TEST_START
 
-    if(!testAddingNewCredentials()) {
+    if (!testAddingNewCredentials()) {
         QFAIL("Adding new credentials test failed.");
     }
 
-    if(!testUpdatingCredentials()) {
+    if (!testUpdatingCredentials()) {
         END_IDENTITY_TEST_IF_UNTRUSTED;
         QFAIL("Updating existing credentials test failed.");
     }
@@ -319,17 +317,16 @@ void SsoTestClient::remove()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
 
-    connect(
-            identity,
+    connect(identity,
             SIGNAL(removed()),
             &m_identityResult,
             SLOT(removed()));
@@ -343,13 +340,13 @@ void SsoTestClient::remove()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
         connect(
             identity,
@@ -360,11 +357,10 @@ void SsoTestClient::remove()
         qDebug() << "Going to query info";
         identity->queryInfo();
 
-        QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
+        QVERIFY(m_identityResult.m_responseReceived ==
+                TestIdentityResult::ErrorResp);
         QVERIFY(m_identityResult.m_error == Error::IdentityNotFound);
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -419,11 +415,11 @@ void SsoTestClient::removeStoreRemove()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
@@ -449,8 +445,7 @@ void SsoTestClient::removeStoreRemove()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
         m_identityResult.reset();
 
@@ -473,16 +468,14 @@ void SsoTestClient::removeStoreRemove()
         QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
         loop.exec();
 
-        if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-        {
+        if (m_identityResult.m_responseReceived ==
+            TestIdentityResult::NormalResp) {
             m_storedIdentityInfo = info;
             m_storedIdentityId = identity->id();
             qDebug() << "Identity ID = " << m_storedIdentityId;
-        }
-        else
-        {
-            qDebug() << "Error reply: " << m_identityResult.m_errMsg
-                     << ".\nError code: " << errCodeAsStr(m_identityResult.m_error);
+        } else {
+            qDebug() << "Error reply: " << m_identityResult.m_errMsg << "."
+                "\nError code: " << errCodeAsStr(m_identityResult.m_error);
             QFAIL("Failed to store the credentials");
         }
 
@@ -500,8 +493,8 @@ void SsoTestClient::removeStoreRemove()
         loop.exec();
 
         QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
-        if(!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo, updateInfo))
-        {
+        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
+                                                      updateInfo)) {
             QFAIL("Compared identity infos are not the same.");
         }
 
@@ -525,9 +518,7 @@ void SsoTestClient::removeStoreRemove()
 
         QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
         QVERIFY(m_identityResult.m_error == Error::IdentityNotFound);
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -556,11 +547,11 @@ void SsoTestClient::multipleRemove()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
@@ -585,8 +576,7 @@ void SsoTestClient::multipleRemove()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
 
         qDebug() << "Removing again";
@@ -598,9 +588,7 @@ void SsoTestClient::multipleRemove()
 
         QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::ErrorResp);
         QVERIFY(m_identityResult.m_error == Error::IdentityNotFound);
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -617,11 +605,11 @@ void SsoTestClient::storeCredentialsWithoutAuthMethodsTest()
 {
     TEST_START
 
-    if(!testAddingNewCredentials(false)) {
+    if (!testAddingNewCredentials(false)) {
         QFAIL("Adding new credentials test failed.");
     }
 
-    if(!testUpdatingCredentials()) {
+    if (!testUpdatingCredentials()) {
         END_IDENTITY_TEST_IF_UNTRUSTED;
         QFAIL("Updating existing credentials test failed.");
     }
@@ -645,12 +633,12 @@ void SsoTestClient::queryInfo()
     info.setRealms(QStringList() << "test_realm");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
@@ -670,20 +658,18 @@ void SsoTestClient::queryInfo()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_id == m_storedIdentityId);
         QVERIFY(TestIdentityResult::compareIdentityInfos(
                 m_storedIdentityInfo,
                 m_identityResult.m_idInfo, false));
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -710,12 +696,12 @@ void SsoTestClient::addReference()
     info.setRealms(QStringList() << "test_realm");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
     m_identityResult.m_removed = false;
     QEventLoop loop;
@@ -735,17 +721,15 @@ void SsoTestClient::addReference()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -771,12 +755,12 @@ void SsoTestClient::removeReference()
     info.setRealms(QStringList() << "test_realm");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
     m_identityResult.m_removed = false;
     QEventLoop loop;
@@ -803,12 +787,9 @@ void SsoTestClient::removeReference()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_identityResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -835,12 +816,12 @@ void SsoTestClient::verifyUser()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying user.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId);
 
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
@@ -860,12 +841,14 @@ void SsoTestClient::verifyUser()
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
              "A response was not received.");
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    QVERIFY(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp);
+    QVERIFY(m_identityResult.m_responseReceived ==
+            TestIdentityResult::NormalResp);
     TEST_DONE
 }
 
@@ -885,11 +868,11 @@ void SsoTestClient::verifySecret()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying secret.");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId);
-    if(identity == NULL)
+    if (identity == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     QEventLoop loop;
@@ -914,7 +897,7 @@ void SsoTestClient::verifySecret()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
         QVERIFY(m_identityResult.m_secretVerified);
     }
@@ -944,7 +927,7 @@ void SsoTestClient::signOut()
     info.setSecret("TEST_PASSWORD_1");
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
-    if(!storeCredentialsPrivate(info))
+    if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for signing out.");
 
     //create the existing identities
@@ -953,7 +936,7 @@ void SsoTestClient::signOut()
     Identity *identity2 = Identity::existingIdentity(m_storedIdentityId);
     Identity *identity3 = Identity::existingIdentity(m_storedIdentityId);
 
-    if(identity == NULL || identity1 == NULL || identity2 == NULL || identity3 == NULL)
+    if (identity == NULL || identity1 == NULL || identity2 == NULL || identity3 == NULL)
         QFAIL("Could not create existing identity. '0' ID provided?");
 
     connect(
@@ -1018,7 +1001,7 @@ void SsoTestClient::signOut()
     QVERIFY2(identityResult3.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    if((m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
+    if ((m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
        && (identityResult1.m_responseReceived == TestIdentityResult::NormalResp)
        && (identityResult2.m_responseReceived == TestIdentityResult::NormalResp)
        && (identityResult3.m_responseReceived == TestIdentityResult::NormalResp))
@@ -1059,7 +1042,7 @@ void SsoTestClient::initAuthServiceTest()
     m_numberOfInsertedCredentials = 5;
     m_expectedNumberOfMethods = (QDir(pluginsDir())).entryList(
             QStringList() << "*.so", QDir::Files).count();
-    if(!m_expectedMechanisms.length())
+    if (!m_expectedMechanisms.length())
         m_expectedMechanisms << "mech1" << "mech2" << "mech3" << "BLOB";
 
     m_methodToQueryMechanisms = "ssotest";
@@ -1085,7 +1068,7 @@ void SsoTestClient::initAuthServiceTest()
         retries++;
     } while (retries < 5);
 
-    if(m_serviceResult.m_responseReceived != TestAuthServiceResult::NormalResp) {
+    if (m_serviceResult.m_responseReceived != TestAuthServiceResult::NormalResp) {
         /* DB clearing can fail - if the secrets DB is not available.
          * Do not fail in general if the clearing of the DB reported an error;
          * just print the debug output. */
@@ -1119,7 +1102,7 @@ void SsoTestClient::initAuthServiceTest()
         QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
         loop.exec();
 
-        if(m_identityResult.m_responseReceived != TestIdentityResult::NormalResp) {
+        if (m_identityResult.m_responseReceived != TestIdentityResult::NormalResp) {
 
             QString codeStr = errCodeAsStr(m_identityResult.m_error);
             qDebug() << "Error reply: " << m_identityResult.m_errMsg
@@ -1160,7 +1143,7 @@ void SsoTestClient::queryMethods()
     QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
+    if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         //this should compare the actual lists not only their count
         QCOMPARE(m_serviceResult.m_methods.count(), m_expectedNumberOfMethods);
@@ -1204,7 +1187,7 @@ void SsoTestClient::queryMechanisms()
     QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
+    if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         qDebug() << m_serviceResult.m_queriedMechsMethod;
         qDebug() << m_methodToQueryMechanisms;
@@ -1491,7 +1474,7 @@ void SsoTestClient::clear()
 
     END_SERVICE_TEST_IF_UNTRUSTED;
 
-    if(m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp) {
+    if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp) {
         connect(
                 &service,
                 SIGNAL(identities(const QList<SignOn::IdentityInfo> &)),
@@ -1543,23 +1526,21 @@ bool SsoTestClient::testAddingNewCredentials(bool addMethods)
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
     loop.exec();
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::InexistentResp)
-    {
+    if (m_identityResult.m_responseReceived ==
+        TestIdentityResult::InexistentResp) {
         qDebug() << "A response was not received.";
         return false;
     }
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
-        if(m_identityResult.m_id != identity->id())
-        {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
+        if (m_identityResult.m_id != identity->id()) {
             qDebug() << "Queried identity id does not match with stored data.";
             return false;
         }
 
-        Identity *existingIdentity = Identity::existingIdentity(m_identityResult.m_id, this);
-        if(existingIdentity == NULL)
-        {
+        Identity *existingIdentity =
+            Identity::existingIdentity(m_identityResult.m_id, this);
+        if (existingIdentity == NULL) {
             qDebug() << "Could not create existing identity. '0' ID provided?";
             return false;
         }
@@ -1572,14 +1553,12 @@ bool SsoTestClient::testAddingNewCredentials(bool addMethods)
         loop.exec();
         delete existingIdentity;
 
-        if(!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo, info))
-        {
+        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
+                                                      info)) {
             qDebug() << "Compared identity infos are not the same.";
             return false;
         }
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_serviceResult.m_errMsg
                  << ".\nError code: " << codeStr;
@@ -1593,8 +1572,7 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     // Test update credentials functionality
 
     Identity *existingIdentity = Identity::existingIdentity(m_identityResult.m_id, this);
-    if(existingIdentity == NULL)
-    {
+    if (existingIdentity == NULL) {
         qDebug() << "Could not create existing identity. '0' ID provided?";
         return false;
     }
@@ -1627,14 +1605,13 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     } while(0);
 
     qDebug();
-    if(m_identityResult.m_responseReceived == TestIdentityResult::InexistentResp)
-    {
+    if (m_identityResult.m_responseReceived ==
+        TestIdentityResult::InexistentResp) {
         qDebug() << "A response was not received.";
         return false;
     }
 
-    if(m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
-    {
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QEventLoop loop;
         connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
         connect(existingIdentity, SIGNAL(info(const SignOn::IdentityInfo &)),
@@ -1645,14 +1622,12 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
         loop.exec();
 
         qDebug() << "ID:" << existingIdentity->id();
-        if(!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo, updateInfo))
-        {
+        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
+                                                      updateInfo)) {
             qDebug() << "Compared identity infos are not the same.";
             return false;
         }
-    }
-    else
-    {
+    } else {
         QString codeStr = errCodeAsStr(m_identityResult.m_error);
         qDebug() << "Error reply: " << m_serviceResult.m_errMsg
                  << ".\nError code: " << codeStr;

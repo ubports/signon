@@ -28,16 +28,17 @@ using namespace SignonDaemonNS;
 
 SignonAuthSession::SignonAuthSession(quint32 id,
                                      const QString &method,
-                                     pid_t ownerPid) :
-                                     m_id(id),
-                                     m_method(method),
-                                     m_registered(false),
-                                     m_ownerPid(ownerPid)
+                                     pid_t ownerPid):
+    m_id(id),
+    m_method(method),
+    m_registered(false),
+    m_ownerPid(ownerPid)
 {
     TRACE();
 
     static quint32 incr = 0;
-    QString objectName = SIGNOND_DAEMON_OBJECTPATH + QLatin1String("/AuthSession_") + QString::number(incr++, 16);
+    QString objectName = SIGNOND_DAEMON_OBJECTPATH +
+        QLatin1String("/AuthSession_") + QString::number(incr++, 16);
     TRACE() << objectName;
 
     setObjectName(objectName);
@@ -74,7 +75,8 @@ QString SignonAuthSession::getAuthSessionObjectPath(const quint32 id,
 
     (void)new SignonAuthSessionAdaptor(sas);
     QString objectName = sas->objectName();
-    if (!connection.registerObject(sas->objectName(), sas, QDBusConnection::ExportAdaptors)) {
+    if (!connection.registerObject(sas->objectName(), sas,
+                                   QDBusConnection::ExportAdaptors)) {
         TRACE() << "Object cannot be registered: " << objectName;
         delete sas;
         return QString();
@@ -118,7 +120,8 @@ pid_t SignonAuthSession::ownerPid() const
     return m_ownerPid;
 }
 
-QStringList SignonAuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
+QStringList
+SignonAuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
 {
     return parent()->queryAvailableMechanisms(wantedMechanisms);
 }
@@ -162,7 +165,9 @@ void SignonAuthSession::objectUnref()
     deleteLater();
 }
 
-void SignonAuthSession::stateChangedSlot(const QString &sessionKey, int state, const QString &message)
+void SignonAuthSession::stateChangedSlot(const QString &sessionKey,
+                                         int state,
+                                         const QString &message)
 {
     TRACE();
 

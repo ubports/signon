@@ -80,6 +80,5 @@ public Q_SLOTS:
 Q_SIGNALS:
     void testCompleted();
 };
-//}
 
 #endif // TESTSIDENTITYRESULT_H

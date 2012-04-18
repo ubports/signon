@@ -37,248 +37,247 @@
 
 namespace SignOn {
 
-    /* ----------------------- IdentityRegExp ----------------------- */
+/* ----------------------- IdentityRegExp ----------------------- */
 
-    AuthService::IdentityRegExp::IdentityRegExp(const QString &pattern)
-            : m_pattern(pattern)
-    {}
+AuthService::IdentityRegExp::IdentityRegExp(const QString &pattern):
+    m_pattern(pattern)
+{
+}
 
-    AuthService::IdentityRegExp::IdentityRegExp(const IdentityRegExp &src)
-            : m_pattern(src.pattern())
-    {}
+AuthService::IdentityRegExp::IdentityRegExp(const IdentityRegExp &src):
+    m_pattern(src.pattern())
+{
+}
 
-    bool AuthService::IdentityRegExp::isValid() const
-    {
-        return false;
+bool AuthService::IdentityRegExp::isValid() const
+{
+    return false;
+}
+
+QString AuthService::IdentityRegExp::pattern() const
+{
+    return m_pattern;
+}
+
+/* ----------------------- AuthServiceImpl ----------------------- */
+
+AuthServiceImpl::AuthServiceImpl(AuthService *parent):
+    QObject(parent),
+    m_parent(parent)
+{
+    TRACE();
+    m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
+                                        SIGNOND_DAEMON_OBJECTPATH,
+                                        SIGNOND_DAEMON_INTERFACE_C,
+                                        SIGNOND_BUS,
+                                        this);
+    if (!m_DBusInterface->isValid())
+        BLAME() << "Signon Daemon not started. Start on demand "
+                   "could delay the first call's result.";
+
+    qDBusRegisterMetaType<MapList>();
+}
+
+AuthServiceImpl::~AuthServiceImpl()
+{
+}
+
+void AuthServiceImpl::queryMethods()
+{
+    bool result = false;
+
+    int timeout = -1;
+    if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
+        timeout = SIGNOND_MAX_TIMEOUT;
+
+    result = sendRequest(QString::fromLatin1(__func__),
+                         SLOT(queryMethodsReply(const QStringList&)),
+                         QList<QVariant>(),
+                         timeout);
+    if (!result) {
+        emit m_parent->error(Error(Error::InternalCommunication,
+                                   SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
     }
+}
 
-    QString AuthService::IdentityRegExp::pattern() const
-    {
-        return m_pattern;
+void AuthServiceImpl::queryMechanisms(const QString &method)
+{
+    bool result = false;
+
+    int timeout = -1;
+    if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
+        timeout = SIGNOND_MAX_TIMEOUT;
+
+    result = sendRequest(QString::fromLatin1(__func__),
+                         SLOT(queryMechanismsReply(const QStringList&)),
+                         QList<QVariant>() << method,
+                         timeout);
+    if (!result) {
+        emit m_parent->error(Error(Error::InternalCommunication,
+                                   SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+    } else {
+        m_methodsForWhichMechsWereQueried.enqueue(method);
     }
+}
 
-    /* ----------------------- AuthServiceImpl ----------------------- */
+void AuthServiceImpl::queryIdentities(const AuthService::IdentityFilter &filter)
+{
+    if (!filter.isEmpty())
+        TRACE() << "Querying identities with filter not implemented.";
 
-    AuthServiceImpl::AuthServiceImpl(AuthService *parent):
-        QObject(parent),
-        m_parent(parent)
-    {
-        TRACE();
-        m_DBusInterface = new DBusInterface(SIGNOND_SERVICE,
-                                            SIGNOND_DAEMON_OBJECTPATH,
-                                            SIGNOND_DAEMON_INTERFACE_C,
-                                            SIGNOND_BUS,
-                                            this);
-        if (!m_DBusInterface->isValid())
-            BLAME() << "Signon Daemon not started. Start on demand "
-                       "could delay the first call's result.";
+    QList<QVariant> args;
+    QMap<QString, QVariant> filterMap;
+    if (!filter.empty()) {
+        QMapIterator<AuthService::IdentityFilterCriteria,
+                     AuthService::IdentityRegExp> it(filter);
 
-        qDBusRegisterMetaType<MapList>();
-    }
+        while (it.hasNext()) {
+            it.next();
 
-    AuthServiceImpl::~AuthServiceImpl()
-    {
-    }
+            if (!it.value().isValid())
+                continue;
 
-    void AuthServiceImpl::queryMethods()
-    {
-        bool result = false;
-
-        int timeout = -1;
-        if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            timeout = SIGNOND_MAX_TIMEOUT;
-
-        result = sendRequest(QString::fromLatin1(__func__),
-                             SLOT(queryMethodsReply(const QStringList&)),
-                             QList<QVariant>(),
-                             timeout);
-        if (!result) {
-            emit m_parent->error(
-                    Error(Error::InternalCommunication,
-                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
-        }
-    }
-
-    void AuthServiceImpl::queryMechanisms(const QString &method)
-    {
-        bool result = false;
-
-        int timeout = -1;
-        if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            timeout = SIGNOND_MAX_TIMEOUT;
-
-        result = sendRequest(QString::fromLatin1(__func__),
-                             SLOT(queryMechanismsReply(const QStringList&)),
-                             QList<QVariant>() << method,
-                             timeout);
-        if (!result) {
-            emit m_parent->error(
-                    Error(Error::InternalCommunication,
-                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
-        } else {
-            m_methodsForWhichMechsWereQueried.enqueue(method);
-        }
-    }
-
-    void AuthServiceImpl::queryIdentities(const AuthService::IdentityFilter &filter)
-    {
-        if (!filter.isEmpty())
-            TRACE() << "Querying identities with filter not implemented.";
-
-        QList<QVariant> args;
-        QMap<QString, QVariant> filterMap;
-        if (!filter.empty()) {
-            QMapIterator<AuthService::IdentityFilterCriteria,
-                         AuthService::IdentityRegExp> it(filter);
-
-            while (it.hasNext()) {
-                it.next();
-
-                if (!it.value().isValid())
-                    continue;
-
-                const char *criteriaStr = 0;
-                switch ((AuthService::IdentityFilterCriteria)it.key()) {
-                    case AuthService::AuthMethod: criteriaStr = "AuthMethod"; break;
-                    case AuthService::Username: criteriaStr = "Username"; break;
-                    case AuthService::Realm: criteriaStr = "Realm"; break;
-                    case AuthService::Caption: criteriaStr = "Caption"; break;
-                    default: break;
-                }
-                filterMap.insert(QLatin1String(criteriaStr),
-                                 QVariant(it.value().pattern()));
+            const char *criteriaStr = 0;
+            switch ((AuthService::IdentityFilterCriteria)it.key()) {
+            case AuthService::AuthMethod: criteriaStr = "AuthMethod"; break;
+            case AuthService::Username: criteriaStr = "Username"; break;
+            case AuthService::Realm: criteriaStr = "Realm"; break;
+            case AuthService::Caption: criteriaStr = "Caption"; break;
+            default: break;
             }
-
-        }
-        // todo - check if DBUS supports default args, if yes move this line in the block above
-        args << filterMap;
-
-        bool result = false;
-        int timeout = -1;
-        if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            timeout = SIGNOND_MAX_TIMEOUT;
-
-        result = sendRequest(QString::fromLatin1(__func__),
-                             SLOT(queryIdentitiesReply(const QDBusMessage &)),
-                             args,
-                             timeout);
-        if (!result) {
-            emit m_parent->error(
-                    Error(Error::InternalCommunication,
-                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
-        }
-    }
-
-    void AuthServiceImpl::clear()
-    {
-        bool result = false;
-        int timeout = -1;
-        if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
-            timeout = SIGNOND_MAX_TIMEOUT;
-
-        result = sendRequest(QLatin1String(__func__),
-                             SLOT(clearReply()),
-                             QList<QVariant>(),
-                             timeout);
-        if (!result) {
-            emit m_parent->error(
-                    Error(Error::InternalCommunication,
-                          SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
-        }
-    }
-
-
-
-    bool AuthServiceImpl::sendRequest(const QString &operation,
-                                      const char *replySlot,
-                                      const QList<QVariant> &args,
-                                      int timeout)
-    {
-        QDBusMessage msg = QDBusMessage::createMethodCall(m_DBusInterface->service(),
-                                                          m_DBusInterface->path(),
-                                                          m_DBusInterface->interface(),
-                                                          operation);
-        if (!args.isEmpty())
-            msg.setArguments(args);
-        msg.setDelayedReply(true);
-
-        return m_DBusInterface->connection().callWithCallback(msg,
-                                                              this,
-                                                              replySlot,
-                                                              SLOT(errorReply(const QDBusError&)),
-                                                              timeout);
-    }
-
-    void AuthServiceImpl::queryMethodsReply(const QStringList &methods)
-    {
-        emit m_parent->methodsAvailable(methods);
-    }
-
-    void AuthServiceImpl::queryMechanismsReply(const QStringList &mechs)
-    {
-        TRACE() << mechs;
-        QString method;
-        if (!m_methodsForWhichMechsWereQueried.empty())
-            method = m_methodsForWhichMechsWereQueried.dequeue();
-
-        emit m_parent->mechanismsAvailable(method, mechs);
-    }
-
-    void AuthServiceImpl::queryIdentitiesReply(const QDBusMessage &msg)
-    {
-        QList<QVariant> args = msg.arguments();
-        if (args.isEmpty()) {
-            BLAME() << "Invalid reply: no arguments";
-            return;
+            filterMap.insert(QLatin1String(criteriaStr),
+                             QVariant(it.value().pattern()));
         }
 
-        QDBusArgument arg = args[0].value<QDBusArgument>();
-        MapList identitiesData = qdbus_cast<MapList>(arg);
+    }
+    // TODO - check if DBUS supports default args, if yes move this line in the
+    // block above
+    args << filterMap;
 
-        QList<IdentityInfo> infoList;
-        foreach (const QVariantMap &map, identitiesData) {
-            IdentityInfo info;
-            info.impl->updateFromMap(map);
-            infoList.append(info);
-        }
+    bool result = false;
+    int timeout = -1;
+    if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
+        timeout = SIGNOND_MAX_TIMEOUT;
 
-        emit m_parent->identities(infoList);
+    result = sendRequest(QString::fromLatin1(__func__),
+                         SLOT(queryIdentitiesReply(const QDBusMessage &)),
+                         args,
+                         timeout);
+    if (!result) {
+        emit m_parent->error(Error(Error::InternalCommunication,
+                                   SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+    }
+}
+
+void AuthServiceImpl::clear()
+{
+    bool result = false;
+    int timeout = -1;
+    if ((!m_DBusInterface->isValid()) && m_DBusInterface->lastError().isValid())
+        timeout = SIGNOND_MAX_TIMEOUT;
+
+    result = sendRequest(QLatin1String(__func__),
+                         SLOT(clearReply()),
+                         QList<QVariant>(),
+                         timeout);
+    if (!result) {
+        emit m_parent->error(Error(Error::InternalCommunication,
+                                   SIGNOND_INTERNAL_COMMUNICATION_ERR_STR));
+    }
+}
+
+
+
+bool AuthServiceImpl::sendRequest(const QString &operation,
+                                  const char *replySlot,
+                                  const QList<QVariant> &args,
+                                  int timeout)
+{
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall(m_DBusInterface->service(),
+                                       m_DBusInterface->path(),
+                                       m_DBusInterface->interface(),
+                                       operation);
+    if (!args.isEmpty())
+        msg.setArguments(args);
+    msg.setDelayedReply(true);
+
+    return m_DBusInterface->connection().
+        callWithCallback(msg, this, replySlot,
+                         SLOT(errorReply(const QDBusError&)),
+                         timeout);
+}
+
+void AuthServiceImpl::queryMethodsReply(const QStringList &methods)
+{
+    emit m_parent->methodsAvailable(methods);
+}
+
+void AuthServiceImpl::queryMechanismsReply(const QStringList &mechs)
+{
+    TRACE() << mechs;
+    QString method;
+    if (!m_methodsForWhichMechsWereQueried.empty())
+        method = m_methodsForWhichMechsWereQueried.dequeue();
+
+    emit m_parent->mechanismsAvailable(method, mechs);
+}
+
+void AuthServiceImpl::queryIdentitiesReply(const QDBusMessage &msg)
+{
+    QList<QVariant> args = msg.arguments();
+    if (args.isEmpty()) {
+        BLAME() << "Invalid reply: no arguments";
+        return;
     }
 
-    void AuthServiceImpl::clearReply()
-    {
-        emit m_parent->cleared();
+    QDBusArgument arg = args[0].value<QDBusArgument>();
+    MapList identitiesData = qdbus_cast<MapList>(arg);
+
+    QList<IdentityInfo> infoList;
+    foreach (const QVariantMap &map, identitiesData) {
+        IdentityInfo info;
+        info.impl->updateFromMap(map);
+        infoList.append(info);
     }
 
-    void AuthServiceImpl::errorReply(const QDBusError &err)
-    {
-        TRACE();
+    emit m_parent->identities(infoList);
+}
 
-        /* Signon specific errors */
-        if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
-            emit m_parent->error(Error(Error::Unknown, err.message()));
-            return;
-        } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
-            emit m_parent->error(Error(Error::InternalServer, err.message()));
-            return;
-        } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {
-            emit m_parent->error(Error(Error::MethodNotKnown, err.message()));
-            return;
-        } else if (err.name() == SIGNOND_INVALID_QUERY_ERR_NAME) {
-            emit m_parent->error(Error(Error::InvalidQuery, err.message()));
-            return;
-        } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
-            emit m_parent->error(Error(Error::PermissionDenied, err.message()));
-            return;
-        }
+void AuthServiceImpl::clearReply()
+{
+    emit m_parent->cleared();
+}
 
-        /* Qt DBUS specific errors */
-        if (err.type() != QDBusError::NoError) {
-            emit m_parent->error(Error(Error::InternalCommunication, err.message()));
-            return;
-        }
+void AuthServiceImpl::errorReply(const QDBusError &err)
+{
+    TRACE();
 
+    /* Signon specific errors */
+    if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
         emit m_parent->error(Error(Error::Unknown, err.message()));
+        return;
+    } else if (err.name() == SIGNOND_INTERNAL_SERVER_ERR_NAME) {
+        emit m_parent->error(Error(Error::InternalServer, err.message()));
+        return;
+    } else if (err.name() == SIGNOND_METHOD_NOT_KNOWN_ERR_NAME) {
+        emit m_parent->error(Error(Error::MethodNotKnown, err.message()));
+        return;
+    } else if (err.name() == SIGNOND_INVALID_QUERY_ERR_NAME) {
+        emit m_parent->error(Error(Error::InvalidQuery, err.message()));
+        return;
+    } else if (err.name() == SIGNOND_PERMISSION_DENIED_ERR_NAME) {
+        emit m_parent->error(Error(Error::PermissionDenied, err.message()));
+        return;
     }
+
+    /* Qt DBUS specific errors */
+    if (err.type() != QDBusError::NoError) {
+        emit m_parent->error(Error(Error::InternalCommunication, err.message()));
+        return;
+    }
+
+    emit m_parent->error(Error(Error::Unknown, err.message()));
+}
 
 } //namespace SignOn

@@ -34,7 +34,7 @@ namespace ExamplePluginNS {
  * @class ExamplePlugin
  * Example plugin for Sign-On.
  */
-class ExamplePlugin : public AuthPluginInterface
+class ExamplePlugin: public AuthPluginInterface
 {
     Q_OBJECT
     Q_INTERFACES(AuthPluginInterface)
@@ -47,7 +47,8 @@ public Q_SLOTS:
     QString type() const;
     QStringList mechanisms() const;
     void cancel();
-    void process(const SignOn::SessionData &inData, const QString &mechanism = 0);
+    void process(const SignOn::SessionData &inData,
+                 const QString &mechanism = 0);
     void userActionFinished(const SignOn::UiSessionData &data);
 //    void refresh(const SignOn::UiSessionData &data);
 private:

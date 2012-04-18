@@ -38,12 +38,16 @@ enum QueryError {
     QUERY_ERROR_NONE = 0,        /**< No errors. */
     QUERY_ERROR_GENERAL,         /**< Generic error during interaction. */
     QUERY_ERROR_NO_SIGNONUI,     /**< Cannot send request to signon-ui. */
-    QUERY_ERROR_BAD_PARAMETERS,  /**< Signon-Ui cannot create dialog based on the given UiSessionData. */
-    QUERY_ERROR_CANCELED,        /**< User canceled action. Plugin should not retry automatically after this. */
-    QUERY_ERROR_NOT_AVAILABLE,   /**< Requested ui is not available. For example browser cannot be started. */
+    QUERY_ERROR_BAD_PARAMETERS,  /**< Signon-Ui cannot create dialog based on
+                                   the given UiSessionData. */
+    QUERY_ERROR_CANCELED,        /**< User canceled action. Plugin should not
+                                   retry automatically after this. */
+    QUERY_ERROR_NOT_AVAILABLE,   /**< Requested ui is not available. For
+                                   example browser cannot be started. */
     QUERY_ERROR_BAD_URL,         /**< Given url was not valid. */
     QUERY_ERROR_BAD_CAPTCHA,     /**< Given captcha image was not valid. */
-    QUERY_ERROR_BAD_CAPTCHA_URL, /**< Given url for capctha loading was not valid. */
+    QUERY_ERROR_BAD_CAPTCHA_URL, /**< Given url for capctha loading was not
+                                   valid. */
     QUERY_ERROR_REFRESH_FAILED,  /**< Refresh failed. */
     QUERY_ERROR_FORBIDDEN,       /**< Showing ui forbidden by ui policy. */
     QUERY_ERROR_FORGOT_PASSWORD  /**< User pressed forgot password. */
@@ -73,8 +77,8 @@ public:
     /*!
      * Constructor. Creates a UiSessionData with data 'data'.
      * @param data The data to be contained by the UiSessionData
-     * @attention internal use only recommended. As a SSO client application developer
-     *            use setters/gettters for specific SessionData properties.
+     * @attention internal use only recommended. As a SSO client application
+     * developer use setters/gettters for specific SessionData properties.
      */
     UiSessionData(const QVariantMap &data = QVariantMap()) { m_data = data; }
 
@@ -160,29 +164,35 @@ public:
     /*!
      * Declares the property UrlResponse setter and getter.
      * Response from signon-ui for OpenUrl request.
-     * After completion UrlResponse contains redirect target url, if there was redirection.
+     * After completion UrlResponse contains redirect target url, if there was
+     * redirection.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, UrlResponse)
 
     /*!
      * Declares the property CaptchaUrl setter and getter.
      * CaptchaUrl contains url to the captcha image to be verified by user.
-     * CaptchaUrl is used in signon-ui when plugin requires the captcha verification from user.
-     * If this is empty, captcha query is not shown, unless CaptchaImage contain valid image.
+     * CaptchaUrl is used in signon-ui when plugin requires the captcha
+     * verification from user.
+     * If this is empty, captcha query is not shown, unless CaptchaImage
+     * contain valid image.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QString, CaptchaUrl)
 
     /*!
      * Declares the property CaptchaImage setter and getter.
      * CaptchaImage contains the captcha image to be verified by user.
-     * CaptchaImage is passed to signon-ui when plugin requires the captcha verification from user.
-     * If this is empty, captcha query is not shown, unless CaptchaUrl point to valid image.
+     * CaptchaImage is passed to signon-ui when plugin requires the captcha
+     * verification from user.
+     * If this is empty, captcha query is not shown, unless CaptchaUrl point to
+     * valid image.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(QByteArray, CaptchaImage)
 
     /*!
      * Declares the property CaptchaResponse setter and getter
-     * CaptchaResponse is passed to plugin after signon-ui has processed the captcha query.
+     * CaptchaResponse is passed to plugin after signon-ui has processed the
+     * captcha query.
      * It contains user input for captcha query.
      * @see CaptchaUrl
      * @see CaptchaImage.

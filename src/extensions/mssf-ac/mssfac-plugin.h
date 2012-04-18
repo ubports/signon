@@ -36,7 +36,8 @@ public:
     MSSFAccessControlPlugin();
 
     // reimplemented methods
-    SignOn::AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
+    SignOn::AbstractAccessControlManager *accessControlManager(
+                                                   QObject *parent = 0) const;
 };
 
 #endif // MSSFAC_PLUGIN_H

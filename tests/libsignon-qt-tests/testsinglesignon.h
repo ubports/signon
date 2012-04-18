@@ -25,7 +25,6 @@
 
 #include <QObject>
 
-
 class QProcess;
 
 class TestSingleSignon: public QObject
@@ -35,19 +34,18 @@ class TestSingleSignon: public QObject
 private Q_SLOTS:
 
     /*
-    * Start the signon daemon
-    * */
+     * Start the signon daemon
+     */
     void initTestCase();
 
     /*
-    * End the signon daemon
-    * */
+     * End the signon daemon
+     */
     void cleanupTestCase();
 
     /*
-    * Test cases
-    * */
-
+     * Test cases
+     */
     void singleTestClient();
     void multipleClientsAtOnceTest();
 

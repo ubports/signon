@@ -26,109 +26,111 @@
 
 namespace SignOn {
 
-    Identity::Identity(const quint32 id, QObject *parent) : QObject(parent)
-    {
-        qRegisterMetaType<Error>("SignOn::Error");
-        qRegisterMetaType<Error>("Error");
+Identity::Identity(const quint32 id, QObject *parent):
+    QObject(parent)
+{
+    qRegisterMetaType<Error>("SignOn::Error");
+    qRegisterMetaType<Error>("Error");
 
-        if (qMetaTypeId<Error>() < QMetaType::User)
-            BLAME() << "Identity::Identity() - SignOn::Error meta type not registered.";
+    if (qMetaTypeId<Error>() < QMetaType::User)
+        BLAME() << "Identity::Identity() - "
+            "SignOn::Error meta type not registered.";
 
-        impl = new IdentityImpl(this, id);
-    }
+    impl = new IdentityImpl(this, id);
+}
 
-    Identity *Identity::newIdentity(const IdentityInfo &info, QObject *parent)
-    {
-        Identity *identity = new Identity(SSO_NEW_IDENTITY, parent);
-        identity->impl->copyInfo(info);
-        return identity;
-    }
+Identity *Identity::newIdentity(const IdentityInfo &info, QObject *parent)
+{
+    Identity *identity = new Identity(SSO_NEW_IDENTITY, parent);
+    identity->impl->copyInfo(info);
+    return identity;
+}
 
-    Identity *Identity::existingIdentity(const quint32 id, QObject *parent)
-    {
-        if (id == 0)
-            return NULL;
-        return new Identity(id, parent);
-    }
+Identity *Identity::existingIdentity(const quint32 id, QObject *parent)
+{
+    if (id == 0)
+        return NULL;
+    return new Identity(id, parent);
+}
 
-    Identity::~Identity()
-    {
-    }
+Identity::~Identity()
+{
+}
 
-    quint32 Identity::id() const
-    {
-        return impl->id();
-    }
+quint32 Identity::id() const
+{
+    return impl->id();
+}
 
-    void Identity::queryAvailableMethods()
-    {
-        impl->queryAvailableMethods();
-    }
+void Identity::queryAvailableMethods()
+{
+    impl->queryAvailableMethods();
+}
 
-    AuthSessionP Identity::createSession(const QString &methodName)
-    {
-        if (methodName.isEmpty())
-            return NULL;
+AuthSessionP Identity::createSession(const QString &methodName)
+{
+    if (methodName.isEmpty())
+        return NULL;
 
-        return AuthSessionP(impl->createSession(methodName, this));
-    }
+    return AuthSessionP(impl->createSession(methodName, this));
+}
 
-    void Identity::destroySession(const AuthSessionP &session)
-    {
-        if (session.isNull())
-            return;
+void Identity::destroySession(const AuthSessionP &session)
+{
+    if (session.isNull())
+        return;
 
-        impl->destroySession(session.data());
-    }
+    impl->destroySession(session.data());
+}
 
-    void Identity::requestCredentialsUpdate(const QString &message)
-    {
-        impl->requestCredentialsUpdate(message);
-    }
+void Identity::requestCredentialsUpdate(const QString &message)
+{
+    impl->requestCredentialsUpdate(message);
+}
 
-    void Identity::storeCredentials(const IdentityInfo &info)
-    {
-        impl->storeCredentials(info);
-    }
+void Identity::storeCredentials(const IdentityInfo &info)
+{
+    impl->storeCredentials(info);
+}
 
-    void Identity::remove()
-    {
-        impl->remove();
-    }
+void Identity::remove()
+{
+    impl->remove();
+}
 
-    void Identity::addReference(const QString &reference)
-    {
-        impl->addReference(reference);
-    }
+void Identity::addReference(const QString &reference)
+{
+    impl->addReference(reference);
+}
 
-    void Identity::removeReference(const QString &reference)
-    {
-        impl->removeReference(reference);
-    }
+void Identity::removeReference(const QString &reference)
+{
+    impl->removeReference(reference);
+}
 
-    void Identity::queryInfo()
-    {
-        impl->queryInfo();
-    }
+void Identity::queryInfo()
+{
+    impl->queryInfo();
+}
 
-    void Identity::verifyUser(const QString &message)
-    {
-        impl->verifyUser(message);
-    }
+void Identity::verifyUser(const QString &message)
+{
+    impl->verifyUser(message);
+}
 
-    void Identity::verifyUser(const QVariantMap &params)
-    {
-        impl->verifyUser(params);
-    }
+void Identity::verifyUser(const QVariantMap &params)
+{
+    impl->verifyUser(params);
+}
 
-    void Identity::verifySecret(const QString &secret)
-    {
-        impl->verifySecret(secret);
-    }
+void Identity::verifySecret(const QString &secret)
+{
+    impl->verifySecret(secret);
+}
 
-    void Identity::signOut()
-    {
-        impl->signOut();
-    }
+void Identity::signOut()
+{
+    impl->signOut();
+}
 
 } //namespace SignOn

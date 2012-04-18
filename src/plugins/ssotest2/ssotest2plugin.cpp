@@ -35,205 +35,209 @@ using namespace SignOn;
 
 namespace SsoTest2PluginNS {
 
-    static QMutex mutex;
-    static bool is_canceled = false;
-    static QEventLoop uiLoop;
-    static SignOn::UiSessionData uiData;
+static QMutex mutex;
+static bool is_canceled = false;
+static QEventLoop uiLoop;
+static SignOn::UiSessionData uiData;
 
+SsoTest2Plugin::SsoTest2Plugin(QObject *parent):
+    AuthPluginInterface(parent)
+{
+    TRACE();
 
-    SsoTest2Plugin::SsoTest2Plugin(QObject *parent) : AuthPluginInterface(parent)
-    {
-        TRACE();
+    m_type = QLatin1String("ssotest2");
+    m_mechanisms = QStringList(QLatin1String("mech1"));
+    m_mechanisms += QLatin1String("mech2");
+    m_mechanisms += QLatin1String("mech3");
 
-        m_type = QLatin1String("ssotest2");
-        m_mechanisms = QStringList(QLatin1String("mech1"));
-        m_mechanisms += QLatin1String("mech2");
-        m_mechanisms += QLatin1String("mech3");
+    qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
+}
 
-        qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
+SsoTest2Plugin::~SsoTest2Plugin()
+{
+
+}
+
+void SsoTest2Plugin::cancel()
+{
+    TRACE();
+    QMutexLocker locker(&mutex);
+    is_canceled = true;
+}
+
+/*
+ * dummy plugin is used for testing purposes only
+ * */
+void SsoTest2Plugin::process(const SignOn::SessionData &inData,
+                             const QString &mechanism)
+{
+    if (! mechanisms().contains(mechanism) ) {
+        emit error(Error::MechanismNotAvailable);
+        return;
     }
 
-    SsoTest2Plugin::~SsoTest2Plugin()
-    {
+    QMetaObject::invokeMethod(this,
+                              "execProcess",
+                              Qt::QueuedConnection,
+                              Q_ARG(SignOn::SessionData, inData),
+                              Q_ARG(QString, mechanism));
+}
 
+static QByteArray loadImage(const QString &name, const char *format)
+{
+    //TODO: adopt to something changeable
+    QString imageDir = QLatin1String("/usr/lib/signon/captcha_images/");
+    QByteArray ba;
+
+    TRACE() << (imageDir + name);
+    QImage realImage(imageDir + name, format);
+    QBuffer buffer(&ba);
+    buffer.open(QIODevice::ReadWrite);
+    ba.clear();
+    realImage.save(&buffer, format);
+    return ba;
+}
+
+static QVariantMap nameToParameters(const QString &dialogName)
+{
+    QVariantMap data;
+
+    if (dialogName  == QLatin1String("Browser")) {
+        static int ii = 0;
+        ii++;
+
+        if (ii % 2)
+            data["OpenUrl"] = "www.yahoo.com";
+        else
+            data["OpenUrl"] = "www.google.com";
+
+        data["watchdog"] = QString(SSOUI_KEY_SLOT_ACCEPT);
+
+    } else if (dialogName  == QLatin1String("Login")) {
+        data["UserName"] = "testUsername";
+        data["Secret"] = "testSecret";
+        data["QueryMessageId"] = 0;
+        data["QueryUserName"] = true;
+        data["QueryPassword"] = true;
+        data["watchdog"] = QString(SSOUI_KEY_SLOT_ACCEPT);
+    } else if (dialogName  == QLatin1String("Captcha")) {
+        data["QueryMessageId"] = 0;
+        data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
+        data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
+    } else if (dialogName  == QLatin1String("LoginAndCaptcha")) {
+        data["UserName"] = "testUsername";
+        data["Secret"] = "testSecret";
+        data["QueryMessageId"] = 0;
+        data["QueryUserName"] = true;
+        data["QueryPassword"] = true;
+        data["QueryMessageId"] = 0;
+
+        data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
+        data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
     }
 
-    void SsoTest2Plugin::cancel()
-    {
-        TRACE();
-        QMutexLocker locker(&mutex);
-        is_canceled = true;
-    }
-    /*
-     * dummy plugin is used for testing purposes only
-     * */
-    void SsoTest2Plugin::process(const SignOn::SessionData &inData, const QString &mechanism)
-    {
-        if (! mechanisms().contains(mechanism) ) {
-            emit error(Error::MechanismNotAvailable);
-            return;
-        }
+    return data;
+}
 
-        QMetaObject::invokeMethod(this,
-                                  "execProcess",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(SignOn::SessionData, inData),
-                                  Q_ARG(QString, mechanism));
-    }
+void SsoTest2Plugin::execProcess(const SignOn::SessionData &inData,
+                                 const QString &mechanism)
+{
+    Q_UNUSED(mechanism);
+    int err;
+    SsoTest2Data testData = inData.data<SsoTest2Data>();
+    QStringList chainOfResults;
 
-    static QByteArray loadImage(const QString &name, const char *format)
-    {
-        //TODO: adopt to something changeable
-        QString imageDir = QLatin1String("/usr/lib/signon/captcha_images/");
-        QByteArray ba;
+    for (int i = 0; i < testData.ChainOfStates().length(); i++)
+        if (!is_canceled) {
+            quint32 currState = testData.CurrentState();
+            QString message =
+                QString("message from plugin, state : %1").arg(currState);
+            TRACE() << message;
+            emit statusChanged(PLUGIN_STATE_WAITING, message);
+            usleep(0.1 * 1000000);
 
-        TRACE() << (imageDir + name);
-        QImage realImage(imageDir + name, format);
-        QBuffer buffer(&ba);
-        buffer.open(QIODevice::ReadWrite);
-        ba.clear();
-        realImage.save(&buffer, format);
-        return ba;
-    }
+            QString dialogName = testData.ChainOfStates().at(currState);
 
-    static QVariantMap nameToParameters(const QString &dialogName)
-    {
-        QVariantMap data;
+            QVariantMap parameters = nameToParameters(dialogName);
+            SignOn::UiSessionData data(parameters);
 
-        if (dialogName  == QLatin1String("Browser")) {
-            static int ii = 0;
-            ii++;
+            emit userActionRequired(data);
+            uiLoop.exec();
 
-            if (ii % 2)
-                data["OpenUrl"] = "www.yahoo.com";
-            else
-                data["OpenUrl"] = "www.google.com";
+            int errorCode = data.QueryErrorCode();
 
-            data["watchdog"] = QString(SSOUI_KEY_SLOT_ACCEPT);
-
-        } else if (dialogName  == QLatin1String("Login")) {
-            data["UserName"] = "testUsername";
-            data["Secret"] = "testSecret";
-            data["QueryMessageId"] = 0;
-            data["QueryUserName"] = true;
-            data["QueryPassword"] = true;
-            data["watchdog"] = QString(SSOUI_KEY_SLOT_ACCEPT);
-        } else if (dialogName  == QLatin1String("Captcha")) {
-            data["QueryMessageId"] = 0;
-            data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
-            data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
-        } else if (dialogName  == QLatin1String("LoginAndCaptcha")) {
-            data["UserName"] = "testUsername";
-            data["Secret"] = "testSecret";
-            data["QueryMessageId"] = 0;
-            data["QueryUserName"] = true;
-            data["QueryPassword"] = true;
-            data["QueryMessageId"] = 0;
-
-            data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
-            data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
-        }
-
-        return data;
-    }
-
-    void SsoTest2Plugin::execProcess(const SignOn::SessionData &inData, const QString &mechanism)
-    {
-        Q_UNUSED(mechanism);
-        int err;
-        SsoTest2Data testData = inData.data<SsoTest2Data>();
-        QStringList chainOfResults;
-
-        for (int i = 0; i < testData.ChainOfStates().length(); i++)
-            if (!is_canceled) {
-                quint32 currState = testData.CurrentState();
-                QString message = QString("message from plugin, state : %1").arg(currState);
-                TRACE() << message;
-                emit statusChanged(PLUGIN_STATE_WAITING, message);
-                usleep(0.1 * 1000000);
-
-                QString dialogName = testData.ChainOfStates().at(currState);
-
-                QVariantMap parameters = nameToParameters(dialogName);
-                SignOn::UiSessionData data(parameters);
-
-                emit userActionRequired(data);
-                uiLoop.exec();
-
-                int errorCode = data.QueryErrorCode();
-
-                if ( dialogName == QLatin1String("Browser") ) {
-                    if ( errorCode == SignOn::QUERY_ERROR_NONE ||
-                        errorCode == SignOn::QUERY_ERROR_BAD_URL )
-                        chainOfResults.append(QLatin1String("OK"));
-                    else
-                        chainOfResults.append(QString("FAIL"));
-                } else if ( dialogName == QLatin1String("Login") ) {
-                    if (errorCode == SignOn::QUERY_ERROR_NONE)
-                        chainOfResults.append(QLatin1String("OK"));
-                    else
-                        chainOfResults.append(QString("FAIL"));
-                } else if ( dialogName == QLatin1String("Captcha") ||
-                          dialogName == QLatin1String("LoginAndCaptcha") ) {
-                    if (errorCode == SignOn::QUERY_ERROR_CANCELED)
-                        chainOfResults.append(QLatin1String("OK"));
-                    else
-                        chainOfResults.append(QLatin1String("FAIL"));
-                }
-
-                testData.setCurrentState(currState+1);
+            if ( dialogName == QLatin1String("Browser") ) {
+                if ( errorCode == SignOn::QUERY_ERROR_NONE ||
+                    errorCode == SignOn::QUERY_ERROR_BAD_URL )
+                    chainOfResults.append(QLatin1String("OK"));
+                else
+                    chainOfResults.append(QString("FAIL"));
+            } else if ( dialogName == QLatin1String("Login") ) {
+                if (errorCode == SignOn::QUERY_ERROR_NONE)
+                    chainOfResults.append(QLatin1String("OK"));
+                else
+                    chainOfResults.append(QString("FAIL"));
+            } else if ( dialogName == QLatin1String("Captcha") ||
+                      dialogName == QLatin1String("LoginAndCaptcha") ) {
+                if (errorCode == SignOn::QUERY_ERROR_CANCELED)
+                    chainOfResults.append(QLatin1String("OK"));
+                else
+                    chainOfResults.append(QLatin1String("FAIL"));
             }
 
-        if (is_canceled) {
-            TRACE() << "Operation is canceled";
-            QMutexLocker locker(&mutex);
-            is_canceled = false;
-            emit error(Error::SessionCanceled);
-            return;
+            testData.setCurrentState(currState+1);
         }
 
-        if (!testData.ChainOfStates().length() ||
-           testData.CurrentState() >= (quint32)testData.ChainOfStates().length()) {
-            err = 0;
-        }
-
-        testData.setSecret("testSecret_after_test");
-
-        foreach(QString key, testData.propertyNames())
-            TRACE() << key << ": " << testData.getProperty(key);
-
-        TRACE() << "Emit the signal";
-        if (err)
-            emit error(err);
-        else
-            emit result(testData);
+    if (is_canceled) {
+        TRACE() << "Operation is canceled";
+        QMutexLocker locker(&mutex);
+        is_canceled = false;
+        emit error(Error::SessionCanceled);
+        return;
     }
 
-    void SsoTest2Plugin::userActionFinished(const SignOn::UiSessionData &data)
-    {
-        TRACE();
-        uiData = data;
-        uiLoop.quit();
-        TRACE() << "Completed";
+    if (!testData.ChainOfStates().length() ||
+        testData.CurrentState() >= (quint32)testData.ChainOfStates().length()) {
+        err = 0;
     }
 
-    void SsoTest2Plugin::refresh(const SignOn::UiSessionData &data)
-    {
-        TRACE();
-        static int ii = 2;
+    testData.setSecret("testSecret_after_test");
 
-        uiData = data;
-        QString imageName = QString("Captcha%1.jpg").arg(ii);
-        TRACE() << imageName;
-        uiData.setCaptchaImage(loadImage(imageName, "JPEG"));
-        ii++;
-        if (ii>4)
-            ii = 1;
-        emit refreshed(uiData);
-        TRACE() << "Completed";
-    }
+    foreach(QString key, testData.propertyNames())
+        TRACE() << key << ": " << testData.getProperty(key);
 
-    SIGNON_DECL_AUTH_PLUGIN(SsoTest2Plugin)
+    TRACE() << "Emit the signal";
+    if (err)
+        emit error(err);
+    else
+        emit result(testData);
+}
+
+void SsoTest2Plugin::userActionFinished(const SignOn::UiSessionData &data)
+{
+    TRACE();
+    uiData = data;
+    uiLoop.quit();
+    TRACE() << "Completed";
+}
+
+void SsoTest2Plugin::refresh(const SignOn::UiSessionData &data)
+{
+    TRACE();
+    static int ii = 2;
+
+    uiData = data;
+    QString imageName = QString("Captcha%1.jpg").arg(ii);
+    TRACE() << imageName;
+    uiData.setCaptchaImage(loadImage(imageName, "JPEG"));
+    ii++;
+    if (ii>4)
+        ii = 1;
+    emit refreshed(uiData);
+    TRACE() << "Completed";
+}
+
+SIGNON_DECL_AUTH_PLUGIN(SsoTest2Plugin)
 } //namespace SsoTest2PluginNS
 
 

@@ -55,7 +55,9 @@ void TestSingleSignon::singleTestClient()
 
     QTime endTime = QTime::currentTime();
     int elapsed = startTime.secsTo(endTime);
-    qDebug() << QString("TestSingleSignon::singleTestClient() ---- TIME --> Total elapsed time: %1 seconds.\n\n").arg(elapsed);
+    qDebug() << QString("TestSingleSignon::singleTestClient() "
+                        "---- TIME --> Total elapsed time: %1 seconds.").
+        arg(elapsed);
 }
 
 void TestSingleSignon::multipleClientsAtOnceTest()
@@ -65,7 +67,7 @@ void TestSingleSignon::multipleClientsAtOnceTest()
     QTime startTime = QTime::currentTime();
     for(int i = 0; i < m_numberOfTestClients; i++)
     {
-        qDebug() << "\n\nCreating SSO test client thread...\n\n";
+        qDebug() << "Creating SSO test client thread...";
         SsoClientThread *thread = new SsoClientThread(SsoTestClient::AllTests);
         thread->start();
         clientThreads.append(thread);
@@ -90,7 +92,9 @@ void TestSingleSignon::multipleClientsAtOnceTest()
 
     QTime endTime = QTime::currentTime();
     int elapsed = startTime.secsTo(endTime);
-    qDebug() << QString("TestSingleSignon::multipleClientsAtOnceTest() ---- TIME --> Total elapsed time: %1 seconds.\n\n").arg(elapsed);
+    qDebug() << QString("TestSingleSignon::multipleClientsAtOnceTest() "
+                        "---- TIME --> Total elapsed time: %1 seconds.").
+        arg(elapsed);
 }
 
 void TestSingleSignon::multipleClientsAtOnceContiousTest()
@@ -102,10 +106,11 @@ void TestSingleSignon::multipleClientsAtOnceContiousTest()
     {
         QList<SsoClientThread *> clientThreads;
 
-        for(int i = 0; i < m_numberOfTestClients; i++)
+        for (int i = 0; i < m_numberOfTestClients; i++)
         {
-            qDebug() << "\n\nCreating SSO test client thread...\n\n";
-            SsoClientThread *thread = new SsoClientThread(SsoTestClient::AllTests /*| SsoTestClient::IdentityStorage*/);
+            qDebug() << "\n\nCreating SSO test client thread...";
+            SsoClientThread *thread =
+                new SsoClientThread(SsoTestClient::AllTests);
             thread->start();
             clientThreads.append(thread);
         }
@@ -113,24 +118,28 @@ void TestSingleSignon::multipleClientsAtOnceContiousTest()
         SsoClientThread *thread = NULL;
         bool done = false;
         //this assumes all client threads will be finished at a certain point
-        while(!done)
+        while (!done)
         {
             int finishedThreadsCount = 0;
             foreach(thread, clientThreads)
-                if(thread->isFinished()) ++finishedThreadsCount;
+                if (thread->isFinished()) ++finishedThreadsCount;
 
-            done = ((finishedThreadsCount == m_numberOfTestClients) ? true : false);
+            done = ((finishedThreadsCount == m_numberOfTestClients) ?
+                    true : false);
             sleep(1);
         }
-        while(!clientThreads.empty())
-            if(SsoClientThread *thread = clientThreads.takeFirst()) delete thread;
+        while (!clientThreads.empty())
+            if (SsoClientThread *thread = clientThreads.takeFirst())
+                delete thread;
 
         --rounds;
     }
 
     QTime endTime = QTime::currentTime();
     int elapsed = startTime.secsTo(endTime);
-    qDebug() << QString("TestSingleSignon::multipleClientsAtOnceContiousTest() ---- TIME --> Total elapsed time: %1 seconds.\n\n").arg(elapsed);
+    qDebug() << QString("TestSingleSignon::multipleClientsAtOnceContiousTest() "
+                        "---- TIME --> Total elapsed time: %1 seconds.").
+        arg(elapsed);
 }
 
 void TestSingleSignon::stressTest()

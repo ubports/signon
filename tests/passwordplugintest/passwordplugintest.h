@@ -29,14 +29,14 @@
 
 using namespace PasswordPluginNS;
 
-class PasswordPluginTest : public QObject
+class PasswordPluginTest: public QObject
 {
     Q_OBJECT
 
 public slots:
-    void result(const SignOn::SessionData& data);
+    void result(const SignOn::SessionData &data);
     void pluginError(const SignOn::Error &err);
-    void uiRequest(const SignOn::UiSessionData& data);
+    void uiRequest(const SignOn::UiSessionData &data);
 
 private slots:
     void initTestCase();
@@ -55,12 +55,11 @@ private slots:
     //end test cases
 
 private:
-    PasswordPlugin* m_testPlugin;
+    PasswordPlugin *m_testPlugin;
     int m_error;
     SignOn::SessionData m_response;
     SignOn::UiSessionData m_uiResponse;
     QEventLoop m_loop;
 };
-
 
 #endif //PASSWORD_PLUGIN_TEST

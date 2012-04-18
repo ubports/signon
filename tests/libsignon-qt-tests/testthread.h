@@ -27,7 +27,7 @@
 
 const int g_testThreadTimeout = 10000;
 
-class TestThread : public QThread
+class TestThread: public QThread
 {
     Q_OBJECT
 

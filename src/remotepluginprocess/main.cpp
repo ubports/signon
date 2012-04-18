@@ -44,12 +44,12 @@ void messageHandler(QtMsgType type, const char *msg)
 {
     int priority;
     switch (type) {
-        case QtWarningMsg: priority = LOG_WARNING; break;
-        case QtCriticalMsg: priority = LOG_CRIT; break;
-        case QtFatalMsg: priority = LOG_EMERG; break;
-        case QtDebugMsg:
-                         /* fall through */
-        default: priority = LOG_INFO; break;
+    case QtWarningMsg: priority = LOG_WARNING; break;
+    case QtCriticalMsg: priority = LOG_CRIT; break;
+    case QtFatalMsg: priority = LOG_EMERG; break;
+    case QtDebugMsg:
+                     /* fall through */
+    default: priority = LOG_INFO; break;
     }
 
     syslog(priority, "%s", msg);

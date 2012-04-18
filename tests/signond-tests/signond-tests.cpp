@@ -34,24 +34,24 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-class SignondTest : public QObject
+class SignondTest: public QObject
 {
-     Q_OBJECT
+    Q_OBJECT
 
 private Q_SLOTS:
-     void runTimeoutTests();
-     void runPluginProxyTests();
-     void runCAMTests();
-     void runBackupTests();
-     void runDatabaseTests();
+    void runTimeoutTests();
+    void runPluginProxyTests();
+    void runCAMTests();
+    void runBackupTests();
+    void runDatabaseTests();
 
 public:
-     TestPluginProxy testPluginProxy;
-     TimeoutsTest testTimeouts;
-     TestBackup testBackup;
-     TestDatabase testDatabase;
+    TestPluginProxy testPluginProxy;
+    TimeoutsTest testTimeouts;
+    TestBackup testBackup;
+    TestDatabase testDatabase;
 #ifdef CAM_UNIT_TESTS_FIXED
-     CredentialsAccessManagerTest testCAM;
+    CredentialsAccessManagerTest testCAM;
 #endif
 };
 

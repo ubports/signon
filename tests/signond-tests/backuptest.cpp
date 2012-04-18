@@ -57,10 +57,11 @@ void TestBackup::backupTest()
     //remove backup files
     QFile::remove("/home/user/.signon/signondb.bin");
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
-                                                      SIGNOND_DAEMON_OBJECTPATH + "/Backup",
-                                                      "com.nokia.backupclient",
-                                                      "backupStarts");
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
+                                       SIGNOND_DAEMON_OBJECTPATH + "/Backup",
+                                       "com.nokia.backupclient",
+                                       "backupStarts");
     QList<QVariant> args;
     msg.setArguments(args);
 
@@ -70,12 +71,13 @@ void TestBackup::backupTest()
 
     //check if backup file was created successfully
     QVERIFY(QFile::exists("/home/user/.signon/signondb.bin"));
-    QFile::copy("/home/user/.signon/signondb.bin", "/home/user/.signon/signondb.bin2");
+    QFile::copy("/home/user/.signon/signondb.bin",
+                "/home/user/.signon/signondb.bin2");
 
     msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
-                                            SIGNOND_DAEMON_OBJECTPATH + "/Backup",
-                                            "com.nokia.backupclient",
-                                            "backupFinished");
+                                         SIGNOND_DAEMON_OBJECTPATH + "/Backup",
+                                         "com.nokia.backupclient",
+                                         "backupFinished");
     reply = conn.call(msg, QDBus::Block, 10*1000);
 
     QVERIFY(reply.type() == QDBusMessage::ReplyMessage);
@@ -87,12 +89,14 @@ void TestBackup::restoreTest()
     QDBusConnection conn (SIGNOND_BUS);
 
     QVERIFY(QFile::exists("/home/user/.signon/signondb.bin2"));
-    QFile::rename("/home/user/.signon/signondb.bin2", "/home/user/.signon/signondb.bin");
+    QFile::rename("/home/user/.signon/signondb.bin2",
+                  "/home/user/.signon/signondb.bin");
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
-                                                      SIGNOND_DAEMON_OBJECTPATH + "/Backup",
-                                                      "com.nokia.backupclient",
-                                                      "restoreStarts");
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
+                                       SIGNOND_DAEMON_OBJECTPATH + "/Backup",
+                                       "com.nokia.backupclient",
+                                       "restoreStarts");
     QList<QVariant> args;
     msg.setArguments(args);
 
@@ -103,9 +107,9 @@ void TestBackup::restoreTest()
     //check if backup file was created successfully
 
     msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE + ".Backup",
-                                            SIGNOND_DAEMON_OBJECTPATH + "/Backup",
-                                            "com.nokia.backupclient",
-                                            "restoreFinished");
+                                         SIGNOND_DAEMON_OBJECTPATH + "/Backup",
+                                         "com.nokia.backupclient",
+                                         "restoreFinished");
     reply = conn.call(msg, QDBus::Block, 10*1000);
 
     QVERIFY(QFile::exists("/home/user/.signon/signondb.bin") == false);
@@ -173,5 +177,5 @@ void TestBackup::runAllTests()
 }
 
 #if !defined(SSO_CI_TESTMANAGEMENT)
-    QTEST_MAIN(TestBackup)
+QTEST_MAIN(TestBackup)
 #endif

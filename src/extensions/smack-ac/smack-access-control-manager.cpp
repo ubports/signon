@@ -34,18 +34,20 @@ SmackAccessControlManager::SmackAccessControlManager(QObject *parent):
 }
 
 SmackAccessControlManager::~SmackAccessControlManager()
-{ 
+{
 }
 
 QString SmackAccessControlManager::keychainWidgetAppId()
-{ 
+{
     return QLatin1String(keychainAppId);
 }
 
-bool SmackAccessControlManager::isPeerAllowedToAccess(const QDBusMessage &peerMessage,
+bool SmackAccessControlManager::isPeerAllowedToAccess(
+                                               const QDBusMessage &peerMessage,
                                                const QString &securityContext)
 {
-    QString appId = SmackQt::DBusSmackContext::getCallerSmackContext(peerMessage);
+    QString appId =
+        SmackQt::DBusSmackContext::getCallerSmackContext(peerMessage);
     TRACE() << appId << ":" << securityContext;
 
     if (SmackQt::Smack::hasAccess(appId, securityContext, QLatin1String("r")) ||
@@ -58,7 +60,6 @@ bool SmackAccessControlManager::isPeerAllowedToAccess(const QDBusMessage &peerMe
     }
 }
 
-  
 QString SmackAccessControlManager::appIdOfPeer(const QDBusMessage &peerMessage)
 {
     TRACE() << SmackQt::DBusSmackContext::getCallerSmackContext(peerMessage);

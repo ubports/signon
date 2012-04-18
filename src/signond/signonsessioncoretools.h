@@ -36,7 +36,7 @@ namespace SignonDaemonNS {
  * @brief Helper method which unites two variant maps.
  * @param map1 base map to be united with
  * @param map2 map to be united with base. If map2 and map1 contain common
-          keys, the values in map1 will be overwritten by map2 values
+ *        keys, the values in map1 will be overwritten by map2 values
  * @returns a union of the map1 and map2 with unique keys,
  */
 QVariantMap mergeVariantMaps(const QVariantMap &map1, const QVariantMap &map2);
@@ -95,7 +95,7 @@ public:
  * credentials ID are destroyed, the cache for that specific ID
  * will be deleted.
  */
-class AuthCoreCache : public QObject
+class AuthCoreCache: public QObject
 {
     Q_OBJECT
 
@@ -117,12 +117,9 @@ public:
         QString password() const { return m_password; }
         QVariantMap blobData() const { return m_blobData; }
 
-        void setUsername(const QString &username)
-            { m_username = username; }
-        void setPassword(const QString &password)
-            { m_password = password; }
-        void setBlobData(const QVariantMap &blobData)
-            { m_blobData = blobData; }
+        void setUsername(const QString &username) { m_username = username; }
+        void setPassword(const QString &password) { m_password = password; }
+        void setBlobData(const QVariantMap &blobData) { m_blobData = blobData; }
 
         bool isEmpty() const;
 

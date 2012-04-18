@@ -40,28 +40,31 @@ MSSFAccessControlManager::~MSSFAccessControlManager()
 }
 
 QString MSSFAccessControlManager::keychainWidgetAppId()
-{ 
+{
     return QLatin1String(keychainAppId);
 }
 
-bool MSSFAccessControlManager::isPeerAllowedToAccess(const QDBusMessage &peerMessage,
+bool MSSFAccessControlManager::isPeerAllowedToAccess(
+                                       const QDBusMessage &peerMessage,
                                        const QString &securityContext)
 {
     bool hasAccess = false;
-    QStringList Credlist = MssfQt::DBusContextAccessManager::peerCredentials(peerMessage, NULL);
+    QStringList Credlist =
+        MssfQt::DBusContextAccessManager::peerCredentials(peerMessage, NULL);
     foreach(QString cred, Credlist) {
         if (cred.compare(securityContext) == 0) {
             hasAccess = true;
             break;
         }
-    }	
+    }
     TRACE() << "Process ACCESS:" << (hasAccess ? "TRUE" : "FALSE");
     return hasAccess;
 }
 
 QString MSSFAccessControlManager::appIdOfPeer(const QDBusMessage &peerMessage)
 {
-    QStringList Credlist = MssfQt::DBusContextAccessManager::peerCredentials(peerMessage, NULL);
+    QStringList Credlist =
+        MssfQt::DBusContextAccessManager::peerCredentials(peerMessage, NULL);
     foreach(QString cred, Credlist) {
         if (cred.startsWith(SSO_AEGIS_PACKAGE_ID_TOKEN_PREFIX))
             return cred;

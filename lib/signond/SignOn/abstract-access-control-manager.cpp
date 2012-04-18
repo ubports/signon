@@ -26,7 +26,7 @@ using namespace SignOn;
 
 
 AbstractAccessControlManager::AbstractAccessControlManager(QObject *parent):
-    QObject(parent) 
+    QObject(parent)
 {
 }
 
@@ -35,11 +35,12 @@ AbstractAccessControlManager::~AbstractAccessControlManager()
 }
 
 QString AbstractAccessControlManager::keychainWidgetAppId()
-{ 
+{
     return QString();
 }
 
-bool AbstractAccessControlManager::isPeerAllowedToAccess(const QDBusMessage &peerMessage,
+bool AbstractAccessControlManager::isPeerAllowedToAccess(
+                                               const QDBusMessage &peerMessage,
                                                const QString &securityContext)
 {
     Q_UNUSED(peerMessage);
@@ -47,7 +48,8 @@ bool AbstractAccessControlManager::isPeerAllowedToAccess(const QDBusMessage &pee
     return true;
 }
 
-QString AbstractAccessControlManager::appIdOfPeer(const QDBusMessage &peerMessage)
+QString
+AbstractAccessControlManager::appIdOfPeer(const QDBusMessage &peerMessage)
 {
     Q_UNUSED(peerMessage);
     return QString();

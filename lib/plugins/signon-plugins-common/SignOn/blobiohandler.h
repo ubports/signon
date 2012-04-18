@@ -31,7 +31,7 @@
 
 namespace SignOn {
 
-class BlobIOHandler : public QObject
+class BlobIOHandler: public QObject
 {
     Q_OBJECT
 

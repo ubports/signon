@@ -28,9 +28,12 @@
 /*
  * Implementation of interface class SignonUiAdaptor
  */
-
-SignonUiAdaptor::SignonUiAdaptor(const QString &service, const QString &path, const QDBusConnection &connection, QObject *parent)
-    : QDBusAbstractInterface(service, path, staticInterfaceName(), connection, parent)
+SignonUiAdaptor::SignonUiAdaptor(const QString &service,
+                                 const QString &path,
+                                 const QDBusConnection &connection,
+                                 QObject *parent):
+    QDBusAbstractInterface(service, path, staticInterfaceName(),
+                           connection, parent)
 {
 }
 
@@ -46,7 +49,8 @@ QDBusPendingCall SignonUiAdaptor::queryDialog(const QVariantMap &parameters)
 {
     QList<QVariant> argumentList;
     argumentList << parameters;
-    return callWithArgumentListAndBigTimeout(QLatin1String("queryDialog"), argumentList);
+    return callWithArgumentListAndBigTimeout(QLatin1String("queryDialog"),
+                                             argumentList);
 }
 
 
@@ -57,7 +61,8 @@ QDBusPendingCall SignonUiAdaptor::refreshDialog(const QVariantMap &parameters)
 {
     QList<QVariant> argumentList;
     argumentList << parameters;
-    return callWithArgumentListAndBigTimeout(QLatin1String("refreshDialog"), argumentList);
+    return callWithArgumentListAndBigTimeout(QLatin1String("refreshDialog"),
+                                             argumentList);
 }
 
 
@@ -68,11 +73,13 @@ void SignonUiAdaptor::cancelUiRequest(const QString &requestId)
 {
     QList<QVariant> argumentList;
     argumentList << requestId;
-    callWithArgumentList(QDBus::NoBlock, QLatin1String("cancelUiRequest"), argumentList);
+    callWithArgumentList(QDBus::NoBlock, QLatin1String("cancelUiRequest"),
+                         argumentList);
 }
 
-QDBusPendingCall SignonUiAdaptor::callWithArgumentListAndBigTimeout(const QString &method,
-                                                         const QList<QVariant> &args)
+QDBusPendingCall
+SignonUiAdaptor::callWithArgumentListAndBigTimeout(const QString &method,
+                                                   const QList<QVariant> &args)
 {
     QDBusMessage msg = QDBusMessage::createMethodCall(service(),
                                                       path(),
@@ -82,4 +89,3 @@ QDBusPendingCall SignonUiAdaptor::callWithArgumentListAndBigTimeout(const QStrin
         msg.setArguments(args);
     return connection().asyncCall(msg, SIGNOND_MAX_TIMEOUT);
 }
-

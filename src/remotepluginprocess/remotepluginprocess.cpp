@@ -41,536 +41,548 @@ using namespace SignOn;
 
 namespace RemotePluginProcessNS {
 
-    static CancelEventThread *cancelThread = NULL;
+static CancelEventThread *cancelThread = NULL;
 
-    /* ---------------------- RemotePluginProcess ---------------------- */
+/* ---------------------- RemotePluginProcess ---------------------- */
 
-    RemotePluginProcess::RemotePluginProcess(QObject *parent) : QObject(parent)
-    {
-        m_plugin = NULL;
-        m_readnotifier = NULL;
-        m_errnotifier = NULL;
+RemotePluginProcess::RemotePluginProcess(QObject *parent):
+    QObject(parent)
+{
+    m_plugin = NULL;
+    m_readnotifier = NULL;
+    m_errnotifier = NULL;
 
-        qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
-        qRegisterMetaType<QString>("QString");
+    qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
+    qRegisterMetaType<QString>("QString");
+}
+
+RemotePluginProcess::~RemotePluginProcess()
+{
+    delete m_plugin;
+    delete m_readnotifier;
+    delete m_errnotifier;
+
+    if (cancelThread) {
+        cancelThread->quit();
+        cancelThread->wait();
+        delete cancelThread;
+    }
+}
+
+RemotePluginProcess *
+RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
+{
+    RemotePluginProcess *rpp = new RemotePluginProcess(parent);
+
+    //this is needed before plugin is initialized
+    rpp->setupProxySettings();
+
+    if (!rpp->loadPlugin(type) ||
+       !rpp->setupDataStreams() ||
+       rpp->m_plugin->type() != type) {
+        delete rpp;
+        return NULL;
+    }
+    return rpp;
+}
+
+bool RemotePluginProcess::loadPlugin(QString &type)
+{
+    TRACE() << " loading auth library for " << type;
+
+    QLibrary lib(getPluginName(type));
+
+    if (!lib.load()) {
+        qCritical() << QString("Failed to load %1 (reason: %2)")
+            .arg(getPluginName(type)).arg(lib.errorString());
+        return false;
     }
 
-    RemotePluginProcess::~RemotePluginProcess()
-    {
-        delete m_plugin;
-        delete m_readnotifier;
-        delete m_errnotifier;
+    TRACE() << "library loaded";
 
-        if (cancelThread) {
-            cancelThread->quit();
-            cancelThread->wait();
-            delete cancelThread;
-        }
+    typedef AuthPluginInterface* (*SsoAuthPluginInstanceF)();
+    SsoAuthPluginInstanceF instance =
+        (SsoAuthPluginInstanceF)lib.resolve("auth_plugin_instance");
+    if (!instance) {
+        qCritical() << QString("Failed to resolve init function in %1 "
+                               "(reason: %2)")
+            .arg(getPluginName(type)).arg(lib.errorString());
+        return false;
     }
 
-    RemotePluginProcess* RemotePluginProcess::createRemotePluginProcess(QString &type, QObject *parent)
-    {
-        RemotePluginProcess *rpp = new RemotePluginProcess(parent);
+    TRACE() << "constructor resolved";
 
-        //this is needed before plugin is initialized
-        rpp->setupProxySettings();
+    m_plugin = qobject_cast<AuthPluginInterface *>(instance());
 
-        if (!rpp->loadPlugin(type) ||
-           !rpp->setupDataStreams() ||
-           rpp->m_plugin->type() != type) {
-            delete rpp;
-            return NULL;
-        }
-        return rpp;
+    if (!m_plugin) {
+        qCritical() << QString("Failed to cast object for %1 type")
+            .arg(type);
+        return false;
     }
 
-    bool RemotePluginProcess::loadPlugin(QString &type)
-    {
-        TRACE() << " loading auth library for " << type;
+    connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
+            this, SLOT(result(const SignOn::SessionData&)));
 
-        QLibrary lib(getPluginName(type));
+    connect(m_plugin, SIGNAL(store(const SignOn::SessionData&)),
+            this, SLOT(store(const SignOn::SessionData&)));
 
-        if (!lib.load()) {
-            qCritical() << QString("Failed to load %1 (reason: %2)")
-                .arg(getPluginName(type)).arg(lib.errorString());
-            return false;
-        }
+    connect(m_plugin, SIGNAL(error(const SignOn::Error &)),
+            this, SLOT(error(const SignOn::Error &)));
 
-        TRACE() << "library loaded";
+    connect(m_plugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
+            this, SLOT(userActionRequired(const SignOn::UiSessionData&)));
 
-        typedef AuthPluginInterface* (*SsoAuthPluginInstanceF)();
-        SsoAuthPluginInstanceF instance = (SsoAuthPluginInstanceF)lib.resolve("auth_plugin_instance");
-        if (!instance) {
-            qCritical() << QString("Failed to resolve init function in %1 (reason: %2)")
-                .arg(getPluginName(type)).arg(lib.errorString());
-            return false;
-        }
+    connect(m_plugin, SIGNAL(refreshed(const SignOn::UiSessionData&)),
+            this, SLOT(refreshed(const SignOn::UiSessionData&)));
 
-        TRACE() << "constructor resolved";
+    connect(m_plugin,
+            SIGNAL(statusChanged(const AuthPluginState, const QString&)),
+            this, SLOT(statusChanged(const AuthPluginState, const QString&)));
 
-        m_plugin = qobject_cast<AuthPluginInterface *>(instance());
+    m_plugin->setParent(this);
 
-        if (!m_plugin) {
-            qCritical() << QString("Failed to cast object for %1 type")
-                .arg(type);
-            return false;
-        }
+    TRACE() << "plugin is fully initialized";
+    return true;
+}
 
-        connect(m_plugin, SIGNAL(result(const SignOn::SessionData&)),
-                  this, SLOT(result(const SignOn::SessionData&)));
+bool RemotePluginProcess::setupDataStreams()
+{
+    TRACE();
 
-        connect(m_plugin, SIGNAL(store(const SignOn::SessionData&)),
-                  this, SLOT(store(const SignOn::SessionData&)));
+    m_inFile.open(STDIN_FILENO, QIODevice::ReadOnly);
+    m_outFile.open(STDOUT_FILENO, QIODevice::WriteOnly);
 
-        connect(m_plugin, SIGNAL(error(const SignOn::Error &)),
-                  this, SLOT(error(const SignOn::Error &)));
+    m_readnotifier = new QSocketNotifier(STDIN_FILENO, QSocketNotifier::Read);
+    m_errnotifier = new QSocketNotifier(STDIN_FILENO,
+                                        QSocketNotifier::Exception);
 
-        connect(m_plugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
-                  this, SLOT(userActionRequired(const SignOn::UiSessionData&)));
+    connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+    connect(m_errnotifier, SIGNAL(activated(int)),
+            this, SIGNAL(processStopped()));
 
-        connect(m_plugin, SIGNAL(refreshed(const SignOn::UiSessionData&)),
-                  this, SLOT(refreshed(const SignOn::UiSessionData&)));
+    if (!cancelThread)
+        cancelThread = new CancelEventThread(m_plugin);
 
-        connect(m_plugin, SIGNAL(statusChanged(const AuthPluginState, const QString&)),
-                  this, SLOT(statusChanged(const AuthPluginState, const QString&)));
+    TRACE() << "cancel thread created";
 
-        m_plugin->setParent(this);
+    m_blobIOHandler = new BlobIOHandler(&m_inFile, &m_outFile, this);
 
-        TRACE() << "plugin is fully initialized";
-        return true;
-    }
+    connect(m_blobIOHandler,
+            SIGNAL(dataReceived(const QVariantMap &)),
+            this,
+            SLOT(sessionDataReceived(const QVariantMap &)));
 
-    bool RemotePluginProcess::setupDataStreams()
-    {
-        TRACE();
+    connect(m_blobIOHandler,
+            SIGNAL(error()),
+            this,
+            SLOT(blobIOError()));
 
-        m_inFile.open(STDIN_FILENO, QIODevice::ReadOnly);
-        m_outFile.open(STDOUT_FILENO, QIODevice::WriteOnly);
+    m_blobIOHandler->setReadChannelSocketNotifier(m_readnotifier);
 
-        m_readnotifier = new QSocketNotifier(STDIN_FILENO, QSocketNotifier::Read);
-        m_errnotifier = new QSocketNotifier(STDIN_FILENO, QSocketNotifier::Exception);
+    return true;
+}
 
-        connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-        connect(m_errnotifier, SIGNAL(activated(int)), this, SIGNAL(processStopped()));
-
-        if (!cancelThread)
-            cancelThread = new CancelEventThread(m_plugin);
-
-        TRACE() << "cancel thread created";
-
-        m_blobIOHandler = new BlobIOHandler(&m_inFile, &m_outFile, this);
-
-        connect(m_blobIOHandler,
-                SIGNAL(dataReceived(const QVariantMap &)),
-                this,
-                SLOT(sessionDataReceived(const QVariantMap &)));
-
-        connect(m_blobIOHandler,
-                SIGNAL(error()),
-                this,
-                SLOT(blobIOError()));
-
-        m_blobIOHandler->setReadChannelSocketNotifier(m_readnotifier);
-
-        return true;
-    }
-
-    bool RemotePluginProcess::setupProxySettings()
-    {
-        TRACE();
-        //set application default proxy
-        QNetworkProxy networkProxy = QNetworkProxy::applicationProxy();
+bool RemotePluginProcess::setupProxySettings()
+{
+    TRACE();
+    //set application default proxy
+    QNetworkProxy networkProxy = QNetworkProxy::applicationProxy();
 
 #ifdef HAVE_GCONF
-        //get proxy settings from GConf
-        GConfItem *hostItem = new GConfItem("/system/http_proxy/host");
-        if (hostItem->value().canConvert(QVariant::String)) {
-            QString host = hostItem->value().toString();
-            GConfItem *portItem = new GConfItem("/system/http_proxy/port");
-            uint port = portItem->value().toUInt();
-            networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
-                                        host, port);
-            delete portItem;
-        }
-        delete hostItem;
+    //get proxy settings from GConf
+    GConfItem *hostItem = new GConfItem("/system/http_proxy/host");
+    if (hostItem->value().canConvert(QVariant::String)) {
+        QString host = hostItem->value().toString();
+        GConfItem *portItem = new GConfItem("/system/http_proxy/port");
+        uint port = portItem->value().toUInt();
+        networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
+                                    host, port);
+        delete portItem;
+    }
+    delete hostItem;
 #endif
 
-        //get system env for proxy
-        QString proxy = qgetenv("http_proxy");
-        if (!proxy.isEmpty()) {
-            QUrl proxyUrl(proxy);
-            if (!proxyUrl.host().isEmpty()) {
-                networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
-                                        proxyUrl.host(),
-                                        proxyUrl.port(),
-                                        proxyUrl.userName(),
-                                        proxyUrl.password());
-            }
+    //get system env for proxy
+    QString proxy = qgetenv("http_proxy");
+    if (!proxy.isEmpty()) {
+        QUrl proxyUrl(proxy);
+        if (!proxyUrl.host().isEmpty()) {
+            networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
+                                    proxyUrl.host(),
+                                    proxyUrl.port(),
+                                    proxyUrl.userName(),
+                                    proxyUrl.password());
         }
-
-        //add other proxy types here
-
-        TRACE() << networkProxy.hostName() << ":" << networkProxy.port();
-        QNetworkProxy::setApplicationProxy(networkProxy);
-        return true;
     }
 
-    void RemotePluginProcess::blobIOError()
-    {
-        error(
-            Error(Error::InternalServer,
-            QLatin1String("Failed to I/O session data to/from the signon daemon.")));
-        connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+    //add other proxy types here
+
+    TRACE() << networkProxy.hostName() << ":" << networkProxy.port();
+    QNetworkProxy::setApplicationProxy(networkProxy);
+    return true;
+}
+
+void RemotePluginProcess::blobIOError()
+{
+    error(
+        Error(Error::InternalServer,
+        QLatin1String("Failed to I/O session data to/from the signon daemon.")));
+    connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+}
+
+void RemotePluginProcess::result(const SignOn::SessionData &data)
+{
+    disableCancelThread();
+    QDataStream out(&m_outFile);
+    QVariantMap resultDataMap;
+
+    foreach(QString key, data.propertyNames())
+        resultDataMap[key] = data.getProperty(key);
+
+    out << (quint32)PLUGIN_RESPONSE_RESULT;
+
+    m_blobIOHandler->sendData(resultDataMap);
+
+    m_outFile.flush();
+}
+
+void RemotePluginProcess::store(const SignOn::SessionData &data)
+{
+    QDataStream out(&m_outFile);
+    QVariantMap storeDataMap;
+
+    foreach(QString key, data.propertyNames())
+        storeDataMap[key] = data.getProperty(key);
+
+    out << (quint32)PLUGIN_RESPONSE_STORE;
+
+    m_blobIOHandler->sendData(storeDataMap);
+
+    m_outFile.flush();
+}
+
+void RemotePluginProcess::error(const SignOn::Error &err)
+{
+    disableCancelThread();
+
+    QDataStream out(&m_outFile);
+
+    out << (quint32)PLUGIN_RESPONSE_ERROR;
+    out << (quint32)err.type();
+    out << err.message();
+    m_outFile.flush();
+
+    TRACE() << "error is sent" << err.type() << " " << err.message();
+}
+
+void RemotePluginProcess::userActionRequired(const SignOn::UiSessionData &data)
+{
+    TRACE();
+    disableCancelThread();
+
+    QDataStream out(&m_outFile);
+    QVariantMap resultDataMap;
+
+    foreach(QString key, data.propertyNames())
+        resultDataMap[key] = data.getProperty(key);
+
+    out << (quint32)PLUGIN_RESPONSE_UI;
+    m_blobIOHandler->sendData(resultDataMap);
+    m_outFile.flush();
+}
+
+void RemotePluginProcess::refreshed(const SignOn::UiSessionData &data)
+{
+    TRACE();
+    disableCancelThread();
+
+    QDataStream out(&m_outFile);
+    QVariantMap resultDataMap;
+
+    foreach(QString key, data.propertyNames())
+        resultDataMap[key] = data.getProperty(key);
+
+    m_readnotifier->setEnabled(true);
+
+    out << (quint32)PLUGIN_RESPONSE_REFRESHED;
+
+    m_blobIOHandler->sendData(resultDataMap);
+
+    m_outFile.flush();
+}
+
+void RemotePluginProcess::statusChanged(const AuthPluginState state,
+                                        const QString &message)
+{
+    TRACE();
+    QDataStream out(&m_outFile);
+
+    out << (quint32)PLUGIN_RESPONSE_SIGNAL;
+    out << (quint32)state;
+    out << message;
+
+    m_outFile.flush();
+}
+
+QString RemotePluginProcess::getPluginName(const QString &type)
+{
+    QString dirName = qgetenv("SSO_PLUGINS_DIR");
+    if (dirName.isEmpty())
+        dirName = QDir::cleanPath(SIGNOND_PLUGINS_DIR);
+    QString fileName = dirName +
+                       QDir::separator() +
+                       QString(SIGNON_PLUGIN_PREFIX) +
+                       type +
+                       QString(SIGNON_PLUGIN_SUFFIX);
+
+    return fileName;
+}
+
+void RemotePluginProcess::type()
+{
+    QDataStream out(&m_outFile);
+    out << m_plugin->type();
+}
+
+void RemotePluginProcess::mechanisms()
+{
+    QDataStream out(&m_outFile);
+    QStringList mechanisms = m_plugin->mechanisms();
+    QVariant mechsVar = mechanisms;
+    out << mechsVar;
+}
+
+void RemotePluginProcess::process()
+{
+    QDataStream in(&m_inFile);
+
+
+    in >> m_currentMechanism;
+
+    int processBlobSize = -1;
+    in >> processBlobSize;
+
+    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+
+    m_currentOperation = PLUGIN_OP_PROCESS;
+    m_blobIOHandler->receiveData(processBlobSize);
+}
+
+void RemotePluginProcess::userActionFinished()
+{
+    QDataStream in(&m_inFile);
+    int processBlobSize = -1;
+    in >> processBlobSize;
+
+    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+
+    m_currentOperation = PLUGIN_OP_PROCESS_UI;
+    m_blobIOHandler->receiveData(processBlobSize);
+}
+
+void RemotePluginProcess::refresh()
+{
+    QDataStream in(&m_inFile);
+    int processBlobSize = -1;
+    in >> processBlobSize;
+
+    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+
+    m_currentOperation = PLUGIN_OP_REFRESH;
+    m_blobIOHandler->receiveData(processBlobSize);
+}
+
+void RemotePluginProcess::sessionDataReceived(const QVariantMap &sessionDataMap)
+{
+    enableCancelThread();
+    TRACE() << "The cancel thread is started";
+
+    if (m_currentOperation == PLUGIN_OP_PROCESS) {
+        SessionData inData(sessionDataMap);
+        m_plugin->process(inData, m_currentMechanism);
+        m_currentMechanism.clear();
+
+    } else if(m_currentOperation == PLUGIN_OP_PROCESS_UI) {
+        UiSessionData inData(sessionDataMap);
+        m_plugin->userActionFinished(inData);
+
+    } else if(m_currentOperation == PLUGIN_OP_REFRESH) {
+        UiSessionData inData(sessionDataMap);
+        m_plugin->refresh(inData);
+
+    } else {
+        TRACE() << "Wrong operation code.";
+        error(Error(Error::InternalServer,
+                    QLatin1String("Plugin process - invalid operation code.")));
     }
 
-    void RemotePluginProcess::result(const SignOn::SessionData &data)
-    {
-        disableCancelThread();
-        QDataStream out(&m_outFile);
-        QVariantMap resultDataMap;
+    m_currentOperation = PLUGIN_OP_STOP;
+    connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
+}
 
-        foreach(QString key, data.propertyNames())
-            resultDataMap[key] = data.getProperty(key);
+void RemotePluginProcess::enableCancelThread()
+{
+    QEventLoop loop;
+    connect(cancelThread,
+            SIGNAL(started()),
+            &loop,
+            SLOT(quit()));
 
-        out << (quint32)PLUGIN_RESPONSE_RESULT;
+    m_readnotifier->setEnabled(false);
+    QTimer::singleShot(0.5*1000, &loop, SLOT(quit()));
+    cancelThread->start();
+    loop.exec();
+    QThread::yieldCurrentThread();
+}
 
-        m_blobIOHandler->sendData(resultDataMap);
+void RemotePluginProcess::disableCancelThread()
+{
+    if (!cancelThread->isRunning())
+        return;
 
-        m_outFile.flush();
-    }
+    /**
+     * Sort of terrible workaround which
+     * I do not know how to fix: the thread
+     * could hang up during wait up without
+     * these loops and sleeps
+     */
+    cancelThread->quit();
 
-    void RemotePluginProcess::store(const SignOn::SessionData &data)
-    {
-        QDataStream out(&m_outFile);
-        QVariantMap storeDataMap;
+    TRACE() << "Before the isFinished loop ";
 
-        foreach(QString key, data.propertyNames())
-            storeDataMap[key] = data.getProperty(key);
-
-        out << (quint32)PLUGIN_RESPONSE_STORE;
-
-        m_blobIOHandler->sendData(storeDataMap);
-
-        m_outFile.flush();
-    }
-
-    void RemotePluginProcess::error(const SignOn::Error &err)
-    {
-        disableCancelThread();
-
-        QDataStream out(&m_outFile);
-
-        out << (quint32)PLUGIN_RESPONSE_ERROR;
-        out << (quint32)err.type();
-        out << err.message();
-        m_outFile.flush();
-
-        TRACE() << "error is sent" << err.type() << " " << err.message();
-    }
-
-    void RemotePluginProcess::userActionRequired(const SignOn::UiSessionData &data)
-    {
-        TRACE();
-        disableCancelThread();
-
-        QDataStream out(&m_outFile);
-        QVariantMap resultDataMap;
-
-        foreach(QString key, data.propertyNames())
-            resultDataMap[key] = data.getProperty(key);
-
-        out << (quint32)PLUGIN_RESPONSE_UI;
-        m_blobIOHandler->sendData(resultDataMap);
-        m_outFile.flush();
-    }
-
-    void RemotePluginProcess::refreshed(const SignOn::UiSessionData &data)
-    {
-        TRACE();
-        disableCancelThread();
-
-        QDataStream out(&m_outFile);
-        QVariantMap resultDataMap;
-
-        foreach(QString key, data.propertyNames())
-            resultDataMap[key] = data.getProperty(key);
-
-        m_readnotifier->setEnabled(true);
-
-        out << (quint32)PLUGIN_RESPONSE_REFRESHED;
-
-        m_blobIOHandler->sendData(resultDataMap);
-
-        m_outFile.flush();
-    }
-
-    void RemotePluginProcess::statusChanged(const AuthPluginState state, const QString &message)
-    {
-        TRACE();
-        QDataStream out(&m_outFile);
-
-        out << (quint32)PLUGIN_RESPONSE_SIGNAL;
-        out << (quint32)state;
-        out << message;
-
-        m_outFile.flush();
-    }
-
-    QString RemotePluginProcess::getPluginName(const QString &type)
-    {
-        QString dirName = qgetenv("SSO_PLUGINS_DIR");
-        if (dirName.isEmpty())
-            dirName = QDir::cleanPath(SIGNOND_PLUGINS_DIR);
-        QString fileName = dirName +
-                           QDir::separator() +
-                           QString(SIGNON_PLUGIN_PREFIX) +
-                           type +
-                           QString(SIGNON_PLUGIN_SUFFIX);
-
-        return fileName;
-    }
-
-    void RemotePluginProcess::type()
-    {
-        QDataStream out(&m_outFile);
-        out << m_plugin->type();
-    }
-
-    void RemotePluginProcess::mechanisms()
-    {
-        QDataStream out(&m_outFile);
-        QStringList mechanisms = m_plugin->mechanisms();
-        QVariant mechsVar = mechanisms;
-        out << mechsVar;
-    }
-
-    void RemotePluginProcess::process()
-    {
-        QDataStream in(&m_inFile);
-
-
-        in >> m_currentMechanism;
-
-        int processBlobSize = -1;
-        in >> processBlobSize;
-
-        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-
-        m_currentOperation = PLUGIN_OP_PROCESS;
-        m_blobIOHandler->receiveData(processBlobSize);
-    }
-
-    void RemotePluginProcess::userActionFinished()
-    {
-        QDataStream in(&m_inFile);
-        int processBlobSize = -1;
-        in >> processBlobSize;
-
-        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-
-        m_currentOperation = PLUGIN_OP_PROCESS_UI;
-        m_blobIOHandler->receiveData(processBlobSize);
-    }
-
-    void RemotePluginProcess::refresh()
-    {
-        QDataStream in(&m_inFile);
-        int processBlobSize = -1;
-        in >> processBlobSize;
-
-        disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-
-        m_currentOperation = PLUGIN_OP_REFRESH;
-        m_blobIOHandler->receiveData(processBlobSize);
-    }
-
-    void RemotePluginProcess::sessionDataReceived(const QVariantMap &sessionDataMap)
-    {
-        enableCancelThread();
-        TRACE() << "The cancel thread is started";
-
-        if (m_currentOperation == PLUGIN_OP_PROCESS) {
-            SessionData inData(sessionDataMap);
-            m_plugin->process(inData, m_currentMechanism);
-            m_currentMechanism.clear();
-
-        } else if(m_currentOperation == PLUGIN_OP_PROCESS_UI) {
-            UiSessionData inData(sessionDataMap);
-            m_plugin->userActionFinished(inData);
-
-        } else if(m_currentOperation == PLUGIN_OP_REFRESH) {
-            UiSessionData inData(sessionDataMap);
-            m_plugin->refresh(inData);
-
-        } else {
-            TRACE() << "Wrong operation code.";
-            error(Error(Error::InternalServer,
-                        QLatin1String("Plugin process - invalid operation code.")));
-        }
-
-        m_currentOperation = PLUGIN_OP_STOP;
-        connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-    }
-
-    void RemotePluginProcess::enableCancelThread()
-    {
-        QEventLoop loop;
-        connect(cancelThread,
-                SIGNAL(started()),
-                &loop,
-                SLOT(quit()));
-
-        m_readnotifier->setEnabled(false);
-        QTimer::singleShot(0.5*1000, &loop, SLOT(quit()));
-        cancelThread->start();
-        loop.exec();
-        QThread::yieldCurrentThread();
-    }
-
-    void RemotePluginProcess::disableCancelThread()
-    {
-        if (!cancelThread->isRunning())
-            return;
-
-        /**
-         * Sort of terrible workaround which
-         * I do not know how to fix: the thread
-         * could hang up during wait up without
-         * these loops and sleeps
-         */
+    int i = 0;
+    while (!cancelThread->isFinished()) {
         cancelThread->quit();
-
-        TRACE() << "Before the isFinished loop ";
-
-        int i = 0;
-        while (!cancelThread->isFinished()) {
-            cancelThread->quit();
-            TRACE() << "Internal iteration " << i++;
-            usleep(0.005 * 1000000);
-        }
-
-        if (!cancelThread->wait(500)) {
-            BLAME() << "Cannot disable cancel thread";
-            int i;
-            for (i = 0; i < 5; i++) {
-                usleep(0.01 * 1000000);
-                if (cancelThread->wait(500))
-                    break;
-            }
-
-            if (i == 5) {
-                BLAME() << "Cannot do anything with cancel thread";
-                cancelThread->terminate();
-                cancelThread->wait();
-            }
-        }
-
-        m_readnotifier->setEnabled(true);
+        TRACE() << "Internal iteration " << i++;
+        usleep(0.005 * 1000000);
     }
 
-    void RemotePluginProcess::startTask()
-    {
-        quint32 opcode = PLUGIN_OP_STOP;
-        bool is_stopped = false;
-
-        QDataStream in(&m_inFile);
-        in >> opcode;
-
-        switch (opcode) {
-            case PLUGIN_OP_CANCEL:
-            {
-                m_plugin->cancel(); break;
-                //still do not have clear understanding
-                //of the cancelation-stop mechanism
-                //is_stopped = true;
-            }
-            break;
-            case PLUGIN_OP_TYPE:
-                type();
+    if (!cancelThread->wait(500)) {
+        BLAME() << "Cannot disable cancel thread";
+        int i;
+        for (i = 0; i < 5; i++) {
+            usleep(0.01 * 1000000);
+            if (cancelThread->wait(500))
                 break;
-            case PLUGIN_OP_MECHANISMS:
-                mechanisms();
-                break;
-            case PLUGIN_OP_PROCESS:
-                process();
-                break;
-            case PLUGIN_OP_PROCESS_UI:
-                userActionFinished();
-                break;
-            case PLUGIN_OP_REFRESH:
-                refresh();
-                break;
-            case PLUGIN_OP_STOP:
-                is_stopped = true;
-                break;
-            default:
-            {
-                qCritical() << " unknown operation code: " << opcode;
-                is_stopped = true;
-            }
-            break;
-        };
-
-        TRACE() << "operation is completed";
-
-        if (!is_stopped) {
-            if (!m_outFile.flush())
-                is_stopped = true;
         }
 
-        if (is_stopped)
+        if (i == 5) {
+            BLAME() << "Cannot do anything with cancel thread";
+            cancelThread->terminate();
+            cancelThread->wait();
+        }
+    }
+
+    m_readnotifier->setEnabled(true);
+}
+
+void RemotePluginProcess::startTask()
+{
+    quint32 opcode = PLUGIN_OP_STOP;
+    bool is_stopped = false;
+
+    QDataStream in(&m_inFile);
+    in >> opcode;
+
+    switch (opcode) {
+    case PLUGIN_OP_CANCEL:
         {
-            m_plugin->abort();
-            emit processStopped();
+            m_plugin->cancel(); break;
+            //still do not have clear understanding
+            //of the cancelation-stop mechanism
+            //is_stopped = true;
         }
-    }
-
-    CancelEventThread::CancelEventThread(AuthPluginInterface *plugin)
-    {
-        m_plugin = plugin;
-        m_cancelNotifier = 0;
-    }
-
-    CancelEventThread::~CancelEventThread()
-    {
-        delete m_cancelNotifier;
-    }
-
-    void CancelEventThread::run()
-    {
-        if (!m_cancelNotifier) {
-            m_cancelNotifier = new QSocketNotifier(STDIN_FILENO, QSocketNotifier::Read);
-            connect(m_cancelNotifier, SIGNAL(activated(int)), this, SLOT(cancel()), Qt::DirectConnection);
+        break;
+    case PLUGIN_OP_TYPE:
+        type();
+        break;
+    case PLUGIN_OP_MECHANISMS:
+        mechanisms();
+        break;
+    case PLUGIN_OP_PROCESS:
+        process();
+        break;
+    case PLUGIN_OP_PROCESS_UI:
+        userActionFinished();
+        break;
+    case PLUGIN_OP_REFRESH:
+        refresh();
+        break;
+    case PLUGIN_OP_STOP:
+        is_stopped = true;
+        break;
+    default:
+        {
+            qCritical() << " unknown operation code: " << opcode;
+            is_stopped = true;
         }
+        break;
+    };
 
-        m_cancelNotifier->setEnabled(true);
-        exec();
-        m_cancelNotifier->setEnabled(false);
+    TRACE() << "operation is completed";
+
+    if (!is_stopped) {
+        if (!m_outFile.flush())
+            is_stopped = true;
     }
 
-    void CancelEventThread::cancel()
+    if (is_stopped)
     {
-        char buf[4];
-        memset(buf, 0, 4);
-        int n = 0;
-
-        if (!(n = read(STDIN_FILENO, buf, 4))) {
-            qCritical() << "Cannot read from cancel socket";
-            return;
-        }
-
-        /*
-         * Read the actual value of
-         * */
-        QByteArray ba(buf, 4);
-        quint32 opcode;
-        QDataStream ds(ba);
-        ds >> opcode;
-
-        if (opcode != PLUGIN_OP_CANCEL)
-            qCritical() << "wrong operation code: breakage of remotepluginprocess threads synchronization: " << opcode;
-
-        m_plugin->cancel();
+        m_plugin->abort();
+        emit processStopped();
     }
+}
+
+CancelEventThread::CancelEventThread(AuthPluginInterface *plugin)
+{
+    m_plugin = plugin;
+    m_cancelNotifier = 0;
+}
+
+CancelEventThread::~CancelEventThread()
+{
+    delete m_cancelNotifier;
+}
+
+void CancelEventThread::run()
+{
+    if (!m_cancelNotifier) {
+        m_cancelNotifier = new QSocketNotifier(STDIN_FILENO,
+                                               QSocketNotifier::Read);
+        connect(m_cancelNotifier, SIGNAL(activated(int)),
+                this, SLOT(cancel()), Qt::DirectConnection);
+    }
+
+    m_cancelNotifier->setEnabled(true);
+    exec();
+    m_cancelNotifier->setEnabled(false);
+}
+
+void CancelEventThread::cancel()
+{
+    char buf[4];
+    memset(buf, 0, 4);
+    int n = 0;
+
+    if (!(n = read(STDIN_FILENO, buf, 4))) {
+        qCritical() << "Cannot read from cancel socket";
+        return;
+    }
+
+    /*
+     * Read the actual value of
+     * */
+    QByteArray ba(buf, 4);
+    quint32 opcode;
+    QDataStream ds(ba);
+    ds >> opcode;
+
+    if (opcode != PLUGIN_OP_CANCEL)
+        qCritical() << "wrong operation code: breakage of remotepluginprocess "
+            "threads synchronization: " << opcode;
+
+    m_plugin->cancel();
+}
+
 } //namespace RemotePluginProcessNS
 

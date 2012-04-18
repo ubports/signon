@@ -29,104 +29,109 @@
 
 namespace SignonDaemonNS {
 
-    SignonDaemonAdaptor::SignonDaemonAdaptor(SignonDaemon *parent)
-        : QDBusAbstractAdaptor(parent),
-          m_parent(parent)
-    {
-        setAutoRelaySignals(false);
+SignonDaemonAdaptor::SignonDaemonAdaptor(SignonDaemon *parent):
+    QDBusAbstractAdaptor(parent),
+    m_parent(parent)
+{
+    setAutoRelaySignals(false);
+}
+
+SignonDaemonAdaptor::~SignonDaemonAdaptor()
+{
+}
+
+void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
+{
+    m_parent->registerNewIdentity(objectPath);
+
+    SignonDisposable::destroyUnused();
+}
+
+void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
+{
+    QString errMsg;
+    QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
+                         << "Method:"
+                         << failedMethodName;
+
+    QDBusMessage msg = parentDBusContext().message();
+    msg.setDelayedReply(true);
+    QDBusMessage errReply =
+                msg.createErrorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME,
+                                     errMsg);
+    SIGNOND_BUS.send(errReply);
+    TRACE() << "Method FAILED Access Control check:" << failedMethodName;
+}
+
+void SignonDaemonAdaptor::getIdentity(const quint32 id,
+                                      QDBusObjectPath &objectPath,
+                                      QVariantMap &identityData)
+{
+    if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+                                    parentDBusContext().message(), id)) {
+        securityErrorReply(__func__);
+        return;
     }
 
-    SignonDaemonAdaptor::~SignonDaemonAdaptor()
-    {}
+    m_parent->getIdentity(id, objectPath, identityData);
 
-    void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
-    {
-        m_parent->registerNewIdentity(objectPath);
+    SignonDisposable::destroyUnused();
+}
 
-        SignonDisposable::destroyUnused();
-    }
+QStringList SignonDaemonAdaptor::queryMethods()
+{
+    return m_parent->queryMethods();
+}
 
-    void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
-    {
-        QString errMsg;
-        QTextStream(&errMsg) << SIGNOND_PERMISSION_DENIED_ERR_STR
-                             << "Method:"
-                             << failedMethodName;
+QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id,
+                                                      const QString &type)
+{
+    SignonDisposable::destroyUnused();
 
-        QDBusMessage msg = parentDBusContext().message();
-        msg.setDelayedReply(true);
-        QDBusMessage errReply =
-                    msg.createErrorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME,
-                                         errMsg);
-        SIGNOND_BUS.send(errReply);
-        TRACE() << "\nMethod FAILED Access Control check:\n" << failedMethodName;
-    }
-
-    void SignonDaemonAdaptor::getIdentity(const quint32 id,
-                                          QDBusObjectPath &objectPath,
-                                          QVariantMap &identityData)
-    {
-        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseIdentity(
+    /* Access Control */
+    if (id != SIGNOND_NEW_IDENTITY) {
+        if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseAuthSession(
                                         parentDBusContext().message(), id)) {
             securityErrorReply(__func__);
-            return;
+            return QString();
         }
-
-        m_parent->getIdentity(id, objectPath, identityData);
-
-        SignonDisposable::destroyUnused();
     }
 
-    QStringList SignonDaemonAdaptor::queryMethods()
-    {
-        return m_parent->queryMethods();
+    TRACE() << "ACM passed, creating AuthSession object";
+    return m_parent->getAuthSessionObjectPath(id, type);
+}
+
+QStringList SignonDaemonAdaptor::queryMechanisms(const QString &method)
+{
+    return m_parent->queryMechanisms(method);
+}
+
+void SignonDaemonAdaptor::queryIdentities(const QVariantMap &filter)
+{
+    /* Access Control */
+    if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(
+                                              parentDBusContext().message())) {
+        securityErrorReply(__func__);
+        return;
     }
 
-    QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id, const QString &type)
-    {
-        SignonDisposable::destroyUnused();
+    QDBusMessage msg = parentDBusContext().message();
+    msg.setDelayedReply(true);
+    MapList identities = m_parent->queryIdentities(filter);
+    QDBusMessage reply = msg.createReply(QVariant::fromValue(identities));
+    SIGNOND_BUS.send(reply);
+}
 
-        /* Access Control */
-        if (id != SIGNOND_NEW_IDENTITY) {
-            if (!AccessControlManagerHelper::instance()->isPeerAllowedToUseAuthSession(
-                                            parentDBusContext().message(), id)) {
-                securityErrorReply(__func__);
-                return QString();
-            }
-        }
-
-        TRACE() << "ACM passed, creating AuthSession object";
-        return m_parent->getAuthSessionObjectPath(id, type);
+bool SignonDaemonAdaptor::clear()
+{
+    /* Access Control */
+    if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(
+                                              parentDBusContext().message())) {
+        securityErrorReply(__func__);
+        return false;
     }
 
-    QStringList SignonDaemonAdaptor::queryMechanisms(const QString &method)
-    {
-        return m_parent->queryMechanisms(method);
-    }
+    return m_parent->clear();
+}
 
-    void SignonDaemonAdaptor::queryIdentities(const QVariantMap &filter)
-    {
-        /* Access Control */
-        if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
-            securityErrorReply(__func__);
-            return;
-        }
-
-        QDBusMessage msg = parentDBusContext().message();
-        msg.setDelayedReply(true);
-        MapList identities = m_parent->queryIdentities(filter);
-        QDBusMessage reply = msg.createReply(QVariant::fromValue(identities));
-        SIGNOND_BUS.send(reply);
-    }
-
-    bool SignonDaemonAdaptor::clear()
-    {
-        /* Access Control */
-        if (!AccessControlManagerHelper::instance()->isPeerKeychainWidget(parentDBusContext().message())) {
-            securityErrorReply(__func__);
-            return false;
-        }
-
-        return m_parent->clear();
-    }
 } //namespace SignonDaemonNS

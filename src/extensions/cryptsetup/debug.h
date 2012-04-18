@@ -25,11 +25,11 @@
 #include <QDebug>
 
 #ifndef TRACE
-#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
 #endif
 
 #ifndef BLAME
-#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
 #endif
 
 #endif // SIGNON_DEBUG_H
