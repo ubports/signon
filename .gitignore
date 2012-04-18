@@ -1,6 +1,8 @@
 Makefile*
 moc_*
 *.o
+*.gcda
+*.gcno
 .moc
 .obj
 *.so
