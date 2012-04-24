@@ -233,7 +233,6 @@ QString SqlDatabase::errorInfo(const QSqlError &error)
 
 QStringList SqlDatabase::queryList(const QString &query_str)
 {
-    TRACE();
     QSqlQuery query(QString(), m_database);
     if (!query.prepare(query_str))
         TRACE() << "Query prepare warning: " << query.lastQuery();
@@ -242,7 +241,6 @@ QStringList SqlDatabase::queryList(const QString &query_str)
 
 QStringList SqlDatabase::queryList(QSqlQuery &q)
 {
-    TRACE();
     QStringList list;
     QSqlQuery query = exec(q);
     if (errorOccurred()) return list;
