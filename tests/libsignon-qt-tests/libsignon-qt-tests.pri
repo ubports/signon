@@ -23,10 +23,10 @@ HEADERS += \
     ssotestclient.h \
     testauthserviceresult.h \
     testidentityresult.h \
-    $$TOP_SRC_DIR/src/plugins/ssotest2/ssotest2data.h
+    $$TOP_SRC_DIR/src/plugins/test/ssotest2data.h
 INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/plugins \
-    $$TOP_SRC_DIR/src/plugins/ssotest2
+    $$TOP_SRC_DIR/src/plugins/test
 DEFINES += SSO_CI_TESTMANAGEMENT
 DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR_QUOTED}"
 QMAKE_CXXFLAGS += -fno-exceptions \
