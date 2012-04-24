@@ -149,9 +149,19 @@ SignonIdentityInfo SignonIdentity::queryInfo(bool &ok, bool queryPassword)
 {
     ok = true;
 
+    bool needLoadFromDB = true;
     if (m_pInfo) {
-        return *m_pInfo;
-    } else {
+        needLoadFromDB = false;
+        if (queryPassword && m_pInfo->password().isEmpty()) {
+            needLoadFromDB = true;
+        }
+    }
+
+    if (needLoadFromDB) {
+        if (m_pInfo != 0) {
+            delete m_pInfo;
+        }
+
         CredentialsDB *db =
             CredentialsAccessManager::instance()->credentialsDB();
         m_pInfo = new SignonIdentityInfo(db->credentials(m_id, queryPassword));
@@ -163,7 +173,13 @@ SignonIdentityInfo SignonIdentity::queryInfo(bool &ok, bool queryPassword)
             return SignonIdentityInfo();
         }
     }
-    return *m_pInfo;
+
+    /* Make sure that we clear the password, if the caller doesn't need it */
+    SignonIdentityInfo info = *m_pInfo;
+    if (!queryPassword) {
+        info.setPassword(QString());
+    }
+    return info;
 }
 
 bool SignonIdentity::addReference(const QString &reference)
