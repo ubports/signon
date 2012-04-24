@@ -260,7 +260,8 @@ void SsoTestClient::queryAvailableMetods()
 void SsoTestClient::requestCredentialsUpdate()
 {
     TEST_START
-    QSKIP("This test involves UI interaction...Skipping.", SkipSingle);
+
+    m_signOnUI->setPassword("Hello there, this is my password");
 
     Identity *identity = Identity::existingIdentity(m_storedIdentityId, this);
 
@@ -289,8 +290,24 @@ void SsoTestClient::requestCredentialsUpdate()
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
+    qDebug() << m_signOnUI->parameters();
     QVERIFY(m_identityResult.m_responseReceived ==
             TestIdentityResult::NormalResp);
+
+    /* Verify that the password is the one set by signon UI */
+    connect(identity, SIGNAL(secretVerified(const bool)),
+            &m_identityResult, SLOT(secretVerified(const bool)));
+
+    identity->verifySecret(m_signOnUI->password());
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(m_identityResult.m_responseReceived,
+             TestIdentityResult::NormalResp);
+
+    QVERIFY(m_identityResult.m_secretVerified);
+
     TEST_DONE
 }
 

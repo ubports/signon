@@ -45,6 +45,21 @@ public:
      */
     void setDelay(int seconds) { m_delay = seconds * 1000; }
 
+    /*!
+     * Get the parameters sent with the last request.
+     */
+    QVariantMap parameters() const { return m_parameters; }
+
+    /*!
+     * Set the password which will be returned to the next query.
+     */
+    void setPassword(const QString &password) { m_replyPassword = password; }
+
+    /*!
+     * Get the password used by SignOnUI.
+     */
+    QString password() const { return m_replyPassword; }
+
 public Q_SLOTS:
     Q_NOREPLY void cancelUiRequest(const QString &requestId);
     QVariantMap queryDialog(const QVariantMap &parameters);
@@ -56,6 +71,8 @@ private Q_SLOTS:
 private:
     QDBusMessage m_reply;
     QDBusConnection m_connection;
+    QVariantMap m_parameters;
+    QString m_replyPassword;
     int m_delay;
 };
 

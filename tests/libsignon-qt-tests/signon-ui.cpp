@@ -21,6 +21,8 @@
  */
 
 #include "signon-ui.h"
+#include "SignOn/uisessiondata.h"
+#include "SignOn/uisessiondata_priv.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -32,6 +34,7 @@ SignOnUI::SignOnUI(QDBusConnection connection, QObject *parent):
     QObject(parent),
     QDBusContext(),
     m_connection(connection),
+    m_replyPassword("SSOUI default password"),
     m_delay(0)
 {
     connection.registerObject(QLatin1String(objectPath), this,
@@ -54,7 +57,15 @@ QVariantMap SignOnUI::queryDialog(const QVariantMap &parameters)
 {
     qDebug() << Q_FUNC_INFO << parameters;
 
-    QVariant result = parameters;
+    m_parameters = parameters;
+
+    QVariantMap result = parameters;
+    if (parameters.value(SSOUI_KEY_QUERYPASSWORD, false).toBool()) {
+        result.remove(SSOUI_KEY_QUERYPASSWORD);
+        result.insert(SSOUI_KEY_PASSWORD, m_replyPassword);
+    }
+    result.insert(SSOUI_KEY_ERROR, SignOn::QUERY_ERROR_NONE);
+
     m_reply = message().createReply(result);
 
     setDelayedReply(true);
