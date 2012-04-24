@@ -893,7 +893,6 @@ void SsoTestClient::verifyUser()
 
 void SsoTestClient::verifySecret()
 {
-    QSKIP("Skipping until secure storage gets stabilized.", SkipSingle);
     TEST_START
     m_identityResult.reset();
 
