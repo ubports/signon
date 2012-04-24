@@ -83,18 +83,17 @@ void SsoTest2Plugin::process(const SignOn::SessionData &inData,
                               Q_ARG(QString, mechanism));
 }
 
-static QByteArray loadImage(const QString &name, const char *format)
+static QByteArray loadImage(const QString &name)
 {
     //TODO: adopt to something changeable
-    QString imageDir = QLatin1String("/usr/lib/signon/captcha_images/");
+    QString resource = QLatin1String(":/");
     QByteArray ba;
 
-    TRACE() << (imageDir + name);
-    QImage realImage(imageDir + name, format);
+    QImage realImage(resource + name);
     QBuffer buffer(&ba);
     buffer.open(QIODevice::ReadWrite);
     ba.clear();
-    realImage.save(&buffer, format);
+    realImage.save(&buffer);
     return ba;
 }
 
@@ -122,7 +121,7 @@ static QVariantMap nameToParameters(const QString &dialogName)
         data["watchdog"] = QString(SSOUI_KEY_SLOT_ACCEPT);
     } else if (dialogName  == QLatin1String("Captcha")) {
         data["QueryMessageId"] = 0;
-        data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
+        data["CaptchaImage"] = loadImage("Captcha1.jpg");
         data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
     } else if (dialogName  == QLatin1String("LoginAndCaptcha")) {
         data["UserName"] = "testUsername";
@@ -132,7 +131,7 @@ static QVariantMap nameToParameters(const QString &dialogName)
         data["QueryPassword"] = true;
         data["QueryMessageId"] = 0;
 
-        data["CaptchaImage"] = loadImage("Captcha1.jpg", "JPEG");
+        data["CaptchaImage"] = loadImage("Captcha1.jpg");
         data["watchdog"] = QString(SSOUI_KEY_SLOT_REJECT);
     }
 
@@ -229,7 +228,7 @@ void SsoTest2Plugin::refresh(const SignOn::UiSessionData &data)
     uiData = data;
     QString imageName = QString("Captcha%1.jpg").arg(ii);
     TRACE() << imageName;
-    uiData.setCaptchaImage(loadImage(imageName, "JPEG"));
+    uiData.setCaptchaImage(loadImage(imageName));
     ii++;
     if (ii>4)
         ii = 1;
