@@ -20,6 +20,8 @@
  * 02110-1301 USA
  */
 
+#include "SignOn/uisessiondata.h"
+#include "SignOn/uisessiondata_priv.h"
 #include "signon-ui.h"
 #include "ssotestclient.h"
 
@@ -829,9 +831,9 @@ void SsoTestClient::removeReference()
 void SsoTestClient::verifyUser()
 {
     TEST_START
-    QSKIP("This tests requires user interactiojn... so skipping", SkipSingle);
     m_identityResult.reset();
 
+    const QString password(QLatin1String("A strong password"));
     //inserting some credentials
     QMap<MethodName, MechanismsList> methods;
     methods.insert("method1", QStringList() << "mech1" << "mech2");
@@ -839,7 +841,7 @@ void SsoTestClient::verifyUser()
     IdentityInfo info("TEST_CAPTION_1",
                       "TEST_USERNAME_1",
                       methods);
-    info.setSecret("TEST_PASSWORD_1");
+    info.setSecret(password);
     info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
 
     if (!storeCredentialsPrivate(info))
@@ -862,6 +864,7 @@ void SsoTestClient::verifyUser()
 
     connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
 
+    m_signOnUI->setPassword(password);
     identity->verifyUser("message");
 
     QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
@@ -875,6 +878,16 @@ void SsoTestClient::verifyUser()
 
     QVERIFY(m_identityResult.m_responseReceived ==
             TestIdentityResult::NormalResp);
+
+    /* check that the parameters received by SignOnUI were correct */
+    QVariantMap uiParameters = m_signOnUI->parameters();
+    QCOMPARE(uiParameters.value(SSOUI_KEY_MESSAGE).toString(),
+             QLatin1String("message"));
+    QVERIFY(uiParameters.contains(SSOUI_KEY_QUERYPASSWORD));
+
+    /* check that the verification was successful */
+    QVERIFY(m_identityResult.m_userVerified);
+
     TEST_DONE
 }
 
