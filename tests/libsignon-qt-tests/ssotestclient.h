@@ -25,8 +25,6 @@
 
 #include <QObject>
 
-//#define SSOUI_TESTS_ENABLED
-
 #include "testauthsession.h"
 #include "testidentityresult.h"
 #include "testauthserviceresult.h"
@@ -92,6 +90,8 @@ private Q_SLOTS:
     void cancel_with_delay();
     void cancel_without_process();
     void handle_destroyed_signal();
+    void processUi_with_existing_identity();
+    void processUi_and_cancel();
 #endif
 
 private:
@@ -101,10 +101,6 @@ private:
 
     void queryIdentitiesWithFilter();
 
-#ifdef SSOUI_TESTS_ENABLED
-    void processUi_with_existing_identity();
-    void processUi_and_cancel();
-#endif
     /*
      * Subtests
      * */

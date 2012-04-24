@@ -1749,7 +1749,6 @@ void SsoTestClient::handle_destroyed_signal()
     TEST_DONE
 }
 
-#ifdef SSOUI_TESTS_ENABLED
 void SsoTestClient::processUi_with_existing_identity()
 {
     TEST_START
@@ -1763,7 +1762,6 @@ void SsoTestClient::processUi_and_cancel()
     testAuthSession.processUi_and_cancel();
     TEST_DONE
 }
-#endif
 
 #endif
 

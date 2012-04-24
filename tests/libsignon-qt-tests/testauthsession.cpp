@@ -23,6 +23,7 @@
 #ifndef TESTAUTHSESSION_CPP_
 #define TESTAUTHSESSION_CPP_
 
+#include "signon-ui.h"
 #include "testauthsession.h"
 #include "testthread.h"
 #include "SignOn/identity.h"
@@ -774,9 +775,6 @@ void TestAuthSession::handle_destroyed_signal()
     QTimer::singleShot(5 * 62 *1000, &loop, SLOT(quit()));
     loop.exec();
 
-    AuthSession *as2;
-    SSO_TEST_CREATE_AUTH_SESSION(as2, "ssotest");
-
     QTimer::singleShot(5 * 1000, &loop, SLOT(quit()));
     loop.exec();
 
@@ -814,21 +812,20 @@ void TestAuthSession::response(const SignOn::SessionData &data)
     g_bigStringReplySize = data.Caption().size();
 }
 
-
-#ifdef SSOUI_TESTS_ENABLED
-
 void TestAuthSession::processUi_with_existing_identity()
 {
     AuthSession *as;
     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
 
+    SignOnUI *signOnUI = new SignOnUI(QDBusConnection::sessionBus(), this);
+
     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
     QSignalSpy stateCounter(as,
           SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
-    QSignalSpy spy(as, SIGNAL(response(const SessionData&)));
+    QSignalSpy spy(as, SIGNAL(response(const SignOn::SessionData&)));
     QEventLoop loop;
 
-    QObject::connect(as, SIGNAL(response(const SessionData&)),
+    QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)),
                      &loop, SLOT(quit()));
     QObject::connect(as, SIGNAL(error(const SignOn::Error &)),
                      &loop, SLOT(quit()));
@@ -856,7 +853,7 @@ void TestAuthSession::processUi_with_existing_identity()
 
     QCOMPARE(spy.count(), 1);
     if (errorCounter.count())
-        TRACE() << errorCounter.at(0).at(1).toString();
+        qDebug() << errorCounter.at(0).at(1).toString();
 
     QCOMPARE(errorCounter.count(), 0);
 
@@ -868,6 +865,8 @@ void TestAuthSession::processUi_with_existing_identity()
 
     foreach(QString result, resultData.ChainOfResults())
         QCOMPARE(result, QString("OK"));
+
+    delete signOnUI;
 }
 
 void TestAuthSession::processUi_and_cancel()
@@ -876,13 +875,16 @@ void TestAuthSession::processUi_and_cancel()
     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
     g_currentSession = as;
 
+    SignOnUI *signOnUI = new SignOnUI(QDBusConnection::sessionBus(), this);
+    signOnUI->setDelay(4);
+
     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
     QSignalSpy stateCounter(as,
           SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
-    QSignalSpy spy(as, SIGNAL(response(const SessionData&)));
+    QSignalSpy spy(as, SIGNAL(response(const SignOn::SessionData&)));
     QEventLoop loop;
 
-    QObject::connect(as, SIGNAL(response(const SessionData&)),
+    QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)),
                      &loop, SLOT(quit()));
     QObject::connect(as, SIGNAL(error(const SignOn::Error &)),
                      &loop, SLOT(quit()));
@@ -911,9 +913,9 @@ void TestAuthSession::processUi_and_cancel()
 
     QCOMPARE(spy.count(), 0);
     QCOMPARE(errorCounter.count(), 1);
-}
 
-#endif
+    delete signOnUI;
+}
 
 #if !defined(SSO_CI_TESTMANAGEMENT) && !defined(SSOTESTCLIENT_USES_AUTHSESSION)
 QTEST_MAIN(TestAuthSession)

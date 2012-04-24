@@ -14,12 +14,14 @@ QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 SOURCES += \
     testauthsession.cpp \
     testthread.cpp \
+    signon-ui.cpp \
     ssotestclient.cpp \
     testauthserviceresult.cpp \
     testidentityresult.cpp
 HEADERS += \
     testauthsession.h \
     testthread.h \
+    signon-ui.h \
     ssotestclient.h \
     testauthserviceresult.h \
     testidentityresult.h \

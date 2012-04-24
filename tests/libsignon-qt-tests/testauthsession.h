@@ -36,22 +36,8 @@
 #include "signond/signoncommon.h"
 #include "SignOn/authservice.h"
 
-//#ifdef SSOUI_TESTS_ENABLED
-//#undef SSOUI_TESTS_ENABLED
-//#endif
-
-/*
-  * As the autotesting framework is not implemented yet
-  * so we need to disable this test for now.
-  *
-  * */
-//#define SSOUI_TESTS_ENABLED
-
-
-#ifdef SSOUI_TESTS_ENABLED
-    #include "ssotest2data.h"
-    #include "SignOn/uisessiondata.h"
-#endif
+#include "ssotest2data.h"
+#include "SignOn/uisessiondata.h"
 
 /*
  * here we test the implementation because of difficulties of having
@@ -110,10 +96,8 @@ private Q_SLOTS:
 
     void multi_thread_test();
 
-#ifdef SSOUI_TESTS_ENABLED
     void processUi_with_existing_identity();
     void processUi_and_cancel();
-#endif
 
 private Q_SLOTS:
     void cancel();
