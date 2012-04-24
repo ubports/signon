@@ -41,6 +41,12 @@ static QStringList g_processReplyRealmsList;
 static int g_bigStringSize = 50000;
 static int g_bigStringReplySize = 0;
 
+TestAuthSession::TestAuthSession(SignOnUI *signOnUI, QObject *parent):
+    QObject(parent),
+    m_signOnUI(signOnUI)
+{
+}
+
 void TestAuthSession::initTestCase()
 {
     qDebug() << "HI!";
@@ -817,8 +823,6 @@ void TestAuthSession::processUi_with_existing_identity()
     AuthSession *as;
     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
 
-    SignOnUI *signOnUI = new SignOnUI(QDBusConnection::sessionBus(), this);
-
     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
     QSignalSpy stateCounter(as,
           SIGNAL(stateChanged(AuthSession::AuthSessionState, const QString&)));
@@ -865,8 +869,6 @@ void TestAuthSession::processUi_with_existing_identity()
 
     foreach(QString result, resultData.ChainOfResults())
         QCOMPARE(result, QString("OK"));
-
-    delete signOnUI;
 }
 
 void TestAuthSession::processUi_and_cancel()
@@ -875,8 +877,7 @@ void TestAuthSession::processUi_and_cancel()
     SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
     g_currentSession = as;
 
-    SignOnUI *signOnUI = new SignOnUI(QDBusConnection::sessionBus(), this);
-    signOnUI->setDelay(4);
+    m_signOnUI->setDelay(4);
 
     QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
     QSignalSpy stateCounter(as,
@@ -913,8 +914,6 @@ void TestAuthSession::processUi_and_cancel()
 
     QCOMPARE(spy.count(), 0);
     QCOMPARE(errorCounter.count(), 1);
-
-    delete signOnUI;
 }
 
 #if !defined(SSO_CI_TESTMANAGEMENT) && !defined(SSOTESTCLIENT_USES_AUTHSESSION)

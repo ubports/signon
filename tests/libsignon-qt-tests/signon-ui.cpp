@@ -41,6 +41,8 @@ SignOnUI::SignOnUI(QDBusConnection connection, QObject *parent):
 
 SignOnUI::~SignOnUI()
 {
+    m_connection.unregisterService(QLatin1String(serviceName));
+    m_connection.unregisterObject(QLatin1String(objectPath));
 }
 
 void SignOnUI::cancelUiRequest(const QString &requestId)

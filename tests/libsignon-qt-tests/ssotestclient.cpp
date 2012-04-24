@@ -20,6 +20,7 @@
  * 02110-1301 USA
  */
 
+#include "signon-ui.h"
 #include "ssotestclient.h"
 
 #include <QEventLoop>
@@ -99,6 +100,13 @@ int finishedClients = 0;
 
 #define TEST_AEGIS_TOKEN "libsignon-qt-tests::libsignon-qt-tests"
 
+SsoTestClient::SsoTestClient(QObject *parent):
+    QObject(parent),
+    m_signOnUI(new SignOnUI(QDBusConnection::sessionBus(), this)),
+    testAuthSession(m_signOnUI)
+{
+}
+
 void SsoTestClient::initTestCase()
 {
     clearDB();
@@ -109,6 +117,7 @@ void SsoTestClient::initTestCase()
 void SsoTestClient::cleanupTestCase()
 {
     testAuthSession.cleanupTestCase();
+    delete m_signOnUI;
     clearDB();
 }
 

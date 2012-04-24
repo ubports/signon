@@ -52,9 +52,14 @@ using namespace SignOn;
  * */
 #define test_timeout 10000
 
+class SignOnUI;
+
 class TestAuthSession: public QObject
 {
     Q_OBJECT
+
+public:
+    TestAuthSession(SignOnUI *signOnUi, QObject *parent = 0);
 
 #if defined(SSO_CI_TESTMANAGEMENT) || defined(SSOTESTCLIENT_USES_AUTHSESSION)
 public Q_SLOTS:
@@ -102,6 +107,9 @@ private Q_SLOTS:
 private Q_SLOTS:
     void cancel();
     void response(const SignOn::SessionData &data);
+
+private:
+    SignOnUI *m_signOnUI;
 };
 
 /*

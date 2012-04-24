@@ -35,9 +35,14 @@
     #define SSOTESTCLIENT_USES_AUTHSESSION
 #endif
 
+class SignOnUI;
+
 class SsoTestClient: public QObject
 {
     Q_OBJECT
+
+public:
+    SsoTestClient(QObject *parent = 0);
 
 private Q_SLOTS:
     void initTestCase();
@@ -122,6 +127,7 @@ protected Q_SLOTS:
     void response(const SignOn::SessionData &data);
 
 private:
+    SignOnUI *m_signOnUI;
     TestAuthSession testAuthSession;
     QStringList m_tokenList;
     int m_expectedNumberOfMethods;
