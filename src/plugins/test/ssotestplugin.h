@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +31,7 @@
 
 namespace SsoTestPluginNS {
 
-class SsoTestPlugin : public AuthPluginInterface
+class SsoTestPlugin: public AuthPluginInterface
 {
     Q_OBJECT
     Q_INTERFACES(AuthPluginInterface)
@@ -43,7 +43,8 @@ public Q_SLOTS:
     QString type() const { return m_type; }
     QStringList mechanisms() const { return m_mechanisms; }
     void cancel();
-    void process(const SignOn::SessionData &inData, const QString &mechanism = 0);
+    void process(const SignOn::SessionData &inData,
+                 const QString &mechanism = 0);
     void userActionFinished(const SignOn::UiSessionData &data);
 
 private:
@@ -51,7 +52,8 @@ private:
     QStringList m_mechanisms;
 
 private Q_SLOTS:
-        void execProcess(const SignOn::SessionData &inData, const QString &mechanism);
+    void execProcess(const SignOn::SessionData &inData,
+                     const QString &mechanism);
 };
 
 } //namespace SsoTestPluginNS

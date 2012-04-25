@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -36,7 +36,7 @@ class TestBackup: public QObject
 
 public Q_SLOTS:
 #if defined(SSO_CI_TESTMANAGEMENT)
-     void runAllTests();
+    void runAllTests();
 #endif
 
 private Q_SLOTS:
@@ -55,6 +55,5 @@ private Q_SLOTS:
 private:
     QProcess *daemonProcess;
 };
-
 
 #endif //BACKUPTEST_H_

@@ -34,7 +34,8 @@ MSSFAccessControlPlugin::MSSFAccessControlPlugin():
     setObjectName(QLatin1String("mssf-ac"));
 }
 
-AbstractAccessControlManager *MSSFAccessControlPlugin::accessControlManager(QObject *parent) const
+AbstractAccessControlManager *
+MSSFAccessControlPlugin::accessControlManager(QObject *parent) const
 {
     qDebug() << Q_FUNC_INFO;
     return new MSSFAccessControlManager(parent);

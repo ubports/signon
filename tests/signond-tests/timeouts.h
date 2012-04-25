@@ -40,7 +40,7 @@ public Q_SLOTS:
     void identityError(const SignOn::Error &error);
 
 #if defined(SSO_CI_TESTMANAGEMENT)
-     void runAllTests();
+    void runAllTests();
 #endif
 
 private Q_SLOTS:
@@ -50,7 +50,6 @@ private Q_SLOTS:
 
     void identityTimeout();
     void identityRegisterTwice();
-
 
 signals:
     void finished();
@@ -63,4 +62,3 @@ private:
 };
 
 #endif // TIMEOUTS_TEST_H
-

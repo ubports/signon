@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2011 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -29,8 +29,7 @@ DBusInterface::DBusInterface(const QString &service,
                              const char *interface,
                              const QDBusConnection &connection,
                              QObject *parent):
-    QDBusAbstractInterface(service, path, interface, connection,
-                           parent)
+    QDBusAbstractInterface(service, path, interface, connection, parent)
 {
 }
 

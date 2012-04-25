@@ -5,7 +5,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -65,7 +65,7 @@ void PasswordPluginTest::cleanup()
 }
 
 //slot for receiving result
-void PasswordPluginTest::result(const SignOn::SessionData& data)
+void PasswordPluginTest::result(const SignOn::SessionData &data)
 {
     qDebug() << "got result";
     m_response = data;
@@ -81,7 +81,7 @@ void PasswordPluginTest::pluginError(const SignOn::Error &err)
 }
 
 //slot for receiving result
-void PasswordPluginTest::uiRequest(const SignOn::UiSessionData& data)
+void PasswordPluginTest::uiRequest(const SignOn::UiSessionData &data)
 {
     qDebug() << "got ui request";
     m_uiResponse = data;
@@ -137,11 +137,15 @@ void PasswordPluginTest::testPluginProcess()
     SignOn::SessionData info2;
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
-                  this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
+                     this, SLOT(result(const SignOn::SessionData&)),
+                     Qt::QueuedConnection);
     QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
-                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
-                  this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
+                     this, SLOT(pluginError(const SignOn::Error & )),
+                     Qt::QueuedConnection);
+    QObject::connect(m_testPlugin,
+                     SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
+                     this,  SLOT(uiRequest(const SignOn::UiSessionData&)),
+                     Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     //try with password
@@ -184,11 +188,15 @@ void PasswordPluginTest::testPluginUserActionFinished()
     SignOn::UiSessionData info;
 
     QObject::connect(m_testPlugin, SIGNAL(result(const SignOn::SessionData&)),
-                  this,  SLOT(result(const SignOn::SessionData&)),Qt::QueuedConnection);
+                     this, SLOT(result(const SignOn::SessionData&)),
+                     Qt::QueuedConnection);
     QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
-                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
-                  this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
+                     this, SLOT(pluginError(const SignOn::Error & )),
+                     Qt::QueuedConnection);
+    QObject::connect(m_testPlugin,
+                     SIGNAL(userActionRequired(const SignOn::UiSessionData&)),
+                     this, SLOT(uiRequest(const SignOn::UiSessionData&)),
+                     Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     //empty data
@@ -226,10 +234,13 @@ void PasswordPluginTest::testPluginRefresh()
     TEST_START
     SignOn::UiSessionData info;
 
-    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error & )),
-                  this,  SLOT(pluginError(const SignOn::Error & )),Qt::QueuedConnection);
-    QObject::connect(m_testPlugin, SIGNAL(refreshed(const SignOn::UiSessionData&)),
-                  this,  SLOT(uiRequest(const SignOn::UiSessionData&)),Qt::QueuedConnection);
+    QObject::connect(m_testPlugin, SIGNAL(error(const SignOn::Error &)),
+                     this, SLOT(pluginError(const SignOn::Error &)),
+                     Qt::QueuedConnection);
+    QObject::connect(m_testPlugin,
+                     SIGNAL(refreshed(const SignOn::UiSessionData&)),
+                     this, SLOT(uiRequest(const SignOn::UiSessionData&)),
+                     Qt::QueuedConnection);
     QTimer::singleShot(10*1000, &m_loop, SLOT(quit()));
 
     m_testPlugin->refresh(info);

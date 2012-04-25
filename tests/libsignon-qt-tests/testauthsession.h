@@ -5,7 +5,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -36,22 +36,8 @@
 #include "signond/signoncommon.h"
 #include "SignOn/authservice.h"
 
-//#ifdef SSOUI_TESTS_ENABLED
-//#undef SSOUI_TESTS_ENABLED
-//#endif
-
-/*
-  * As the autotesting framework is not implemented yet
-  * so we need to disable this test for now.
-  *
-  * */
-//#define SSOUI_TESTS_ENABLED
-
-
-#ifdef SSOUI_TESTS_ENABLED
-    #include "ssotest2data.h"
-    #include "SignOn/uisessiondata.h"
-#endif
+#include "ssotest2data.h"
+#include "SignOn/uisessiondata.h"
 
 /*
  * here we test the implementation because of difficulties of having
@@ -66,62 +52,67 @@ using namespace SignOn;
  * */
 #define test_timeout 10000
 
+class SignOnUI;
+
 class TestAuthSession: public QObject
 {
-     Q_OBJECT
+    Q_OBJECT
+
+public:
+    TestAuthSession(SignOnUI *signOnUi, QObject *parent = 0);
 
 #if defined(SSO_CI_TESTMANAGEMENT) || defined(SSOTESTCLIENT_USES_AUTHSESSION)
-    public Q_SLOTS:
+public Q_SLOTS:
 #else
-    private Q_SLOTS:
+private Q_SLOTS:
 #endif
-      /*
-      * Start the signon daemon
-      * */
-     void initTestCase();
+    /*
+     * Start the signon daemon
+     */
+    void initTestCase();
 
-     /*
-      * End the signon daemon
-      * */
-     void cleanupTestCase();
+    /*
+     * End the signon daemon
+     */
+    void cleanupTestCase();
 
-     /*
-      * UIless
-      * AuthSession API related test cases
-      * */
+    /*
+     * UIless
+     * AuthSession API related test cases
+     */
+    void queryMechanisms_existing_method();
+    void queryMechanisms_nonexisting_method();
 
-     void queryMechanisms_existing_method();
-     void queryMechanisms_nonexisting_method();
+    void process_with_new_identity();
+    void process_with_existing_identity();
+    void process_with_nonexisting_type();
+    void process_with_nonexisting_method();
+    void process_with_unauthorized_method();
+    void process_from_other_process();
+    void process_many_times_after_auth();
+    void process_many_times_before_auth();
+    void process_with_big_session_data();
 
+    void cancel_immidiately();
+    void cancel_with_delay();
+    void cancel_without_process();
 
-     void process_with_new_identity();
-     void process_with_existing_identity();
-     void process_with_nonexisting_type();
-     void process_with_nonexisting_method();
-     void process_with_unauthorized_method();
-     void process_from_other_process();
-     void process_many_times_after_auth();
-     void process_many_times_before_auth();
-     void process_with_big_session_data();
+    void handle_destroyed_signal();
 
-     void cancel_immidiately();
-     void cancel_with_delay();
-     void cancel_without_process();
+    void multi_thread_test();
 
-     void handle_destroyed_signal();
+    void processUi_with_existing_identity();
+    void processUi_and_cancel();
 
-     void multi_thread_test();
+private Q_SLOTS:
+    void cancel();
+    void response(const SignOn::SessionData &data);
 
-#ifdef SSOUI_TESTS_ENABLED
-     void processUi_with_existing_identity();
-     void processUi_and_cancel();
-#endif
-    private Q_SLOTS:
-        void cancel();
-        void response(const SignOn::SessionData &data);
- };
+private:
+    SignOnUI *m_signOnUI;
+};
 
-/**
+/*
  * The SlotMachine class is used by process_from_other_process
  * test to receive signals regarding the completion of D-Bus
  * calls. The QSignalSpy classes cannot be used because the

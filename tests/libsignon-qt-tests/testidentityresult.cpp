@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -47,56 +47,51 @@ void TestIdentityResult::reset()
     m_removed = false;
 
 }
-bool TestIdentityResult::compareIdentityInfos(
-        const IdentityInfo &info1,
-        const IdentityInfo &info2, bool checkId, bool checlACL)
+bool TestIdentityResult::compareIdentityInfos(const IdentityInfo &info1,
+                                              const IdentityInfo &info2,
+                                              bool checkId,
+                                              bool checlACL)
 {
-    qDebug() << QString("\nComparing identities %1 & %2.\n").arg(info1.id()).arg(info2.id());
+    qDebug() << QString("Comparing identities %1 & %2.").
+        arg(info1.id()).arg(info2.id());
 
-    if(checkId && (info1.id() != info2.id()))
-    {
+    if (checkId && (info1.id() != info2.id())) {
         qDebug() << "IDs:" << info1.id() << " " << info2.id();
         return false;
     }
 
-    if(info1.caption() != info2.caption())
-    {
+    if (info1.caption() != info2.caption()) {
         qDebug() << "Captions:" << info1.caption() << " " << info2.caption();
         return false;
     }
 
 
-    if(info1.methods() != info2.methods())
-    {
+    if (info1.methods() != info2.methods()) {
         qDebug() << "Methods:" << info1.methods() << " " << info2.methods();
         return false;
     }
 
-    if(info1.realms() != info2.realms())
-    {
+    if (info1.realms() != info2.realms()) {
         qDebug() << "Realms:" << info1.realms() << " " << info2.realms();
         return false;
     }
 
-    if(checlACL && (info1.accessControlList() != info2.accessControlList()))
-    {
+    if (checlACL && (info1.accessControlList() != info2.accessControlList())) {
         qDebug() << "ACLs:" << info1.accessControlList() << " " << info2.accessControlList();
         return false;
     }
 
-    if(info1.userName() != info2.userName())
-    {
+    if (info1.userName() != info2.userName()) {
         qDebug() << "Usernames:" << info1.userName() << " " << info2.userName();
         return false;
     }
 
-    foreach(QString method, info1.methods()) {
+    foreach (QString method, info1.methods()) {
         MechanismsList mechs1 = info1.mechanisms(method);
         MechanismsList mechs2 =  info2.mechanisms(method);
         mechs1.sort();
         mechs2.sort();
-        if(mechs1 != mechs2)
-        {
+        if (mechs1 != mechs2) {
             qDebug() << QString("Mechanisms for method %1:").arg(method)
                     << info1.mechanisms(method) << " " << info2.mechanisms(method);
             return false;

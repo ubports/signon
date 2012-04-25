@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -54,7 +54,8 @@ namespace SignOn {
           type_ name_() const { return m_data.value(QLatin1String(#name_)).value<type_>(); }
 
 /*!
- * Property which holds the access control tokens that the requesting application has.
+ * Property which holds the access control tokens that the requesting
+ * application has.
  * @note to be used by the plugins developers only.
  */
 #define SSO_ACCESS_CONTROL_TOKENS QLatin1String("AccessControlTokens")
@@ -92,8 +93,8 @@ public:
     /*!
      * Constructor. Creates a SessionData with data 'data'.
      * @param data The data to be contained by the SessionData
-     * @attention internal use only recommended. As a SSO client application developer
-     *            use setters/gettters for specific SessionData properties.
+     * @attention internal use only recommended. As a SSO client application
+     * developer use setters/gettters for specific SessionData properties.
      */
     SessionData(const QVariantMap &data = QVariantMap()) { m_data = data; }
 
@@ -134,8 +135,8 @@ public:
     /*!
      * Access the list of runtime existing properties of the SessionData.
      * @param propertyName Name of the property to be accessed
-     * @return Variant containing the property value of propertyName, or an empty variant if
-     *          property does not exist at runtime.
+     * @return Variant containing the property value of propertyName, or an
+     * empty variant if property does not exist at runtime.
      */
     const QVariant getProperty(const QString &propertyName) const {
         return m_data.value(propertyName, QVariant());
@@ -204,7 +205,8 @@ public:
     /*!
      * Declares the property NetworkTimeout setter and getter.
      * Sets the timeout for network related operations in milliseconds.
-     * To be used when a remote service does not reply in a reasonable amount of time.
+     * To be used when a remote service does not reply in a reasonable amount
+     * of time.
      */
     SIGNON_SESSION_DECLARE_PROPERTY(quint32, NetworkTimeout)
 

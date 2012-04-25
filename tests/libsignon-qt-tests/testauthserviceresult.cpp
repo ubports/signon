@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -65,7 +65,8 @@ void TestAuthServiceResult::methodsAvailable(const QStringList &methods)
     emit testCompleted();
 }
 
-void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QStringList &mechanisms)
+void TestAuthServiceResult::mechanismsAvailable(const QString &method,
+                                                const QStringList &mechanisms)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = NormalResp;
@@ -76,7 +77,8 @@ void TestAuthServiceResult::mechanismsAvailable(const QString &method, const QSt
     emit testCompleted();
 }
 
-void TestAuthServiceResult::identities(const QList<SignOn::IdentityInfo> &identityList)
+void TestAuthServiceResult::identities(
+                               const QList<SignOn::IdentityInfo> &identityList)
 {
     SIGNOND_TEST_REPLY_RECEIVED
     m_responseReceived = NormalResp;

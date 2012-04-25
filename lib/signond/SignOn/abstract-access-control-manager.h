@@ -21,7 +21,7 @@
  */
 /*!
  * @file abstract-access-control-manager.h
- * Definition of the AbstractAccessControlManager object. 
+ * Definition of the AbstractAccessControlManager object.
  * @ingroup Accounts_and_SSO_Framework
  */
 
@@ -42,7 +42,6 @@ namespace SignOn {
  * based on security priviledges of the client processes.
  * @ingroup Accounts_and_SSO_Framework
  */
-
 class SIGNON_EXPORT AbstractAccessControlManager: public QObject
 {
     Q_OBJECT
@@ -57,11 +56,13 @@ public:
     /*!
      * Destructor.
      */
-    virtual ~AbstractAccessControlManager();              
+    virtual ~AbstractAccessControlManager();
 
     /*!
-     * Checks if a client process is allowed to access objects with a certain security context. 
-     * The access type to be checked depends on the concrete implementation of this function. 
+     * Checks if a client process is allowed to access objects with a certain
+     * security context.
+     * The access type to be checked depends on the concrete implementation of
+     * this function.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @param securityContext, the securityContext to be checked against.
      * @returns true, if the peer is allowed, false otherwise.
@@ -72,7 +73,8 @@ public:
     /*!
      * Looks up for the application identifier of a specific client process.
      * @param peerMessage, the request message sent over DBUS by the process.
-     * @returns the application identifier of the process, or an empty string if none found.
+     * @returns the application identifier of the process, or an empty string
+     * if none found.
      */
     virtual QString appIdOfPeer(const QDBusMessage &peerMessage);
 
@@ -80,8 +82,6 @@ public:
      * @returns the application identifier of the keychain widget
      */
     virtual QString keychainWidgetAppId();
-
-
 };
 
 } // namespace

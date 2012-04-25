@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,44 +31,48 @@
 
 namespace SignOn {
 
-    AuthSession::AuthSession(quint32 id, const QString &methodName, QObject *parent)
-            :  QObject(parent),
-               impl(new AuthSessionImpl(this, id, methodName))
-    {
-        qRegisterMetaType<SessionData>("SessionData");
-        qRegisterMetaType<AuthSessionState>("AuthSession::AuthSessionState");
+AuthSession::AuthSession(quint32 id, const QString &methodName,
+                         QObject *parent):
+    QObject(parent),
+    impl(new AuthSessionImpl(this, id, methodName))
+{
+    qRegisterMetaType<SessionData>("SessionData");
+    qRegisterMetaType<AuthSessionState>("AuthSession::AuthSessionState");
 
-        if (qMetaTypeId<SessionData>() < QMetaType::User)
-            BLAME() << "AuthSession::AuthSession() - SessionData meta type not registered.";
+    if (qMetaTypeId<SessionData>() < QMetaType::User)
+        BLAME() << "AuthSession::AuthSession() - "
+            "SessionData meta type not registered.";
 
-        if (qMetaTypeId<AuthSessionState>() < QMetaType::User)
-            BLAME() << "AuthSession::AuthSession() - AuthSessionState meta type not registered.";
+    if (qMetaTypeId<AuthSessionState>() < QMetaType::User)
+        BLAME() << "AuthSession::AuthSession() - "
+            "AuthSessionState meta type not registered.";
 
-    }
+}
 
-    AuthSession::~AuthSession()
-    {
-        delete impl;
-    }
+AuthSession::~AuthSession()
+{
+    delete impl;
+}
 
-    const QString AuthSession::name() const
-    {
-        return impl->name();
-    }
+const QString AuthSession::name() const
+{
+    return impl->name();
+}
 
-    void AuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
-    {
-        impl->queryAvailableMechanisms(wantedMechanisms);
-    }
+void AuthSession::queryAvailableMechanisms(const QStringList &wantedMechanisms)
+{
+    impl->queryAvailableMechanisms(wantedMechanisms);
+}
 
-    void AuthSession::process(const SessionData& sessionData, const QString &mechanism)
-    {
-        impl->process(sessionData, mechanism);
-    }
+void AuthSession::process(const SessionData& sessionData,
+                          const QString &mechanism)
+{
+    impl->process(sessionData, mechanism);
+}
 
-    void AuthSession::cancel()
-    {
-        impl->cancel();
-    }
+void AuthSession::cancel()
+{
+    impl->cancel();
+}
 
 } //namespace SignOn

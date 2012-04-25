@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -61,7 +61,8 @@ public:
 public Q_SLOTS:
     void error(const SignOn::Error &err);
     void methodsAvailable(const QStringList &methods);
-    void mechanismsAvailable(const QString &method, const QStringList &mechanisms);
+    void mechanismsAvailable(const QString &method,
+                             const QStringList &mechanisms);
     void identities(const QList<SignOn::IdentityInfo> &identityList);
     void cleared();
 

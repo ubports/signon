@@ -6,7 +6,7 @@
  * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Aurel Popirtac <mailto:ext-Aurel.Popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -53,10 +53,10 @@ using namespace SignOn;
 
 /* ---------------------- CAMConfiguration ---------------------- */
 
-CAMConfiguration::CAMConfiguration()
-        : m_dbName(QLatin1String(signonDefaultDbName)),
-          m_secretsDbName(QLatin1String(signonDefaultSecretsDbName)),
-          m_encryptionPassphrase(QByteArray())
+CAMConfiguration::CAMConfiguration():
+    m_dbName(QLatin1String(signonDefaultDbName)),
+    m_secretsDbName(QLatin1String(signonDefaultSecretsDbName)),
+    m_encryptionPassphrase(QByteArray())
 {
     setStoragePath(QLatin1String(signonDefaultStoragePath));
 }
@@ -124,21 +124,22 @@ void CAMConfiguration::setStoragePath(const QString &storagePath) {
 
 CredentialsAccessManager *CredentialsAccessManager::m_pInstance = NULL;
 
-CredentialsAccessManager::CredentialsAccessManager(const CAMConfiguration &configuration,
-                                                   QObject *parent)
-        : QObject(parent),
-          m_isInitialized(false),
-          m_systemOpened(false),
-          m_error(NoError),
-          keyManagers(),
-          m_pCredentialsDB(NULL),
-          m_cryptoManager(NULL),
-          m_keyHandler(NULL),
-          m_keyAuthorizer(NULL),
-          m_secretsStorage(NULL),
-          m_CAMConfiguration(configuration),
-          m_acManager(NULL),
-          m_acManagerHelper(NULL)
+CredentialsAccessManager::CredentialsAccessManager(
+                                          const CAMConfiguration &configuration,
+                                          QObject *parent):
+    QObject(parent),
+    m_isInitialized(false),
+    m_systemOpened(false),
+    m_error(NoError),
+    keyManagers(),
+    m_pCredentialsDB(NULL),
+    m_cryptoManager(NULL),
+    m_keyHandler(NULL),
+    m_keyAuthorizer(NULL),
+    m_secretsStorage(NULL),
+    m_CAMConfiguration(configuration),
+    m_acManager(NULL),
+    m_acManagerHelper(NULL)
 {
     if (!m_pInstance) {
         m_pInstance = this;
@@ -186,7 +187,8 @@ bool CredentialsAccessManager::init()
 
     QBuffer config;
     m_CAMConfiguration.serialize(&config);
-    TRACE() << "\n\nInitualizing CredentialsAccessManager with configuration: " << config.data();
+    TRACE() << "Initializing CredentialsAccessManager with configuration: " <<
+        config.data();
 
     if (!createStorageDir()) {
         BLAME() << "Failed to create storage directory.";
@@ -353,9 +355,10 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
             }
         }
 
-        /* Instantiate this plugin's AccessControlManager only if it's the plugin
-         * requested in the config file. */
-        if (plugin->objectName() == m_CAMConfiguration.accessControlManagerName()) {
+        /* Instantiate this plugin's AccessControlManager only if it's the
+         * plugin requested in the config file. */
+        if (plugin->objectName() ==
+            m_CAMConfiguration.accessControlManagerName()) {
             SignOn::AbstractAccessControlManager *acManager =
                 extension3->accessControlManager(this);
             if (acManager != 0) {
@@ -670,4 +673,3 @@ void CredentialsAccessManager::onEncryptedFSUnmounting()
         m_pCredentialsDB->closeSecretsDB();
     }
 }
-

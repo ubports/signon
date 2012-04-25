@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,8 +25,6 @@
 
 #include <QObject>
 
-//#define SSOUI_TESTS_ENABLED
-
 #include "testauthsession.h"
 #include "testidentityresult.h"
 #include "testauthserviceresult.h"
@@ -37,9 +35,14 @@
     #define SSOTESTCLIENT_USES_AUTHSESSION
 #endif
 
-class SsoTestClient : public QObject
+class SignOnUI;
+
+class SsoTestClient: public QObject
 {
     Q_OBJECT
+
+public:
+    SsoTestClient(QObject *parent = 0);
 
 private Q_SLOTS:
     void initTestCase();
@@ -92,6 +95,8 @@ private Q_SLOTS:
     void cancel_with_delay();
     void cancel_without_process();
     void handle_destroyed_signal();
+    void processUi_with_existing_identity();
+    void processUi_and_cancel();
 #endif
 
 private:
@@ -101,10 +106,6 @@ private:
 
     void queryIdentitiesWithFilter();
 
-#ifdef SSOUI_TESTS_ENABLED
-    void processUi_with_existing_identity();
-    void processUi_and_cancel();
-#endif
     /*
      * Subtests
      * */
@@ -126,6 +127,7 @@ protected Q_SLOTS:
     void response(const SignOn::SessionData &data);
 
 private:
+    SignOnUI *m_signOnUI;
     TestAuthSession testAuthSession;
     QStringList m_tokenList;
     int m_expectedNumberOfMethods;

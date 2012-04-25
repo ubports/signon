@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2011 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -34,12 +34,12 @@ using namespace SignOn;
 
 BlobIOHandler::BlobIOHandler(QIODevice *readChannel,
                              QIODevice *writeChannel,
-                             QObject *parent)
-    : QObject(parent),
-      m_readChannel(readChannel),
-      m_writeChannel(writeChannel),
-      m_readNotifier(0),
-      m_blobSize(-1)
+                             QObject *parent):
+    QObject(parent),
+    m_readChannel(readChannel),
+    m_writeChannel(writeChannel),
+    m_readNotifier(0),
+    m_blobSize(-1)
 {
 }
 
@@ -74,16 +74,20 @@ void BlobIOHandler::setReadNotificationEnabled(bool enabled)
     if (enabled) {
         if (m_readNotifier != 0) {
             m_readNotifier->setEnabled(true);
-            connect(m_readNotifier, SIGNAL(activated(int)), this, SLOT(readBlob()));
+            connect(m_readNotifier, SIGNAL(activated(int)),
+                    this, SLOT(readBlob()));
         } else {
-            connect(m_readChannel, SIGNAL(readyRead()), this, SLOT(readBlob()));
+            connect(m_readChannel, SIGNAL(readyRead()),
+                    this, SLOT(readBlob()));
         }
     } else {
         if (m_readNotifier != 0) {
-            disconnect(m_readNotifier, SIGNAL(activated(int)), this, SLOT(readBlob()));
+            disconnect(m_readNotifier, SIGNAL(activated(int)),
+                       this, SLOT(readBlob()));
             m_readNotifier->setEnabled(false);
         } else {
-            disconnect(m_readChannel, SIGNAL(readyRead()), this, SLOT(readBlob()));
+            disconnect(m_readChannel, SIGNAL(readyRead()),
+                       this, SLOT(readBlob()));
         }
     }
 }

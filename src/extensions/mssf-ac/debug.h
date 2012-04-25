@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,11 +25,11 @@
 #include <QDebug>
 
 #ifndef TRACE
-#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__ << ":\t"
+#define TRACE() qDebug() << __FILE__ << __LINE__ << __func__
 #endif
 
 #ifndef BLAME
-#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__ << ":\t"
+#define BLAME() qCritical() << __FILE__ << __LINE__ << __func__
 #endif
 
 #endif // SIGNON_DEBUG_H

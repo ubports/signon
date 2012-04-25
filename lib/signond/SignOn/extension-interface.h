@@ -111,15 +111,17 @@ public:
     virtual AbstractSecretsStorage *secretsStorage(QObject *parent = 0) const;
 
     /*!
-     * Gets the AbstractAccessControlManager object, which will be used to check
-     * accesses to the credential database
-     * This object is instantiated only if the value of the "AccessControlManager"
-     * setting in the signond configuration matches the plugin's
-     * QObject::objectName().
+     * Gets the AbstractAccessControlManager object, which will be used to
+     * check accesses to the credential database.
+     * This object is instantiated only if the value of the
+     * "AccessControlManager" setting in the signond configuration matches the
+     * plugin's QObject::objectName().
      *
-     * @return An AbstractAccessControlManager object, or 0 if none is provided by this plugin
+     * @return An AbstractAccessControlManager object, or 0 if none is provided
+     * by this plugin
      */
-    virtual AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
+    virtual AbstractAccessControlManager *accessControlManager(
+                                                    QObject *parent = 0) const;
 };
 
 } // namespace

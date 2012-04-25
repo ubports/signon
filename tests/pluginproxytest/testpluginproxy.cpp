@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -34,7 +34,8 @@ void TestPluginProxy::initTestCase()
     //check signon user
 
     struct passwd *signonUser = getpwnam("signon");
-    QVERIFY2(signonUser, "signon user do not exist, add with 'useradd --system signon'");
+    QVERIFY2(signonUser,
+             "signon user do not exist, add with 'useradd --system signon'");
 #endif
 
     qRegisterMetaType<QVariantMap>("QVariantMap");
@@ -92,14 +93,16 @@ void TestPluginProxy::process_for_dummy()
     foreach(QString key, inData.propertyNames())
         inDataV[key] = inData.getProperty(key);
 
-    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QString&, const QVariantMap&)));
-    QSignalSpy spyState(m_proxy, SIGNAL(stateChanged(const QString&, int, const QString&)));
+    QSignalSpy spyResult(m_proxy,
+               SIGNAL(processResultReply(const QString&, const QVariantMap&)));
+    QSignalSpy spyState(m_proxy,
+                    SIGNAL(stateChanged(const QString&, int, const QString&)));
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                     SIGNAL(processResultReply(const QString&, const QVariantMap&)),
-                     &loop,
-                     SLOT(quit()));
+                 SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                 &loop,
+                 SLOT(quit()));
 
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
@@ -116,8 +119,10 @@ void TestPluginProxy::process_for_dummy()
 
     qDebug() << outData;
 
-    QVERIFY(outData.contains("UserName") && outData["UserName"] == "testUsername");
-    QVERIFY(outData.contains("Realm") && outData["Realm"] == "testRealm_after_test");
+    QVERIFY(outData.contains("UserName") &&
+            outData["UserName"] == "testUsername");
+    QVERIFY(outData.contains("Realm") &&
+            outData["Realm"] == "testRealm_after_test");
 }
 
 void TestPluginProxy::processUi_for_dummy()
@@ -133,15 +138,18 @@ void TestPluginProxy::processUi_for_dummy()
     foreach(QString key, inData.propertyNames())
         inDataV[key] = inData.getProperty(key);
 
-    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QString&, const QVariantMap&)));
-    QSignalSpy spyError(m_proxy, SIGNAL(processError(const QString&, int, const QString&)));
-    QSignalSpy spyUi(m_proxy, SIGNAL(processUiRequest(const QString&, const QVariantMap&)));
+    QSignalSpy spyResult(m_proxy,
+              SIGNAL(processResultReply(const QString&, const QVariantMap&)));
+    QSignalSpy spyError(m_proxy,
+                   SIGNAL(processError(const QString&, int, const QString&)));
+    QSignalSpy spyUi(m_proxy,
+                SIGNAL(processUiRequest(const QString&, const QVariantMap&)));
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                     SIGNAL(processResultReply(const QString&, const QVariantMap&)),
-                     &loop,
-                     SLOT(quit()));
+                 SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                 &loop,
+                 SLOT(quit()));
 
     QObject::connect(m_proxy,
                      SIGNAL(processError(const QString&, int, const QString&)),
@@ -150,7 +158,7 @@ void TestPluginProxy::processUi_for_dummy()
 
 
     QObject::connect(m_proxy,
-                     SIGNAL(processUiRequest(const QString&, const QVariantMap&)),
+                     SIGNAL(processUiRequest(const QString&,const QVariantMap&)),
                      &loop,
                      SLOT(quit()));
 
@@ -294,18 +302,18 @@ void TestPluginProxy::wrong_user_for_dummy()
 }
 
 #if defined(SSO_CI_TESTMANAGEMENT)
-    void TestPluginProxy::runAllTests()
-    {
-         initTestCase();
-         create_nonexisting();
-         create_dummy();
-         type_for_dummy();
-         mechanisms_for_dummy();
-         process_for_dummy();
-         process_wrong_mech_for_dummy();
-         process_and_cancel_for_dummy();
-         cleanupTestCase();
-    }
+void TestPluginProxy::runAllTests()
+{
+    initTestCase();
+    create_nonexisting();
+    create_dummy();
+    type_for_dummy();
+    mechanisms_for_dummy();
+    process_for_dummy();
+    process_wrong_mech_for_dummy();
+    process_and_cancel_for_dummy();
+    cleanupTestCase();
+}
 #else
-    QTEST_MAIN(TestPluginProxy)
+QTEST_MAIN(TestPluginProxy)
 #endif

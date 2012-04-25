@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2011 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +31,7 @@
 
 namespace SignOn {
 
-class BlobIOHandler : public QObject
+class BlobIOHandler: public QObject
 {
     Q_OBJECT
 

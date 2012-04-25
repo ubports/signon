@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -26,13 +26,14 @@
 
 namespace SsoTest2PluginNS {
 
-    class SsoTest2Data : public SignOn::SessionData
-    {
-        public:
-            SIGNON_SESSION_DECLARE_PROPERTY(QStringList, ChainOfStates);
-            SIGNON_SESSION_DECLARE_PROPERTY(quint32, CurrentState);
-            SIGNON_SESSION_DECLARE_PROPERTY(QStringList, ChainOfResults);
-    };
+class SsoTest2Data: public SignOn::SessionData
+{
+public:
+    SIGNON_SESSION_DECLARE_PROPERTY(QStringList, ChainOfStates);
+    SIGNON_SESSION_DECLARE_PROPERTY(quint32, CurrentState);
+    SIGNON_SESSION_DECLARE_PROPERTY(QStringList, ChainOfResults);
+};
+
 }  // namespace SsoTest2PluginNS
 
 #endif // SSOTEST2DATA_H

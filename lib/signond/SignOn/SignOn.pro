@@ -1,5 +1,3 @@
 TEMPLATE = subdirs
 SUBDIRS = \
-    SignOnExtension.pro \
-    signond.pro
-
+    SignOnExtension.pro

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -29,9 +29,11 @@
 #include "exampledata.h"
 
 using namespace SignOn;
+
 namespace SignOn {
-SignonClient::SignonClient(QWidget *parent)
-    : QWidget(parent)
+
+SignonClient::SignonClient(QWidget *parent):
+    QWidget(parent)
 {
     ui.setupUi(this);
 
@@ -40,8 +42,10 @@ SignonClient::SignonClient(QWidget *parent)
     m_session = NULL;
     connect(m_service, SIGNAL(methodsAvailable(const QStringList &)),
             this, SLOT(methodsAvailable(const QStringList &)));
-    connect(m_service, SIGNAL(mechanismsAvailable(const QString &, const QStringList &)),
-            this, SLOT( mechanismsAvailable(const QString &, const QStringList&)));
+    connect(m_service,
+            SIGNAL(mechanismsAvailable(const QString &, const QStringList &)),
+            this,
+            SLOT( mechanismsAvailable(const QString &, const QStringList&)));
     connect(m_service, SIGNAL(identities(const QList<SignOn::IdentityInfo> &)),
             this, SLOT(identities(const QList<SignOn::IdentityInfo> &)));
 
@@ -63,7 +67,8 @@ void SignonClient::methodsAvailable(const QStringList &mechs)
     }
 }
 
-void SignonClient::mechanismsAvailable(const QString &method, const QStringList &mechs)
+void SignonClient::mechanismsAvailable(const QString &method,
+                                       const QStringList &mechs)
 {
     qDebug("mechanismsAvailable");
     qDebug() << method;
@@ -76,7 +81,8 @@ void SignonClient::identities(const QList<SignOn::IdentityInfo> &identityList)
 {
     qDebug("identities");
      for (int i = 0; i < identityList.size(); ++i) {
-         qDebug() << identityList.at(i).caption().toLocal8Bit().constData() << endl;
+         qDebug() << identityList.at(i).caption().toLocal8Bit().constData() <<
+             endl;
     }
  }
 

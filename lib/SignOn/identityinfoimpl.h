@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -36,57 +36,59 @@
 
 namespace SignOn {
 
-    typedef QMap<MethodName, MechanismsList> MethodMap;
+typedef QMap<MethodName, MechanismsList> MethodMap;
 
-    /*!
-     * @class IdentityInfoImpl
-     * IdentityInfo class implementation.
-     * @sa IdentityInfo
-     */
-    class IdentityInfoImpl
-    {
-        friend class IdentityInfo;
-        friend class IdentityImpl;
+/*!
+ * @class IdentityInfoImpl
+ * IdentityInfo class implementation.
+ * @sa IdentityInfo
+ */
+class IdentityInfoImpl
+{
+    friend class IdentityInfo;
+    friend class IdentityImpl;
 
-        Q_DISABLE_COPY(IdentityInfoImpl)
+    Q_DISABLE_COPY(IdentityInfoImpl)
 
-    public:
-        IdentityInfoImpl(IdentityInfo *identityInfo);
-        ~IdentityInfoImpl();
+public:
+    IdentityInfoImpl(IdentityInfo *identityInfo);
+    ~IdentityInfoImpl();
 
-        void addMethod(const MethodName &method, const MechanismsList &mechanismsList);
-        void updateMethod(const MethodName &method, const MechanismsList &mechanismsList);
-        void removeMethod(const MethodName &method);
-        void setType(IdentityInfo::CredentialsType type);
-        IdentityInfo::CredentialsType type() const;
-        void setRefCount(qint32 refCount);
-        qint32 refCount() const;
+    void addMethod(const MethodName &method,
+                   const MechanismsList &mechanismsList);
+    void updateMethod(const MethodName &method,
+                      const MechanismsList &mechanismsList);
+    void removeMethod(const MethodName &method);
+    void setType(IdentityInfo::CredentialsType type);
+    IdentityInfo::CredentialsType type() const;
+    void setRefCount(qint32 refCount);
+    qint32 refCount() const;
 
-        bool isEmpty() const;
-        bool hasMethod(const MethodName &method) const;
-        void clear();
-        QVariantMap toMap() const;
-        void updateFromMap(const QVariantMap &map);
+    bool isEmpty() const;
+    bool hasMethod(const MethodName &method) const;
+    void clear();
+    QVariantMap toMap() const;
+    void updateFromMap(const QVariantMap &map);
 
-    private:
-        void copy(const IdentityInfoImpl &other);
+private:
+    void copy(const IdentityInfoImpl &other);
 
-    private:
-        IdentityInfo *m_identityInfo;
+private:
+    IdentityInfo *m_identityInfo;
 
-        quint32 m_id;
-        QString m_userName;
-        QString m_secret;
-        bool m_storeSecret;
-        QString m_caption;
-        MethodMap m_authMethods;
-        QStringList m_realms;
-        QStringList m_accessControlList;
-        QString m_owner;
-        IdentityInfo::CredentialsType m_type;
-        qint32 m_refCount;
-        bool m_isEmpty;
-    };
+    quint32 m_id;
+    QString m_userName;
+    QString m_secret;
+    bool m_storeSecret;
+    QString m_caption;
+    MethodMap m_authMethods;
+    QStringList m_realms;
+    QStringList m_accessControlList;
+    QString m_owner;
+    IdentityInfo::CredentialsType m_type;
+    qint32 m_refCount;
+    bool m_isEmpty;
+};
 
 } //namespace SignOn
 

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -28,7 +28,7 @@
  * @class ExampleData
  * Data container to hold values for example authentication session.
  */
-class ExampleData : public SignOn::SessionData
+class ExampleData: public SignOn::SessionData
 {
 public:
     /*!

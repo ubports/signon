@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -75,19 +75,18 @@ static QString sessionName(const quint32 id, const QString &method)
 SignonSessionCore::SignonSessionCore(quint32 id,
                                      const QString &method,
                                      int timeout,
-                                     SignonDaemon *parent)
-    : SignonDisposable(timeout, parent),
-      m_id(id),
-      m_method(method),
-      m_queryCredsUiDisplayed(false)
+                                     SignonDaemon *parent):
+    SignonDisposable(timeout, parent),
+    m_id(id),
+    m_method(method),
+    m_queryCredsUiDisplayed(false)
 {
     m_signonui = NULL;
     m_watcher = NULL;
 
-    m_signonui = new SignonUiAdaptor(
-                                    SIGNON_UI_SERVICE,
-                                    SIGNON_UI_DAEMON_OBJECTPATH,
-                                    QDBusConnection::sessionBus());
+    m_signonui = new SignonUiAdaptor(SIGNON_UI_SERVICE,
+                                     SIGNON_UI_DAEMON_OBJECTPATH,
+                                     QDBusConnection::sessionBus());
 
 
     connect(CredentialsAccessManager::instance(),
@@ -109,7 +108,9 @@ SignonSessionCore::~SignonSessionCore()
     m_watcher = NULL;
 }
 
-SignonSessionCore *SignonSessionCore::sessionCore(const quint32 id, const QString &method, SignonDaemon *parent)
+SignonSessionCore *SignonSessionCore::sessionCore(const quint32 id,
+                                                  const QString &method,
+                                                  SignonDaemon *parent)
 {
     QString objectName;
     QString key = sessionName(id, method);
@@ -120,7 +121,9 @@ SignonSessionCore *SignonSessionCore::sessionCore(const quint32 id, const QStrin
         }
     }
 
-    SignonSessionCore *ssc = new SignonSessionCore(id, method, parent->authSessionTimeout(), parent);
+    SignonSessionCore *ssc = new SignonSessionCore(id, method,
+                                                   parent->authSessionTimeout(),
+                                                   parent);
 
     if (ssc->setupPlugin() == false) {
         TRACE() << "The resulted object is corrupted and has to be deleted";
@@ -223,21 +226,23 @@ QStringList SignonSessionCore::loadedPluginMethods(const QString &method)
     return QStringList();
 }
 
-QStringList SignonSessionCore::queryAvailableMechanisms(const QStringList &wantedMechanisms)
+QStringList
+SignonSessionCore::queryAvailableMechanisms(const QStringList &wantedMechanisms)
 {
     keepInUse();
 
     if (!wantedMechanisms.size())
         return m_plugin->mechanisms();
 
-    return m_plugin->mechanisms().toSet().intersect(wantedMechanisms.toSet()).toList();
+    return m_plugin->mechanisms().toSet().
+        intersect(wantedMechanisms.toSet()).toList();
 }
 
 void SignonSessionCore::process(const QDBusConnection &connection,
-                                 const QDBusMessage &message,
-                                 const QVariantMap &sessionDataVa,
-                                 const QString &mechanism,
-                                 const QString &cancelKey)
+                                const QDBusMessage &message,
+                                const QVariantMap &sessionDataVa,
+                                const QString &mechanism,
+                                const QString &cancelKey)
 {
     keepInUse();
     m_listOfRequests.enqueue(RequestData(connection,
@@ -255,7 +260,9 @@ void SignonSessionCore::cancel(const QString &cancelKey)
     TRACE();
 
     int requestIndex;
-    for (requestIndex = 0; requestIndex < m_listOfRequests.size(); requestIndex++) {
+    for (requestIndex = 0;
+         requestIndex < m_listOfRequests.size();
+         requestIndex++) {
         if (m_listOfRequests.at(requestIndex).m_cancelKey == cancelKey)
             break;
     }
@@ -284,8 +291,9 @@ void SignonSessionCore::cancel(const QString &cancelKey)
                         m_listOfRequests.head() :
                         m_listOfRequests.takeAt(requestIndex)));
 
-        QDBusMessage errReply = rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
-                                                          SIGNOND_SESSION_CANCELED_ERR_STR);
+        QDBusMessage errReply =
+            rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
+                                      SIGNOND_SESSION_CANCELED_ERR_STR);
         rd.m_conn.send(errReply);
         TRACE() << "Size of the queue is " << m_listOfRequests.size();
     }
@@ -302,7 +310,8 @@ void SignonSessionCore::setId(quint32 id)
 
     if (id == 0) {
         key = sessionName(m_id, m_method);
-        sessionsOfNonStoredCredentials.append(sessionsOfStoredCredentials.take(key));
+        sessionsOfNonStoredCredentials.append(
+                                        sessionsOfStoredCredentials.take(key));
     } else {
         key = sessionName(id, m_method);
         if (sessionsOfStoredCredentials.contains(key)) {
@@ -331,7 +340,8 @@ void SignonSessionCore::startProcess()
     m_clientData = parameters;
 
     if (m_id) {
-        CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+        CredentialsDB *db =
+            CredentialsAccessManager::instance()->credentialsDB();
         Q_ASSERT(db != 0);
 
         SignonIdentityInfo info = db->credentials(m_id);
@@ -342,17 +352,18 @@ void SignonSessionCore::startProcess()
                     parameters[SSO_KEY_PASSWORD] = info.password();
                 }
 
-                /* Temporary fix - keep it until session core refactoring is complete and auth cache
-                 * will be dumped in the secrets db. */
+                /* Temporary fix - keep it until session core refactoring is
+                 * complete and auth cache will be dumped in the secrets db. */
                 if (parameters[SSO_KEY_PASSWORD].toString().isEmpty()) {
-                    AuthCache *cache = AuthCoreCache::instance()->data(info.id());
+                    AuthCache *cache =
+                        AuthCoreCache::instance()->data(info.id());
                     if (cache != 0) {
                         TRACE() << "Using cached secret.";
                         parameters[SSO_KEY_PASSWORD] = cache->password();
                     } else {
-                        TRACE() << "Secrets storage not available and authentication "
-                                   "cache is empty - if SSO requires a password, "
-                                   "auth. will fail.";
+                        TRACE() << "Secrets storage not available and "
+                            "authentication cache is empty - if SSO requires "
+                            "a password, auth. will fail.";
                     }
                 }
             }
@@ -372,9 +383,9 @@ void SignonSessionCore::startProcess()
             if (!paramsTokenList.isEmpty()) {
                 parameters[SSO_ACCESS_CONTROL_TOKENS] = paramsTokenList;
             }
-         
         } else {
-            BLAME() << "Error occurred while getting data from credentials database.";
+            BLAME() << "Error occurred while getting data from credentials "
+                "database.";
         }
 
         QVariantMap storedParams;
@@ -406,16 +417,20 @@ void SignonSessionCore::startProcess()
     m_tmpPassword = parameters[SSO_KEY_PASSWORD].toString();
 
     if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
-        QDBusMessage errReply = data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
-                                                            SIGNOND_RUNTIME_ERR_STR);
+        QDBusMessage errReply =
+            data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
+                                        SIGNOND_RUNTIME_ERR_STR);
         data.m_conn.send(errReply);
         m_listOfRequests.removeFirst();
         QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
     } else
-        stateChangedSlot(data.m_cancelKey, SignOn::SessionStarted, QLatin1String("The request is started successfully"));
+        stateChangedSlot(data.m_cancelKey, SignOn::SessionStarted,
+                         QLatin1String("The request is started successfully"));
 }
 
-void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessage &msg, int err, const QString &message)
+void SignonSessionCore::replyError(const QDBusConnection &conn,
+                                   const QDBusMessage &msg,
+                                   int err, const QString &message)
 {
     keepInUse();
 
@@ -423,7 +438,7 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
     QString errMessage;
 
     //TODO this is needed for old error codes
-    if(err < Error::AuthSessionErr) {
+    if( err < Error::AuthSessionErr) {
         BLAME() << "Deprecated error code: " << err;
             if (message.isEmpty())
                 errMessage = SIGNOND_UNKNOWN_ERR_STR;
@@ -434,95 +449,96 @@ void SignonSessionCore::replyError(const QDBusConnection &conn, const QDBusMessa
 
     if (Error::AuthSessionErr < err && err < Error::UserErr) {
         switch(err) {
-            case Error::MechanismNotAvailable:
-                errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
-                errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
-                break;
-            case Error::MissingData:
-                errName = SIGNOND_MISSING_DATA_ERR_NAME;
-                errMessage = SIGNOND_MISSING_DATA_ERR_STR;
-                break;
-            case Error::InvalidCredentials:
-                errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
-                errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
-                break;
-            case Error::NotAuthorized:
-                errName = SIGNOND_NOT_AUTHORIZED_ERR_NAME;
-                errMessage = SIGNOND_NOT_AUTHORIZED_ERR_STR;
-                break;
-            case Error::WrongState:
-                errName = SIGNOND_WRONG_STATE_ERR_NAME;
-                errMessage = SIGNOND_WRONG_STATE_ERR_STR;
-                break;
-            case Error::OperationNotSupported:
-                errName = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME;
-                errMessage = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_STR;
-                break;
-            case Error::NoConnection:
-                errName = SIGNOND_NO_CONNECTION_ERR_NAME;
-                errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
-                break;
-            case Error::Network:
-                errName = SIGNOND_NETWORK_ERR_NAME;
-                errMessage = SIGNOND_NETWORK_ERR_STR;
-                break;
-            case Error::Ssl:
-                errName = SIGNOND_SSL_ERR_NAME;
-                errMessage = SIGNOND_SSL_ERR_STR;
-                break;
-            case Error::Runtime:
-                errName = SIGNOND_RUNTIME_ERR_NAME;
-                errMessage = SIGNOND_RUNTIME_ERR_STR;
-                break;
-            case Error::SessionCanceled:
-                errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
-                errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
-                break;
-            case Error::TimedOut:
-                errName = SIGNOND_TIMED_OUT_ERR_NAME;
-                errMessage = SIGNOND_TIMED_OUT_ERR_STR;
-                break;
-            case Error::UserInteraction:
-                errName = SIGNOND_USER_INTERACTION_ERR_NAME;
-                errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
-                break;
-            case Error::OperationFailed:
-                errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
-                errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
-                break;
-            case Error::EncryptionFailure:
-                errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
-                errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
-                break;
-            case Error::TOSNotAccepted:
-                errName = SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME;
-                errMessage = SIGNOND_TOS_NOT_ACCEPTED_ERR_STR;
-                break;
-            case Error::ForgotPassword:
-                errName = SIGNOND_FORGOT_PASSWORD_ERR_NAME;
-                errMessage = SIGNOND_FORGOT_PASSWORD_ERR_STR;
-                break;
-            case Error::IncorrectDate:
-                errName = SIGNOND_INCORRECT_DATE_ERR_NAME;
-                errMessage = SIGNOND_INCORRECT_DATE_ERR_STR;
-                break;
-            default:
-                if (message.isEmpty())
-                    errMessage = SIGNOND_UNKNOWN_ERR_STR;
-                else
-                    errMessage = message;
-                errName = SIGNOND_UNKNOWN_ERR_NAME;
-                break;
+        case Error::MechanismNotAvailable:
+            errName = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_NAME;
+            errMessage = SIGNOND_MECHANISM_NOT_AVAILABLE_ERR_STR;
+            break;
+        case Error::MissingData:
+            errName = SIGNOND_MISSING_DATA_ERR_NAME;
+            errMessage = SIGNOND_MISSING_DATA_ERR_STR;
+            break;
+        case Error::InvalidCredentials:
+            errName = SIGNOND_INVALID_CREDENTIALS_ERR_NAME;
+            errMessage = SIGNOND_INVALID_CREDENTIALS_ERR_STR;
+            break;
+        case Error::NotAuthorized:
+            errName = SIGNOND_NOT_AUTHORIZED_ERR_NAME;
+            errMessage = SIGNOND_NOT_AUTHORIZED_ERR_STR;
+            break;
+        case Error::WrongState:
+            errName = SIGNOND_WRONG_STATE_ERR_NAME;
+            errMessage = SIGNOND_WRONG_STATE_ERR_STR;
+            break;
+        case Error::OperationNotSupported:
+            errName = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_NAME;
+            errMessage = SIGNOND_OPERATION_NOT_SUPPORTED_ERR_STR;
+            break;
+        case Error::NoConnection:
+            errName = SIGNOND_NO_CONNECTION_ERR_NAME;
+            errMessage = SIGNOND_NO_CONNECTION_ERR_STR;
+            break;
+        case Error::Network:
+            errName = SIGNOND_NETWORK_ERR_NAME;
+            errMessage = SIGNOND_NETWORK_ERR_STR;
+            break;
+        case Error::Ssl:
+            errName = SIGNOND_SSL_ERR_NAME;
+            errMessage = SIGNOND_SSL_ERR_STR;
+            break;
+        case Error::Runtime:
+            errName = SIGNOND_RUNTIME_ERR_NAME;
+            errMessage = SIGNOND_RUNTIME_ERR_STR;
+            break;
+        case Error::SessionCanceled:
+            errName = SIGNOND_SESSION_CANCELED_ERR_NAME;
+            errMessage = SIGNOND_SESSION_CANCELED_ERR_STR;
+            break;
+        case Error::TimedOut:
+            errName = SIGNOND_TIMED_OUT_ERR_NAME;
+            errMessage = SIGNOND_TIMED_OUT_ERR_STR;
+            break;
+        case Error::UserInteraction:
+            errName = SIGNOND_USER_INTERACTION_ERR_NAME;
+            errMessage = SIGNOND_USER_INTERACTION_ERR_STR;
+            break;
+        case Error::OperationFailed:
+            errName = SIGNOND_OPERATION_FAILED_ERR_NAME;
+            errMessage = SIGNOND_OPERATION_FAILED_ERR_STR;
+            break;
+        case Error::EncryptionFailure:
+            errName = SIGNOND_ENCRYPTION_FAILED_ERR_NAME;
+            errMessage = SIGNOND_ENCRYPTION_FAILED_ERR_STR;
+            break;
+        case Error::TOSNotAccepted:
+            errName = SIGNOND_TOS_NOT_ACCEPTED_ERR_NAME;
+            errMessage = SIGNOND_TOS_NOT_ACCEPTED_ERR_STR;
+            break;
+        case Error::ForgotPassword:
+            errName = SIGNOND_FORGOT_PASSWORD_ERR_NAME;
+            errMessage = SIGNOND_FORGOT_PASSWORD_ERR_STR;
+            break;
+        case Error::IncorrectDate:
+            errName = SIGNOND_INCORRECT_DATE_ERR_NAME;
+            errMessage = SIGNOND_INCORRECT_DATE_ERR_STR;
+            break;
+        default:
+            if (message.isEmpty())
+                errMessage = SIGNOND_UNKNOWN_ERR_STR;
+            else
+                errMessage = message;
+            errName = SIGNOND_UNKNOWN_ERR_NAME;
+            break;
         };
     }
 
-    if(err > Error::UserErr) {
+    if (err > Error::UserErr) {
         errName = SIGNOND_USER_ERROR_ERR_NAME;
         errMessage = (QString::fromLatin1("%1:%2")).arg(err).arg(message);
     }
 
     QDBusMessage errReply;
-    errReply = msg.createErrorReply(errName, ( message.isEmpty() ? errMessage : message ));
+    errReply = msg.createErrorReply(errName,
+                                    (message.isEmpty() ? errMessage : message));
     conn.send(errReply);
 }
 
@@ -547,7 +563,8 @@ void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
     }
 }
 
-void SignonSessionCore::processResultReply(const QString &cancelKey, const QVariantMap &data)
+void SignonSessionCore::processResultReply(const QString &cancelKey,
+                                           const QVariantMap &data)
 {
     TRACE();
 
@@ -562,7 +579,8 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
         QVariantList arguments;
         QVariantMap filteredData = filterVariantMap(data);
 
-        CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
+        CredentialsAccessManager *camManager =
+            CredentialsAccessManager::instance();
         CredentialsDB *db = camManager->credentialsDB();
         Q_ASSERT(db != 0);
 
@@ -585,13 +603,13 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
             StoreOperation storeOp(StoreOperation::Credentials);
             storeOp.m_info = info;
 
-            /* If the credentials are validated, the secrets db is not available and
-             * not authorized keys are available inform the CAM about the situation. */
+            /* If the credentials are validated, the secrets db is not
+             * available and not authorized keys are available inform the CAM
+             * about the situation. */
             if (identityWasValidated && !db->isSecretsDBOpen()) {
-                /* Send the storage not available event only if the curent result
-                 * processing is following a previous signon UI query. This is
-                 * to avoid unexpected UI pop-ups.
-                 */
+                /* Send the storage not available event only if the curent
+                 * result processing is following a previous signon UI query.
+                 * This is to avoid unexpected UI pop-ups. */
                 if (m_queryCredsUiDisplayed) {
                     m_storeQueue.enqueue(storeOp);
 
@@ -647,7 +665,8 @@ void SignonSessionCore::processResultReply(const QString &cancelKey, const QVari
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
-void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap &data)
+void SignonSessionCore::processStore(const QString &cancelKey,
+                                     const QVariantMap &data)
 {
     Q_UNUSED(cancelKey);
     TRACE();
@@ -680,7 +699,8 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
          * unexpected UI pop-ups.
          */
         if (m_queryCredsUiDisplayed) {
-            TRACE() << "Secure storage not available. Queueing store operations.";
+            TRACE() << "Secure storage not available. "
+                "Queueing store operations.";
             m_storeQueue.enqueue(storeOp);
 
             SecureStorageEvent *event =
@@ -712,7 +732,8 @@ void SignonSessionCore::processStore(const QString &cancelKey, const QVariantMap
     return;
 }
 
-void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVariantMap &data)
+void SignonSessionCore::processUiRequest(const QString &cancelKey,
+                                         const QVariantMap &data)
 {
     TRACE();
 
@@ -739,7 +760,8 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
         m_listOfRequests.head().m_params[SSOUI_KEY_IDENTITY] = m_id;
         m_listOfRequests.head().m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
 
-        CredentialsAccessManager *camManager = CredentialsAccessManager::instance();
+        CredentialsAccessManager *camManager =
+            CredentialsAccessManager::instance();
         CredentialsDB *db = camManager->credentialsDB();
         Q_ASSERT(db != 0);
 
@@ -748,7 +770,8 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
             TRACE() << "Caption missing";
             if (m_id != SIGNOND_NEW_IDENTITY) {
                 SignonIdentityInfo info = db->credentials(m_id);
-                m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION, info.caption());
+                m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION,
+                                                        info.caption());
                 TRACE() << "Got caption: " << info.caption();
             }
         }
@@ -768,13 +791,16 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey, const QVarian
             }
         }
 
-        m_watcher = new QDBusPendingCallWatcher(m_signonui->queryDialog(m_listOfRequests.head().m_params),
-                                                this);
-        connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
+        m_watcher = new QDBusPendingCallWatcher(
+                     m_signonui->queryDialog(m_listOfRequests.head().m_params),
+                     this);
+        connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
     }
 }
 
-void SignonSessionCore::processRefreshRequest(const QString &cancelKey, const QVariantMap &data)
+void SignonSessionCore::processRefreshRequest(const QString &cancelKey,
+                                              const QVariantMap &data)
 {
     TRACE();
 
@@ -792,13 +818,16 @@ void SignonSessionCore::processRefreshRequest(const QString &cancelKey, const QV
         }
 
         m_listOfRequests.head().m_params = filterVariantMap(data);
-        m_watcher = new QDBusPendingCallWatcher(m_signonui->refreshDialog(m_listOfRequests.head().m_params),
-                                                this);
-        connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
+        m_watcher = new QDBusPendingCallWatcher(
+                     m_signonui->refreshDialog(m_listOfRequests.head().m_params),
+                     this);
+        connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
     }
 }
 
-void SignonSessionCore::processError(const QString &cancelKey, int err, const QString &message)
+void SignonSessionCore::processError(const QString &cancelKey,
+                                     int err, const QString &message)
 {
     TRACE();
     keepInUse();
@@ -824,7 +853,8 @@ void SignonSessionCore::processError(const QString &cancelKey, int err, const QS
     QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
 }
 
-void SignonSessionCore::stateChangedSlot(const QString &cancelKey, int state, const QString &message)
+void SignonSessionCore::stateChangedSlot(const QString &cancelKey,
+                                         int state, const QString &message)
 {
     if (cancelKey != m_canceled && m_listOfRequests.size()) {
         RequestData rd = m_listOfRequests.head();
@@ -868,7 +898,8 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
 
     QDBusPendingReply<QVariantMap> reply = *call;
     bool isRequestToRefresh = false;
-    Q_ASSERT_X( m_listOfRequests.size() != 0, __func__, "queue of requests is empty");
+    Q_ASSERT_X(m_listOfRequests.size() != 0, __func__,
+               "queue of requests is empty");
 
     if (!reply.isError() && reply.count()) {
         QVariantMap resultParameters = reply.argumentAt<0>();
@@ -889,7 +920,8 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             m_queryCredsUiDisplayed = true;
         }
     } else {
-        m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR, (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
+        m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR,
+                                        (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
     }
 
     if (m_listOfRequests.head().m_cancelKey != m_canceled) {

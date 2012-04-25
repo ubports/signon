@@ -5,7 +5,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -27,7 +27,7 @@
 
 const int g_testThreadTimeout = 10000;
 
-class TestThread : public QThread
+class TestThread: public QThread
 {
     Q_OBJECT
 

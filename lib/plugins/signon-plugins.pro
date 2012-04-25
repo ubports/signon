@@ -10,8 +10,7 @@ CONFIG += static
 HEADERS = \
     SignOn/authpluginif.h \
     SignOn/uisessiondata.h \
-    SignOn/uisessiondata_priv.h \
-    SignOn/securestorageui.h
+    SignOn/uisessiondata_priv.h
 
 headers.files = \
     SignOn/AuthPluginInterface \

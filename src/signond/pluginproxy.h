@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -34,92 +34,100 @@ namespace SignOn {
 
 namespace SignonDaemonNS {
 
-    /*!
-     * @class PluginProcess
-     * Process to run authentication.
-     * @todo description.
-     */
-    class PluginProcess: public QProcess
-    {
-        Q_OBJECT
-        friend class PluginProxy;
+/*!
+ * @class PluginProcess
+ * Process to run authentication.
+ * @todo description.
+ */
+class PluginProcess: public QProcess
+{
+    Q_OBJECT
+    friend class PluginProxy;
 
-        PluginProcess(QObject* parent = NULL);
-        ~PluginProcess();
-    };
+    PluginProcess(QObject* parent = NULL);
+    ~PluginProcess();
+};
 
-    /*!
-     * @class PluginProxy
-     * Plugin proxy.
-     * @todo description.
-     */
-    class PluginProxy : public QObject
-    {
-        Q_OBJECT
+/*!
+ * @class PluginProxy
+ * Plugin proxy.
+ * @todo description.
+ */
+class PluginProxy: public QObject
+{
+    Q_OBJECT
 
-        friend class SignonIdentity;
-        friend class TestAuthSession;
+    friend class SignonIdentity;
+    friend class TestAuthSession;
 
-    public:
-        static PluginProxy *createNewPluginProxy(const QString &type);
-        virtual ~PluginProxy();
+public:
+    static PluginProxy *createNewPluginProxy(const QString &type);
+    virtual ~PluginProxy();
 
-        bool restartIfRequired();
-        bool isProcessing();
+    bool restartIfRequired();
+    bool isProcessing();
 
-    public Q_SLOTS:
-        QString type() const { return m_type; }
-        QStringList mechanisms() const { return m_mechanisms; }
-        bool process(const QString &cancelKey, const QVariantMap &inData, const QString &mechanism);
-        bool processUi(const QString &cancelKey, const QVariantMap &inData);
-        bool processRefresh(const QString &cancelKey, const QVariantMap &inData);
-        void cancel();
-        void stop();
+public Q_SLOTS:
+    QString type() const { return m_type; }
+    QStringList mechanisms() const { return m_mechanisms; }
+    bool process(const QString &cancelKey,
+                 const QVariantMap &inData,
+                 const QString &mechanism);
+    bool processUi(const QString &cancelKey, const QVariantMap &inData);
+    bool processRefresh(const QString &cancelKey, const QVariantMap &inData);
+    void cancel();
+    void stop();
 
-    Q_SIGNALS:
-        void processResultReply(const QString &cancelKey, const QVariantMap &data);
-        void processStore(const QString &cancelKey, const QVariantMap &data);
-        void processUiRequest(const QString &cancelKey, const QVariantMap &data);
-        void processRefreshRequest(const QString &cancelKey, const QVariantMap &data);
-        void processError(const QString &cancelKey, int error, const QString &message);
-        void stateChanged(const QString &cancelKey, int state, const QString &message);
+Q_SIGNALS:
+    void processResultReply(const QString &cancelKey, const QVariantMap &data);
+    void processStore(const QString &cancelKey, const QVariantMap &data);
+    void processUiRequest(const QString &cancelKey, const QVariantMap &data);
+    void processRefreshRequest(const QString &cancelKey,
+                               const QVariantMap &data);
+    void processError(const QString &cancelKey,
+                      int error,
+                      const QString &message);
+    void stateChanged(const QString &cancelKey,
+                      int state,
+                      const QString &message);
 
-    private:
-        QString queryType();
-        QStringList queryMechanisms();
+private:
+    QString queryType();
+    QStringList queryMechanisms();
 
-        bool waitForStarted(int timeout);
-        bool waitForFinished(int timeout);
+    bool waitForStarted(int timeout);
+    bool waitForFinished(int timeout);
 
-        bool readOnReady(QByteArray &buffer, int timeout);
+    bool readOnReady(QByteArray &buffer, int timeout);
 
-        void handlePluginResponse(const quint32 resultOperation,
-                                  const QVariantMap &sessionDataMap = QVariantMap());
+    void handlePluginResponse(const quint32 resultOperation,
+                              const QVariantMap &sessionDataMap = QVariantMap());
 
-        bool isResultOperationCodeValid(const int opCode) const;
+    bool isResultOperationCodeValid(const int opCode) const;
 
-    private Q_SLOTS:
-        void onReadStandardOutput();
-        void onReadStandardError();
-        void onExit(int exitCode, QProcess::ExitStatus exitStatus);
-        void onError(QProcess::ProcessError err);
-        void sessionDataReceived(const QVariantMap &map);
-        void blobIOError();
+private Q_SLOTS:
+    void onReadStandardOutput();
+    void onReadStandardError();
+    void onExit(int exitCode, QProcess::ExitStatus exitStatus);
+    void onError(QProcess::ProcessError err);
+    void sessionDataReceived(const QVariantMap &map);
+    void blobIOError();
 
-    private:
-        PluginProxy(QString type, QObject *parent = NULL);
+private:
+    PluginProxy(QString type, QObject *parent = NULL);
 
-        bool m_isProcessing;
-        bool m_isResultObtained;
-        QString m_type;
-        QString m_cancelKey;
-        QStringList m_mechanisms;
-        int m_uiPolicy;
-        int m_currentResultOperation;
+    bool m_isProcessing;
+    bool m_isResultObtained;
+    QString m_type;
+    QString m_cancelKey;
+    QStringList m_mechanisms;
+    int m_uiPolicy;
+    int m_currentResultOperation;
 
-        PluginProcess *m_process;
-        SignOn::BlobIOHandler *m_blobIOHandler;
-    };
+    PluginProcess *m_process;
+    SignOn::BlobIOHandler *m_blobIOHandler;
+};
+
 } //namespace SignonDaemonNS
 
 #endif /* PLUGINPROXY_H */

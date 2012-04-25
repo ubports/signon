@@ -4,7 +4,7 @@
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -36,55 +36,52 @@
  */
 namespace SignOn {
 
-    class DBusOperationQueueHandler
+class DBusOperationQueueHandler
+{
+public:
+    struct Operation
     {
-    public:
-        struct Operation
-        {
-            Operation(const char *name,
-                      QList<QGenericArgument *> args = QList<QGenericArgument *>());
-            ~Operation();
+        Operation(const char *name,
+                  QList<QGenericArgument *> args = QList<QGenericArgument *>());
+        ~Operation();
 
-            inline bool operator==(const Operation &op) const
-                { return QLatin1String(op.m_name) == m_name; }
+        inline bool operator==(const Operation &op) const
+            { return QLatin1String(op.m_name) == m_name; }
 
-            char *m_name;
-            QList<QGenericArgument *> m_args;
-
-        private:
-            void copy(const char *name,
-                      const QList<QGenericArgument *> &args);
-        };
-
-    public:
-        DBusOperationQueueHandler(QObject *clientObject);
-        ~DBusOperationQueueHandler();
-
-        void enqueueOperation(Operation *operation);
-        void enqueueOperation(const char *name,
-                              QList<QGenericArgument *> args = QList<QGenericArgument *>());
-
-        void execQueuedOperations();
-        int queuedOperationsCount() const
-            { return m_operationsQueue.count(); }
-        void clearOperationsQueue()
-            { m_operationsQueue.clear(); }
-
-        void removeOperation(const char *name, bool removeAll = true);
-
-        bool queueContainsOperation(const char *name);
-        void stopOperationsProcessing()
-        { m_operationsStopped = true; }
-
-        static QByteArray normalizedOperationSignature(const char *operationName)
-            { return QMetaObject::normalizedSignature(operationName); }
+        char *m_name;
+        QList<QGenericArgument *> m_args;
 
     private:
-        QObject *m_clientObject;
-        const int m_maxNumberOfOperationParameters;
-        QQueue<Operation *> m_operationsQueue;
-        bool m_operationsStopped;
+        void copy(const char *name,
+                  const QList<QGenericArgument *> &args);
     };
+
+public:
+    DBusOperationQueueHandler(QObject *clientObject);
+    ~DBusOperationQueueHandler();
+
+    void enqueueOperation(Operation *operation);
+    void enqueueOperation(const char *name,
+                          QList<QGenericArgument *> args = QList<QGenericArgument *>());
+
+    void execQueuedOperations();
+    int queuedOperationsCount() const { return m_operationsQueue.count(); }
+    void clearOperationsQueue() { m_operationsQueue.clear(); }
+
+    void removeOperation(const char *name, bool removeAll = true);
+
+    bool queueContainsOperation(const char *name);
+    void stopOperationsProcessing() { m_operationsStopped = true; }
+
+    static QByteArray normalizedOperationSignature(const char *operationName)
+        { return QMetaObject::normalizedSignature(operationName); }
+
+private:
+    QObject *m_clientObject;
+    const int m_maxNumberOfOperationParameters;
+    QQueue<Operation *> m_operationsQueue;
+    bool m_operationsStopped;
+};
 
 } //SignOn
 

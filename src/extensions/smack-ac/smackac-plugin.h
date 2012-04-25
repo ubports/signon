@@ -35,7 +35,8 @@ public:
     SmackAccessControlPlugin();
 
     // reimplemented methods
-    SignOn::AbstractAccessControlManager *accessControlManager(QObject *parent = 0) const;
+    SignOn::AbstractAccessControlManager *accessControlManager(
+                                                    QObject *parent = 0) const;
 };
 
 #endif // SMACKAC_PLUGIN_H

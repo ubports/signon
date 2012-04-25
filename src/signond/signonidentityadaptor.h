@@ -33,41 +33,42 @@
 
 namespace SignonDaemonNS {
 
-    class SignonIdentityAdaptor : public QDBusAbstractAdaptor
-    {
-        Q_OBJECT
-        Q_CLASSINFO("D-Bus Interface", "com.google.code.AccountsSSO.SingleSignOn.Identity")
+class SignonIdentityAdaptor : public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface",
+                "com.google.code.AccountsSSO.SingleSignOn.Identity")
 
-    public:
-        SignonIdentityAdaptor(SignonIdentity *parent);
-        virtual ~SignonIdentityAdaptor();
+public:
+    SignonIdentityAdaptor(SignonIdentity *parent);
+    virtual ~SignonIdentityAdaptor();
 
-        inline const QDBusContext &parentDBusContext() const
-            { return *static_cast<QDBusContext *>(m_parent); }
+    inline const QDBusContext &parentDBusContext() const
+        { return *static_cast<QDBusContext *>(m_parent); }
 
-    public Q_SLOTS:
-        quint32 requestCredentialsUpdate(const QString &message);
-        QVariantMap getInfo();
-        void addReference(const QString &reference);
-        void removeReference(const QString &reference);
+public Q_SLOTS:
+    quint32 requestCredentialsUpdate(const QString &message);
+    QVariantMap getInfo();
+    void addReference(const QString &reference);
+    void removeReference(const QString &reference);
 
-        bool verifyUser(const QVariantMap &params);
-        bool verifySecret(const QString &secret);
-        void remove();
-        bool signOut();
-        quint32 store(const QVariantMap &info);
+    bool verifyUser(const QVariantMap &params);
+    bool verifySecret(const QString &secret);
+    void remove();
+    bool signOut();
+    quint32 store(const QVariantMap &info);
 
-    Q_SIGNALS:
-        void unregistered();
-        void infoUpdated(int);
+Q_SIGNALS:
+    void unregistered();
+    void infoUpdated(int);
 
-    private:
-        void securityErrorReply(const char *failedMethodName);
-        void errorReply(const QString &name, const QString &message);
+private:
+    void securityErrorReply(const char *failedMethodName);
+    void errorReply(const QString &name, const QString &message);
 
-    private:
-        SignonIdentity *m_parent;
-    };
+private:
+    SignonIdentity *m_parent;
+};
 
 } //namespace SignonDaemonNS
 

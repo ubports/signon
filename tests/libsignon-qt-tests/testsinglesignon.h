@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,7 +25,6 @@
 
 #include <QObject>
 
-
 class QProcess;
 
 class TestSingleSignon: public QObject
@@ -35,19 +34,18 @@ class TestSingleSignon: public QObject
 private Q_SLOTS:
 
     /*
-    * Start the signon daemon
-    * */
+     * Start the signon daemon
+     */
     void initTestCase();
 
     /*
-    * End the signon daemon
-    * */
+     * End the signon daemon
+     */
     void cleanupTestCase();
 
     /*
-    * Test cases
-    * */
-
+     * Test cases
+     */
     void singleTestClient();
     void multipleClientsAtOnceTest();
 

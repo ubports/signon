@@ -38,8 +38,10 @@ namespace SignonDaemonNS {
 
 /*!
  * @class DefaultCryptoManager
- * Dummy implementation of a manager for the credentials storage file system encryption.
- * It always reports that the file system is mounted, without actually doing anything.
+ * Dummy implementation of a manager for the credentials storage file system
+ * encryption.
+ * It always reports that the file system is mounted, without actually doing
+ * anything.
  * @ingroup Accounts_and_SSO_Framework
  */
 class DefaultCryptoManager: public SignOn::AbstractCryptoManager

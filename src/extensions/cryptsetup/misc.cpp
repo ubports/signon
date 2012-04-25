@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2011 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -39,7 +39,7 @@ bool setUserOwnership(const QString &filePath)
 
     QByteArray filePathArray = filePath.toLocal8Bit();
     const char *filePathStr = filePathArray.constData();
-    if (chown(filePathStr, fileInfo.st_uid , fileInfo.st_gid) != 0) {
+    if (chown(filePathStr, fileInfo.st_uid, fileInfo.st_gid) != 0) {
         BLAME() << "chown of" << filePathStr << "failed, errno:" << errno;
         return false;
     }

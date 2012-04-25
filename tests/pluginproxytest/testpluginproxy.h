@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -39,10 +39,10 @@ class TestPluginProxy: public QObject
     Q_OBJECT
 
 #if defined(SSO_CI_TESTMANAGEMENT)
-     public Q_SLOTS:
-     void runAllTests();
+public Q_SLOTS:
+    void runAllTests();
 #else
-     private Q_SLOTS:
+private Q_SLOTS:
 #endif
     void initTestCase();
     void cleanupTestCase();
@@ -60,6 +60,5 @@ class TestPluginProxy: public QObject
 private:
     PluginProxy *m_proxy;
 };
-
 
 #endif //TESTPLUGINPROXY_H_

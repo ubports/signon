@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -44,12 +44,12 @@ void messageHandler(QtMsgType type, const char *msg)
 {
     int priority;
     switch (type) {
-        case QtWarningMsg: priority = LOG_WARNING; break;
-        case QtCriticalMsg: priority = LOG_CRIT; break;
-        case QtFatalMsg: priority = LOG_EMERG; break;
-        case QtDebugMsg:
-                         /* fall through */
-        default: priority = LOG_INFO; break;
+    case QtWarningMsg: priority = LOG_WARNING; break;
+    case QtCriticalMsg: priority = LOG_CRIT; break;
+    case QtFatalMsg: priority = LOG_EMERG; break;
+    case QtDebugMsg:
+                     /* fall through */
+    default: priority = LOG_INFO; break;
     }
 
     syslog(priority, "%s", msg);

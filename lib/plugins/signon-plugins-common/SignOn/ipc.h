@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2011 Nokia Corporation.
  *
- * Contact: Alberto Mardegan <alberto.mardegan@nokia.com>
+ * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -49,4 +49,3 @@ enum PluginResponse {
 };
 
 #endif // SIGNON_PLUGINS_COMMON_IPC_H
-
