@@ -131,6 +131,24 @@ void BlobIOHandler::readBlob()
     }
 }
 
+static QVariantMap filterOutComplexTypes(const QVariantMap &map)
+{
+    QVariantMap filteredMap;
+    QVariantMap::const_iterator i;
+    for (i = map.constBegin(); i != map.constEnd(); i++) {
+        /* QDBusArgument are complex types; there is no QDataStream
+         * serialization for them, so keeping them in the map would make the
+         * serialization fail for the whole map.
+         * Therefore, skip them. */
+        if (qstrcmp(i.value().typeName(), "QDBusArgument") == 0) {
+            BLAME() << "Found QDBusArgument in map; skipping.";
+            continue;
+        }
+        filteredMap.insert(i.key(), i.value());
+    }
+    return filteredMap;
+}
+
 QByteArray BlobIOHandler::variantMapToByteArray(const QVariantMap &map)
 {
     QBuffer buffer;
@@ -138,7 +156,7 @@ QByteArray BlobIOHandler::variantMapToByteArray(const QVariantMap &map)
         BLAME() << "Buffer opening failed.";
 
     QDataStream stream(&buffer);
-    stream << map;
+    stream << filterOutComplexTypes(map);
     buffer.close();
 
     return buffer.data();
