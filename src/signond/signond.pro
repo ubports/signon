@@ -86,10 +86,6 @@ QMAKE_CLEAN += backupifadaptor.cpp \
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
 
-# Disabling access control if platform is not arm
-BUILD_ARCH = $$QMAKE_HOST.arch
-contains(BUILD_ARCH, i686):DEFINES += SIGNON_DISABLE_ACCESS_CONTROL
-
 OTHER_FILES += \
     signond.conf \
     setupstorage.sh
