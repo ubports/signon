@@ -105,10 +105,8 @@ bool SignonIdentity::init()
     QDBusConnection::RegisterOptions registerOptions =
         QDBusConnection::ExportAllContents;
 
-#ifndef SIGNON_DISABLE_ACCESS_CONTROL
     (void)new SignonIdentityAdaptor(this);
     registerOptions = QDBusConnection::ExportAdaptors;
-#endif
 
     if (!connection.registerObject(objectName(), this, registerOptions)) {
         TRACE() << "Object cannot be registered: " << objectName();
