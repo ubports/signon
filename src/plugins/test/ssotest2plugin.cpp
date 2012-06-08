@@ -23,6 +23,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QImage>
+#include <unistd.h>
 
 #include "ssotest2plugin.h"
 #include "ssotest2data.h"

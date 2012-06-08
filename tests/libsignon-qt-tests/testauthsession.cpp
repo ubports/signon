@@ -28,6 +28,7 @@
 #include "testthread.h"
 #include "SignOn/identity.h"
 #include <sys/wait.h>
+#include <unistd.h>
 
 #define SSO_TEST_CREATE_AUTH_SESSION(__session__, __method__) \
     do {                                                            \

@@ -25,6 +25,7 @@
 #include <QTimer>
 #include <QBuffer>
 #include <QDataStream>
+#include <unistd.h>
 
 #ifdef HAVE_GCONF
 #include <gq/GConfItem>
