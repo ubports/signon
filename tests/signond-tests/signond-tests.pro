@@ -16,9 +16,9 @@ QT -= gui
 LIBS += \
         -lsignon-extension \
         -lsignon-qt
-QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/signond/SignOn
+QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 #DEFINES += CAM_UNIT_TESTS_FIXED
 
