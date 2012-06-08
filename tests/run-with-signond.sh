@@ -12,6 +12,7 @@ export SSO_DAEMON_TIMEOUT=5
 export SSO_IDENTITY_TIMEOUT=5
 export SSO_AUTHSESSION_TIMEOUT=5
 export PATH="${BUILDDIR}/src/remotepluginprocess:$PATH"
+export LD_LIBRARY_PATH="${BUILDDIR}/lib/plugins/signon-plugins-common":"${BUILDDIR}/lib/signond/SignOn":"$LD_LIBRARY_PATH"
 
 # If dbus-test-runner exists, use it to run the tests in a separate D-Bus
 # session
