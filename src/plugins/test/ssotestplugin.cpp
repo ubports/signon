@@ -22,6 +22,8 @@
 
 #include <QMutex>
 #include <QMutexLocker>
+#include <unistd.h>
+
 #include "ssotestplugin.h"
 
 #include "SignOn/signonplugincommon.h"

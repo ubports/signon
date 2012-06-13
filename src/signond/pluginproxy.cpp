@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include <QStringList>
 #include <QThreadStorage>

@@ -22,6 +22,7 @@
 #include "backuptest.h"
 #include "signond/signoncommon.h"
 #include <QDBusMessage>
+#include <unistd.h>
 
 void TestBackup::initTestCase()
 {
