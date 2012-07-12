@@ -103,6 +103,7 @@ private Q_SLOTS:
 
     void processUi_with_existing_identity();
     void processUi_and_cancel();
+    void windowId();
 
 private Q_SLOTS:
     void cancel();

@@ -97,6 +97,7 @@ private Q_SLOTS:
     void handle_destroyed_signal();
     void processUi_with_existing_identity();
     void processUi_and_cancel();
+    void windowId();
 #endif
 
 private:

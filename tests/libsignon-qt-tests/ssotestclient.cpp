@@ -1801,6 +1801,13 @@ void SsoTestClient::processUi_and_cancel()
     TEST_DONE
 }
 
+void SsoTestClient::windowId()
+{
+    TEST_START
+    testAuthSession.windowId();
+    TEST_DONE
+}
+
 #endif
 
 QTEST_MAIN(SsoTestClient);
