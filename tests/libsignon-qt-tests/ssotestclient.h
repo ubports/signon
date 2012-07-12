@@ -31,10 +31,6 @@
 
 #include "SignOn/signonerror.h"
 
-#ifdef SSO_CI_TESTMANAGEMENT
-    #define SSOTESTCLIENT_USES_AUTHSESSION
-#endif
-
 class SignOnUI;
 
 class SsoTestClient: public QObject
@@ -42,7 +38,7 @@ class SsoTestClient: public QObject
     Q_OBJECT
 
 public:
-    SsoTestClient(QObject *parent = 0);
+    SsoTestClient(SignOnUI *signOnUi, QObject *parent = 0);
 
 private Q_SLOTS:
     void initTestCase();
@@ -73,32 +69,7 @@ private Q_SLOTS:
     void sessionTest();
     void multipleRemove();
     void removeStoreRemove();
-
-#ifdef SSOTESTCLIENT_USES_AUTHSESSION
-    /*
-     * AuthSession tests
-     */
-    void multiThreadTest();
-    void queryMechanisms_existing_method();
-    void queryMechanisms_nonexisting_method();
     void queryAuthPluginACL();
-    void process_with_new_identity();
-    void process_with_existing_identity();
-    void process_with_nonexisting_type();
-    void process_with_nonexisting_method();
-    void process_with_unauthorized_method();
-    void process_from_other_process();
-    void process_many_times_after_auth();
-    void process_many_times_before_auth();
-    void process_with_big_session_data();
-    void cancel_immidiately();
-    void cancel_with_delay();
-    void cancel_without_process();
-    void handle_destroyed_signal();
-    void processUi_with_existing_identity();
-    void processUi_and_cancel();
-    void windowId();
-#endif
 
 private:
     void clearDB();
@@ -129,7 +100,6 @@ protected Q_SLOTS:
 
 private:
     SignOnUI *m_signOnUI;
-    TestAuthSession testAuthSession;
     QStringList m_tokenList;
     int m_expectedNumberOfMethods;
     QStringList m_expectedMechanisms;

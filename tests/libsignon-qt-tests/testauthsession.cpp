@@ -20,9 +20,6 @@
  * 02110-1301 USA
  */
 
-#ifndef TESTAUTHSESSION_CPP_
-#define TESTAUTHSESSION_CPP_
-
 #include "signon-ui.h"
 #include "testauthsession.h"
 #include "testthread.h"
@@ -955,9 +952,3 @@ void TestAuthSession::windowId()
     QCOMPARE(m_signOnUI->clientData().value("WindowId").toUInt(),
              0xdeadbeef);
 }
-
-#if !defined(SSO_CI_TESTMANAGEMENT) && !defined(SSOTESTCLIENT_USES_AUTHSESSION)
-QTEST_MAIN(TestAuthSession)
-#endif
-
-#endif //TESTAUTHSESSION_CPP_

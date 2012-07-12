@@ -61,11 +61,7 @@ class TestAuthSession: public QObject
 public:
     TestAuthSession(SignOnUI *signOnUi, QObject *parent = 0);
 
-#if defined(SSO_CI_TESTMANAGEMENT) || defined(SSOTESTCLIENT_USES_AUTHSESSION)
-public Q_SLOTS:
-#else
 private Q_SLOTS:
-#endif
     /*
      * Start the signon daemon
      */
