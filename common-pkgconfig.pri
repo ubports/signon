@@ -14,4 +14,6 @@
     pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
     pkgconfig.commands = $${COMMAND}
     QMAKE_EXTRA_TARGETS += pkgconfig
+
+    QMAKE_CLEAN += $${pkgconfig.files}
 }
