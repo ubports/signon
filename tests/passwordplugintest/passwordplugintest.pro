@@ -19,11 +19,3 @@ INCLUDEPATH += $${TOP_SRC_DIR}/lib/plugins \
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
-
-target.path = /usr/bin
-
-testsuite.path  = /usr/share/$$TARGET
-testsuite.files = tests.xml
-
-INSTALLS += target \
-            testsuite
