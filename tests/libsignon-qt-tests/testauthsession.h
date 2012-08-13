@@ -61,11 +61,7 @@ class TestAuthSession: public QObject
 public:
     TestAuthSession(SignOnUI *signOnUi, QObject *parent = 0);
 
-#if defined(SSO_CI_TESTMANAGEMENT) || defined(SSOTESTCLIENT_USES_AUTHSESSION)
-public Q_SLOTS:
-#else
 private Q_SLOTS:
-#endif
     /*
      * Start the signon daemon
      */
@@ -103,6 +99,7 @@ private Q_SLOTS:
 
     void processUi_with_existing_identity();
     void processUi_and_cancel();
+    void windowId();
 
 private Q_SLOTS:
     void cancel();

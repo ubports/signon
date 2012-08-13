@@ -51,6 +51,11 @@ public:
     QVariantMap parameters() const { return m_parameters; }
 
     /*!
+     * Get the client data.
+     */
+    QVariantMap clientData() const;
+
+    /*!
      * Set the password which will be returned to the next query.
      */
     void setPassword(const QString &password) { m_replyPassword = password; }

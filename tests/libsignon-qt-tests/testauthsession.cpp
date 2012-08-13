@@ -20,9 +20,6 @@
  * 02110-1301 USA
  */
 
-#ifndef TESTAUTHSESSION_CPP_
-#define TESTAUTHSESSION_CPP_
-
 #include "signon-ui.h"
 #include "testauthsession.h"
 #include "testthread.h"
@@ -915,10 +912,43 @@ void TestAuthSession::processUi_and_cancel()
 
     QCOMPARE(spy.count(), 0);
     QCOMPARE(errorCounter.count(), 1);
+
+    m_signOnUI->setDelay(0);
 }
 
-#if !defined(SSO_CI_TESTMANAGEMENT) && !defined(SSOTESTCLIENT_USES_AUTHSESSION)
-QTEST_MAIN(TestAuthSession)
-#endif
+void TestAuthSession::windowId()
+{
+    AuthSession *as;
+    SSO_TEST_CREATE_AUTH_SESSION(as, "ssotest2");
 
-#endif //TESTAUTHSESSION_CPP_
+    QSignalSpy errorCounter(as, SIGNAL(error(const SignOn::Error &)));
+    QSignalSpy spy(as, SIGNAL(response(const SignOn::SessionData&)));
+    QEventLoop loop;
+
+    QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)),
+                     &loop, SLOT(quit()));
+    QObject::connect(as, SIGNAL(error(const SignOn::Error &)),
+                     &loop, SLOT(quit()));
+    QTimer::singleShot(500*1000, &loop, SLOT(quit()));
+
+    /*
+     * chain of UiSessionData
+     * */
+    QStringList chainOfStates;
+
+    SsoTest2PluginNS::SsoTest2Data testData;
+
+    chainOfStates << "Browser" << "Browser";
+    testData.setChainOfStates(chainOfStates);
+    testData.setCurrentState(0);
+    testData.setWindowId(0xdeadbeef);
+
+    as->process(testData, "mech1");
+    if (!errorCounter.count())
+        loop.exec();
+
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(errorCounter.count(), 0);
+    QCOMPARE(m_signOnUI->clientData().value("WindowId").toUInt(),
+             0xdeadbeef);
+}
