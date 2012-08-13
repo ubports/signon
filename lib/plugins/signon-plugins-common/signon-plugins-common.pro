@@ -2,7 +2,8 @@ TEMPLATE = lib
 TARGET = signon-plugins-common
 
 include( ../../../common-project-config.pri )
-include( ../../../common-installs-config.pri )
+include($${TOP_SRC_DIR}/common-installs-config.pri)
+include($${TOP_SRC_DIR}/common-vars.pri)
 
 CONFIG += qt
 
@@ -23,7 +24,7 @@ headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
 pkgconfig.files = signon-plugins-common.pc
-pkgconfig.path  = $${INSTALL_LIBDIR}/pkgconfig
+include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig
 
 # configuration feature
