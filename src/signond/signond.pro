@@ -80,8 +80,9 @@ LIBS += \
     -lsignon-plugins-common \
     -lsignon-extension
 
-QMAKE_CLEAN += backupifadaptor.cpp \
-               backupifadaptor.h
+QMAKE_DISTCLEAN += \
+    backupifadaptor.cpp \
+    backupifadaptor.h
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )
