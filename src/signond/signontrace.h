@@ -36,23 +36,26 @@ namespace SignOn {
 
 class SignonTrace
 {
-    SignonTrace() {}
-
 public:
+    enum LogOutput {
+        Syslog = 0,
+        Stdout,
+    };
+
     ~SignonTrace()
     {
         m_pInstance = NULL;
-        closelog();
+        if (m_logOutput == Syslog) {
+            closelog();
+        }
     }
 
-    static void initialize()
+    static void initialize(LogOutput logOutput)
     {
         if (m_pInstance)
             return;
 
-        m_pInstance = new SignonTrace();
-        openlog(NULL, LOG_PID, LOG_DAEMON);
-        qInstallMsgHandler(output);
+        m_pInstance = new SignonTrace(logOutput);
     }
 
     static void output(QtMsgType type, const char *msg)
@@ -77,15 +80,21 @@ public:
         }
 
         syslog(priority, "%s", msg);
-     }
+    }
 
 private:
-    static SignonTrace *m_pInstance;
-};
+    SignonTrace(LogOutput logOutput):
+        m_logOutput(logOutput)
+    {
+        if (logOutput == Syslog) {
+            openlog(NULL, LOG_PID, LOG_DAEMON);
+            qInstallMsgHandler(output);
+        }
+    }
 
-static void initializeTrace() {
-    SignonTrace::initialize();
-}
+    static SignonTrace *m_pInstance;
+    LogOutput m_logOutput;
+};
 
 SignonTrace *SignonTrace::m_pInstance = 0;
 

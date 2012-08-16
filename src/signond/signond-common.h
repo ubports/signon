@@ -38,8 +38,6 @@
     #include "SignOn/Debug"
 #endif
 
-#define SIGNOND_INITIALIZE_TRACE() initializeTrace();
-
 #ifdef TESTS_TRACE
     #define TRACE() \
         qDebug() << __FILE__ << __LINE__ << __func__
