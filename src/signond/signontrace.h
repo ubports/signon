@@ -34,7 +34,6 @@
 
 namespace SignOn {
 
-template <typename T = void>
 class SignonTrace
 {
     SignonTrace() {}
@@ -51,7 +50,7 @@ public:
         if (m_pInstance)
             return;
 
-        m_pInstance = new SignonTrace<T>();
+        m_pInstance = new SignonTrace();
         openlog(NULL, LOG_PID, LOG_DAEMON);
         qInstallMsgHandler(output);
     }
@@ -81,15 +80,14 @@ public:
      }
 
 private:
-    static SignonTrace<T> *m_pInstance;
+    static SignonTrace *m_pInstance;
 };
 
 static void initializeTrace() {
-    SignonTrace<>::initialize();
+    SignonTrace::initialize();
 }
 
-template <typename T>
-SignonTrace<T> *SignonTrace<T>::m_pInstance = 0;
+SignonTrace *SignonTrace::m_pInstance = 0;
 
 } //namespace SignOn
 
