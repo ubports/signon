@@ -573,20 +573,13 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
             /* If the credentials are validated, the secrets db is not
              * available and not authorized keys are available, then
              * the store operation has been performed on the memory
-             * cache only; inform the CAM about the situation, and
-             * queue the operation so that it's attempted again when
-             * the secrets DB is available. */
+             * cache only; inform the CAM about the situation. */
             if (identityWasValidated && !db->isSecretsDBOpen()) {
                 /* Send the storage not available event only if the curent
                  * result processing is following a previous signon UI query.
                  * This is to avoid unexpected UI pop-ups. */
 
-                /* FIXME: instead of queuing the single operations,
-                 * just dump the cached credentials into the DB once it
-                 * becomes available. */
                 if (m_queryCredsUiDisplayed) {
-                    m_storeQueue.enqueue(storeOp);
-
                     SecureStorageEvent *event =
                         new SecureStorageEvent(
                             (QEvent::Type)SIGNON_SECURE_STORAGE_NOT_AVAILABLE);
@@ -660,9 +653,7 @@ void SignonSessionCore::processStore(const QString &cancelKey,
          * unexpected UI pop-ups.
          */
         if (m_queryCredsUiDisplayed) {
-            TRACE() << "Secure storage not available. "
-                "Queueing store operations.";
-            m_storeQueue.enqueue(storeOp);
+            TRACE() << "Secure storage not available.";
 
             SecureStorageEvent *event =
                 new SecureStorageEvent(
@@ -823,18 +814,17 @@ void SignonSessionCore::childEvent(QChildEvent *ce)
 
 void SignonSessionCore::customEvent(QEvent *event)
 {
+    /* TODO: This method is useless now, and there's probably a simpler
+     * way to handle the secure storage events than using QEvent (such
+     * as direct signal connections).
+     * For the time being, let this method live just for logging the
+     * secure storage events.
+     */
     TRACE() << "Custom event received.";
     if (event->type() == SIGNON_SECURE_STORAGE_AVAILABLE) {
         TRACE() << "Secure storage is available.";
-
-        TRACE() << "Processing queued stored operations.";
-        while (!m_storeQueue.empty()) {
-            processStoreOperation(m_storeQueue.dequeue());
-        }
     } else if (event->type() == SIGNON_SECURE_STORAGE_NOT_AVAILABLE) {
-        TRACE() << "Secure storage still not available. "
-                   "Clearing storage operation queue.";
-        m_storeQueue.clear();
+        TRACE() << "Secure storage still not available.";
     }
 
     QObject::customEvent(event);

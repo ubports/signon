@@ -62,13 +62,15 @@ QVariantMap SecretsCache::lookupData(quint32 id, quint32 method) const
 
 void SecretsCache::updateCredentials(quint32 id,
                                      const QString &username,
-                                     const QString &password)
+                                     const QString &password,
+                                     bool storePassword)
 {
     if (id == 0) return;
 
     AuthCache &credentials = m_cache[id];
     credentials.m_username = username;
     credentials.m_password = password;
+    credentials.m_storePassword = storePassword;
 }
 
 void SecretsCache::updateData(quint32 id, quint32 method,
@@ -78,6 +80,40 @@ void SecretsCache::updateData(quint32 id, quint32 method,
 
     AuthCache &credentials = m_cache[id];
     credentials.m_blobData[method] = data;
+}
+
+void
+SecretsCache::storeToDB(SignOn::AbstractSecretsStorage *secretsStorage) const
+{
+    if (m_cache.isEmpty()) return;
+
+    TRACE() << "Storing cached credentials into permanent storage";
+
+    QHash<quint32, AuthCache>::const_iterator i;
+    for (i = m_cache.constBegin();
+         i != m_cache.constEnd();
+         i++) {
+        quint32 id = i.key();
+        const AuthCache &cache = i.value();
+
+        /* Store the credentials */
+        QString password = cache.m_storePassword ?
+            cache.m_password : QString();
+        if (!cache.m_username.isEmpty() || !password.isEmpty()) {
+            secretsStorage->updateCredentials(id,
+                                              cache.m_username,
+                                              password);
+        }
+
+        /* Store any binary blobs */
+        QHash<quint32, QVariantMap>::const_iterator j;
+        for (j = cache.m_blobData.constBegin();
+             j != cache.m_blobData.constEnd();
+             j++) {
+            quint32 method = j.key();
+            secretsStorage->storeData(id, method, j.value());
+        }
+    }
 }
 
 void SecretsCache::clear()
@@ -1281,6 +1317,7 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
         return false;
     }
 
+    m_secretsCache->storeToDB(secretsStorage);
     m_secretsCache->clear();
     return true;
 }
@@ -1380,7 +1417,8 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
         secretsStorage->updateCredentials(id, userName, password);
     } else {
         /* Cache username and password in memory */
-        m_secretsCache->updateCredentials(id, userName, password);
+        m_secretsCache->updateCredentials(id, userName, password,
+                                          info.storePassword());
     }
 
     return id;

@@ -52,6 +52,7 @@ public:
     private:
         QString m_username;
         QString m_password;
+        bool m_storePassword;
         QHash<quint32,QVariantMap> m_blobData;
     };
 
@@ -65,7 +66,8 @@ public:
 
     void updateCredentials(quint32 id,
                            const QString &username,
-                           const QString &password);
+                           const QString &password,
+                           bool storePassword);
     void updateData(quint32 id, quint32 method, const QVariantMap &data);
 
     void storeToDB(SignOn::AbstractSecretsStorage *secretsStorage) const;
