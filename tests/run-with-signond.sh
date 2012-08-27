@@ -7,6 +7,7 @@ set -e
 # start a local signond
 
 export SSO_LOGGING_LEVEL=2
+export SSO_LOGGING_OUTPUT="stdout"
 export SSO_STORAGE_PATH="/tmp"
 export SSO_DAEMON_TIMEOUT=5
 export SSO_IDENTITY_TIMEOUT=5
