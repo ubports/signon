@@ -482,12 +482,9 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info,
 
         //If secrets db is not available cache auth. data.
         if (!db->isSecretsDBOpen()) {
-            AuthCache *cache = new AuthCache;
-            cache->setUsername(info.userName());
-            cache->setPassword(info.password());
-            AuthCoreCache::instance()->insert(
-                AuthCoreCache::CacheId(m_id, AuthCoreCache::AuthMethod()),
-                cache);
+            AuthCoreCache::instance()->updateCredentials(m_id,
+                                                         info.userName(),
+                                                         info.password());
         }
         TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
         emit infoUpdated((int)SignOn::IdentityDataUpdated);

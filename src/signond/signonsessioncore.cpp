@@ -96,9 +96,6 @@ SignonSessionCore::SignonSessionCore(quint32 id,
 
 SignonSessionCore::~SignonSessionCore()
 {
-    AuthCoreCache::instance()->authSessionDestroyed(
-        AuthCoreCache::CacheId(m_id, m_method));
-
     delete m_plugin;
     delete m_watcher;
     delete m_signonui;
@@ -355,11 +352,14 @@ void SignonSessionCore::startProcess()
                 /* Temporary fix - keep it until session core refactoring is
                  * complete and auth cache will be dumped in the secrets db. */
                 if (parameters[SSO_KEY_PASSWORD].toString().isEmpty()) {
-                    AuthCache *cache =
-                        AuthCoreCache::instance()->data(info.id());
-                    if (cache != 0) {
+                    QString username;
+                    QString password;
+                    AuthCoreCache *cache = AuthCoreCache::instance();
+                    if (cache->lookupCredentials(info.id(),
+                                                 username,
+                                                 password)) {
                         TRACE() << "Using cached secret.";
-                        parameters[SSO_KEY_PASSWORD] = cache->password();
+                        parameters[SSO_KEY_PASSWORD] = password;
                     } else {
                         TRACE() << "Secrets storage not available and "
                             "authentication cache is empty - if SSO requires "
@@ -392,13 +392,13 @@ void SignonSessionCore::startProcess()
         if (db->isSecretsDBOpen()) {
             storedParams = db->loadData(m_id, m_method);
         }
-        /* Temporary fix - keep it until session core refactoring is complete and auth cache
-         * will be dumped in the secrets db. */
+
         if (storedParams.isEmpty()) {
-            AuthCache *cache = AuthCoreCache::instance()->data(info.id());
-            if (cache != 0) {
+            QVariantMap cachedParams =
+                AuthCoreCache::instance()->lookupData(m_id, m_method);
+            if (!cachedParams.isEmpty()) {
                 TRACE() << "Using cached BLOB data.";
-                storedParams = cache->blobData();
+                storedParams = cachedParams;
             }
         }
 
@@ -634,11 +634,9 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
          * Avoid creating an invalid caching record - cache only if the password
          * is not empty. */
         if (!credentialsUpdated && !m_tmpPassword.isEmpty()) {
-            AuthCache *cache = new AuthCache;
-            cache->setUsername(m_tmpUsername);
-            cache->setPassword(m_tmpPassword);
-            AuthCoreCache::instance()->insert(
-                AuthCoreCache::CacheId(m_id, m_method), cache);
+            AuthCoreCache::instance()->updateCredentials(m_id,
+                                                         m_tmpUsername,
+                                                         m_tmpPassword);
         }
 
         m_tmpUsername.clear();
@@ -722,10 +720,7 @@ void SignonSessionCore::processStore(const QString &cancelKey,
      * is not empty. */
     if (!db->isSecretsDBOpen() && !data.isEmpty()) {
         TRACE() << "Caching BLOB authentication data.";
-        AuthCache *cache = new AuthCache;
-        cache->setBlobData(data);
-        AuthCoreCache::instance()->insert(
-            AuthCoreCache::CacheId(m_id, m_method), cache);
+        AuthCoreCache::instance()->updateData(m_id, m_method, data);
     }
     m_queryCredsUiDisplayed = false;
 

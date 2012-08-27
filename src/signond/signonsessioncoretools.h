@@ -100,33 +100,14 @@ class AuthCoreCache: public QObject
     Q_OBJECT
 
 public:
-    typedef quint32 IdentityId;
-    typedef QString AuthMethod;
-    typedef QList<AuthMethod> AuthMethods;
-    typedef QPair<IdentityId, AuthMethod> CacheId;
-
     class AuthCache
     {
         friend class AuthCoreCache;
 
-        ~AuthCache();
-
-    public:
-        AuthCache();
-        QString username() const { return m_username; }
-        QString password() const { return m_password; }
-        QVariantMap blobData() const { return m_blobData; }
-
-        void setUsername(const QString &username) { m_username = username; }
-        void setPassword(const QString &password) { m_password = password; }
-        void setBlobData(const QVariantMap &blobData) { m_blobData = blobData; }
-
-        bool isEmpty() const;
-
     private:
         QString m_username;
         QString m_password;
-        QVariantMap m_blobData;
+        QHash<QString,QVariantMap> m_blobData;
     };
 
 private:
@@ -137,18 +118,22 @@ public:
     static AuthCoreCache *instance(QObject *parent = 0);
     ~AuthCoreCache();
 
-    AuthCache *data(const IdentityId id) const;
-    void insert(const CacheId &id, AuthCache *cache);
+    bool lookupCredentials(quint32 id,
+                           QString &username,
+                           QString &password) const;
+    QVariantMap lookupData(quint32 id, const QString &method) const;
+
+    void updateCredentials(quint32 id,
+                           const QString &username,
+                           const QString &password);
+    void updateData(quint32 id, const QString &method,
+                    const QVariantMap &data);
+
     void clear();
 
-    void authSessionDestroyed(const CacheId &id);
-
 private:
-    QHash<IdentityId, AuthCache *> m_cache;
-    QHash<IdentityId, AuthMethods> m_cachingSessionsMethods;
+    QHash<quint32, AuthCache> m_cache;
 };
-
-typedef AuthCoreCache::AuthCache AuthCache;
 
 } //SignonDaemonNS
 

@@ -96,19 +96,6 @@ RequestData::~RequestData()
 
 AuthCoreCache *AuthCoreCache::m_instance = 0;
 
-AuthCoreCache::AuthCache::AuthCache()
-{
-}
-
-AuthCoreCache::AuthCache::~AuthCache()
-{
-}
-
-bool AuthCoreCache::AuthCache::isEmpty() const
-{
-    return (m_password.isEmpty() && m_blobData.isEmpty());
-}
-
 AuthCoreCache::AuthCoreCache(QObject *parent):
     QObject(parent)
 {
@@ -128,61 +115,47 @@ AuthCoreCache *AuthCoreCache::instance(QObject *parent)
     return m_instance;
 }
 
-AuthCache *AuthCoreCache::data(const IdentityId id) const
+bool AuthCoreCache::lookupCredentials(quint32 id,
+                                      QString &username,
+                                      QString &password) const
 {
-    return m_cache.value(id, 0);
+    QHash<quint32, AuthCache>::const_iterator i;
+
+    i = m_cache.find(id);
+    if (i == m_cache.end()) return false;
+
+    username = i->m_username;
+    password = i->m_password;
+    return true;
 }
 
-void AuthCoreCache::insert(const CacheId &id, AuthCache *cache)
+QVariantMap AuthCoreCache::lookupData(quint32 id,
+                                      const QString &method) const
 {
-    if (cache == 0) return;
-
-    AuthCache *data = m_cache.take(id.first);
-
-    if ((data != 0) && data->isEmpty()) {
-        delete data;
-        data = 0;
-    }
-
-    if (data == 0) {
-        m_cache.insert(id.first, cache);
-        m_cachingSessionsMethods[id.first] = AuthMethods() << id.second;
-    } else {
-        if (cache->m_username.isEmpty())
-            cache->m_username = data->m_username;
-        if (cache->m_password.isEmpty())
-            cache->m_password = data->m_password;
-
-        cache->m_blobData =
-            mergeVariantMaps(data->m_blobData, cache->m_blobData);
-
-        delete data;
-        m_cache.insert(id.first, cache);
-
-        AuthMethods cachingSessionsMethods = m_cachingSessionsMethods[id.first];
-        if (!cachingSessionsMethods.contains(id.second))
-            cachingSessionsMethods.append(id.second);
-    }
+    return m_cache.value(id).m_blobData.value(method);
 }
 
-void AuthCoreCache::authSessionDestroyed(const CacheId &id)
+void AuthCoreCache::updateCredentials(quint32 id,
+                                      const QString &username,
+                                      const QString &password)
 {
-    AuthCache *data = m_cache.value(id.first, 0);
-    if (data != 0) {
-        AuthMethods authMethods = m_cachingSessionsMethods[id.first];
-        authMethods.removeOne(id.second);
-        if (authMethods.isEmpty()) {
-            delete m_cache.take(id.first);
-            (void)m_cachingSessionsMethods.take(id.first);
-        }
-    }
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_username = username;
+    credentials.m_password = password;
+}
+
+void AuthCoreCache::updateData(quint32 id, const QString &method,
+                               const QVariantMap &data)
+{
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_blobData[method] = data;
 }
 
 void AuthCoreCache::clear()
 {
-    QList<IdentityId> keys = m_cache.keys();
-    foreach (IdentityId key, keys)
-        delete m_cache.take(key);
-
-    m_cachingSessionsMethods.clear();
+    m_cache.clear();
 }
