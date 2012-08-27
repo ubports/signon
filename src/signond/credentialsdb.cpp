@@ -3,6 +3,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -23,6 +24,7 @@
  */
 
 #include "credentialsdb.h"
+#include "credentialsdb_p.h"
 #include "signond-common.h"
 #include "signonsessioncoretools.h"
 
@@ -38,6 +40,50 @@
 namespace SignonDaemonNS {
 
 static const QString driver = QLatin1String("QSQLITE");
+
+bool SecretsCache::lookupCredentials(quint32 id,
+                                     QString &username,
+                                     QString &password) const
+{
+    QHash<quint32, AuthCache>::const_iterator i;
+
+    i = m_cache.find(id);
+    if (i == m_cache.end()) return false;
+
+    username = i->m_username;
+    password = i->m_password;
+    return true;
+}
+
+QVariantMap SecretsCache::lookupData(quint32 id, quint32 method) const
+{
+    return m_cache.value(id).m_blobData.value(method);
+}
+
+void SecretsCache::updateCredentials(quint32 id,
+                                     const QString &username,
+                                     const QString &password)
+{
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_username = username;
+    credentials.m_password = password;
+}
+
+void SecretsCache::updateData(quint32 id, quint32 method,
+                              const QVariantMap &data)
+{
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_blobData[method] = data;
+}
+
+void SecretsCache::clear()
+{
+    m_cache.clear();
+}
 
 SqlDatabase::SqlDatabase(const QString &databaseName,
                          const QString &connectionName,
@@ -1199,6 +1245,7 @@ CredentialsDB::ErrorMonitor::~ErrorMonitor()
 CredentialsDB::CredentialsDB(const QString &metaDataDbName,
                              SignOn::AbstractSecretsStorage *secretsStorage):
     secretsStorage(secretsStorage),
+    m_secretsCache(new SecretsCache),
     metaDataDB(new MetaDataDB(metaDataDbName))
 {
     noSecretsDB = SignOn::CredentialsDBError(
@@ -1209,6 +1256,9 @@ CredentialsDB::CredentialsDB(const QString &metaDataDbName,
 CredentialsDB::~CredentialsDB()
 {
     TRACE();
+
+    delete m_secretsCache;
+
     if (metaDataDB) {
         QString connectionName = metaDataDB->connectionName();
         delete metaDataDB;
@@ -1231,7 +1281,7 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
         return false;
     }
 
-    AuthCoreCache::instance()->clear();
+    m_secretsCache->clear();
     return true;
 }
 
@@ -1285,9 +1335,7 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id,
             secretsStorage->loadCredentials(id, username, password);
         } else {
             TRACE() << "Looking up credentials from cache.";
-            AuthCoreCache::instance()->lookupCredentials(id,
-                                                         username,
-                                                         password);
+            m_secretsCache->lookupCredentials(id, username, password);
         }
         if (info.isUserNameSecret())
             info.setUserName(username);
@@ -1332,7 +1380,7 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
         secretsStorage->updateCredentials(id, userName, password);
     } else {
         /* Cache username and password in memory */
-        AuthCoreCache::instance()->updateCredentials(id, userName, password);
+        m_secretsCache->updateCredentials(id, userName, password);
     }
 
     return id;
@@ -1376,7 +1424,7 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
         return secretsStorage->loadData(id, methodId);
     } else {
         TRACE() << "Looking up data from cache";
-        return AuthCoreCache::instance()->lookupData(id, method);
+        return m_secretsCache->lookupData(id, methodId);
     }
 }
 
@@ -1400,7 +1448,7 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
         return secretsStorage->storeData(id, methodId, data);
     } else {
         TRACE() << "Storing data into cache";
-        AuthCoreCache::instance()->updateData(id, method, data);
+        m_secretsCache->updateData(id, methodId, data);
         return true;
     }
 }

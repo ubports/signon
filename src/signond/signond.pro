@@ -16,6 +16,7 @@ HEADERS += \
     accesscontrolmanagerhelper.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
+    credentialsdb_p.h \
     default-crypto-manager.h \
     default-key-authorizer.h \
     default-secrets-storage.h \

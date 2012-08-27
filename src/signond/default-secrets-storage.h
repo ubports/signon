@@ -32,6 +32,7 @@
 
 #include "SignOn/abstract-secrets-storage.h"
 #include "credentialsdb.h"
+#include "credentialsdb_p.h"
 
 #include <QObject>
 

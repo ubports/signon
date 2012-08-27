@@ -87,54 +87,6 @@ public:
     QString m_cancelKey;
 };
 
-/*!
- * @class AuthCoreCache
- * Caches credentials or BLOB authentication data.
- * The cache is credentials' record oriented (credentials ID as key).
- * Once all references of authentication sessions for a specifc
- * credentials ID are destroyed, the cache for that specific ID
- * will be deleted.
- */
-class AuthCoreCache: public QObject
-{
-    Q_OBJECT
-
-public:
-    class AuthCache
-    {
-        friend class AuthCoreCache;
-
-    private:
-        QString m_username;
-        QString m_password;
-        QHash<QString,QVariantMap> m_blobData;
-    };
-
-private:
-    static AuthCoreCache *m_instance;
-    AuthCoreCache(QObject *parent = 0);
-
-public:
-    static AuthCoreCache *instance(QObject *parent = 0);
-    ~AuthCoreCache();
-
-    bool lookupCredentials(quint32 id,
-                           QString &username,
-                           QString &password) const;
-    QVariantMap lookupData(quint32 id, const QString &method) const;
-
-    void updateCredentials(quint32 id,
-                           const QString &username,
-                           const QString &password);
-    void updateData(quint32 id, const QString &method,
-                    const QVariantMap &data);
-
-    void clear();
-
-private:
-    QHash<quint32, AuthCache> m_cache;
-};
-
 } //SignonDaemonNS
 
 #endif //SIGNONSESSIONCORETOOLS_H
