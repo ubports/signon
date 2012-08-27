@@ -1293,32 +1293,29 @@ CredentialsDB::credentials(const QMap<QString, QString> &filter)
     return metaDataDB->identities(filter);
 }
 
-quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info,
-                                         bool storeSecret)
+quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info)
 {
     SignonIdentityInfo newInfo = info;
     if (!info.isNew())
         newInfo.setNew();
-    return updateCredentials(newInfo, storeSecret);
+    return updateCredentials(newInfo);
 }
 
-quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
-                                         bool storeSecret)
+quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
 {
     INIT_ERROR();
     quint32 id = metaDataDB->updateIdentity(info);
     if (id == 0) return id;
 
-    if (storeSecret && isSecretsDBOpen()) {
-        QString password;
-        if (info.storePassword())
-            password = info.password();
+    QString password = info.password();
+    QString userName;
+    if (info.isUserNameSecret())
+        userName = info.userName();
 
-        QString userName;
-        if (info.isUserNameSecret())
-            userName = info.userName();
-
+    if (info.storePassword() && isSecretsDBOpen()) {
         secretsStorage->updateCredentials(id, userName, password);
+    } else {
+        /* TODO Cache username and password in memory */
     }
 
     return id;

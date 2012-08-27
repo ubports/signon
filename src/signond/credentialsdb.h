@@ -313,10 +313,8 @@ public:
     SignonIdentityInfo credentials(const quint32 id, bool queryPassword = true);
     QList<SignonIdentityInfo> credentials(const QMap<QString, QString> &filter);
 
-    quint32 insertCredentials(const SignonIdentityInfo &info,
-                              bool storeSecret = true);
-    quint32 updateCredentials(const SignonIdentityInfo &info,
-                              bool storeSecret = true);
+    quint32 insertCredentials(const SignonIdentityInfo &info);
+    quint32 updateCredentials(const SignonIdentityInfo &info);
     bool removeCredentials(const quint32 id);
 
     bool clear();

@@ -168,7 +168,7 @@ void TestDatabase::methodsTest()
                            testAcl,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     QStringList meths = m_db->methods(id);
     QVERIFY(meths.contains(QLatin1String("Method1")));
@@ -193,7 +193,7 @@ void TestDatabase::checkPasswordTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     QVERIFY(m_db->checkPassword(id, info.userName(), info.password()));
     QVERIFY(!m_db->checkPassword(id, info.userName(), QLatin1String("PassWd")));
@@ -219,10 +219,10 @@ void TestDatabase::credentialsTest()
                            testRealms,
                            testAcl);
 
-    m_db->insertCredentials(info, true);
+    m_db->insertCredentials(info);
     creds = m_db->credentials(filter);
     QVERIFY(creds.count() == 1);
-    m_db->insertCredentials(info, true);
+    m_db->insertCredentials(info);
     creds = m_db->credentials(filter);
     QVERIFY(creds.count() == 2);
     foreach(SignonIdentityInfo info, creds) {
@@ -239,7 +239,7 @@ void TestDatabase::insertCredentialsTest()
     quint32 id;
 
     //insert empty
-    id = m_db->insertCredentials(info, false);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, false);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -254,7 +254,7 @@ void TestDatabase::insertCredentialsTest()
                            testMethods,
                            testRealms);
 
-    id = m_db->insertCredentials(info, false);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, false);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -271,7 +271,7 @@ void TestDatabase::insertCredentialsTest()
                            methods2,
                            testRealms);
 
-    id = m_db->insertCredentials(info2, false);
+    id = m_db->insertCredentials(info2);
     retInfo = m_db->credentials(id, false);
     QVERIFY(id != info2.id());
     info2.setId(id);
@@ -288,7 +288,7 @@ void TestDatabase::insertCredentialsTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, false);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -302,7 +302,7 @@ void TestDatabase::insertCredentialsTest()
     QVERIFY(retInfo == info);
 
     //with password and secrets DB disabled
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, true);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -311,7 +311,7 @@ void TestDatabase::insertCredentialsTest()
     //with password and secrets DB enabled
     bool success = m_db->openSecretsDB(secretsDbFile);
     QVERIFY(success);
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, true);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -336,7 +336,7 @@ void TestDatabase::updateCredentialsTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, true);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -367,7 +367,7 @@ void TestDatabase::updateCredentialsTest()
                            testAcl,
                            2, 0, false);
 
-    QVERIFY(m_db->updateCredentials(updateInfo, true));
+    QVERIFY(m_db->updateCredentials(updateInfo));
 
     retInfo = m_db->credentials(id, true);
 
@@ -393,7 +393,7 @@ void TestDatabase::removeCredentialsTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
     retInfo = m_db->credentials(id, true);
     QVERIFY(id != info.id());
     info.setId(id);
@@ -461,7 +461,7 @@ void TestDatabase::dataTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     /* no secrets DB: expect fail */
     bool ret = m_db->storeData(id, method, QVariantMap());
@@ -556,7 +556,7 @@ void TestDatabase::referenceTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     //add reference
     bool ret = m_db->addReference(id, QLatin1String("AID::12345678"),
@@ -614,7 +614,7 @@ void TestDatabase::accessControlListTest()
                            testRealms,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     QStringList acl = m_db->accessControlList(id);
     qDebug() << acl;
@@ -636,7 +636,7 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
                            testAcl,
                            testAcl);
 
-    id = m_db->insertCredentials(info, true);
+    id = m_db->insertCredentials(info);
 
     QString token = m_db->credentialsOwnerSecurityToken(id);
     qDebug() << token;
