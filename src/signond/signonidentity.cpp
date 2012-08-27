@@ -476,12 +476,6 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info)
         }
         m_pSignonDaemon->identityStored(this);
 
-        //If secrets db is not available cache auth. data.
-        if (!db->isSecretsDBOpen()) {
-            AuthCoreCache::instance()->updateCredentials(m_id,
-                                                         info.userName(),
-                                                         info.password());
-        }
         TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
         emit infoUpdated((int)SignOn::IdentityDataUpdated);
     }

@@ -24,6 +24,7 @@
 
 #include "credentialsdb.h"
 #include "signond-common.h"
+#include "signonsessioncoretools.h"
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
 #define RETURN_IF_NO_SECRETS_DB(retval) \
@@ -1315,7 +1316,8 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
     if (info.storePassword() && isSecretsDBOpen()) {
         secretsStorage->updateCredentials(id, userName, password);
     } else {
-        /* TODO Cache username and password in memory */
+        /* Cache username and password in memory */
+        AuthCoreCache::instance()->updateCredentials(id, userName, password);
     }
 
     return id;
