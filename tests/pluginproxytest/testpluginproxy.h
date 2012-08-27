@@ -38,12 +38,7 @@ class TestPluginProxy: public QObject
 {
     Q_OBJECT
 
-#if defined(SSO_CI_TESTMANAGEMENT)
-public Q_SLOTS:
-    void runAllTests();
-#else
 private Q_SLOTS:
-#endif
     void initTestCase();
     void cleanupTestCase();
 

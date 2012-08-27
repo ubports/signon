@@ -653,69 +653,6 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
 
 }
 
-void TestDatabase::runAllTests()
-{
-    initTestCase();
-
-    init();
-    createTableStructureTest();
-    cleanup();
-
-    init();
-    queryListTest();
-    cleanup();
-
-    init();
-    insertMethodsTest();
-    cleanup();
-
-    init();
-    methodsTest();
-    cleanup();
-
-    init();
-    checkPasswordTest();
-    cleanup();
-
-    init();
-    credentialsTest();
-    cleanup();
-
-    init();
-    insertCredentialsTest();
-    cleanup();
-
-    init();
-    updateCredentialsTest();
-    cleanup();
-
-    init();
-    removeCredentialsTest();
-    cleanup();
-
-    init();
-    clearTest();
-    cleanup();
-
-    init();
-    dataTest();
-    cleanup();
-
-    init();
-    referenceTest();
-    cleanup();
-
-    init();
-    accessControlListTest();
-    cleanup();
-
-    init();
-    credentialsOwnerSecurityTokenTest();
-    cleanup();
-
-    cleanupTestCase();
-}
-
 #if !defined(SSO_CI_TESTMANAGEMENT)
     QTEST_MAIN(TestDatabase)
 #endif

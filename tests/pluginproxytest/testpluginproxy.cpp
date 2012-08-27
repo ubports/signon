@@ -302,19 +302,6 @@ void TestPluginProxy::wrong_user_for_dummy()
 #endif
 }
 
-#if defined(SSO_CI_TESTMANAGEMENT)
-void TestPluginProxy::runAllTests()
-{
-    initTestCase();
-    create_nonexisting();
-    create_dummy();
-    type_for_dummy();
-    mechanisms_for_dummy();
-    process_for_dummy();
-    process_wrong_mech_for_dummy();
-    process_and_cancel_for_dummy();
-    cleanupTestCase();
-}
-#else
+#if !defined(SSO_CI_TESTMANAGEMENT)
 QTEST_MAIN(TestPluginProxy)
 #endif

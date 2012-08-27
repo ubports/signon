@@ -39,10 +39,6 @@ public Q_SLOTS:
     void credentialsStored(const quint32 id);
     void identityError(const SignOn::Error &error);
 
-#if defined(SSO_CI_TESTMANAGEMENT)
-    void runAllTests();
-#endif
-
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
