@@ -606,6 +606,54 @@ void TestDatabase::referenceTest()
 
 }
 
+void TestDatabase::cacheTest()
+{
+    quint32 idWithStore, idWithoutStore;
+
+    SignonIdentityInfo info =
+        SignonIdentityInfo(0,
+                           QLatin1String("User"),
+                           QLatin1String("Pass"), true,
+                           QLatin1String("Caption"),
+                           testMethods,
+                           testRealms,
+                           testAcl);
+
+    /* no secrets DB: data will be cached in memory */
+
+    idWithStore = m_db->insertCredentials(info);
+    QVERIFY(idWithStore != 0);
+
+    info.setPassword("Pass2");
+    info.setStorePassword(false);
+    idWithoutStore = m_db->insertCredentials(info);
+    QVERIFY(idWithoutStore != 0);
+
+    /* verify that the password is cached */
+    info = m_db->credentials(idWithStore, true);
+    QCOMPARE(info.password(), QLatin1String("Pass"));
+    info = m_db->credentials(idWithoutStore, true);
+    QCOMPARE(info.password(), QLatin1String("Pass2"));
+
+    /* load the secrets DB */
+    int ret = m_db->openSecretsDB(secretsDbFile);
+    QVERIFY(ret);
+
+    /* the cached data should have been stored into the DB, but not for
+     * idWithoutStore, which has storeSecret set to false.
+     */
+    QString username, password;
+    bool ok;
+    ok = m_db->secretsStorage->loadCredentials(idWithStore,
+                                               username, password);
+    QVERIFY(ok);
+    QCOMPARE(password, QLatin1String("Pass"));
+
+    ok = m_db->secretsStorage->loadCredentials(idWithoutStore,
+                                               username, password);
+    QVERIFY(!ok);
+}
+
 void TestDatabase::accessControlListTest()
 {
     quint32 id;

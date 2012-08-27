@@ -58,6 +58,7 @@ private Q_SLOTS:
 
     void dataTest();
     void referenceTest();
+    void cacheTest();
 
     void accessControlListTest();
     void credentialsOwnerSecurityTokenTest();
