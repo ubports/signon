@@ -1231,6 +1231,7 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
         return false;
     }
 
+    AuthCoreCache::instance()->clear();
     return true;
 }
 
@@ -1277,12 +1278,26 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id,
     TRACE() << "id:" << id << "queryPassword:" << queryPassword;
     INIT_ERROR();
     SignonIdentityInfo info = metaDataDB->identity(id);
-    if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
+    if (queryPassword && !info.isNew()) {
         QString username, password;
-        secretsStorage->loadCredentials(id, username, password);
+        if (isSecretsDBOpen()) {
+            TRACE() << "Loading credentials from DB.";
+            secretsStorage->loadCredentials(id, username, password);
+        } else {
+            TRACE() << "Looking up credentials from cache.";
+            AuthCoreCache::instance()->lookupCredentials(id,
+                                                         username,
+                                                         password);
+        }
         if (info.isUserNameSecret())
             info.setUserName(username);
         info.setPassword(password);
+
+#ifdef DEBUG_ENABLED
+        if (password.isEmpty()) {
+            TRACE() << "Password is empty";
+        }
+#endif
     }
     return info;
 }
@@ -1352,13 +1367,17 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
     TRACE() << "Loading:" << id << "," << method;
 
     INIT_ERROR();
-    RETURN_IF_NO_SECRETS_DB(QVariantMap());
     if (id == 0) return QVariantMap();
 
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return QVariantMap();
 
-    return secretsStorage->loadData(id, methodId);
+    if (isSecretsDBOpen()) {
+        return secretsStorage->loadData(id, methodId);
+    } else {
+        TRACE() << "Looking up data from cache";
+        return AuthCoreCache::instance()->lookupData(id, method);
+    }
 }
 
 bool CredentialsDB::storeData(const quint32 id, const QString &method,
@@ -1367,7 +1386,6 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
     TRACE() << "Storing:" << id << "," << method;
 
     INIT_ERROR();
-    RETURN_IF_NO_SECRETS_DB(false);
     if (id == 0) return false;
 
     quint32 methodId = metaDataDB->methodId(method);
@@ -1378,7 +1396,13 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
             return false;
     }
 
-    return secretsStorage->storeData(id, methodId, data);
+    if (isSecretsDBOpen()) {
+        return secretsStorage->storeData(id, methodId, data);
+    } else {
+        TRACE() << "Storing data into cache";
+        AuthCoreCache::instance()->updateData(id, method, data);
+        return true;
+    }
 }
 
 bool CredentialsDB::removeData(const quint32 id, const QString &method)

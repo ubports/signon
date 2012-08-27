@@ -344,28 +344,7 @@ void SignonSessionCore::startProcess()
         SignonIdentityInfo info = db->credentials(m_id);
         if (info.id() != SIGNOND_NEW_IDENTITY) {
             if (!parameters.contains(SSO_KEY_PASSWORD)) {
-                //If secrets db not available attempt loading data from cache
-                if (db->isSecretsDBOpen()) {
-                    parameters[SSO_KEY_PASSWORD] = info.password();
-                }
-
-                /* Temporary fix - keep it until session core refactoring is
-                 * complete and auth cache will be dumped in the secrets db. */
-                if (parameters[SSO_KEY_PASSWORD].toString().isEmpty()) {
-                    QString username;
-                    QString password;
-                    AuthCoreCache *cache = AuthCoreCache::instance();
-                    if (cache->lookupCredentials(info.id(),
-                                                 username,
-                                                 password)) {
-                        TRACE() << "Using cached secret.";
-                        parameters[SSO_KEY_PASSWORD] = password;
-                    } else {
-                        TRACE() << "Secrets storage not available and "
-                            "authentication cache is empty - if SSO requires "
-                            "a password, auth. will fail.";
-                    }
-                }
+                parameters[SSO_KEY_PASSWORD] = info.password();
             }
             //database overrules over sessiondata for validated username,
             //so that identity cannot be misused
@@ -388,19 +367,7 @@ void SignonSessionCore::startProcess()
                 "database.";
         }
 
-        QVariantMap storedParams;
-        if (db->isSecretsDBOpen()) {
-            storedParams = db->loadData(m_id, m_method);
-        }
-
-        if (storedParams.isEmpty()) {
-            QVariantMap cachedParams =
-                AuthCoreCache::instance()->lookupData(m_id, m_method);
-            if (!cachedParams.isEmpty()) {
-                TRACE() << "Using cached BLOB data.";
-                storedParams = cachedParams;
-            }
-        }
+        QVariantMap storedParams = db->loadData(m_id, m_method);
 
         //parameters will overwrite any common keys on stored params
         parameters = mergeVariantMaps(storedParams, parameters);
@@ -585,7 +552,6 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
         Q_ASSERT(db != 0);
 
         //update database entry
-        bool credentialsUpdated = false;
         if (m_id != SIGNOND_NEW_IDENTITY) {
             SignonIdentityInfo info = db->credentials(m_id);
             bool identityWasValidated = info.validated();
@@ -602,14 +568,22 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
 
             StoreOperation storeOp(StoreOperation::Credentials);
             storeOp.m_info = info;
+            processStoreOperation(storeOp);
 
             /* If the credentials are validated, the secrets db is not
-             * available and not authorized keys are available inform the CAM
-             * about the situation. */
+             * available and not authorized keys are available, then
+             * the store operation has been performed on the memory
+             * cache only; inform the CAM about the situation, and
+             * queue the operation so that it's attempted again when
+             * the secrets DB is available. */
             if (identityWasValidated && !db->isSecretsDBOpen()) {
                 /* Send the storage not available event only if the curent
                  * result processing is following a previous signon UI query.
                  * This is to avoid unexpected UI pop-ups. */
+
+                /* FIXME: instead of queuing the single operations,
+                 * just dump the cached credentials into the DB once it
+                 * becomes available. */
                 if (m_queryCredsUiDisplayed) {
                     m_storeQueue.enqueue(storeOp);
 
@@ -624,19 +598,7 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
                         event,
                         Qt::HighEventPriority);
                 }
-            } else {
-                processStoreOperation(storeOp);
-                credentialsUpdated = true;
             }
-        }
-
-        /* If secrets db not available cache credentials for this session core.
-         * Avoid creating an invalid caching record - cache only if the password
-         * is not empty. */
-        if (!credentialsUpdated && !m_tmpPassword.isEmpty()) {
-            AuthCoreCache::instance()->updateCredentials(m_id,
-                                                         m_tmpUsername,
-                                                         m_tmpPassword);
         }
 
         m_tmpUsername.clear();
@@ -687,6 +649,7 @@ void SignonSessionCore::processStore(const QString &cancelKey,
     StoreOperation storeOp(StoreOperation::Blob);
     storeOp.m_blobData = filteredData;
     storeOp.m_authMethod = m_method;
+    processStoreOperation(storeOp);
 
     /* If the credentials are validated, the secrets db is not available and
      * not authorized keys are available inform the CAM about the situation. */
@@ -711,17 +674,8 @@ void SignonSessionCore::processStore(const QString &cancelKey,
                 event,
                 Qt::HighEventPriority);
         }
-    } else {
-        processStoreOperation(storeOp);
     }
 
-    /* If secrets db not available cache credentials for this session core.
-     * Avoid creating an invalid caching record - cache only if the BLOB data
-     * is not empty. */
-    if (!db->isSecretsDBOpen() && !data.isEmpty()) {
-        TRACE() << "Caching BLOB authentication data.";
-        AuthCoreCache::instance()->updateData(m_id, m_method, data);
-    }
     m_queryCredsUiDisplayed = false;
 
     return;
@@ -872,7 +826,6 @@ void SignonSessionCore::customEvent(QEvent *event)
     TRACE() << "Custom event received.";
     if (event->type() == SIGNON_SECURE_STORAGE_AVAILABLE) {
         TRACE() << "Secure storage is available.";
-        AuthCoreCache::instance()->clear();
 
         TRACE() << "Processing queued stored operations.";
         while (!m_storeQueue.empty()) {
