@@ -44,6 +44,7 @@ namespace SignonDaemonNS {
  */
 class SecretsCache
 {
+    friend class ::TestDatabase;
 public:
     class AuthCache
     {

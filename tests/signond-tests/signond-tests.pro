@@ -53,7 +53,8 @@ contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
            $$TOP_SRC_DIR/src/signond/accesscodehandler.h \
            $$TOP_SRC_DIR/src/signond/simdbusadaptor.h \
            $$TOP_SRC_DIR/src/signond/cryptomanager.h \
-           $$TOP_SRC_DIR/src/signond/credentialsdb.h
+           $$TOP_SRC_DIR/src/signond/credentialsdb.h \
+           $$TOP_SRC_DIR/src/signond/credentialsdb_p.h
 
  SOURCES *= $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/includes.cpp \

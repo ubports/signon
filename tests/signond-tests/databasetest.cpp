@@ -306,7 +306,7 @@ void TestDatabase::insertCredentialsTest()
     retInfo = m_db->credentials(id, true);
     QVERIFY(id != info.id());
     info.setId(id);
-    QVERIFY(!(retInfo == info));
+    QCOMPARE(retInfo, info);
 
     //with password and secrets DB enabled
     bool success = m_db->openSecretsDB(secretsDbFile);
@@ -463,35 +463,41 @@ void TestDatabase::dataTest()
 
     id = m_db->insertCredentials(info);
 
-    /* no secrets DB: expect fail */
-    bool ret = m_db->storeData(id, method, QVariantMap());
-    QVERIFY(!ret);
+    /* no secrets DB: data will be cached in memory */
+    QVariantMap cachedData;
+    cachedData.insert(QLatin1String("James"), QLatin1String("Bond"));
+    bool ret = m_db->storeData(id, method, cachedData);
+    QVERIFY(ret);
+
+    /* verify that the data is cached */
+    QCOMPARE(cachedData, m_db->loadData(id, method));
+    QCOMPARE(m_db->m_secretsCache->m_cache.count(), 1);
 
     /* load the secrets DB */
     ret = m_db->openSecretsDB(secretsDbFile);
     QVERIFY(ret);
 
-    /* now it must work */
-    ret = m_db->storeData(id, method, QVariantMap());
-    QVERIFY(ret);
+    /* the cached data should have been stored into the DB and the
+     * cache should be clear */
+    QCOMPARE(cachedData, m_db->loadData(id, method));
+    QVERIFY(m_db->m_secretsCache->m_cache.isEmpty());
 
-
-    QVariantMap result = m_db->loadData(id, method);
-    QVERIFY(result.isEmpty());
+    /* now store more data, with the secrets DB active */
+    QVariantMap result;
     QVariantMap data;
     data.insert(QLatin1String("token"), QLatin1String("tokenval"));
     ret = m_db->storeData(id, method, data);
     QVERIFY(ret);
     result = m_db->loadData(id, method);
     qDebug() << result;
-    QVERIFY(result == data);
+    QCOMPARE(result, data);
 
     data.insert(QLatin1String("token"), QLatin1String("tokenvalupdated"));
     data.insert(QLatin1String("token2"), QLatin1String("tokenval2"));
     ret = m_db->storeData(id, method, data);
     QVERIFY(ret);
     result = m_db->loadData(id, method);
-    QVERIFY(result == data);
+    QCOMPARE(result, data);
 
 
     data.insert(QLatin1String("token"), QVariant());
