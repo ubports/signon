@@ -59,7 +59,7 @@ public:
     quint32 id() const { return m_id; }
 
     SignonIdentityInfo queryInfo(bool &ok, bool queryPassword = true);
-    quint32 storeCredentials(const SignonIdentityInfo &info, bool storeSecret);
+    quint32 storeCredentials(const SignonIdentityInfo &info);
 
 public Q_SLOTS:
     quint32 requestCredentialsUpdate(const QString &message);

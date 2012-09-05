@@ -19,10 +19,11 @@ core
 *pro.user
 build-stamp
 configure-stamp
+coverage-html
+coverage.info
 debian
-
 doc/html
 doc/qch
-
 lib/SignOn/doc/html
 lib/SignOn/doc/qch
+signon-*.tar.bz2

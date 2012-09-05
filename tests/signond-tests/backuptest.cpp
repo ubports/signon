@@ -154,29 +154,6 @@ void TestBackup::restoreNormalTest()
 
 }
 
-void TestBackup::runAllTests()
-{
-    initTestCase();
-
-    init();
-    backupTest();
-    cleanup();
-
-    init();
-    restoreTest();
-    cleanup();
-
-    init();
-    backupNormalTest();
-    cleanup();
-
-    init();
-    restoreNormalTest();
-    cleanup();
-
-    cleanupTestCase();
-}
-
 #if !defined(SSO_CI_TESTMANAGEMENT)
 QTEST_MAIN(TestBackup)
 #endif

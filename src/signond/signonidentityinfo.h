@@ -75,6 +75,9 @@ struct SignonIdentityInfo
 
     void setPassword(const QString &password) { m_password = password; }
     QString password() const { return m_password; }
+    void setStorePassword(bool storePassword) {
+        m_storePassword = storePassword;
+    }
     bool storePassword() const { return m_storePassword; }
 
     void setCaption(const QString &caption) { m_caption = caption; }

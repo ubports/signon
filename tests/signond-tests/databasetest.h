@@ -38,11 +38,6 @@ class TestDatabase: public QObject
 {
     Q_OBJECT
 
-public Q_SLOTS:
-#if defined(SSO_CI_TESTMANAGEMENT)
-    void runAllTests();
-#endif
-
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
@@ -63,6 +58,7 @@ private Q_SLOTS:
 
     void dataTest();
     void referenceTest();
+    void cacheTest();
 
     void accessControlListTest();
     void credentialsOwnerSecurityTokenTest();

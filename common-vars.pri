@@ -14,7 +14,7 @@ PROJECT_NAME = signon
 # Project version
 # remember to update debian/* files if you changes this
 #-----------------------------------------------------------------------------
-PROJECT_VERSION = 8.40
+PROJECT_VERSION = 8.41
 
 #-----------------------------------------------------------------------------
 # Library version

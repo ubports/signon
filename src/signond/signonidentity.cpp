@@ -437,12 +437,9 @@ quint32 SignonIdentity::store(const QVariantMap &info)
         m_pInfo->setType(type);
     }
 
-    if (storeSecret) {
-        m_pInfo->setPassword(secret);
-    } else {
-        m_pInfo->setPassword(QString());
-    }
-    m_id = storeCredentials(*m_pInfo, storeSecret);
+    m_pInfo->setPassword(secret);
+    m_pInfo->setStorePassword(storeSecret);
+    m_id = storeCredentials(*m_pInfo);
 
     if (m_id == SIGNOND_NEW_IDENTITY) {
         sendErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
@@ -452,8 +449,7 @@ quint32 SignonIdentity::store(const QVariantMap &info)
     return m_id;
 }
 
-quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info,
-                                         bool storeSecret)
+quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info)
 {
     CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
     if (db == NULL) {
@@ -464,9 +460,9 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info,
     bool newIdentity = info.isNew();
 
     if (newIdentity)
-        m_id = db->insertCredentials(info, storeSecret);
+        m_id = db->insertCredentials(info);
     else
-        db->updateCredentials(info, storeSecret);
+        db->updateCredentials(info);
 
     if (db->errorOccurred()) {
         if (newIdentity)
@@ -480,15 +476,6 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info,
         }
         m_pSignonDaemon->identityStored(this);
 
-        //If secrets db is not available cache auth. data.
-        if (!db->isSecretsDBOpen()) {
-            AuthCache *cache = new AuthCache;
-            cache->setUsername(info.userName());
-            cache->setPassword(info.password());
-            AuthCoreCache::instance()->insert(
-                AuthCoreCache::CacheId(m_id, AuthCoreCache::AuthMethod()),
-                cache);
-        }
         TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
         emit infoUpdated((int)SignOn::IdentityDataUpdated);
     }
@@ -559,7 +546,7 @@ void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
         if (m_pInfo) {
             m_pInfo->setPassword(resultParameters[SSOUI_KEY_PASSWORD].toString());
 
-            quint32 ret = db->updateCredentials(*m_pInfo, true);
+            quint32 ret = db->updateCredentials(*m_pInfo);
             delete m_pInfo;
             m_pInfo = NULL;
             if (ret != SIGNOND_NEW_IDENTITY) {

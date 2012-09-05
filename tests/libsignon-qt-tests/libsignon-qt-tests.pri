@@ -1,5 +1,4 @@
 include( ../tests.pri )
-include( $$TOP_SRC_DIR/common-installs-config.pri )
 
 CONFIG += qtestlib \
           build_all \
@@ -34,7 +33,3 @@ DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR_QUOTED}"
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
 TARGET = libsignon-qt-tests
-
-testsuite.path = /usr/share/$$TARGET
-testsuite.files = tests.xml
-INSTALLS += testsuite pkgconfig

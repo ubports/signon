@@ -178,6 +178,11 @@ void SignonDaemonConfiguration::load()
             setLoggingLevel(value);
     }
 
+    QString logOutput = environment.value(QLatin1String("SSO_LOGGING_OUTPUT"),
+                                          QLatin1String("syslog"));
+    SignonTrace::initialize(logOutput == QLatin1String("syslog") ?
+                            SignonTrace::Syslog : SignonTrace::Stdout);
+
     if (environment.contains(QLatin1String("SSO_STORAGE_PATH"))) {
         m_camConfiguration.setStoragePath(
             environment.value(QLatin1String("SSO_STORAGE_PATH")));
@@ -336,8 +341,6 @@ void SignonDaemon::init()
 
     m_configuration->load();
 
-    SIGNOND_INITIALIZE_TRACE()
-
     if (getuid() != 0) {
         BLAME() << "Failed to SUID root. Secure storage will not be available.";
     }
@@ -436,8 +439,6 @@ void SignonDaemon::init()
 
     if (!initStorage())
         BLAME() << "Signond: Cannot initialize credentials storage.";
-
-    Q_UNUSED(AuthCoreCache::instance(this));
 
     if (m_configuration->daemonTimeout() > 0) {
         SignonDisposable::invokeOnIdle(m_configuration->daemonTimeout(),

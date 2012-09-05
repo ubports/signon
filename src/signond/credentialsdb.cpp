@@ -3,6 +3,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -23,7 +24,9 @@
  */
 
 #include "credentialsdb.h"
+#include "credentialsdb_p.h"
 #include "signond-common.h"
+#include "signonsessioncoretools.h"
 
 #define INIT_ERROR() ErrorMonitor errorMonitor(this)
 #define RETURN_IF_NO_SECRETS_DB(retval) \
@@ -37,6 +40,86 @@
 namespace SignonDaemonNS {
 
 static const QString driver = QLatin1String("QSQLITE");
+
+bool SecretsCache::lookupCredentials(quint32 id,
+                                     QString &username,
+                                     QString &password) const
+{
+    QHash<quint32, AuthCache>::const_iterator i;
+
+    i = m_cache.find(id);
+    if (i == m_cache.end()) return false;
+
+    username = i->m_username;
+    password = i->m_password;
+    return true;
+}
+
+QVariantMap SecretsCache::lookupData(quint32 id, quint32 method) const
+{
+    return m_cache.value(id).m_blobData.value(method);
+}
+
+void SecretsCache::updateCredentials(quint32 id,
+                                     const QString &username,
+                                     const QString &password,
+                                     bool storePassword)
+{
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_username = username;
+    credentials.m_password = password;
+    credentials.m_storePassword = storePassword;
+}
+
+void SecretsCache::updateData(quint32 id, quint32 method,
+                              const QVariantMap &data)
+{
+    if (id == 0) return;
+
+    AuthCache &credentials = m_cache[id];
+    credentials.m_blobData[method] = data;
+}
+
+void
+SecretsCache::storeToDB(SignOn::AbstractSecretsStorage *secretsStorage) const
+{
+    if (m_cache.isEmpty()) return;
+
+    TRACE() << "Storing cached credentials into permanent storage";
+
+    QHash<quint32, AuthCache>::const_iterator i;
+    for (i = m_cache.constBegin();
+         i != m_cache.constEnd();
+         i++) {
+        quint32 id = i.key();
+        const AuthCache &cache = i.value();
+
+        /* Store the credentials */
+        QString password = cache.m_storePassword ?
+            cache.m_password : QString();
+        if (!cache.m_username.isEmpty() || !password.isEmpty()) {
+            secretsStorage->updateCredentials(id,
+                                              cache.m_username,
+                                              password);
+        }
+
+        /* Store any binary blobs */
+        QHash<quint32, QVariantMap>::const_iterator j;
+        for (j = cache.m_blobData.constBegin();
+             j != cache.m_blobData.constEnd();
+             j++) {
+            quint32 method = j.key();
+            secretsStorage->storeData(id, method, j.value());
+        }
+    }
+}
+
+void SecretsCache::clear()
+{
+    m_cache.clear();
+}
 
 SqlDatabase::SqlDatabase(const QString &databaseName,
                          const QString &connectionName,
@@ -1198,6 +1281,7 @@ CredentialsDB::ErrorMonitor::~ErrorMonitor()
 CredentialsDB::CredentialsDB(const QString &metaDataDbName,
                              SignOn::AbstractSecretsStorage *secretsStorage):
     secretsStorage(secretsStorage),
+    m_secretsCache(new SecretsCache),
     metaDataDB(new MetaDataDB(metaDataDbName))
 {
     noSecretsDB = SignOn::CredentialsDBError(
@@ -1208,6 +1292,9 @@ CredentialsDB::CredentialsDB(const QString &metaDataDbName,
 CredentialsDB::~CredentialsDB()
 {
     TRACE();
+
+    delete m_secretsCache;
+
     if (metaDataDB) {
         QString connectionName = metaDataDB->connectionName();
         delete metaDataDB;
@@ -1230,6 +1317,8 @@ bool CredentialsDB::openSecretsDB(const QString &secretsDbName)
         return false;
     }
 
+    m_secretsCache->storeToDB(secretsStorage);
+    m_secretsCache->clear();
     return true;
 }
 
@@ -1276,12 +1365,24 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id,
     TRACE() << "id:" << id << "queryPassword:" << queryPassword;
     INIT_ERROR();
     SignonIdentityInfo info = metaDataDB->identity(id);
-    if (queryPassword && !info.isNew() && isSecretsDBOpen()) {
+    if (queryPassword && !info.isNew()) {
         QString username, password;
-        secretsStorage->loadCredentials(id, username, password);
+        if (isSecretsDBOpen()) {
+            TRACE() << "Loading credentials from DB.";
+            secretsStorage->loadCredentials(id, username, password);
+        } else {
+            TRACE() << "Looking up credentials from cache.";
+            m_secretsCache->lookupCredentials(id, username, password);
+        }
         if (info.isUserNameSecret())
             info.setUserName(username);
         info.setPassword(password);
+
+#ifdef DEBUG_ENABLED
+        if (password.isEmpty()) {
+            TRACE() << "Password is empty";
+        }
+#endif
     }
     return info;
 }
@@ -1293,32 +1394,31 @@ CredentialsDB::credentials(const QMap<QString, QString> &filter)
     return metaDataDB->identities(filter);
 }
 
-quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info,
-                                         bool storeSecret)
+quint32 CredentialsDB::insertCredentials(const SignonIdentityInfo &info)
 {
     SignonIdentityInfo newInfo = info;
     if (!info.isNew())
         newInfo.setNew();
-    return updateCredentials(newInfo, storeSecret);
+    return updateCredentials(newInfo);
 }
 
-quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info,
-                                         bool storeSecret)
+quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
 {
     INIT_ERROR();
     quint32 id = metaDataDB->updateIdentity(info);
     if (id == 0) return id;
 
-    if (storeSecret && isSecretsDBOpen()) {
-        QString password;
-        if (info.storePassword())
-            password = info.password();
+    QString password = info.password();
+    QString userName;
+    if (info.isUserNameSecret())
+        userName = info.userName();
 
-        QString userName;
-        if (info.isUserNameSecret())
-            userName = info.userName();
-
+    if (info.storePassword() && isSecretsDBOpen()) {
         secretsStorage->updateCredentials(id, userName, password);
+    } else {
+        /* Cache username and password in memory */
+        m_secretsCache->updateCredentials(id, userName, password,
+                                          info.storePassword());
     }
 
     return id;
@@ -1353,13 +1453,17 @@ QVariantMap CredentialsDB::loadData(const quint32 id, const QString &method)
     TRACE() << "Loading:" << id << "," << method;
 
     INIT_ERROR();
-    RETURN_IF_NO_SECRETS_DB(QVariantMap());
     if (id == 0) return QVariantMap();
 
     quint32 methodId = metaDataDB->methodId(method);
     if (methodId == 0) return QVariantMap();
 
-    return secretsStorage->loadData(id, methodId);
+    if (isSecretsDBOpen()) {
+        return secretsStorage->loadData(id, methodId);
+    } else {
+        TRACE() << "Looking up data from cache";
+        return m_secretsCache->lookupData(id, methodId);
+    }
 }
 
 bool CredentialsDB::storeData(const quint32 id, const QString &method,
@@ -1368,7 +1472,6 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
     TRACE() << "Storing:" << id << "," << method;
 
     INIT_ERROR();
-    RETURN_IF_NO_SECRETS_DB(false);
     if (id == 0) return false;
 
     quint32 methodId = metaDataDB->methodId(method);
@@ -1379,7 +1482,13 @@ bool CredentialsDB::storeData(const quint32 id, const QString &method,
             return false;
     }
 
-    return secretsStorage->storeData(id, methodId, data);
+    if (isSecretsDBOpen()) {
+        return secretsStorage->storeData(id, methodId, data);
+    } else {
+        TRACE() << "Storing data into cache";
+        m_secretsCache->updateData(id, methodId, data);
+        return true;
+    }
 }
 
 bool CredentialsDB::removeData(const quint32 id, const QString &method)

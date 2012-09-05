@@ -34,63 +34,34 @@
 #include <QtTest/QtTest>
 #include <QtCore>
 
-class SignondTest: public QObject
-{
-    Q_OBJECT
-
-private Q_SLOTS:
-    void runTimeoutTests();
-    void runPluginProxyTests();
-    void runCAMTests();
-    void runBackupTests();
-    void runDatabaseTests();
-
-public:
-    TestPluginProxy testPluginProxy;
-    TimeoutsTest testTimeouts;
-    TestBackup testBackup;
-    TestDatabase testDatabase;
-#ifdef CAM_UNIT_TESTS_FIXED
-    CredentialsAccessManagerTest testCAM;
-#endif
-};
-
-void SignondTest::runTimeoutTests()
-{
-    testTimeouts.runAllTests();
-}
-
-void SignondTest::runPluginProxyTests()
-{
-    testPluginProxy.runAllTests();
-}
-
-void SignondTest::runCAMTests()
-{
-#if !defined(CAM_UNIT_TESTS_FIXED)
-    QSKIP("This test requires fixes in CAM", SkipSingle);
-#else
-    testCAM.runAllTests();
-#endif
-}
-
-void SignondTest::runBackupTests()
-{
-    QSKIP("Backup has been changed", SkipSingle);
-    testBackup.runAllTests();
-}
-
-void SignondTest::runDatabaseTests()
-{
-    testDatabase.runAllTests();
-}
-
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-    SignondTest signondTest;
-    QTest::qExec(&signondTest, argc, argv);
+    int ret = 0;
+
+    TestPluginProxy testPluginProxy;
+    ret = QTest::qExec(&testPluginProxy, argc, argv);
+    if (ret != 0) return ret;
+
+    TimeoutsTest testTimeouts;
+    ret = QTest::qExec(&testTimeouts, argc, argv);
+    if (ret != 0) return ret;
+
+#ifdef BACKUP_UNIT_TESTS_FIXED
+    TestBackup testBackup;
+    ret = QTest::qExec(&testBackup, argc, argv);
+    if (ret != 0) return ret;
+#endif
+
+    TestDatabase testDatabase;
+    ret = QTest::qExec(&testDatabase, argc, argv);
+    if (ret != 0) return ret;
+
+#ifdef CAM_UNIT_TESTS_FIXED
+    CredentialsAccessManagerTest testCAM;
+    ret = QTest::qExec(&testCAM, argc, argv);
+    if (ret != 0) return ret;
+#endif
+
+    return ret;
 }
-
-#include "signond-tests.moc"
-

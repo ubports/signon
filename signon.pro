@@ -9,12 +9,6 @@ include( common-installs-config.pri )
 include( doc/doc.pri )
 
 DISTNAME = $${PROJECT_NAME}-$${PROJECT_VERSION}
-EXCLUDES = \
-    --exclude-vcs \
-    --exclude=.* \
-    --exclude=$${DISTNAME}.tar.bz2 \
-    --exclude-from .gitignore
-dist.commands = "tar -cvjf $${DISTNAME}.tar.bz2 $$EXCLUDES --transform='s,^,$$DISTNAME/,' *"
-dist.depends = distclean
+dist.commands = "git archive --format=tar --prefix=$${DISTNAME}/ HEAD | bzip2 -9 > $${DISTNAME}.tar.bz2"
 QMAKE_EXTRA_TARGETS += dist
 # End of File

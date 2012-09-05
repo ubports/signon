@@ -96,9 +96,6 @@ SignonSessionCore::SignonSessionCore(quint32 id,
 
 SignonSessionCore::~SignonSessionCore()
 {
-    AuthCoreCache::instance()->authSessionDestroyed(
-        AuthCoreCache::CacheId(m_id, m_method));
-
     delete m_plugin;
     delete m_watcher;
     delete m_signonui;
@@ -347,25 +344,7 @@ void SignonSessionCore::startProcess()
         SignonIdentityInfo info = db->credentials(m_id);
         if (info.id() != SIGNOND_NEW_IDENTITY) {
             if (!parameters.contains(SSO_KEY_PASSWORD)) {
-                //If secrets db not available attempt loading data from cache
-                if (db->isSecretsDBOpen()) {
-                    parameters[SSO_KEY_PASSWORD] = info.password();
-                }
-
-                /* Temporary fix - keep it until session core refactoring is
-                 * complete and auth cache will be dumped in the secrets db. */
-                if (parameters[SSO_KEY_PASSWORD].toString().isEmpty()) {
-                    AuthCache *cache =
-                        AuthCoreCache::instance()->data(info.id());
-                    if (cache != 0) {
-                        TRACE() << "Using cached secret.";
-                        parameters[SSO_KEY_PASSWORD] = cache->password();
-                    } else {
-                        TRACE() << "Secrets storage not available and "
-                            "authentication cache is empty - if SSO requires "
-                            "a password, auth. will fail.";
-                    }
-                }
+                parameters[SSO_KEY_PASSWORD] = info.password();
             }
             //database overrules over sessiondata for validated username,
             //so that identity cannot be misused
@@ -388,19 +367,7 @@ void SignonSessionCore::startProcess()
                 "database.";
         }
 
-        QVariantMap storedParams;
-        if (db->isSecretsDBOpen()) {
-            storedParams = db->loadData(m_id, m_method);
-        }
-        /* Temporary fix - keep it until session core refactoring is complete and auth cache
-         * will be dumped in the secrets db. */
-        if (storedParams.isEmpty()) {
-            AuthCache *cache = AuthCoreCache::instance()->data(info.id());
-            if (cache != 0) {
-                TRACE() << "Using cached BLOB data.";
-                storedParams = cache->blobData();
-            }
-        }
+        QVariantMap storedParams = db->loadData(m_id, m_method);
 
         //parameters will overwrite any common keys on stored params
         parameters = mergeVariantMaps(storedParams, parameters);
@@ -585,7 +552,6 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
         Q_ASSERT(db != 0);
 
         //update database entry
-        bool credentialsUpdated = false;
         if (m_id != SIGNOND_NEW_IDENTITY) {
             SignonIdentityInfo info = db->credentials(m_id);
             bool identityWasValidated = info.validated();
@@ -602,17 +568,18 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
 
             StoreOperation storeOp(StoreOperation::Credentials);
             storeOp.m_info = info;
+            processStoreOperation(storeOp);
 
             /* If the credentials are validated, the secrets db is not
-             * available and not authorized keys are available inform the CAM
-             * about the situation. */
+             * available and not authorized keys are available, then
+             * the store operation has been performed on the memory
+             * cache only; inform the CAM about the situation. */
             if (identityWasValidated && !db->isSecretsDBOpen()) {
                 /* Send the storage not available event only if the curent
                  * result processing is following a previous signon UI query.
                  * This is to avoid unexpected UI pop-ups. */
-                if (m_queryCredsUiDisplayed) {
-                    m_storeQueue.enqueue(storeOp);
 
+                if (m_queryCredsUiDisplayed) {
                     SecureStorageEvent *event =
                         new SecureStorageEvent(
                             (QEvent::Type)SIGNON_SECURE_STORAGE_NOT_AVAILABLE);
@@ -624,21 +591,7 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
                         event,
                         Qt::HighEventPriority);
                 }
-            } else {
-                processStoreOperation(storeOp);
-                credentialsUpdated = true;
             }
-        }
-
-        /* If secrets db not available cache credentials for this session core.
-         * Avoid creating an invalid caching record - cache only if the password
-         * is not empty. */
-        if (!credentialsUpdated && !m_tmpPassword.isEmpty()) {
-            AuthCache *cache = new AuthCache;
-            cache->setUsername(m_tmpUsername);
-            cache->setPassword(m_tmpPassword);
-            AuthCoreCache::instance()->insert(
-                AuthCoreCache::CacheId(m_id, m_method), cache);
         }
 
         m_tmpUsername.clear();
@@ -689,6 +642,7 @@ void SignonSessionCore::processStore(const QString &cancelKey,
     StoreOperation storeOp(StoreOperation::Blob);
     storeOp.m_blobData = filteredData;
     storeOp.m_authMethod = m_method;
+    processStoreOperation(storeOp);
 
     /* If the credentials are validated, the secrets db is not available and
      * not authorized keys are available inform the CAM about the situation. */
@@ -699,9 +653,7 @@ void SignonSessionCore::processStore(const QString &cancelKey,
          * unexpected UI pop-ups.
          */
         if (m_queryCredsUiDisplayed) {
-            TRACE() << "Secure storage not available. "
-                "Queueing store operations.";
-            m_storeQueue.enqueue(storeOp);
+            TRACE() << "Secure storage not available.";
 
             SecureStorageEvent *event =
                 new SecureStorageEvent(
@@ -713,20 +665,8 @@ void SignonSessionCore::processStore(const QString &cancelKey,
                 event,
                 Qt::HighEventPriority);
         }
-    } else {
-        processStoreOperation(storeOp);
     }
 
-    /* If secrets db not available cache credentials for this session core.
-     * Avoid creating an invalid caching record - cache only if the BLOB data
-     * is not empty. */
-    if (!db->isSecretsDBOpen() && !data.isEmpty()) {
-        TRACE() << "Caching BLOB authentication data.";
-        AuthCache *cache = new AuthCache;
-        cache->setBlobData(data);
-        AuthCoreCache::instance()->insert(
-            AuthCoreCache::CacheId(m_id, m_method), cache);
-    }
     m_queryCredsUiDisplayed = false;
 
     return;
@@ -874,19 +814,17 @@ void SignonSessionCore::childEvent(QChildEvent *ce)
 
 void SignonSessionCore::customEvent(QEvent *event)
 {
+    /* TODO: This method is useless now, and there's probably a simpler
+     * way to handle the secure storage events than using QEvent (such
+     * as direct signal connections).
+     * For the time being, let this method live just for logging the
+     * secure storage events.
+     */
     TRACE() << "Custom event received.";
     if (event->type() == SIGNON_SECURE_STORAGE_AVAILABLE) {
         TRACE() << "Secure storage is available.";
-        AuthCoreCache::instance()->clear();
-
-        TRACE() << "Processing queued stored operations.";
-        while (!m_storeQueue.empty()) {
-            processStoreOperation(m_storeQueue.dequeue());
-        }
     } else if (event->type() == SIGNON_SECURE_STORAGE_NOT_AVAILABLE) {
-        TRACE() << "Secure storage still not available. "
-                   "Clearing storage operation queue.";
-        m_storeQueue.clear();
+        TRACE() << "Secure storage still not available.";
     }
 
     QObject::customEvent(event);

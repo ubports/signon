@@ -53,7 +53,8 @@ contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
            $$TOP_SRC_DIR/src/signond/accesscodehandler.h \
            $$TOP_SRC_DIR/src/signond/simdbusadaptor.h \
            $$TOP_SRC_DIR/src/signond/cryptomanager.h \
-           $$TOP_SRC_DIR/src/signond/credentialsdb.h
+           $$TOP_SRC_DIR/src/signond/credentialsdb.h \
+           $$TOP_SRC_DIR/src/signond/credentialsdb_p.h
 
  SOURCES *= $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.cpp \
             $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/includes.cpp \
@@ -77,16 +78,5 @@ DEFINES += SSO_CI_TESTMANAGEMENT
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti
-
-target.path = /usr/bin
-scripts.path = /usr/bin
-scripts.files += signonremoteplugin-test.sh
-
-testsuite.path  = /usr/share/signond-tests
-testsuite.files = tests.xml
-
-INSTALLS += target \
-            testsuite \
-            scripts
 
 check.commands = "SSO_PLUGINS_DIR=$${TOP_BUILD_DIR}/src/plugins/test SSO_EXTENSIONS_DIR=$${TOP_BUILD_DIR}/non-existing-dir $$RUN_WITH_SIGNOND ./signon-tests"

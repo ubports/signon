@@ -24,6 +24,7 @@
 #include "SignOn/uisessiondata.h"
 #include "SignOn/uisessiondata_priv.h"
 
+#include <QDBusArgument>
 #include <QDebug>
 #include <QTimer>
 
@@ -46,6 +47,18 @@ SignOnUI::~SignOnUI()
 {
     m_connection.unregisterService(QLatin1String(serviceName));
     m_connection.unregisterObject(QLatin1String(objectPath));
+}
+
+QVariantMap SignOnUI::clientData() const
+{
+    if (!m_parameters.contains(SSOUI_KEY_CLIENT_DATA)) {
+        return QVariantMap();
+    }
+
+    QVariant variant = m_parameters[SSOUI_KEY_CLIENT_DATA];
+    return (variant.type() == QVariant::Map) ?
+        variant.toMap() :
+        qdbus_cast<QVariantMap>(variant.value<QDBusArgument>());
 }
 
 void SignOnUI::cancelUiRequest(const QString &requestId)

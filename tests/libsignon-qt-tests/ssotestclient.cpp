@@ -85,13 +85,6 @@ int finishedClients = 0;
 #endif
 
 
-#ifdef SSOTESTCLIENT_USES_AUTHSESSION
-
-    //#include "testauthsession.h"
-    //static TestAuthSession testAuthSession;
-
-#endif
-
 //Aegis Tokens for the queryAuthPluginACL test
 #define AEGIS_TOKEN_0 "token_0"
 #define AEGIS_TOKEN_1 "token_1"
@@ -102,10 +95,9 @@ int finishedClients = 0;
 
 #define TEST_AEGIS_TOKEN "libsignon-qt-tests::libsignon-qt-tests"
 
-SsoTestClient::SsoTestClient(QObject *parent):
+SsoTestClient::SsoTestClient(SignOnUI *signOnUI, QObject *parent):
     QObject(parent),
-    m_signOnUI(new SignOnUI(QDBusConnection::sessionBus(), this)),
-    testAuthSession(m_signOnUI)
+    m_signOnUI(signOnUI)
 {
 }
 
@@ -113,13 +105,10 @@ void SsoTestClient::initTestCase()
 {
     clearDB();
     initAuthServiceTest();
-    testAuthSession.initTestCase();
 }
 
 void SsoTestClient::cleanupTestCase()
 {
-    testAuthSession.cleanupTestCase();
-    delete m_signOnUI;
     clearDB();
 }
 
@@ -1675,132 +1664,18 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     return true;
 }
 
-#ifdef SSOTESTCLIENT_USES_AUTHSESSION
-
-void SsoTestClient::multiThreadTest()
+int main(int argc, char *argv[])
 {
-    TEST_START
-    testAuthSession.multi_thread_test();
-    TEST_DONE
-}
+    QCoreApplication app(argc, argv);
 
-void SsoTestClient::queryMechanisms_existing_method()
-{
-    TEST_START
-    testAuthSession.queryMechanisms_existing_method();
-    TEST_DONE
-}
+    SignOnUI signOnUI(QDBusConnection::sessionBus());
+    int ret;
 
-void SsoTestClient::queryMechanisms_nonexisting_method()
-{
-    TEST_START
-    testAuthSession.queryMechanisms_nonexisting_method();
-    TEST_DONE
-}
+    SsoTestClient ssoTestClient(&signOnUI);
+    ret = QTest::qExec(&ssoTestClient, argc, argv);
+    if (ret != 0) return ret;
 
-void SsoTestClient::process_with_new_identity()
-{
-    TEST_START
-    testAuthSession.process_with_new_identity();
-    TEST_DONE
+    TestAuthSession testAuthSession(&signOnUI);
+    ret = QTest::qExec(&testAuthSession, argc, argv);
+    return ret;
 }
-
-void SsoTestClient::process_with_existing_identity()
-{
-    TEST_START
-    testAuthSession.process_with_existing_identity();
-    TEST_DONE
-}
-
-void SsoTestClient::process_with_nonexisting_type()
-{
-    TEST_START
-    testAuthSession.process_with_nonexisting_type();
-    TEST_DONE
-}
-
-void SsoTestClient::process_with_nonexisting_method()
-{
-    TEST_START
-    testAuthSession.process_with_nonexisting_method();
-    TEST_DONE
-}
-
-void SsoTestClient::process_with_unauthorized_method()
-{
-    TEST_START
-    testAuthSession.process_with_unauthorized_method();
-    TEST_DONE
-}
-
-void SsoTestClient::process_from_other_process()
-{
-    TEST_START
-    testAuthSession.process_from_other_process();
-    TEST_DONE
-}
-
-void SsoTestClient::process_many_times_after_auth()
-{
-    TEST_START
-    testAuthSession.process_many_times_after_auth();
-    TEST_DONE
-}
-
-void SsoTestClient::process_many_times_before_auth()
-{
-    TEST_START
-    testAuthSession.process_many_times_before_auth();
-    TEST_DONE
-}
-
-void SsoTestClient::process_with_big_session_data()
-{
-    TEST_START
-    testAuthSession.process_with_big_session_data();
-    TEST_DONE
-}
-
-void SsoTestClient::cancel_immidiately()
-{
-    TEST_START
-    testAuthSession.cancel_immidiately();
-    TEST_DONE
-}
-void SsoTestClient::cancel_with_delay()
-{
-    TEST_START
-    testAuthSession.cancel_with_delay();
-    TEST_DONE
-}
-void SsoTestClient::cancel_without_process()
-{
-    TEST_START
-    testAuthSession.cancel_without_process();
-    TEST_DONE
-}
-
-void SsoTestClient::handle_destroyed_signal()
-{
-    TEST_START
-    testAuthSession.handle_destroyed_signal();
-    TEST_DONE
-}
-
-void SsoTestClient::processUi_with_existing_identity()
-{
-    TEST_START
-    testAuthSession.processUi_with_existing_identity();
-    TEST_DONE
-}
-
-void SsoTestClient::processUi_and_cancel()
-{
-    TEST_START
-    testAuthSession.processUi_and_cancel();
-    TEST_DONE
-}
-
-#endif
-
-QTEST_MAIN(SsoTestClient);

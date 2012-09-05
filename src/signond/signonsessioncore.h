@@ -139,9 +139,6 @@ private:
      * processed */
     QVariantMap m_clientData;
 
-    //Queues store operations when the secure storage is unavailable
-    QQueue<StoreOperation> m_storeQueue;
-
     //Temporary caching
     QString m_tmpUsername;
     QString m_tmpPassword;

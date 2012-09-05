@@ -181,6 +181,19 @@ bool SecretsDB::storeData(quint32 id, quint32 method, const QVariantMap &data)
         return false;
     }
 
+    /* first, remove existing data */
+    QSqlQuery q = newQuery();
+    q.prepare(S("DELETE FROM STORE WHERE identity_id = :id "
+                "AND method_id = :method"));
+    q.bindValue(S(":id"), id);
+    q.bindValue(S(":method"), method);
+    exec(q);
+    if (errorOccurred()) {
+        rollback();
+        TRACE() << "Data removal failed.";
+        return false;
+    }
+
     bool allOk = true;
     qint32 dataCounter = 0;
     if (!(data.keys().empty())) {
@@ -200,21 +213,15 @@ bool SecretsDB::storeData(quint32 id, quint32 method, const QVariantMap &data)
             }
             /* Key/value insert/replace/delete */
             QSqlQuery query = newQuery();
-            if (it.value().isValid() && !it.value().isNull()) {
-                TRACE() << "insert";
-                query.prepare(S(
-                    "INSERT OR REPLACE INTO STORE "
-                    "(identity_id, method_id, key, value) "
-                    "VALUES(:id, :method, :key, :value)"));
-                query.bindValue(S(":value"), array);
-            } else {
-                TRACE() << "remove";
-                query.prepare(S(
-                    "DELETE FROM STORE WHERE identity_id = :id "
-                    "AND method_id = :method "
-                    "AND key = :key"));
-
+            if (!it.value().isValid() || it.value().isNull()) {
+                continue;
             }
+            TRACE() << "insert";
+            query.prepare(S(
+                "INSERT OR REPLACE INTO STORE "
+                "(identity_id, method_id, key, value) "
+                "VALUES(:id, :method, :key, :value)"));
+            query.bindValue(S(":value"), array);
             query.bindValue(S(":id"), id);
             query.bindValue(S(":method"), method);
             query.bindValue(S(":key"), it.key());

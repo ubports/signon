@@ -87,69 +87,6 @@ public:
     QString m_cancelKey;
 };
 
-/*!
- * @class AuthCoreCache
- * Caches credentials or BLOB authentication data.
- * The cache is credentials' record oriented (credentials ID as key).
- * Once all references of authentication sessions for a specifc
- * credentials ID are destroyed, the cache for that specific ID
- * will be deleted.
- */
-class AuthCoreCache: public QObject
-{
-    Q_OBJECT
-
-public:
-    typedef quint32 IdentityId;
-    typedef QString AuthMethod;
-    typedef QList<AuthMethod> AuthMethods;
-    typedef QPair<IdentityId, AuthMethod> CacheId;
-
-    class AuthCache
-    {
-        friend class AuthCoreCache;
-
-        ~AuthCache();
-
-    public:
-        AuthCache();
-        QString username() const { return m_username; }
-        QString password() const { return m_password; }
-        QVariantMap blobData() const { return m_blobData; }
-
-        void setUsername(const QString &username) { m_username = username; }
-        void setPassword(const QString &password) { m_password = password; }
-        void setBlobData(const QVariantMap &blobData) { m_blobData = blobData; }
-
-        bool isEmpty() const;
-
-    private:
-        QString m_username;
-        QString m_password;
-        QVariantMap m_blobData;
-    };
-
-private:
-    static AuthCoreCache *m_instance;
-    AuthCoreCache(QObject *parent = 0);
-
-public:
-    static AuthCoreCache *instance(QObject *parent = 0);
-    ~AuthCoreCache();
-
-    AuthCache *data(const IdentityId id) const;
-    void insert(const CacheId &id, AuthCache *cache);
-    void clear();
-
-    void authSessionDestroyed(const CacheId &id);
-
-private:
-    QHash<IdentityId, AuthCache *> m_cache;
-    QHash<IdentityId, AuthMethods> m_cachingSessionsMethods;
-};
-
-typedef AuthCoreCache::AuthCache AuthCache;
-
 } //SignonDaemonNS
 
 #endif //SIGNONSESSIONCORETOOLS_H
