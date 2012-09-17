@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-#include <QNetworkProxy>
 #include <QProcess>
 #include <QUrl>
 #include <QTimer>
@@ -27,11 +26,10 @@
 #include <QDataStream>
 #include <unistd.h>
 
-#ifdef HAVE_GCONF
-#include <gq/GConfItem>
-#endif
-
 #include "debug.h"
+#ifdef HAVE_LIBPROXY
+#include "my-network-proxy-factory.h"
+#endif
 #include "remotepluginprocess.h"
 
 // signon-plugins-common
@@ -186,40 +184,15 @@ bool RemotePluginProcess::setupDataStreams()
 bool RemotePluginProcess::setupProxySettings()
 {
     TRACE();
-    //set application default proxy
-    QNetworkProxy networkProxy = QNetworkProxy::applicationProxy();
 
-#ifdef HAVE_GCONF
-    //get proxy settings from GConf
-    GConfItem *hostItem = new GConfItem("/system/http_proxy/host");
-    if (hostItem->value().canConvert(QVariant::String)) {
-        QString host = hostItem->value().toString();
-        GConfItem *portItem = new GConfItem("/system/http_proxy/port");
-        uint port = portItem->value().toUInt();
-        networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
-                                    host, port);
-        delete portItem;
-    }
-    delete hostItem;
+#ifdef HAVE_LIBPROXY
+    /* Use a libproxy-based proxy factory; this code will no longer be
+     * needed when https://bugreports.qt-project.org/browse/QTBUG-26295
+     * is fixed. */
+    MyNetworkProxyFactory *proxyFactory = new MyNetworkProxyFactory();
+    QNetworkProxyFactory::setApplicationProxyFactory(proxyFactory);
 #endif
 
-    //get system env for proxy
-    QString proxy = qgetenv("http_proxy");
-    if (!proxy.isEmpty()) {
-        QUrl proxyUrl(proxy);
-        if (!proxyUrl.host().isEmpty()) {
-            networkProxy = QNetworkProxy(QNetworkProxy::HttpProxy,
-                                    proxyUrl.host(),
-                                    proxyUrl.port(),
-                                    proxyUrl.userName(),
-                                    proxyUrl.password());
-        }
-    }
-
-    //add other proxy types here
-
-    TRACE() << networkProxy.hostName() << ":" << networkProxy.port();
-    QNetworkProxy::setApplicationProxy(networkProxy);
     return true;
 }
 

@@ -25,9 +25,10 @@ CONFIG += \
     build_all \
     link_pkgconfig
 
-system(pkg-config --exists gq-gconf) {
-    PKGCONFIG += gq-gconf
-    DEFINES += HAVE_GCONF
+system(pkg-config --exists libproxy-1.0) {
+    DEFINES += HAVE_LIBPROXY
+    PKGCONFIG += libproxy-1.0
+    SOURCES += my-network-proxy-factory.cpp
 }
 
 QMAKE_LIBDIR += \
