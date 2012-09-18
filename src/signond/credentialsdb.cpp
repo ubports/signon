@@ -1367,7 +1367,7 @@ SignonIdentityInfo CredentialsDB::credentials(const quint32 id,
     SignonIdentityInfo info = metaDataDB->identity(id);
     if (queryPassword && !info.isNew()) {
         QString username, password;
-        if (isSecretsDBOpen()) {
+        if (info.storePassword() && isSecretsDBOpen()) {
             TRACE() << "Loading credentials from DB.";
             secretsStorage->loadCredentials(id, username, password);
         } else {
