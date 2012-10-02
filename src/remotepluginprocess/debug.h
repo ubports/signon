@@ -23,6 +23,8 @@
 #ifndef REMOTEPLUGINPROCESS_DEBUG_H
 #define REMOTEPLUGINPROCESS_DEBUG_H
 
+#include <QDebug>
+
 #ifdef DEBUG_ENABLED
     extern int debugLevel;
 
