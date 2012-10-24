@@ -5,6 +5,10 @@
     com.google.code.AccountsSSO.SingleSignOn.Identity:
     @short_description: Representation of a single identity.
 
+    The signond D-Bus APIs are unstable, subject to change and should not be
+    used by client applications, which should use libsignon-glib or
+    libsignon-qt instead.
+
     A single credential stored in the Signon database.
   -->
   <interface name="com.google.code.AccountsSSO.SingleSignOn.Identity">

@@ -5,6 +5,10 @@
     com.google.code.AccountsSSO.SingleSignOn.AuthService:
     @short_description: Manages Signon identities.
 
+    The signond D-Bus APIs are unstable, subject to change and should not be
+    used by client applications, which should use libsignon-glib or
+    libsignon-qt instead.
+
     Query information on available authentication methods and mechanisms, as
     well as create identities and authentication sessions.
   -->

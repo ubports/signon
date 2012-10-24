@@ -5,6 +5,10 @@
     com.google.code.AccountsSSO.SingleSignOn.AuthSession:
     @short_description: An authentication session for an Identity.
 
+    The signond D-Bus APIs are unstable, subject to change and should not be
+    used by client applications, which should use libsignon-glib or
+    libsignon-qt instead.
+
     Handle the client authentication process.
   -->
   <interface name="com.google.code.AccountsSSO.SingleSignOn.AuthSession">
