@@ -55,6 +55,16 @@ void TestAuthSession::cleanupTestCase()
     qDebug() << "BYE!";
 }
 
+void TestAuthSession::sessionData()
+{
+    QVariantMap originalMap;
+    originalMap["Hello"] = "World";
+    originalMap["Int"] = 4;
+
+    SessionData sessionData(originalMap);
+    QCOMPARE(sessionData.toMap(), originalMap);
+}
+
 void TestAuthSession::queryMechanisms_existing_method()
 {
     AuthSession *as;

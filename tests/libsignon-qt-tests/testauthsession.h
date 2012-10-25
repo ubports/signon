@@ -76,6 +76,7 @@ private Q_SLOTS:
      * UIless
      * AuthSession API related test cases
      */
+    void sessionData();
     void queryMechanisms_existing_method();
     void queryMechanisms_nonexisting_method();
 
