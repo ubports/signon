@@ -700,6 +700,8 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
             request.m_params[SSOUI_KEY_STORED_IDENTITY] = true;
         request.m_params[SSOUI_KEY_IDENTITY] = m_id;
         request.m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
+        request.m_params[SSOUI_KEY_METHOD] = m_method;
+        request.m_params[SSOUI_KEY_MECHANISM] = request.m_mechanism;
 
         CredentialsAccessManager *camManager =
             CredentialsAccessManager::instance();

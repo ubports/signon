@@ -951,4 +951,6 @@ void TestAuthSession::windowId()
     QCOMPARE(errorCounter.count(), 0);
     QCOMPARE(m_signOnUI->clientData().value("WindowId").toUInt(),
              0xdeadbeef);
+    QCOMPARE(m_signOnUI->method(), QLatin1String("ssotest2"));
+    QCOMPARE(m_signOnUI->mechanism(), QLatin1String("mech1"));
 }

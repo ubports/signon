@@ -61,6 +61,11 @@
 /* Contains the original request parameters, as sent from the application */
 #define SSOUI_KEY_CLIENT_DATA       QLatin1String("ClientData")
 
+/* Method and mechanism; these could be used, along with the IDENTITY
+ * and CLIENT_DATA keys above, to replay the authentication. */
+#define SSOUI_KEY_METHOD            QLatin1String("Method")
+#define SSOUI_KEY_MECHANISM         QLatin1String("Mechanism")
+
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
 #define SSOUI_KEY_SLOT_REFRESH "refresh"

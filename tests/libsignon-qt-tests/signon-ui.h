@@ -56,6 +56,16 @@ public:
     QVariantMap clientData() const;
 
     /*!
+     * Get the authentication method.
+     */
+    QString method() const;
+
+    /*!
+     * Get the authentication mechanism.
+     */
+    QString mechanism() const;
+
+    /*!
      * Set the password which will be returned to the next query.
      */
     void setPassword(const QString &password) { m_replyPassword = password; }
