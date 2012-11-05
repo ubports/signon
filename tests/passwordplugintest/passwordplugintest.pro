@@ -1,8 +1,9 @@
 include( ../tests.pri )
 TARGET = signon-passwordplugin-tests
 QT += core \
-    network
-CONFIG += qtestlib \
+    network \
+    testlib
+CONFIG += \
     link_pkgconfig
 
 DEFINES += SIGNON_PLUGIN_TRACE

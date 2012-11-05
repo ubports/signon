@@ -46,7 +46,7 @@ public:
         ~Operation();
 
         inline bool operator==(const Operation &op) const
-            { return QLatin1String(op.m_name) == m_name; }
+            { return qstrcmp(op.m_name, m_name) == 0; }
 
         char *m_name;
         QList<QGenericArgument *> m_args;

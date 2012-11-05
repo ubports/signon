@@ -1,10 +1,12 @@
 include( ../tests.pri )
 
-CONFIG += qtestlib \
-          build_all \
-          link_pkgconfig
-QT += core \
-      dbus
+CONFIG += \
+    build_all \
+    link_pkgconfig
+QT += \
+    core \
+    dbus \
+    testlib
 QT -= gui
 
 LIBS *= -lsignon-qt
