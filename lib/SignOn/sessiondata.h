@@ -162,6 +162,12 @@ public:
     }
 
     /*!
+     * Gets the QVariantMap of session parameters.
+     * @return A map of the session parameters.
+     */
+    QVariantMap toMap() const { return m_data; }
+
+    /*!
      * Declares the property Secret setter and getter.
      * setSecret(const QString secret);
      * const QString Secret() const;

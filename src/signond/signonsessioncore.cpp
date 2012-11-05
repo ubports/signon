@@ -680,7 +680,8 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
     keepInUse();
 
     if (cancelKey != m_canceled && m_listOfRequests.size()) {
-        QString uiRequestId = m_listOfRequests.head().m_cancelKey;
+        RequestData &request = m_listOfRequests.head();
+        QString uiRequestId = request.m_cancelKey;
 
         if (m_watcher) {
             if (!m_watcher->isFinished())
@@ -690,15 +691,17 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
             m_watcher = 0;
         }
 
-        m_listOfRequests.head().m_params = filterVariantMap(data);
-        m_listOfRequests.head().m_params[SSOUI_KEY_REQUESTID] = uiRequestId;
+        request.m_params = filterVariantMap(data);
+        request.m_params[SSOUI_KEY_REQUESTID] = uiRequestId;
 
         if (m_id == SIGNOND_NEW_IDENTITY)
-            m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = false;
+            request.m_params[SSOUI_KEY_STORED_IDENTITY] = false;
         else
-            m_listOfRequests.head().m_params[SSOUI_KEY_STORED_IDENTITY] = true;
-        m_listOfRequests.head().m_params[SSOUI_KEY_IDENTITY] = m_id;
-        m_listOfRequests.head().m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
+            request.m_params[SSOUI_KEY_STORED_IDENTITY] = true;
+        request.m_params[SSOUI_KEY_IDENTITY] = m_id;
+        request.m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
+        request.m_params[SSOUI_KEY_METHOD] = m_method;
+        request.m_params[SSOUI_KEY_MECHANISM] = request.m_mechanism;
 
         CredentialsAccessManager *camManager =
             CredentialsAccessManager::instance();
@@ -710,8 +713,7 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
             TRACE() << "Caption missing";
             if (m_id != SIGNOND_NEW_IDENTITY) {
                 SignonIdentityInfo info = db->credentials(m_id);
-                m_listOfRequests.head().m_params.insert(SSO_KEY_CAPTION,
-                                                        info.caption());
+                request.m_params.insert(SSO_KEY_CAPTION, info.caption());
                 TRACE() << "Got caption: " << info.caption();
             }
         }
@@ -726,13 +728,12 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
             if (!camManager->keysAvailable()) {
                 TRACE() << "Secrets DB not available."
                         << "CAM has no keys available. Informing signon-ui.";
-                m_listOfRequests.head().m_params[
-                    SSOUI_KEY_STORAGE_KEYS_UNAVAILABLE] = true;
+                request.m_params[SSOUI_KEY_STORAGE_KEYS_UNAVAILABLE] = true;
             }
         }
 
         m_watcher = new QDBusPendingCallWatcher(
-                     m_signonui->queryDialog(m_listOfRequests.head().m_params),
+                     m_signonui->queryDialog(request.m_params),
                      this);
         connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
                 this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));

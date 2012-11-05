@@ -61,6 +61,16 @@ QVariantMap SignOnUI::clientData() const
         qdbus_cast<QVariantMap>(variant.value<QDBusArgument>());
 }
 
+QString SignOnUI::method() const
+{
+    return m_parameters.value(SSOUI_KEY_METHOD).toString();
+}
+
+QString SignOnUI::mechanism() const
+{
+    return m_parameters.value(SSOUI_KEY_MECHANISM).toString();
+}
+
 void SignOnUI::cancelUiRequest(const QString &requestId)
 {
     qDebug() << Q_FUNC_INFO << requestId;

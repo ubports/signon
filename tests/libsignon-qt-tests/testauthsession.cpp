@@ -55,6 +55,16 @@ void TestAuthSession::cleanupTestCase()
     qDebug() << "BYE!";
 }
 
+void TestAuthSession::sessionData()
+{
+    QVariantMap originalMap;
+    originalMap["Hello"] = "World";
+    originalMap["Int"] = 4;
+
+    SessionData sessionData(originalMap);
+    QCOMPARE(sessionData.toMap(), originalMap);
+}
+
 void TestAuthSession::queryMechanisms_existing_method()
 {
     AuthSession *as;
@@ -951,4 +961,6 @@ void TestAuthSession::windowId()
     QCOMPARE(errorCounter.count(), 0);
     QCOMPARE(m_signOnUI->clientData().value("WindowId").toUInt(),
              0xdeadbeef);
+    QCOMPARE(m_signOnUI->method(), QLatin1String("ssotest2"));
+    QCOMPARE(m_signOnUI->mechanism(), QLatin1String("mech1"));
 }
