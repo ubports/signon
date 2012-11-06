@@ -40,4 +40,6 @@ SmackAccessControlPlugin::accessControlManager(QObject *parent) const
     return new SmackAccessControlManager(parent);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 Q_EXPORT_PLUGIN2(smack-ac, SmackAccessControlPlugin);
+#endif

@@ -41,5 +41,6 @@ MSSFAccessControlPlugin::accessControlManager(QObject *parent) const
     return new MSSFAccessControlManager(parent);
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 Q_EXPORT_PLUGIN2(mssf-ac, MSSFAccessControlPlugin);
-
+#endif

@@ -30,6 +30,9 @@ class SmackAccessControlPlugin: public QObject, public SignOn::ExtensionInterfac
 {
     Q_OBJECT
     Q_INTERFACES(SignOn::ExtensionInterface3)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    Q_PLUGIN_METADATA(IID "com.nokia.SingleSignOn.ExtensionInterface/3.0")
+#endif
 
 public:
     SmackAccessControlPlugin();
