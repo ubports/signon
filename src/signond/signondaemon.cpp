@@ -111,9 +111,18 @@ void SignonDaemonConfiguration::load()
         settings.value(QLatin1String("LoggingLevel"), 1).toInt();
     setLoggingLevel(loggingLevel);
 
-    QString storagePath =
-        QDir(settings.value(QLatin1String("StoragePath")).toString()).path();
-    m_camConfiguration.setStoragePath(storagePath);
+    QString cfgStoragePath =
+        settings.value(QLatin1String("StoragePath")).toString();
+    if (!cfgStoragePath.isEmpty()) {
+        QString storagePath = QDir(cfgStoragePath).path();
+        m_camConfiguration.setStoragePath(storagePath);
+    } else {
+        QString xdgConfigHome = QLatin1String(qgetenv("XDG_CONFIG_HOME"));
+        if (xdgConfigHome.isEmpty())
+            xdgConfigHome = QDir::homePath() + QLatin1String("/.config");
+        m_camConfiguration.setStoragePath(xdgConfigHome +
+                                          QLatin1String("/signond"));
+    }
 
     // Secure storage
 
