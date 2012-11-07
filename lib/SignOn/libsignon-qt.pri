@@ -41,7 +41,7 @@ SOURCES += identityinfo.cpp \
 QT += core \
     dbus
 
-CONFIG += qdbus \
+CONFIG += \
     build_all \
     link_pkgconfig
     

@@ -66,7 +66,11 @@ void DBusOperationQueueHandler::Operation::copy(const char *name,
 
             char *localName = new char[qstrlen(arg->name()) + 1];
             qstrcpy(localName, arg->name());
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
             void *localData = QMetaType::construct(type, arg->data());
+#else
+            void *localData = QMetaType::create(type, arg->data());
+#endif
 
             m_args << (new QGenericArgument(localName, localData));
         }
@@ -129,7 +133,11 @@ void DBusOperationQueueHandler::execQueuedOperations()
         QMetaMethod method = m_clientObject->metaObject()->method(indexOfMethod);
 
         TRACE() << "Executing cached oparation: SIGNATURE:" <<
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
             method.signature();
+#else
+            method.methodSignature();
+#endif
 
         switch (op->m_args.count()) {
         case 0: TRACE(); method.invoke(m_clientObject); break;

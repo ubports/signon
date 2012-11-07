@@ -1,12 +1,11 @@
 include( ../tests.pri )
 
 CONFIG += \
-    qtestlib \
-    qdbus \
     link_pkgconfig
 
 QT += core \
     sql \
+    testlib \
     xml \
     network \
     dbus

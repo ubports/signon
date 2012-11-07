@@ -871,7 +871,7 @@ void TestAuthSession::processUi_with_existing_identity()
 
 
     SignOn::SessionData outData =
-        qVariantValue<SignOn::SessionData>(spy.at(0).at(0));
+        spy.at(0).at(0).value<SignOn::SessionData>();
     SsoTest2PluginNS::SsoTest2Data resultData =
         outData.data<SsoTest2PluginNS::SsoTest2Data>();
 

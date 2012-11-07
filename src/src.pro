@@ -4,6 +4,5 @@ SUBDIRS = \
     signond \
     plugins \
     remotepluginprocess \
-    example \
     extensions
 
