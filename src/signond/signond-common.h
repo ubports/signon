@@ -62,6 +62,6 @@
 const char signonDefaultDbName[] = "signon.db";
 const char signonDefaultSecretsDbName[] = "signon-secrets.db";
 const bool signonDefaultUseEncryption = true;
-const char signonDefaultStoragePath[] = "~/.signon";
+const char signonDefaultStoragePath[] = "~/.config/signond";
 
 #endif // SIGNOND_COMMON_H_
