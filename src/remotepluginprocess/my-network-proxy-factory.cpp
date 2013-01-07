@@ -128,7 +128,7 @@ QList<QNetworkProxy> MyNetworkProxyFactory::queryProxy(const QNetworkProxyQuery 
         return proxyList;
     }
 
-    QList<QUrl> rawProxies = libProxyWrapper()->getProxies(query.url());
+    QList<QUrl> rawProxies = libProxyWrapper()->getProxies(queryUrl);
 
     bool haveDirectConnection = false;
     foreach (const QUrl& url, rawProxies) {
