@@ -173,15 +173,13 @@ PluginProxy* PluginProxy::createNewPluginProxy(const QString &type)
     return pp;
 }
 
-bool PluginProxy::process(const QString &cancelKey,
-                          const QVariantMap &inData,
+bool PluginProxy::process(const QVariantMap &inData,
                           const QString &mechanism)
 {
     if (!restartIfRequired())
         return false;
 
     m_isResultObtained = false;
-    m_cancelKey = cancelKey;
     QVariant value = inData.value(SSOUI_KEY_UIPOLICY);
     m_uiPolicy = value.toInt();
 
@@ -195,14 +193,12 @@ bool PluginProxy::process(const QString &cancelKey,
     return true;
 }
 
-bool PluginProxy::processUi(const QString &cancelKey, const QVariantMap &inData)
+bool PluginProxy::processUi(const QVariantMap &inData)
 {
     TRACE();
 
     if (!restartIfRequired())
         return false;
-
-    m_cancelKey = cancelKey;
 
     QDataStream in(m_process);
 
@@ -215,15 +211,12 @@ bool PluginProxy::processUi(const QString &cancelKey, const QVariantMap &inData)
     return true;
 }
 
-bool PluginProxy::processRefresh(const QString &cancelKey,
-                                 const QVariantMap &inData)
+bool PluginProxy::processRefresh(const QVariantMap &inData)
 {
     TRACE();
 
     if (!restartIfRequired())
         return false;
-
-    m_cancelKey = cancelKey;
 
     QDataStream in(m_process);
 
@@ -278,7 +271,6 @@ void PluginProxy::blobIOError()
 
     connect(m_process, SIGNAL(readyRead()), this, SLOT(onReadStandardOutput()));
     emit processError(
-        m_cancelKey,
         (int)Error::InternalServer,
         QLatin1String("Failed to I/O session data to/from the authentication "
                       "plugin."));
@@ -304,7 +296,7 @@ void PluginProxy::onReadStandardOutput()
     if (!m_process->bytesAvailable()) {
         qCritical() << "No information available on process";
         m_isProcessing = false;
-        emit processError(m_cancelKey, Error::InternalServer, QString());
+        emit processError(Error::InternalServer, QString());
         return;
     }
 
@@ -356,7 +348,7 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
         m_isProcessing = false;
 
         if (!m_isResultObtained)
-            emit processResultReply(m_cancelKey, sessionDataMap);
+            emit processResultReply(sessionDataMap);
         else
             BLAME() << "Unexpected plugin response: ";
 
@@ -365,7 +357,7 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
         TRACE() << "PLUGIN_RESPONSE_STORE";
 
         if (!m_isResultObtained)
-            emit processStore(m_cancelKey, sessionDataMap);
+            emit processStore(sessionDataMap);
         else
             BLAME() << "Unexpected plugin store: ";
 
@@ -397,10 +389,10 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
 
                 QVariantMap nonConstMap = sessionDataMap;
                 nonConstMap.insert(SSOUI_KEY_ERROR, QUERY_ERROR_FORBIDDEN);
-                processUi(m_cancelKey, nonConstMap);
+                processUi(nonConstMap);
             } else {
                 TRACE() << "open ui";
-                emit processUiRequest(m_cancelKey, sessionDataMap);
+                emit processUiRequest(sessionDataMap);
             }
         } else {
             BLAME() << "Unexpected plugin ui response: ";
@@ -409,7 +401,7 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
         TRACE() << "PLUGIN_RESPONSE_REFRESHED";
 
         if (!m_isResultObtained)
-            emit processRefreshRequest(m_cancelKey, sessionDataMap);
+            emit processRefreshRequest(sessionDataMap);
         else
             BLAME() << "Unexpected plugin ui response: ";
     } else if (resultOperation == PLUGIN_RESPONSE_ERROR) {
@@ -423,7 +415,7 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
         m_isProcessing = false;
 
         if (!m_isResultObtained)
-            emit processError(m_cancelKey, (int)err, errorMessage);
+            emit processError((int)err, errorMessage);
         else
             BLAME() << "Unexpected plugin error: " << errorMessage;
 
@@ -438,7 +430,7 @@ void PluginProxy::handlePluginResponse(const quint32 resultOperation,
         stream >> message;
 
         if (!m_isResultObtained)
-            emit stateChanged(m_cancelKey, (int)state, message);
+            emit stateChanged((int)state, message);
         else
             BLAME() << "Unexpected plugin signal: " << state << message;
     }
@@ -458,7 +450,7 @@ void PluginProxy::onExit(int exitCode, QProcess::ExitStatus exitStatus)
 
     if (m_isProcessing || exitStatus == QProcess::CrashExit) {
         qCritical() << "Challenge produces CRASH!";
-        emit processError(m_cancelKey, Error::InternalServer,
+        emit processError(Error::InternalServer,
                           QLatin1String("plugin processed crashed"));
     }
     if (exitCode == 2) {

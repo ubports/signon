@@ -95,14 +95,12 @@ Q_SIGNALS:
 private Q_SLOTS:
     void startNewRequest();
 
-    void processResultReply(const QString &cancelKey, const QVariantMap &data);
-    void processStore(const QString &cancelKey, const QVariantMap &data);
-    void processUiRequest(const QString &cancelKey, const QVariantMap &data);
-    void processRefreshRequest(const QString &cancelKey,
-                               const QVariantMap &data);
-    void processError(const QString &cancelKey, int err, const QString &message);
-    void stateChangedSlot(const QString &cancelKey,
-                          int state,
+    void processResultReply(const QVariantMap &data);
+    void processStore(const QVariantMap &data);
+    void processUiRequest(const QVariantMap &data);
+    void processRefreshRequest(const QVariantMap &data);
+    void processError(int err, const QString &message);
+    void stateChangedSlot(int state,
                           const QString &message);
 
     void queryUiSlot(QDBusPendingCallWatcher *call);
@@ -123,6 +121,7 @@ private:
                     int err,
                     const QString &message);
     void processStoreOperation(const StoreOperation &operation);
+    void requestDone();
 
 private:
     PluginProxy *m_plugin;
@@ -131,7 +130,8 @@ private:
 
     QDBusPendingCallWatcher *m_watcher;
 
-    QString m_canceled;
+    bool m_requestIsActive;
+    bool m_canceled;
 
     uint m_id;
     QString m_method;

@@ -77,6 +77,8 @@ SignonSessionCore::SignonSessionCore(quint32 id,
                                      int timeout,
                                      SignonDaemon *parent):
     SignonDisposable(timeout, parent),
+    m_requestIsActive(false),
+    m_canceled(false),
     m_id(id),
     m_method(method),
     m_queryCredsUiDisplayed(false)
@@ -161,39 +163,39 @@ bool SignonSessionCore::setupPlugin()
     }
 
     connect(m_plugin,
-            SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+            SIGNAL(processResultReply(const QVariantMap&)),
             this,
-            SLOT(processResultReply(const QString&, const QVariantMap&)),
+            SLOT(processResultReply(const QVariantMap&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
-            SIGNAL(processStore(const QString&, const QVariantMap&)),
+            SIGNAL(processStore(const QVariantMap&)),
             this,
-            SLOT(processStore(const QString&, const QVariantMap&)),
+            SLOT(processStore(const QVariantMap&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
-            SIGNAL(processUiRequest(const QString&, const QVariantMap&)),
+            SIGNAL(processUiRequest(const QVariantMap&)),
             this,
-            SLOT(processUiRequest(const QString&, const QVariantMap&)),
+            SLOT(processUiRequest(const QVariantMap&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
-            SIGNAL(processRefreshRequest(const QString&, const QVariantMap&)),
+            SIGNAL(processRefreshRequest(const QVariantMap&)),
             this,
-            SLOT(processRefreshRequest(const QString&, const QVariantMap&)),
+            SLOT(processRefreshRequest(const QVariantMap&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
-            SIGNAL(processError(const QString&, int, const QString&)),
+            SIGNAL(processError(int, const QString&)),
             this,
-            SLOT(processError(const QString&, int, const QString&)),
+            SLOT(processError(int, const QString&)),
             Qt::DirectConnection);
 
     connect(m_plugin,
-            SIGNAL(stateChanged(const QString&, int, const QString&)),
+            SIGNAL(stateChanged(int, const QString&)),
             this,
-            SLOT(stateChangedSlot(const QString&, int, const QString&)),
+            SLOT(stateChangedSlot(int, const QString&)),
             Qt::DirectConnection);
 
     return true;
@@ -268,7 +270,7 @@ void SignonSessionCore::cancel(const QString &cancelKey)
 
     if (requestIndex < m_listOfRequests.size()) {
         if (requestIndex == 0) {
-            m_canceled = cancelKey;
+            m_canceled = true;
             m_plugin->cancel();
 
             if (m_watcher && !m_watcher->isFinished()) {
@@ -329,6 +331,7 @@ void SignonSessionCore::startProcess()
 
     keepInUse();
 
+    m_requestIsActive = true;
     RequestData data = m_listOfRequests.head();
     QVariantMap parameters = data.m_params;
 
@@ -383,15 +386,14 @@ void SignonSessionCore::startProcess()
     m_tmpUsername = parameters[SSO_KEY_USERNAME].toString();
     m_tmpPassword = parameters[SSO_KEY_PASSWORD].toString();
 
-    if (!m_plugin->process(data.m_cancelKey, parameters, data.m_mechanism)) {
+    if (!m_plugin->process(parameters, data.m_mechanism)) {
         QDBusMessage errReply =
             data.m_msg.createErrorReply(SIGNOND_RUNTIME_ERR_NAME,
                                         SIGNOND_RUNTIME_ERR_STR);
         data.m_conn.send(errReply);
-        m_listOfRequests.removeFirst();
-        QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+        requestDone();
     } else
-        stateChangedSlot(data.m_cancelKey, SignOn::SessionStarted,
+        stateChangedSlot(SignOn::SessionStarted,
                          QLatin1String("The request is started successfully"));
 }
 
@@ -530,19 +532,25 @@ void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
     }
 }
 
-void SignonSessionCore::processResultReply(const QString &cancelKey,
-                                           const QVariantMap &data)
+void SignonSessionCore::requestDone()
+{
+    m_listOfRequests.removeFirst();
+    m_requestIsActive = false;
+    QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+}
+
+void SignonSessionCore::processResultReply(const QVariantMap &data)
 {
     TRACE();
 
     keepInUse();
 
-    if (!m_listOfRequests.size())
+    if (m_listOfRequests.isEmpty())
         return;
 
-    RequestData rd = m_listOfRequests.dequeue();
+    RequestData rd = m_listOfRequests.head();
 
-    if (cancelKey != m_canceled) {
+    if (!m_canceled) {
         QVariantList arguments;
         QVariantMap filteredData = filterVariantMap(data);
 
@@ -605,8 +613,6 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
         arguments << filteredData;
         rd.m_conn.send(rd.m_msg.createReply(arguments));
 
-        m_canceled = QString();
-
         if (m_watcher && !m_watcher->isFinished()) {
             m_signonui->cancelUiRequest(rd.m_cancelKey);
             delete m_watcher;
@@ -614,14 +620,12 @@ void SignonSessionCore::processResultReply(const QString &cancelKey,
         }
         m_queryCredsUiDisplayed = false;
     }
-    m_canceled = QString();
-    QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+
+    requestDone();
 }
 
-void SignonSessionCore::processStore(const QString &cancelKey,
-                                     const QVariantMap &data)
+void SignonSessionCore::processStore(const QVariantMap &data)
 {
-    Q_UNUSED(cancelKey);
     TRACE();
 
     keepInUse();
@@ -672,14 +676,13 @@ void SignonSessionCore::processStore(const QString &cancelKey,
     return;
 }
 
-void SignonSessionCore::processUiRequest(const QString &cancelKey,
-                                         const QVariantMap &data)
+void SignonSessionCore::processUiRequest(const QVariantMap &data)
 {
     TRACE();
 
     keepInUse();
 
-    if (cancelKey != m_canceled && m_listOfRequests.size()) {
+    if (!m_canceled && !m_listOfRequests.isEmpty()) {
         RequestData &request = m_listOfRequests.head();
         QString uiRequestId = request.m_cancelKey;
 
@@ -740,14 +743,13 @@ void SignonSessionCore::processUiRequest(const QString &cancelKey,
     }
 }
 
-void SignonSessionCore::processRefreshRequest(const QString &cancelKey,
-                                              const QVariantMap &data)
+void SignonSessionCore::processRefreshRequest(const QVariantMap &data)
 {
     TRACE();
 
     keepInUse();
 
-    if (cancelKey != m_canceled && m_listOfRequests.size()) {
+    if (!m_canceled && !m_listOfRequests.isEmpty()) {
         QString uiRequestId = m_listOfRequests.head().m_cancelKey;
 
         if (m_watcher) {
@@ -767,20 +769,19 @@ void SignonSessionCore::processRefreshRequest(const QString &cancelKey,
     }
 }
 
-void SignonSessionCore::processError(const QString &cancelKey,
-                                     int err, const QString &message)
+void SignonSessionCore::processError(int err, const QString &message)
 {
     TRACE();
     keepInUse();
     m_tmpUsername.clear();
     m_tmpPassword.clear();
 
-    if (!m_listOfRequests.size())
+    if (m_listOfRequests.isEmpty())
         return;
 
-    RequestData rd = m_listOfRequests.dequeue();
+    RequestData rd = m_listOfRequests.head();
 
-    if (cancelKey != m_canceled) {
+    if (!m_canceled) {
         replyError(rd.m_conn, rd.m_msg, err, message);
 
         if (m_watcher && !m_watcher->isFinished()) {
@@ -790,14 +791,12 @@ void SignonSessionCore::processError(const QString &cancelKey,
         }
     }
 
-    m_canceled = QString();
-    QMetaObject::invokeMethod(this, "startNewRequest", Qt::QueuedConnection);
+    requestDone();
 }
 
-void SignonSessionCore::stateChangedSlot(const QString &cancelKey,
-                                         int state, const QString &message)
+void SignonSessionCore::stateChangedSlot(int state, const QString &message)
 {
-    if (cancelKey != m_canceled && m_listOfRequests.size()) {
+    if (!m_canceled && !m_listOfRequests.isEmpty()) {
         RequestData rd = m_listOfRequests.head();
         emit stateChanged(rd.m_cancelKey, (int)state, message);
     }
@@ -863,7 +862,7 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
                                         (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
     }
 
-    if (m_listOfRequests.head().m_cancelKey != m_canceled) {
+    if (!m_canceled) {
         /* Temporary caching, if credentials are valid
          * this data will be effectively cached */
         m_tmpUsername = m_listOfRequests.head().m_params.value(
@@ -875,11 +874,9 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             TRACE() << "REFRESH IS REQUIRED";
 
             m_listOfRequests.head().m_params.remove(SSOUI_KEY_REFRESH);
-            m_plugin->processRefresh(m_listOfRequests.head().m_cancelKey,
-                                     m_listOfRequests.head().m_params);
+            m_plugin->processRefresh(m_listOfRequests.head().m_params);
         } else {
-            m_plugin->processUi(m_listOfRequests.head().m_cancelKey,
-                                m_listOfRequests.head().m_params);
+            m_plugin->processUi(m_listOfRequests.head().m_params);
         }
     }
 
@@ -891,15 +888,17 @@ void SignonSessionCore::startNewRequest()
 {
     keepInUse();
 
+    m_canceled = false;
+
     // there is no request
     if (!m_listOfRequests.length()) {
         TRACE() << "the data queue is EMPTY!!!";
         return;
     }
 
-    //plugin is busy
-    if (m_plugin && m_plugin->isProcessing()) {
-        TRACE() << " the plugin is in challenge processing";
+    // there is an active request already
+    if (m_requestIsActive) {
+        TRACE() << "One request is already active";
         return;
     }
 
@@ -915,7 +914,7 @@ void SignonSessionCore::startNewRequest()
 
 void SignonSessionCore::destroy()
 {
-    if (m_plugin->isProcessing() ||
+    if (m_requestIsActive ||
         m_watcher != NULL) {
         keepInUse();
         return;

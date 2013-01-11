@@ -70,25 +70,21 @@ public:
 public Q_SLOTS:
     QString type() const { return m_type; }
     QStringList mechanisms() const { return m_mechanisms; }
-    bool process(const QString &cancelKey,
-                 const QVariantMap &inData,
+    bool process(const QVariantMap &inData,
                  const QString &mechanism);
-    bool processUi(const QString &cancelKey, const QVariantMap &inData);
-    bool processRefresh(const QString &cancelKey, const QVariantMap &inData);
+    bool processUi(const QVariantMap &inData);
+    bool processRefresh(const QVariantMap &inData);
     void cancel();
     void stop();
 
 Q_SIGNALS:
-    void processResultReply(const QString &cancelKey, const QVariantMap &data);
-    void processStore(const QString &cancelKey, const QVariantMap &data);
-    void processUiRequest(const QString &cancelKey, const QVariantMap &data);
-    void processRefreshRequest(const QString &cancelKey,
-                               const QVariantMap &data);
-    void processError(const QString &cancelKey,
-                      int error,
+    void processResultReply(const QVariantMap &data);
+    void processStore(const QVariantMap &data);
+    void processUiRequest(const QVariantMap &data);
+    void processRefreshRequest(const QVariantMap &data);
+    void processError(int error,
                       const QString &message);
-    void stateChanged(const QString &cancelKey,
-                      int state,
+    void stateChanged(int state,
                       const QString &message);
 
 private:
@@ -119,7 +115,6 @@ private:
     bool m_isProcessing;
     bool m_isResultObtained;
     QString m_type;
-    QString m_cancelKey;
     QStringList m_mechanisms;
     int m_uiPolicy;
     int m_currentResultOperation;
