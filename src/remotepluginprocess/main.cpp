@@ -42,6 +42,11 @@ RemotePluginProcess *process = NULL;
 
 void messageHandler(QtMsgType type, const char *msg)
 {
+    if (debugLevel < 2) {
+        if (type == QtDebugMsg) return;
+        if (debugLevel < 1 && type == QtWarningMsg) return;
+    }
+
     int priority;
     switch (type) {
     case QtWarningMsg: priority = LOG_WARNING; break;

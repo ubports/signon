@@ -95,20 +95,20 @@ void TestPluginProxy::process_for_dummy()
         inDataV[key] = inData.getProperty(key);
 
     QSignalSpy spyResult(m_proxy,
-               SIGNAL(processResultReply(const QString&, const QVariantMap&)));
+               SIGNAL(processResultReply(const QVariantMap&)));
     QSignalSpy spyState(m_proxy,
-                    SIGNAL(stateChanged(const QString&, int, const QString&)));
+                    SIGNAL(stateChanged(int, const QString&)));
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                 SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                 SIGNAL(processResultReply(const QVariantMap&)),
                  &loop,
                  SLOT(quit()));
 
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
     QString cancelKey = QUuid::createUuid().toString();
-    bool res = m_proxy->process(cancelKey, inDataV, "mech1");
+    bool res = m_proxy->process(inDataV, "mech1");
     QVERIFY(res);
 
     loop.exec();
@@ -116,7 +116,7 @@ void TestPluginProxy::process_for_dummy()
     QCOMPARE(spyResult.count(), 1);
     QCOMPARE(spyState.count(), 10);
 
-    QVariantMap outData = spyResult.at(0).at(1).toMap();
+    QVariantMap outData = spyResult.at(0).at(0).toMap();
 
     qDebug() << outData;
 
@@ -140,33 +140,33 @@ void TestPluginProxy::processUi_for_dummy()
         inDataV[key] = inData.getProperty(key);
 
     QSignalSpy spyResult(m_proxy,
-              SIGNAL(processResultReply(const QString&, const QVariantMap&)));
+              SIGNAL(processResultReply(const QVariantMap&)));
     QSignalSpy spyError(m_proxy,
-                   SIGNAL(processError(const QString&, int, const QString&)));
+                   SIGNAL(processError(int, const QString&)));
     QSignalSpy spyUi(m_proxy,
-                SIGNAL(processUiRequest(const QString&, const QVariantMap&)));
+                SIGNAL(processUiRequest(const QVariantMap&)));
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                 SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                 SIGNAL(processResultReply(const QVariantMap&)),
                  &loop,
                  SLOT(quit()));
 
     QObject::connect(m_proxy,
-                     SIGNAL(processError(const QString&, int, const QString&)),
+                     SIGNAL(processError(int, const QString&)),
                      &loop,
                      SLOT(quit()));
 
 
     QObject::connect(m_proxy,
-                     SIGNAL(processUiRequest(const QString&,const QVariantMap&)),
+                     SIGNAL(processUiRequest(const QVariantMap&)),
                      &loop,
                      SLOT(quit()));
 
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
     QString cancelKey = QUuid::createUuid().toString();
-    bool res = m_proxy->process(cancelKey, inDataV, "mech2");
+    bool res = m_proxy->process(inDataV, "mech2");
     QVERIFY(res);
 
     loop.exec();
@@ -174,9 +174,8 @@ void TestPluginProxy::processUi_for_dummy()
     QCOMPARE(spyUi.count(), 0);
     QCOMPARE(spyError.count(), 1);
 
-    QString key = spyError.at(0).at(0).toString();
-    int err = spyError.at(0).at(1).toInt();
-    QString errMsg = spyError.at(0).at(2).toString();
+    int err = spyError.at(0).at(0).toInt();
+    QString errMsg = spyError.at(0).at(1).toString();
 
     qDebug() << err;
     qDebug() << errMsg;
@@ -184,7 +183,7 @@ void TestPluginProxy::processUi_for_dummy()
     QVERIFY(err == Error::NotAuthorized);
 
     inDataV["UiPolicy"] = 0;
-    res = m_proxy->process(cancelKey, inDataV, "mech2");
+    res = m_proxy->process(inDataV, "mech2");
     QVERIFY(res);
 
     loop.exec();
@@ -205,40 +204,37 @@ void TestPluginProxy::process_and_cancel_for_dummy()
     foreach(QString key, inData.propertyNames())
         inDataV[key] = inData.getProperty(key);
 
-    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QString&, const QVariantMap&)));
-    QSignalSpy spyError(m_proxy, SIGNAL(processError(const QString&, int, const QString&)));
+    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QVariantMap&)));
+    QSignalSpy spyError(m_proxy, SIGNAL(processError(int, const QString&)));
 
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                     SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                     SIGNAL(processResultReply(const QVariantMap&)),
                      &loop,
                      SLOT(quit()));
 
     QObject::connect(m_proxy,
-                     SIGNAL(processError(const QString&, int, const QString&)),
+                     SIGNAL(processError(int, const QString&)),
                      &loop,
                      SLOT(quit()));
 
     QTimer::singleShot(0.2*1000, m_proxy, SLOT(cancel()));
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
-    QString cancelKey = QUuid::createUuid().toString();
-    bool res = m_proxy->process(cancelKey, inDataV, "mech1");
+    bool res = m_proxy->process(inDataV, "mech1");
     QVERIFY(res);
     loop.exec();
 
     QCOMPARE(spyResult.count(), 0);
     QCOMPARE(spyError.count(), 1);
 
-    QString key = spyError.at(0).at(0).toString();
-    int err = spyError.at(0).at(1).toInt();
-    QString errMsg = spyError.at(0).at(2).toString();
+    int err = spyError.at(0).at(0).toInt();
+    QString errMsg = spyError.at(0).at(1).toString();
 
     qDebug() << err;
     qDebug() << errMsg;
 
-    QVERIFY(key == cancelKey);
     QVERIFY(err == Error::SessionCanceled);
     QVERIFY(errMsg == QString("The operation is canceled"));
 }
@@ -255,23 +251,22 @@ void TestPluginProxy::process_wrong_mech_for_dummy()
     foreach(QString key, inData.propertyNames())
         inDataV[key] = inData.getProperty(key);
 
-    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QString&, const QVariantMap&)));
-    QSignalSpy spyError(m_proxy, SIGNAL(processError(const QString&, int, const QString&)));
+    QSignalSpy spyResult(m_proxy, SIGNAL(processResultReply(const QVariantMap&)));
+    QSignalSpy spyError(m_proxy, SIGNAL(processError(int, const QString&)));
 
     QEventLoop loop;
 
     QObject::connect(m_proxy,
-                     SIGNAL(processResultReply(const QString&, const QVariantMap&)),
+                     SIGNAL(processResultReply(const QVariantMap&)),
                      &loop,
                      SLOT(quit()));
 
     QObject::connect(m_proxy,
-                     SIGNAL(processError(const QString&, int, const QString&)),
+                     SIGNAL(processError(int, const QString&)),
                      &loop,
                      SLOT(quit()));
 
-    QString cancelKey = QUuid::createUuid().toString();
-    bool res = m_proxy->process(cancelKey, inDataV, "wrong");
+    bool res = m_proxy->process(inDataV, "wrong");
     QVERIFY(res);
 
     loop.exec();
@@ -279,13 +274,11 @@ void TestPluginProxy::process_wrong_mech_for_dummy()
     QCOMPARE(spyResult.count(), 0);
     QCOMPARE(spyError.count(), 1);
 
-    QString key = spyError.at(0).at(0).toString();
-    int err = spyError.at(0).at(1).toInt();
-    QString errMsg = spyError.at(0).at(2).toString();
+    int err = spyError.at(0).at(0).toInt();
+    QString errMsg = spyError.at(0).at(1).toString();
 
     qDebug() << err << " " << errMsg;
 
-    QVERIFY(key == cancelKey);
     QVERIFY(err == Error::MechanismNotAvailable);
     QVERIFY(errMsg == QString("The given mechanism is unavailable"));
 }

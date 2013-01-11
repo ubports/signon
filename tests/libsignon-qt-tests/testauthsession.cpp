@@ -684,8 +684,6 @@ void TestAuthSession::cancel_with_delay()
 
     QObject::connect(as, SIGNAL(error(const SignOn::Error &)),
                      &loop, SLOT(quit()));
-    QObject::connect(as, SIGNAL(error(const SignOn::Error &)),
-                     &loop, SLOT(quit()),  Qt::DirectConnection);
     QTimer::singleShot(10*1000, &loop, SLOT(quit()));
 
     SessionData inData;

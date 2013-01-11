@@ -1,7 +1,12 @@
 include( ../../common-project-config.pri )
 include( ../../common-vars.pri )
 TEMPLATE = lib
-TARGET = signon-qt
+
+greaterThan(QT_MAJOR_VERSION, 4) {
+    TARGET = signon-qt5
+} else {
+    TARGET = signon-qt
+}
 
 # Input
 public_headers += \
@@ -58,9 +63,9 @@ headers.files = $$public_headers \
     Identity \
         SessionData \
         Error
-headers.path = $${INSTALL_PREFIX}/include/signon-qt/SignOn
+headers.path = $${INSTALL_PREFIX}/include/$${TARGET}/SignOn
 INSTALLS += headers
 
-pkgconfig.files = libsignon-qt.pc
+pkgconfig.files = lib$${TARGET}.pc
 include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig

@@ -7,5 +7,5 @@ Name: libsignon-qt
 Description: Client library for the Single Sign On daemon, Qt bindings.
 Version: PROJECT_VERSION
 Libs: -L${libdir} -lsignon-qt
-Libs.private: -L/usr/lib  -lQtSql -lQtCore -lpthread  
+Requires: QtCore
 Cflags: -I${includedir}/signon-qt -I${includedir}/signon-qt/SignOn
