@@ -269,7 +269,10 @@ void SignonSessionCore::cancel(const QString &cancelKey)
     TRACE() << "The request is found with index " << requestIndex;
 
     if (requestIndex < m_listOfRequests.size()) {
-        if (requestIndex == 0) {
+        /* If the request being cancelled is active, we need to keep
+         * in the queue until the plugin has replied. */
+        bool isActive = (requestIndex == 0) && m_requestIsActive;
+        if (isActive) {
             m_canceled = true;
             m_plugin->cancel();
 
@@ -286,9 +289,9 @@ void SignonSessionCore::cancel(const QString &cancelKey)
          * will happen. We will know about that precisely: plugin must reply via
          * resultSlot or via errorSlot.
          * */
-        RequestData rd((requestIndex == 0 ?
-                        m_listOfRequests.head() :
-                        m_listOfRequests.takeAt(requestIndex)));
+        RequestData rd(isActive ?
+                       m_listOfRequests.head() :
+                       m_listOfRequests.takeAt(requestIndex));
 
         QDBusMessage errReply =
             rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
