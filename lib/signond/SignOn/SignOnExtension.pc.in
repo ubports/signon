@@ -1,12 +1,12 @@
-prefix=INSTALL_PREFIX
+prefix=$$INSTALL_PREFIX
 exec_prefix=${prefix}
-libdir=INSTALL_LIBDIR
+libdir=$$INSTALL_LIBDIR
 includedir=${prefix}/include
-plugindir=SIGNOND_EXTENSIONS_DIR
+plugindir=$$SIGNOND_EXTENSIONS_DIR
 
 Name: SignOnExtension
 Description: SignOn extension development 
-Version: PROJECT_VERSION
+Version: $$PROJECT_VERSION
 Requires: QtCore
 Libs: -L${libdir} -lsignon-extension
 Cflags: -I${includedir}/signon-extension
