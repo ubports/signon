@@ -9,7 +9,11 @@ QT += \
     testlib
 QT -= gui
 
-LIBS *= -lsignon-qt
+greaterThan(QT_MAJOR_VERSION, 4) {
+    LIBS *= -lsignon-qt5
+} else {
+    LIBS *= -lsignon-qt
+}
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 SOURCES += \
