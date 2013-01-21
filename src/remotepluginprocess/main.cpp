@@ -31,6 +31,8 @@ extern "C" {
 #include <syslog.h>
 }
 
+#define QT_DISABLE_DEPRECATED_BEFORE QT_VERSION_CHECK(4, 0, 0)
+
 #include "debug.h"
 #include "remotepluginprocess.h"
 

@@ -27,6 +27,8 @@ extern "C" {
     #include <sys/types.h>
 }
 
+#define QT_DISABLE_DEPRECATED_BEFORE QT_VERSION_CHECK(4, 0, 0)
+
 #include <QtDebug>
 #include <QDir>
 #include <QDBusConnection>
