@@ -188,7 +188,7 @@ public:
     QString message() const { return m_message; }
 
 private:
-    void registerType() { qRegisterMetaType<Error>("SignOn::Error"); }
+    inline void registerType();
 
 private:
     int m_type;
@@ -198,5 +198,9 @@ private:
 } //namespace SignOn
 
 Q_DECLARE_METATYPE(SignOn::Error)
+
+void SignOn::Error::registerType() {
+    qRegisterMetaType<SignOn::Error>("SignOn::Error");
+}
 
 #endif // SIGNONERROR_H
