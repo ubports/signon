@@ -24,7 +24,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 TOP_SRC_DIR     = $$PWD
-TOP_BUILD_DIR   = $${TOP_SRC_DIR}/$(BUILD_DIR)
+TOP_BUILD_DIR   = $${TOP_SRC_DIR}/$${BUILD_DIR}
 QMAKE_LIBDIR   += $${TOP_BUILD_DIR}/lib/SignOn
 INCLUDEPATH    += $${TOP_SRC_DIR}/lib
 
