@@ -1,0 +1,13 @@
+=== modified file 'src/signond/signond.conf'
+Index: signon-8.44/src/signond/signond.conf
+===================================================================
+--- signon-8.44.orig/src/signond/signond.conf	2012-11-09 08:48:49.536819291 -0500
++++ signon-8.44/src/signond/signond.conf	2012-11-09 08:48:55.444819486 -0500
+@@ -20,6 +20,7 @@
+ FileSystemName=signonfs
+ Size=8
+ FileSystemType=ext2
++SecretsStorage=gnome-keyring
+ 
+ [ObjectTimeouts]
+ IdentityTimeout=300
