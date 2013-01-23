@@ -8,6 +8,7 @@
 export DH_OPTIONS
 export NO_DOCS := no
 export QMAKE_LIBDIR=/usr/lib
+export QT_SELECT=qt4
 export DPKG_GENSYMBOLS_CHECK_LEVEL=4
 
 override_dh_auto_configure:
