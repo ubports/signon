@@ -150,13 +150,17 @@ void SignonDaemonConfiguration::load()
     settings.beginGroup(QLatin1String("ObjectTimeouts"));
 
     bool isOk = false;
-    uint aux = settings.value(QLatin1String("Identity")).toUInt(&isOk);
+    uint aux = settings.value(QLatin1String("IdentityTimeout")).toUInt(&isOk);
     if (isOk)
         m_identityTimeout = aux;
 
-    aux = settings.value(QLatin1String("AuthSession")).toUInt(&isOk);
+    aux = settings.value(QLatin1String("AuthSessionTimeout")).toUInt(&isOk);
     if (isOk)
         m_authSessionTimeout = aux;
+
+    aux = settings.value(QLatin1String("DaemonTimeout")).toUInt(&isOk);
+    if (isOk)
+        m_daemonTimeout = aux;
 
     settings.endGroup();
 
