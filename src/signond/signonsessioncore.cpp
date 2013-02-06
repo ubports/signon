@@ -329,8 +329,6 @@ void SignonSessionCore::startProcess()
 
     TRACE() << "the number of requests is" << m_listOfRequests.length();
 
-    keepInUse();
-
     m_requestIsActive = true;
     RequestData data = m_listOfRequests.head();
     QVariantMap parameters = data.m_params;
@@ -892,6 +890,7 @@ void SignonSessionCore::startNewRequest()
 
     if (m_listOfRequests.isEmpty()) {
         TRACE() << "No more requests to process";
+        setAutoDestruct(true);
         return;
     }
 
@@ -908,6 +907,7 @@ void SignonSessionCore::startNewRequest()
     }
 
     TRACE() << "Starting the authentication process";
+    setAutoDestruct(false);
     startProcess();
 }
 
