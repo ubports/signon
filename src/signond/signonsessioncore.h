@@ -109,7 +109,7 @@ protected:
     SignonSessionCore(quint32 id,
                       const QString &method,
                       int timeout,
-                      SignonDaemon *parent);
+                      QObject *parent);
 
     void childEvent(QChildEvent *ce);
     void customEvent(QEvent *event);
