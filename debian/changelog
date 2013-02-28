@@ -1,8 +1,16 @@
-signon (8.46.1-0ubuntu1) UNRELEASED; urgency=low
+signon (8.47-0ubuntu1) UNRELEASED; urgency=low
 
+  [ Robert Bruce Park ]
   * Inline packaging metadata.
 
- -- Robert Bruce Park <robert.park@canonical.com>  Mon, 21 Jan 2013 14:57:58 -0800
+  [ Alberto Mardegan ]
+  * New upstream release.
+    - Fix Qt5 build and pkgconfig files
+    - Fix docs build for out of tree builds
+    - Signond: Add DaemonTimeout configuration option
+    - Log only critical errors 
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 28 Feb 2013 12:06:24 +0200
 
 signon (8.46-0ubuntu1) raring; urgency=low
 

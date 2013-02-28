@@ -26,7 +26,6 @@
 #include "signonauthsession.h"
 #include "signonidentityinfo.h"
 #include "signonidentity.h"
-#include "signonauthsessionadaptor.h"
 #include "signonui_interface.h"
 #include "accesscontrolmanagerhelper.h"
 
@@ -75,17 +74,16 @@ static QString sessionName(const quint32 id, const QString &method)
 SignonSessionCore::SignonSessionCore(quint32 id,
                                      const QString &method,
                                      int timeout,
-                                     SignonDaemon *parent):
+                                     QObject *parent):
     SignonDisposable(timeout, parent),
+    m_signonui(0),
+    m_watcher(0),
     m_requestIsActive(false),
     m_canceled(false),
     m_id(id),
     m_method(method),
     m_queryCredsUiDisplayed(false)
 {
-    m_signonui = NULL;
-    m_watcher = NULL;
-
     m_signonui = new SignonUiAdaptor(SIGNON_UI_SERVICE,
                                      SIGNON_UI_DAEMON_OBJECTPATH,
                                      QDBusConnection::sessionBus());
@@ -111,7 +109,6 @@ SignonSessionCore *SignonSessionCore::sessionCore(const quint32 id,
                                                   const QString &method,
                                                   SignonDaemon *parent)
 {
-    QString objectName;
     QString key = sessionName(id, method);
 
     if (id) {
@@ -297,7 +294,7 @@ void SignonSessionCore::cancel(const QString &cancelKey)
             rd.m_msg.createErrorReply(SIGNOND_SESSION_CANCELED_ERR_NAME,
                                       SIGNOND_SESSION_CANCELED_ERR_STR);
         rd.m_conn.send(errReply);
-        TRACE() << "Size of the queue is " << m_listOfRequests.size();
+        TRACE() << "Size of the queue is" << m_listOfRequests.size();
     }
 }
 
@@ -330,9 +327,7 @@ void SignonSessionCore::setId(quint32 id)
 void SignonSessionCore::startProcess()
 {
 
-    TRACE() << "the number of requests is : " << m_listOfRequests.length();
-
-    keepInUse();
+    TRACE() << "the number of requests is" << m_listOfRequests.length();
 
     m_requestIsActive = true;
     RequestData data = m_listOfRequests.head();
@@ -411,7 +406,7 @@ void SignonSessionCore::replyError(const QDBusConnection &conn,
 
     //TODO this is needed for old error codes
     if( err < Error::AuthSessionErr) {
-        BLAME() << "Deprecated error code: " << err;
+        BLAME() << "Deprecated error code:" << err;
             if (message.isEmpty())
                 errMessage = SIGNOND_UNKNOWN_ERR_STR;
             else
@@ -527,9 +522,9 @@ void SignonSessionCore::processStoreOperation(const StoreOperation &operation)
     } else {
         TRACE() << "Processing --- StoreOperation::Blob";
 
-        if(!db->storeData(m_id,
-                          operation.m_authMethod,
-                          operation.m_blobData)) {
+        if (!db->storeData(m_id,
+                           operation.m_authMethod,
+                           operation.m_blobData)) {
             BLAME() << "Error occured while storing data.";
         }
     }
@@ -893,9 +888,9 @@ void SignonSessionCore::startNewRequest()
 
     m_canceled = false;
 
-    // there is no request
-    if (!m_listOfRequests.length()) {
-        TRACE() << "the data queue is EMPTY!!!";
+    if (m_listOfRequests.isEmpty()) {
+        TRACE() << "No more requests to process";
+        setAutoDestruct(true);
         return;
     }
 
@@ -907,11 +902,12 @@ void SignonSessionCore::startNewRequest()
 
     //there is some UI operation with plugin
     if (m_watcher && !m_watcher->isFinished()) {
-        TRACE() << "watcher is in running mode";
+        TRACE() << "Some UI operation is still pending";
         return;
     }
 
-    TRACE() << "Start the authentication process";
+    TRACE() << "Starting the authentication process";
+    setAutoDestruct(false);
     startProcess();
 }
 
