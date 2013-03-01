@@ -8,11 +8,31 @@
 export DH_OPTIONS
 export NO_DOCS := no
 export QMAKE_LIBDIR=/usr/lib
-export QT_SELECT=qt4
 export DPKG_GENSYMBOLS_CHECK_LEVEL=4
 
 override_dh_auto_configure:
-	dh_auto_configure -- LIBDIR=/usr/lib "QMAKE_CXXFLAGS=$(CFLAGS)" signon.pro
+	mkdir -p build/qt4 build/qt5
+	QT_SELECT=qt4 \
+	dh_auto_configure -Bbuild/qt4 -- LIBDIR=/usr/lib \
+		BUILD_DIR=build/qt4 \
+		"QMAKE_CXXFLAGS=$(CFLAGS)" ../../signon.pro
+	QT_SELECT=qt5 \
+	dh_auto_configure -Bbuild/qt5 -- LIBDIR=/usr/lib \
+		BUILD_DIR=build/qt5 \
+		"QMAKE_CXXFLAGS=$(CFLAGS)" ../../signon.pro
+
+override_dh_auto_build:
+	QT_SELECT=qt4 dh_auto_build -Bbuild/qt4
+	QT_SELECT=qt5 dh_auto_build -Bbuild/qt5
+
+override_dh_auto_clean:
+	dh_auto_clean -Bbuild/qt4
+	dh_auto_clean -Bbuild/qt5
+
+override_dh_auto_install:
+	dh_auto_install -Bbuild/qt5 -plibsignon-qt5-1
+	dh_auto_install -Bbuild/qt5 -plibsignon-qt5-dev
+	dh_auto_install -Bbuild/qt4
 
 override_dh_install:
 	rm -f debian/tmp/usr/include/signon-plugins/*example*.h
@@ -23,4 +43,4 @@ override_dh_install:
 	dh_install --fail-missing
 
 %:
-	dh $@ --with migrations
+	dh $@ --parallel --with migrations
