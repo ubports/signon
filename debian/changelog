@@ -1,4 +1,4 @@
-signon (8.47-0ubuntu1) UNRELEASED; urgency=low
+signon (8.48-0ubuntu1) UNRELEASED; urgency=low
 
   [ Robert Bruce Park ]
   * Inline packaging metadata.
@@ -10,7 +10,7 @@ signon (8.47-0ubuntu1) UNRELEASED; urgency=low
     - Signond: Add DaemonTimeout configuration option
     - Log only critical errors 
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 28 Feb 2013 12:06:24 +0200
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 01 Mar 2013 09:21:51 +0200
 
 signon (8.46-0ubuntu1) raring; urgency=low
 

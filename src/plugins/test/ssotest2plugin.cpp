@@ -64,6 +64,7 @@ void SsoTest2Plugin::cancel()
     TRACE();
     QMutexLocker locker(&mutex);
     is_canceled = true;
+    if (uiLoop.isRunning()) uiLoop.quit();
 }
 
 /*

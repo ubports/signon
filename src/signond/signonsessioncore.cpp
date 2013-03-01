@@ -837,6 +837,7 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
     Q_ASSERT_X(m_listOfRequests.size() != 0, __func__,
                "queue of requests is empty");
 
+    RequestData &rd = m_listOfRequests.head();
     if (!reply.isError() && reply.count()) {
         QVariantMap resultParameters = reply.argumentAt<0>();
         if (resultParameters.contains(SSOUI_KEY_REFRESH)) {
@@ -844,7 +845,7 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             resultParameters.remove(SSOUI_KEY_REFRESH);
         }
 
-        m_listOfRequests.head().m_params = resultParameters;
+        rd.m_params = resultParameters;
 
         /* If the query ui was canceled or any other error occurred
          * do not set this flag to true. */
@@ -856,25 +857,25 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
             m_queryCredsUiDisplayed = true;
         }
     } else {
-        m_listOfRequests.head().m_params.insert(SSOUI_KEY_ERROR,
-                                        (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
+        rd.m_params.insert(SSOUI_KEY_ERROR,
+                           (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
     }
 
     if (!m_canceled) {
         /* Temporary caching, if credentials are valid
          * this data will be effectively cached */
-        m_tmpUsername = m_listOfRequests.head().m_params.value(
-            SSO_KEY_USERNAME, QVariant()).toString();
-        m_tmpPassword = m_listOfRequests.head().m_params.value(
-            SSO_KEY_PASSWORD, QVariant()).toString();
+        m_tmpUsername = rd.m_params.value(SSO_KEY_USERNAME,
+                                          QVariant()).toString();
+        m_tmpPassword = rd.m_params.value(SSO_KEY_PASSWORD,
+                                          QVariant()).toString();
 
         if (isRequestToRefresh) {
             TRACE() << "REFRESH IS REQUIRED";
 
-            m_listOfRequests.head().m_params.remove(SSOUI_KEY_REFRESH);
-            m_plugin->processRefresh(m_listOfRequests.head().m_params);
+            rd.m_params.remove(SSOUI_KEY_REFRESH);
+            m_plugin->processRefresh(rd.m_params);
         } else {
-            m_plugin->processUi(m_listOfRequests.head().m_params);
+            m_plugin->processUi(rd.m_params);
         }
     }
 
