@@ -3,4 +3,3 @@ usr/lib/pkgconfig/signon-plugins-common.pc
 usr/include/signon-plugins/SignOn
 usr/include/signon-plugins/passwordplugin.h
 usr/share/doc/signon-plugins-dev/example/*
-usr/share/qt4/mkspecs/features/signon-plugins.prf

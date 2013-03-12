@@ -2,16 +2,21 @@ Source: signon
 Section: gnome
 Priority: optional
 Maintainer: Ubuntu Desktop Team <ubuntu-desktop@lists.ubuntu.com>
-Build-Depends: dbus-test-runner,
-               debhelper (>= 9),
-               dh-migrations,
+Build-Depends: debhelper (>= 9),
+               pkg-config,
                doxygen,
                graphviz,
                libproxy-dev,
                libqt4-dev (>= 4.6),
                libqt4-sql-sqlite,
                libssl-dev,
-               pkg-config,
+               qt4-dev-tools,
+               qt4-qmake,
+               qt5-qmake,
+               qtbase5-dev,
+               qtchooser,
+               dh-migrations,
+               dbus-test-runner,
 Standards-Version: 3.9.3
 Homepage: http://code.google.com/p/accounts-sso/
 # If you aren't a member of ~online-accounts but need to upload packaging changes,
@@ -35,6 +40,26 @@ Depends: libsignon-qt1 (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends},
          libqt4-dev (>= 4.5)
+Description: Development files for libsignon-qt
+ Headers and static libraries for the libsignon-qt library
+
+Package: libsignon-qt5-1
+Architecture: any
+Section: libs
+Priority: optional
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: Single Sign On framework
+ Framework to provide credential storage and authentication service.
+
+Package: libsignon-qt5-dev
+Architecture: any
+Priority: optional
+Section: libdevel
+Depends: libsignon-qt5-1 (= ${binary:Version}),
+         ${shlibs:Depends},
+         ${misc:Depends},
+         qtbase5-dev
 Description: Development files for libsignon-qt
  Headers and static libraries for the libsignon-qt library
 

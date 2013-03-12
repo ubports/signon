@@ -1,8 +1,45 @@
-signon (8.46.1-0ubuntu1) UNRELEASED; urgency=low
+signon (8.48-0ubuntu1) UNRELEASED; urgency=low
 
+  [ Robert Bruce Park ]
   * Inline packaging metadata.
 
- -- Robert Bruce Park <robert.park@canonical.com>  Mon, 21 Jan 2013 14:57:58 -0800
+  [ Alberto Mardegan ]
+  * New upstream release.
+    - Fix Qt5 build and pkgconfig files
+    - Fix docs build for out of tree builds
+    - Signond: Add DaemonTimeout configuration option
+    - Log only critical errors 
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 01 Mar 2013 09:21:51 +0200
+
+signon (8.46-0ubuntu3) raring; urgency=low
+
+  * debian/rules
+    - dual build for qt4 and qt5
+  * debian/control
+    - add new binaries for qt5 builds, libsignon-qt5-1 and libsignon-qt5-dev
+    - add build depends for qt5 builds
+    - updated build depends to handle armel/armhf and gles2
+  * debian/patches/daemon_timeout.patch
+    - bump up the timeouts
+  * debian/patches/qt5_pkgconfig.patch
+    - Qt5 pkgconfig fixes
+  * debian/patches/build_dir.patch
+    - honor BUILD_DIR
+  * debian/patches/qt5.patch
+    - Do not instantiate Error before Q_DECLARE_METATYPE
+  * debian/patches/doc_out_of_tree_build.patch
+    - Fix out of tree builds for docs
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 27 Feb 2013 15:55:03 -0500
+
+signon (8.46-0ubuntu2) raring; urgency=low
+
+  * debian/patches/daemon_timeout.patch
+    - Added configuration for DaemonTimeout so signond exits after a specified
+      period of inactivity (default is 5 seconds).
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 01 Feb 2013 10:59:28 -0500
 
 signon (8.46-0ubuntu1) raring; urgency=low
 
