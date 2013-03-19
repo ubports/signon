@@ -7,7 +7,7 @@ plugindir=$$SIGNOND_PLUGINS_DIR
 Name: signon-plugins
 Description: SignonPlugins
 Version: $$PROJECT_VERSION
-Requires: libsignon-qt5
-Libs.private: -L/usr/lib  -lQt5Core
+Requires: $${LIBSIGNON}
+Libs.private: -L/usr/lib -l$${LIBQTCORE}
 Cflags:  -I${includedir}/signon-plugins -I${includedir}/signon-plugins/SignOn
 Libs: -lsignon-plugins

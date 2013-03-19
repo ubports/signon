@@ -1,4 +1,12 @@
-signon (8.48-0ubuntu1) UNRELEASED; urgency=low
+signon (8.49-0ubuntu1) raring; urgency=low
+
+  * New upstream release.
+    - Do not force Qt5 into signon plugins (LP: #1156776)
+    - Remove obsolete .prf files 
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 19 Mar 2013 17:05:21 +0200
+
+signon (8.48-0ubuntu1) raring; urgency=low
 
   [ Robert Bruce Park ]
   * Inline packaging metadata.

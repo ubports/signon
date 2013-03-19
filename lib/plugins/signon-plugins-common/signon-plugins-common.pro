@@ -23,14 +23,12 @@ headers.files = \
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
+greaterThan(QT_MAJOR_VERSION, 4) {
+    LIBQTCORE = Qt5Core
+} else {
+    LIBQTCORE = QtCore
+}
+
 pkgconfig.files = signon-plugins-common.pc
 include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig
-
-# configuration feature
-feature.files = signon-plugins-common.prf
-feature.path = $$[QT_INSTALL_DATA]/mkspecs/features
-INSTALLS += feature
-
-
-
