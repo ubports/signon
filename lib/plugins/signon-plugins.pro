@@ -33,10 +33,3 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 pkgconfig.files = signon-plugins.pc
 include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig
-
-# configuration feature
-feature.files = signon-plugins.prf
-feature.path = $$[QT_INSTALL_DATA]/mkspecs/features
-INSTALLS += feature
-
-
