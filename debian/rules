@@ -39,7 +39,6 @@ override_dh_install:
 	rm -f debian/tmp/usr/include/signon-plugins/*test*.h
 	rm -f debian/tmp/usr/lib/lib*.*a
 	rm -f debian/tmp/usr/lib/signon/libexampleplugin.so
-	rm -rf debian/tmp/usr/share/*/mkspecs
 	dh_install --fail-missing
 
 %:

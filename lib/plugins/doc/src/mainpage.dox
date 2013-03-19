@@ -12,8 +12,7 @@ framework.
 Since it currently consists of a few header files and of a single moc-generated
 .cpp file, the library is built statically.
 
-The library ships with a pkg-config file (@a signon-plugins.pc) and with a
-qmake configuration features file (@a signon-plugins.prf).
+The library ships with a pkg-config file (@a signon-plugins.pc).
 
 
 @section classlist List of classes in libsignon-qt
