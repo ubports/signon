@@ -92,4 +92,11 @@ isEmpty(_PLUGINS) {
 }
 SIGNOND_PLUGINS_DIR_QUOTED = \\\"$$SIGNOND_PLUGINS_DIR\\\"
 
+# Note that you have to CONFIG+=install_tests in order to install tests
+isEmpty(TESTDIR) {
+    INSTALL_TESTDIR = $${INSTALL_LIBDIR}/signon
+} else {
+    INSTALL_TESTDIR = $${TESTDIR}
+}
+
 include( coverage.pri )
