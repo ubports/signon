@@ -37,7 +37,7 @@ override_dh_auto_install:
 override_dh_install:
 	rm -f debian/tmp/usr/include/signon-plugins/*example*.h
 	rm -f debian/tmp/usr/include/signon-plugins/*test*.h
-	rm -f debian/tmp/usr/lib/lib*.*a
+	rm -f debian/tmp/usr/lib/libsignon-qt*.*a
 	rm -f debian/tmp/usr/lib/signon/libexampleplugin.so
 	dh_install --fail-missing
 
