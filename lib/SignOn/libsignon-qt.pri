@@ -60,9 +60,10 @@ include( $$TOP_SRC_DIR/common-installs-config.pri )
 headers.files = $$public_headers \
     AuthService \
     AuthSession \
+    Error \
     Identity \
-        SessionData \
-        Error
+    IdentityInfo \
+    SessionData
 headers.path = $${INSTALL_PREFIX}/include/$${TARGET}/SignOn
 INSTALLS += headers
 

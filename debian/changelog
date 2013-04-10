@@ -1,3 +1,14 @@
+signon (8.50-0ubuntu1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - IdentityInfo::secret() and setId() are now public
+      http://code.google.com/p/accounts-sso/issues/detail?id=177
+    - Install the IdentityInfo header file
+    - Allow to install tests
+    - pluginproxytest: link with rpath set 
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 10 Apr 2013 15:26:12 +0400
+
 signon (8.49-0ubuntu2) raring; urgency=low
 
   * debian/rules, debian/signon-plugins-dev.install
