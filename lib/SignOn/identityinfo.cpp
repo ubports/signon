@@ -133,7 +133,7 @@ QStringList IdentityInfo::accessControlList() const
     return impl->m_accessControlList;
 }
 
-const QString IdentityInfo::secret() const
+QString IdentityInfo::secret() const
 {
     return impl->m_secret;
 }

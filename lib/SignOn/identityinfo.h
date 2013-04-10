@@ -104,6 +104,14 @@ public:
     ~IdentityInfo();
 
     /*!
+     * Sets the numeric identifier for the credentials record.
+     * Calling this method makes only sense when handling the
+     * Identity::credentialsStored() signal.
+     * @param id The numeric identifier of the credentials.
+     */
+    void setId(const quint32 id);
+
+    /*!
       * Returns the identity identifier.
       * @return Identifier for the identity
       */
@@ -124,6 +132,13 @@ public:
      * @param storeSecret Whether the secret is stored or not
      */
     void setSecret(const QString &secret, const bool storeSecret = true);
+
+    /*!
+     * Gets the secret. If this object was retrieved from the database, the
+     * returned secret might be an empty string.
+     * @return The secret, when allowed, or an empty string.
+     */
+    QString secret() const;
 
     /*!
      * Returns whether secret is to be stored.
@@ -284,10 +299,6 @@ public:
      * @return Refcount for this IdentityInfo
      */
     qint32 refCount() const;
-
-private:
-    void setId(const quint32 id);
-    const QString secret() const;
 
 private:
     class IdentityInfoImpl *impl;
