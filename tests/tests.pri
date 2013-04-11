@@ -5,3 +5,7 @@ RUN_WITH_SIGNOND = "BUILDDIR=$$TOP_BUILD_DIR SRCDIR=$$TOP_SRC_DIR $$TOP_SRC_DIR/
 
 QMAKE_EXTRA_TARGETS += check
 
+CONFIG(install_tests) {
+    target.path = $${INSTALL_TESTDIR}
+    INSTALLS += target
+}
