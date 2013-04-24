@@ -30,9 +30,9 @@ override_dh_auto_clean:
 	dh_auto_clean -Bbuild/qt5
 
 override_dh_auto_install:
-	dh_auto_install -Bbuild/qt5 -plibsignon-qt5-1
-	dh_auto_install -Bbuild/qt5 -plibsignon-qt5-dev
-	dh_auto_install -Bbuild/qt4
+	dh_auto_install -Bbuild/qt4 -plibsignon-qt1
+	dh_auto_install -Bbuild/qt4 -plibsignon-qt-dev
+	dh_auto_install -Bbuild/qt5
 
 override_dh_install:
 	rm -f debian/tmp/usr/include/signon-plugins/*example*.h

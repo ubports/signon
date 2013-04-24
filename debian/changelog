@@ -1,5 +1,6 @@
-signon (8.50-0ubuntu1) UNRELEASED; urgency=low
+signon (8.50-0ubuntu2) UNRELEASED; urgency=low
 
+  [ Alberto Mardegan ]
   * New upstream release.
     - IdentityInfo::secret() and setId() are now public
       http://code.google.com/p/accounts-sso/issues/detail?id=177
@@ -7,7 +8,10 @@ signon (8.50-0ubuntu1) UNRELEASED; urgency=low
     - Allow to install tests
     - pluginproxytest: link with rpath set 
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 10 Apr 2013 15:26:12 +0400
+  [ Ken VanDine ]
+  * Default to Qt5 build
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Wed, 24 Apr 2013 10:07:19 -0400
 
 signon (8.49-0ubuntu2) raring; urgency=low
 
