@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -363,8 +364,30 @@ void SignonIdentity::remove()
                        QLatin1String("Database error occurred."));
         return;
     }
-    emit infoUpdated((int)SignOn::IdentityRemoved);
+    setDelayedReply(true);
+    m_message = message();
+    setAutoDestruct(false);
+    QDBusPendingCallWatcher *watcher =
+        new QDBusPendingCallWatcher(m_signonui->removeIdentityData(m_id),
+                                    this);
+    connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+            this, SLOT(removeCompleted(QDBusPendingCallWatcher*)));
     keepInUse();
+}
+
+void SignonIdentity::removeCompleted(QDBusPendingCallWatcher *call)
+{
+    setAutoDestruct(true);
+    call->deleteLater();
+
+    QDBusPendingReply<> signOnUiReply = *call;
+    bool ok = !signOnUiReply.isError();
+    TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
+
+    QDBusMessage reply = m_message.createReply();
+    SIGNOND_BUS.send(reply);
+
+    emit infoUpdated((int)SignOn::IdentityRemoved);
 }
 
 bool SignonIdentity::signOut()
@@ -386,10 +409,33 @@ bool SignonIdentity::signOut()
             TRACE() << "clear data failed";
         }
 
-        emit infoUpdated((int)SignOn::IdentitySignedOut);
+        setDelayedReply(true);
+        m_message = message();
+        setAutoDestruct(false);
+        QDBusPendingCallWatcher *watcher =
+            new QDBusPendingCallWatcher(m_signonui->removeIdentityData(m_id),
+                                        this);
+        connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                this, SLOT(signOutCompleted(QDBusPendingCallWatcher*)));
     }
     keepInUse();
     return true;
+}
+
+void SignonIdentity::signOutCompleted(QDBusPendingCallWatcher *call)
+{
+    setAutoDestruct(true);
+    call->deleteLater();
+
+    QDBusPendingReply<> signOnUiReply = *call;
+    bool ok = !signOnUiReply.isError();
+    TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
+
+    QDBusMessage reply = m_message.createReply();
+    reply << ok;
+    SIGNOND_BUS.send(reply);
+
+    emit infoUpdated((int)SignOn::IdentitySignedOut);
 }
 
 quint32 SignonIdentity::store(const QVariantMap &info)

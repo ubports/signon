@@ -1,4 +1,6 @@
-signon (8.50-0ubuntu1) UNRELEASED; urgency=low
+signon (8.51-0ubuntu1) UNRELEASED; urgency=low
+
+  * Automatic snapshot from revision 560 (bootstrap)
 
   [ Alberto Mardegan ]
   * New upstream release.
@@ -11,7 +13,15 @@ signon (8.50-0ubuntu1) UNRELEASED; urgency=low
   [ Ken VanDine ]
   * Default to Qt5 build
 
- -- Ken VanDine <ken.vandine@canonical.com>  Wed, 24 Apr 2013 10:07:19 -0400
+  [ Alberto Mardegan ]
+  * New upstream release.
+    - Qt5: fix SignonExtension.pc (when building with Qt5, SignonExtension.pc
+      was still requiring QtCore).
+    - Inform signon-ui of identity removals and signouts.
+    - libsignon-qt: implement ACL retrieval
+      http://code.google.com/p/accounts-sso/issues/detail?id=178
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 26 Apr 2013 16:30:30 +0300
 
 signon (8.49-0ubuntu2) raring; urgency=low
 

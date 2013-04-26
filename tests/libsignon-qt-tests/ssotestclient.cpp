@@ -648,7 +648,9 @@ void SsoTestClient::queryInfo()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    QStringList acl;
+    acl << TEST_AEGIS_TOKEN;
+    info.setAccessControlList(acl);
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -678,6 +680,8 @@ void SsoTestClient::queryInfo()
     QVERIFY2(m_identityResult.m_responseReceived !=
              TestIdentityResult::InexistentResp,
              "A response was not received.");
+
+    QCOMPARE(m_identityResult.m_idInfo.accessControlList(), acl);
 
     END_IDENTITY_TEST_IF_UNTRUSTED;
 
