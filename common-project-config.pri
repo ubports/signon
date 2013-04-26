@@ -33,6 +33,15 @@ DEFINES += DEBUG_ENABLED
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 
+# Qt4/Qt5 common checks
+greaterThan(QT_MAJOR_VERSION, 4) {
+    LIBSIGNON = libsignon-qt5
+    LIBQTCORE = Qt5Core
+} else {
+    LIBSIGNON = libsignon-qt
+    LIBQTCORE = QtCore
+}
+
 #-----------------------------------------------------------------------------
 # setup the installation prefix
 #-----------------------------------------------------------------------------
