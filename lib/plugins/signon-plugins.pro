@@ -22,14 +22,6 @@ headers.files = \
 headers.path = $${INSTALL_PREFIX}/include/signon-plugins/SignOn
 INSTALLS += headers
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-    LIBSIGNON = libsignon-qt5
-    LIBQTCORE = Qt5Core
-} else {
-    LIBSIGNON = libsignon-qt
-    LIBQTCORE = QtCore
-}
-
 pkgconfig.files = signon-plugins.pc
 include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig

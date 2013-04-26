@@ -2,7 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
- * Copyright (C) 2012 Canonical Ltd.
+ * Copyright (C) 2012-2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -77,6 +77,10 @@ Q_SIGNALS:
     void unregistered();
     //TODO - split this into the 3 separate signals(updated, removed, signed out)
     void infoUpdated(int);
+
+private Q_SLOTS:
+    void removeCompleted(QDBusPendingCallWatcher *call);
+    void signOutCompleted(QDBusPendingCallWatcher *call);
 
 private:
     SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
