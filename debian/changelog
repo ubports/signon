@@ -1,5 +1,7 @@
 signon (8.51-0ubuntu1) UNRELEASED; urgency=low
 
+  * Automatic snapshot from revision 560 (bootstrap)
+
   [ Alberto Mardegan ]
   * New upstream release.
     - IdentityInfo::secret() and setId() are now public
