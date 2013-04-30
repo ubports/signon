@@ -130,7 +130,7 @@ Package: signon-plugins-dev
 Architecture: any
 Section: libdevel
 Priority: optional
-Depends: libsignon-qt-dev,
+Depends: libsignon-qt5-dev,
          ${shlibs:Depends},
          ${misc:Depends},
 Description: Development files for Single Sign On plugins
