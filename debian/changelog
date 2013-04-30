@@ -12,6 +12,7 @@ signon (8.51-0ubuntu1) UNRELEASED; urgency=low
 
   [ Ken VanDine ]
   * Default to Qt5 build
+    - Updated depends for Qt5 built packages
 
   [ Alberto Mardegan ]
   * New upstream release.
@@ -21,7 +22,7 @@ signon (8.51-0ubuntu1) UNRELEASED; urgency=low
     - libsignon-qt: implement ACL retrieval
       http://code.google.com/p/accounts-sso/issues/detail?id=178
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 26 Apr 2013 16:30:30 +0300
+ -- Ken VanDine <ken.vandine@canonical.com>  Tue, 30 Apr 2013 11:20:53 -0700
 
 signon (8.49-0ubuntu2) raring; urgency=low
 
