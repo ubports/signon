@@ -1,3 +1,36 @@
+signon (8.51bzr13.04.26daily13.05.01.2ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 560 (bootstrap)
+
+  [ Alberto Mardegan ]
+  * New upstream release.
+    - IdentityInfo::secret() and setId() are now public
+      http://code.google.com/p/accounts-sso/issues/detail?id=177
+    - Install the IdentityInfo header file
+    - Allow to install tests
+    - pluginproxytest: link with rpath set 
+
+  [ Ken VanDine ]
+  * Default to Qt5 build
+    - Updated depends for Qt5 built packages
+
+  [ Alberto Mardegan ]
+  * New upstream release.
+    - Qt5: fix SignonExtension.pc (when building with Qt5, SignonExtension.pc
+      was still requiring QtCore).
+    - Inform signon-ui of identity removals and signouts.
+    - libsignon-qt: implement ACL retrieval
+      http://code.google.com/p/accounts-sso/issues/detail?id=178
+  * signon-plugin-oauth2-0.15 fails to build (LP: #1156776)
+
+  [ Alberto Mardegan <alberto.mardegan@canonical.com>, Martin Kampas ]
+  * signon-plugin-oauth2-0.15 fails to build (LP: #1156776)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 565 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 01 May 2013 15:32:56 +0000
+
 signon (8.51bzr13.04.26daily13.05.01.1ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 560 (bootstrap)
