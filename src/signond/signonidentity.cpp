@@ -384,10 +384,10 @@ void SignonIdentity::removeCompleted(QDBusPendingCallWatcher *call)
     bool ok = !signOnUiReply.isError();
     TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
 
+    emit infoUpdated((int)SignOn::IdentityRemoved);
+
     QDBusMessage reply = m_message.createReply();
     SIGNOND_BUS.send(reply);
-
-    emit infoUpdated((int)SignOn::IdentityRemoved);
 }
 
 bool SignonIdentity::signOut()
@@ -431,11 +431,11 @@ void SignonIdentity::signOutCompleted(QDBusPendingCallWatcher *call)
     bool ok = !signOnUiReply.isError();
     TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
 
+    emit infoUpdated((int)SignOn::IdentitySignedOut);
+
     QDBusMessage reply = m_message.createReply();
     reply << ok;
     SIGNOND_BUS.send(reply);
-
-    emit infoUpdated((int)SignOn::IdentitySignedOut);
 }
 
 quint32 SignonIdentity::store(const QVariantMap &info)
