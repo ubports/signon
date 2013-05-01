@@ -1,4 +1,4 @@
-signon (8.51-0ubuntu1) UNRELEASED; urgency=low
+signon (8.51bzr13.04.26daily13.05.01.1ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 560 (bootstrap)
 
@@ -21,8 +21,15 @@ signon (8.51-0ubuntu1) UNRELEASED; urgency=low
     - Inform signon-ui of identity removals and signouts.
     - libsignon-qt: implement ACL retrieval
       http://code.google.com/p/accounts-sso/issues/detail?id=178
+  * signon-plugin-oauth2-0.15 fails to build (LP: #1156776)
 
- -- Ken VanDine <ken.vandine@canonical.com>  Tue, 30 Apr 2013 11:20:53 -0700
+  [ Alberto Mardegan <alberto.mardegan@canonical.com>, Martin Kampas ]
+  * signon-plugin-oauth2-0.15 fails to build (LP: #1156776)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 565 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 01 May 2013 07:51:13 +0000
 
 signon (8.49-0ubuntu2) raring; urgency=low
 
