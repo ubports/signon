@@ -4,6 +4,15 @@ signon (8.51bzr13.04.26daily13.05.02.1ubuntu.unity.next-0ubuntu1) raring; urgenc
 
  -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 02 May 2013 20:48:14 +0000
 
+signon (8.51bzr13.04.26daily13.05.02ubuntu.unity.next-0ubuntu2) UNRELEASED; urgency=low
+
+  * debian/rules
+    - Don't apply use_keyring.patch for armhf
+  * debian/control
+    - build depend on quilt
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Thu, 02 May 2013 09:33:39 -0700
+
 signon (8.51bzr13.04.26daily13.05.02ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 567 (ubuntu-unity/next)
