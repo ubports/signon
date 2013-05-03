@@ -1,3 +1,9 @@
+signon (8.51bzr13.04.26daily13.05.03ubuntu.unity.next-0ubuntu1) raring; urgency=low
+
+  * Automatic snapshot from revision 570 (ubuntu-unity/next)
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 03 May 2013 23:16:19 +0000
+
 signon (8.51bzr13.04.26daily13.05.02.1ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 568 (ubuntu-unity/next)
