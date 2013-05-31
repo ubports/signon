@@ -1,3 +1,9 @@
+signon (8.52~-0ubuntu1) UNRELEASED; urgency=low
+
+  * Version bump
+
+ -- Ken VanDine <ken.vandine@canonical.com>  Fri, 31 May 2013 09:34:31 -0400
+
 signon (8.51bzr13.04.26daily13.05.29ubuntu.unity.next-0ubuntu1) raring; urgency=low
 
   * Automatic snapshot from revision 576 (ubuntu-unity/next)
