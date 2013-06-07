@@ -341,7 +341,8 @@ bool CredentialsAccessManager::initExtension(QObject *plugin)
             }
         }
 
-        if (plugin->objectName() == m_CAMConfiguration.secretsStorageName()) {
+        if (m_CAMConfiguration.secretsStorageName().isEmpty() ||
+                plugin->objectName() == m_CAMConfiguration.secretsStorageName()) {
             SignOn::AbstractSecretsStorage *secretsStorage =
                 extension3->secretsStorage(this);
             if (secretsStorage != 0) {

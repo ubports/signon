@@ -471,7 +471,7 @@ void SignonDaemon::initExtensions()
     QDir dir(m_configuration->extensionsDir());
     QStringList filters(QLatin1String("lib*.so"));
     QStringList extensionList = dir.entryList(filters, QDir::Files);
-    foreach(QString filename, extensionList)
+    foreach(const QString &filename, extensionList)
         initExtension(dir.filePath(filename));
 }
 
@@ -481,20 +481,15 @@ void SignonDaemon::initExtension(const QString &filePath)
 
     QPluginLoader pluginLoader(filePath);
     QObject *plugin = pluginLoader.instance();
-    if (plugin == 0) {
+    if (!plugin) {
         qWarning() << "Couldn't load plugin:" << pluginLoader.errorString();
         return;
     }
 
     /* Check whether the extension implements some useful objects; if not,
      * unload it. */
-    bool extensionInUse = false;
-    if (m_pCAMManager->initExtension(plugin))
-        extensionInUse = true;
-
-    if (!extensionInUse) {
+    if (!m_pCAMManager->initExtension(plugin))
         pluginLoader.unload();
-    }
 }
 
 bool SignonDaemon::initStorage()
@@ -634,7 +629,7 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
     QStringList mechs = SignonSessionCore::loadedPluginMethods(method);
 
-    if (mechs.size())
+    if (!mechs.isEmpty())
         return mechs;
 
     PluginProxy *plugin = PluginProxy::createNewPluginProxy(method);
@@ -684,7 +679,7 @@ QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
     }
 
     QList<QVariantMap> mapList;
-    foreach (SignonIdentityInfo info, credentials) {
+    foreach (const SignonIdentityInfo &info, credentials) {
         mapList.append(info.toMap());
     }
     return mapList;
@@ -758,7 +753,7 @@ bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
 
     /* Now copy the files to be backed up */
     bool ok = true;
-    foreach (QString fileName, fileNames) {
+    foreach (const QString &fileName, fileNames) {
         /* Remove the target file, if it exists */
         if (target.exists(fileName))
             target.remove(fileName);
@@ -798,7 +793,7 @@ bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
     bool ok = true;
     QDir target(config.m_storagePath);
     QStringList movedFiles, copiedFiles;
-    foreach (QString fileName, fileNames) {
+    foreach (const QString &fileName, fileNames) {
         /* Remove the target file, if it exists */
         if (target.exists(fileName)) {
             if (target.rename(fileName, fileName + QLatin1String(".bak")))
@@ -827,18 +822,18 @@ bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
     if (!ok) {
         qWarning() << "Restore failed, recovering previous DB";
 
-        foreach (QString fileName, copiedFiles) {
+        foreach (const QString &fileName, copiedFiles) {
             target.remove(fileName);
         }
 
-        foreach (QString fileName, movedFiles) {
+        foreach (const QString &fileName, movedFiles) {
             if (!target.rename(fileName + QLatin1String(".bak"), fileName)) {
                 qCritical() << "Could not recover:" << fileName;
             }
         }
     } else {
         /* delete ".bak" files */
-        foreach (QString fileName, movedFiles) {
+        foreach (const QString &fileName, movedFiles) {
             target.remove(fileName + QLatin1String(".bak"));
         }
 
@@ -858,7 +853,7 @@ bool SignonDaemon::createStorageFileTree(const QStringList &backupFiles) const
         }
     }
 
-    foreach (QString fileName, backupFiles) {
+    foreach (const QString &fileName, backupFiles) {
         if (storageDir.exists(fileName)) continue;
 
         QString filePath = storageDir.path() + QDir::separator() + fileName;

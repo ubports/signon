@@ -96,6 +96,7 @@ const QString IdentityInfo::userName() const
 void IdentityInfo::setCaption(const QString &caption)
 {
     impl->m_caption = caption;
+    impl->m_isEmpty = false;
 }
 
 const QString IdentityInfo::caption() const
