@@ -1,12 +1,16 @@
-signon (8.52-0ubuntu1) UNRELEASED; urgency=low
+signon (8.52daily13.06.12-0ubuntu1) saucy; urgency=low
 
+  [ Alberto Mardegan ]
   * New upstream release.
     - Bunch of micro optimizations, closer following of Qt coding style 
     - lib: allow storing a record with empty username and password 
     - Make the dbus .service files content relative to INSTALL_PREFIX 
     - signond: emit signals before returning a reply
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 07 Jun 2013 09:42:26 +0300
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 580
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 12 Jun 2013 04:32:06 +0000
 
 signon (8.52~daily13.06.05.1-0ubuntu1) saucy; urgency=low
 
