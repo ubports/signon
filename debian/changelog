@@ -1,3 +1,9 @@
+signon (8.52+13.10.20130630-0ubuntu1) saucy; urgency=low
+
+  * Automatic snapshot from revision 592
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Sun, 30 Jun 2013 04:31:08 +0000
+
 signon (8.52+13.10.20130629-0ubuntu1) saucy; urgency=low
 
   * Automatic snapshot from revision 591
