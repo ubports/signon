@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -59,7 +60,7 @@ void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
     QDBusMessage errReply =
                 msg.createErrorReply(SIGNOND_PERMISSION_DENIED_ERR_NAME,
                                      errMsg);
-    SIGNOND_BUS.send(errReply);
+    parentDBusContext().connection().send(errReply);
     TRACE() << "Method FAILED Access Control check:" << failedMethodName;
 }
 
@@ -119,7 +120,7 @@ void SignonDaemonAdaptor::queryIdentities(const QVariantMap &filter)
     msg.setDelayedReply(true);
     MapList identities = m_parent->queryIdentities(filter);
     QDBusMessage reply = msg.createReply(QVariant::fromValue(identities));
-    SIGNOND_BUS.send(reply);
+    parentDBusContext().connection().send(reply);
 }
 
 bool SignonDaemonAdaptor::clear()

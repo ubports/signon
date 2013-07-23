@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -58,7 +59,7 @@ void SignonIdentityAdaptor::errorReply(const QString &name,
     QDBusMessage msg = parentDBusContext().message();
     msg.setDelayedReply(true);
     QDBusMessage errReply = msg.createErrorReply(name, message);
-    SIGNOND_BUS.send(errReply);
+    parentDBusContext().connection().send(errReply);
 }
 
 quint32 SignonIdentityAdaptor::requestCredentialsUpdate(const QString &msg)
