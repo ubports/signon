@@ -65,6 +65,7 @@ public Q_SLOTS:
     void cancel();
 
 private Q_SLOTS:
+    bool initInterface();
     void ignoreError(const QDBusError &err);
     void errorSlot(const QDBusError &err);
     void authenticationSlot(const QString &path);
@@ -77,7 +78,6 @@ private:
     int send2interface(const QString &operation,
                        const char *slot, const QVariantList &arguments);
     void setId(quint32 id);
-    bool initInterface();
 
 private:
     AuthSession *m_parent;

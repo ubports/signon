@@ -223,6 +223,9 @@ int AsyncDBusProxy::queueCall(const QString &method,
                                       receiver, replySlot, errorSlot,
                                       m_nextCallId++);
         m_operationsQueue.enqueue(op);
+        if (m_path.isEmpty()) {
+            Q_EMIT objectPathNeeded();
+        }
         return op->m_id;
     } else {
         sendErrorReply(receiver, errorSlot);

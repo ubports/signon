@@ -89,6 +89,7 @@ public Q_SLOTS:
     void remoteObjectDestroyed();
 
 private Q_SLOTS:
+    bool sendRegisterRequest();
     void queryAvailableMethods();
     void requestCredentialsUpdate(const QString &message = QString());
     void storeCredentials(const IdentityInfo &info);
@@ -110,10 +111,8 @@ private:
     bool sendRequest(const char *remoteMethod, const QList<QVariant> &args,
                      const char *replySlot, int timeout = -1);
     void updateState(State state);
-    void checkConnection();
     bool checkRemoved();
 
-    bool sendRegisterRequest();
     void updateContents();
     void updateCachedData(const QVariantMap &infoData);
     void clearAuthSessionsCache();

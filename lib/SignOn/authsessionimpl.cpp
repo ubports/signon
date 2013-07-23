@@ -72,6 +72,8 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent,
     m_dbusProxy.connect("unregistered", this,
                         SLOT(unregisteredSlot()));
     m_dbusProxy.setConnection(SIGNOND_BUS);
+    QObject::connect(&m_dbusProxy, SIGNAL(objectPathNeeded()),
+                     this, SLOT(initInterface()));
 
     m_id = id;
     m_isAuthInProcessing = false;
@@ -105,6 +107,8 @@ void AuthSessionImpl::setId(quint32 id)
 bool AuthSessionImpl::initInterface()
 {
     TRACE();
+    if (m_isAuthInProcessing) return true;
+
     m_isAuthInProcessing = true;
 
     QLatin1String operation("getAuthSessionObjectPath");
@@ -293,6 +297,5 @@ void AuthSessionImpl::stateSlot(int state, const QString &message)
 
 void AuthSessionImpl::unregisteredSlot()
 {
-    m_isAuthInProcessing = false;
     m_dbusProxy.setObjectPath(QDBusObjectPath());
 }

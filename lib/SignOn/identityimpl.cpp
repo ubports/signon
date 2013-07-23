@@ -93,6 +93,8 @@ IdentityImpl::IdentityImpl(Identity *parent, const quint32 id):
     m_dbusProxy.connect("infoUpdated", this, SLOT(infoUpdated(int)));
     m_dbusProxy.connect("unregistered", this, SLOT(remoteObjectDestroyed()));
     m_dbusProxy.setConnection(SIGNOND_BUS);
+    QObject::connect(&m_dbusProxy, SIGNAL(objectPathNeeded()),
+                     this, SLOT(sendRegisterRequest()));
 
     m_identityInfo->setId(id);
     sendRegisterRequest();
@@ -164,7 +166,6 @@ void IdentityImpl::queryAvailableMethods()
 {
     TRACE() << "Querying available identity authentication methods.";
     if (!checkRemoved()) return;
-    checkConnection();
 
     if (m_state == Ready) {
         emit m_parent->methodsAvailable(m_identityInfo->methods());
@@ -179,7 +180,6 @@ void IdentityImpl::requestCredentialsUpdate(const QString &message)
 {
     TRACE() << "Requesting credentials update.";
     if (!checkRemoved()) return;
-    checkConnection();
 
     QVariantList args;
     args << message;
@@ -192,7 +192,6 @@ void IdentityImpl::requestCredentialsUpdate(const QString &message)
 void IdentityImpl::storeCredentials(const IdentityInfo &info)
 {
     TRACE() << "Storing credentials";
-    checkConnection();
 
     if (m_state == Removed) {
         updateState(NeedsRegistration);
@@ -228,8 +227,6 @@ void IdentityImpl::remove()
      */
 
     if (id() != SIGNOND_NEW_IDENTITY) {
-        checkConnection();
-
         m_dbusProxy.queueCall(QLatin1String("remove"),
                               QVariantList(),
                               SLOT(removeReply()),
@@ -245,7 +242,6 @@ void IdentityImpl::addReference(const QString &reference)
 {
     TRACE() << "Adding reference to identity";
     if (!checkRemoved()) return;
-    checkConnection();
 
     m_dbusProxy.queueCall(QLatin1String("addReference"),
                           QVariantList() << QVariant(reference),
@@ -257,7 +253,6 @@ void IdentityImpl::removeReference(const QString &reference)
 {
     TRACE() << "Removing reference from identity";
     if (!checkRemoved()) return;
-    checkConnection();
 
     m_dbusProxy.queueCall(QLatin1String("removeReference"),
                           QVariantList() << QVariant(reference),
@@ -269,7 +264,6 @@ void IdentityImpl::queryInfo()
 {
     TRACE() << "Querying info.";
     if (!checkRemoved()) return;
-    checkConnection();
 
     if (m_state == Ready) {
         emit m_parent->info(IdentityInfo(*m_identityInfo));
@@ -291,7 +285,6 @@ void IdentityImpl::verifyUser(const QVariantMap &params)
 {
     TRACE() << "Verifying user.";
     if (!checkRemoved()) return;
-    checkConnection();
 
     m_dbusProxy.queueCall(QLatin1String("verifyUser"),
                           QVariantList() << params,
@@ -303,7 +296,6 @@ void IdentityImpl::verifySecret(const QString &secret)
 {
     TRACE();
     if (!checkRemoved()) return;
-    checkConnection();
 
     m_dbusProxy.queueCall(QLatin1String("verifySecret"),
                           QVariantList() << QVariant(secret),
@@ -315,7 +307,6 @@ void IdentityImpl::signOut()
 {
     TRACE() << "Signing out.";
     if (!checkRemoved()) return;
-    checkConnection();
 
     /* if this is a stored identity, inform server about signing out
        so that other client identity objects having the same id will
@@ -545,6 +536,8 @@ void IdentityImpl::updateContents()
 
 bool IdentityImpl::sendRegisterRequest()
 {
+    if (m_state == PendingRegistration) return true;
+
     QVariantList args;
     QString registerMethodName = QLatin1String("registerNewIdentity");
     QByteArray registerReplyMethodName =
@@ -590,13 +583,6 @@ bool IdentityImpl::sendRegisterRequest()
 void IdentityImpl::updateCachedData(const QVariantMap &infoData)
 {
     m_identityInfo->impl->updateFromMap(infoData);
-}
-
-void IdentityImpl::checkConnection()
-{
-    if (m_state == NeedsRegistration) {
-        sendRegisterRequest();
-    }
 }
 
 void IdentityImpl::registerReply(const QDBusObjectPath &objectPath)

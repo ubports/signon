@@ -67,6 +67,9 @@ public:
 
     bool cancelCall(int id);
 
+Q_SIGNALS:
+    void objectPathNeeded();
+
 private:
     enum Status {
         Incomplete,

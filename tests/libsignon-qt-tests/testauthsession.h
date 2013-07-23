@@ -90,6 +90,7 @@ private Q_SLOTS:
     void process_many_times_after_auth();
     void process_many_times_before_auth();
     void process_with_big_session_data();
+    void process_after_timeout();
 
     void cancel_immediately();
     void cancel_with_delay();
