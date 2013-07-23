@@ -73,7 +73,7 @@ SignonAuthSessionAdaptor::queryAvailableMechanisms(
 QVariantMap SignonAuthSessionAdaptor::process(const QVariantMap &sessionDataVa,
                                               const QString &mechanism)
 {
-    TRACE();
+    TRACE() << mechanism;
 
     QString allowedMechanism(mechanism);
 

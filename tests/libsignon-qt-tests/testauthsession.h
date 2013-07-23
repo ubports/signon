@@ -3,6 +3,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -90,7 +91,7 @@ private Q_SLOTS:
     void process_many_times_before_auth();
     void process_with_big_session_data();
 
-    void cancel_immidiately();
+    void cancel_immediately();
     void cancel_with_delay();
     void cancel_without_process();
 

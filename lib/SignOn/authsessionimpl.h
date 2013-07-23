@@ -2,6 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -33,9 +34,9 @@
 #include <QQueue>
 #include <QDateTime>
 
+#include "async-dbus-proxy.h"
 #include "authsession.h"
 #include "dbusinterface.h"
-#include "dbusoperationqueuehandler.h"
 
 namespace SignOn {
 
@@ -64,6 +65,7 @@ public Q_SLOTS:
     void cancel();
 
 private Q_SLOTS:
+    void ignoreError(const QDBusError &err);
     void errorSlot(const QDBusError &err);
     void authenticationSlot(const QString &path);
     void mechanismsAvailableSlot(const QStringList &mechanisms);
@@ -72,32 +74,26 @@ private Q_SLOTS:
     void unregisteredSlot();
 
 private:
-    void send2interface(const QString &operation,
-                        const char *slot, const QVariantList &arguments);
+    int send2interface(const QString &operation,
+                       const char *slot, const QVariantList &arguments);
     void setId(quint32 id);
-    bool checkConnection();
     bool initInterface();
 
 private:
     AuthSession *m_parent;
-    DBusOperationQueueHandler m_operationQueueHandler;
+    AsyncDBusProxy m_dbusProxy;
     quint32 m_id;
     QString m_methodName;
-    DBusInterface *m_DBusInterface;
 
     /*
      * flag to prevent multiple authentication requests
      */
     bool m_isAuthInProcessing;
+
     /*
-     * busy flag for process operation
+     * id of process operation
      */
-    bool m_isBusy;
-    /*
-     * valid flag for authentication: if
-     * authentication failed once we do not try anymore
-     */
-    bool m_isValid;
+    int m_processCallId;
 };
 
 } //namespace SignOn
