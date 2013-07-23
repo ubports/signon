@@ -55,10 +55,11 @@ SignonIdentity::SignonIdentity(quint32 id, int timeout,
                                SignonDaemon *parent):
     SignonDisposable(timeout, parent),
     m_pInfo(NULL),
-    m_pSignonDaemon(parent),
-    m_registered(false)
+    m_pSignonDaemon(parent)
 {
     m_id = id;
+
+    (void)new SignonIdentityAdaptor(this);
 
     /*
      * creation of unique name for the given identity
@@ -77,12 +78,7 @@ SignonIdentity::SignonIdentity(quint32 id, int timeout,
 
 SignonIdentity::~SignonIdentity()
 {
-    if (m_registered)
-    {
-        emit unregistered();
-        QDBusConnection connection = SIGNOND_BUS;
-        connection.unregisterObject(objectName());
-    }
+    emit unregistered();
 
     if (credentialsStored())
         m_pSignonDaemon->m_storedIdentities.remove(m_id);
@@ -92,55 +88,13 @@ SignonIdentity::~SignonIdentity()
     delete m_signonui;
 }
 
-bool SignonIdentity::init()
-{
-    QDBusConnection connection = SIGNOND_BUS;
-
-    if (!connection.isConnected()) {
-        QDBusError err = connection.lastError();
-        TRACE() << "Connection cannot be established:" <<
-            err.errorString(err.type()) ;
-        return false;
-    }
-
-    QDBusConnection::RegisterOptions registerOptions =
-        QDBusConnection::ExportAllContents;
-
-    (void)new SignonIdentityAdaptor(this);
-    registerOptions = QDBusConnection::ExportAdaptors;
-
-    if (!connection.registerObject(objectName(), this, registerOptions)) {
-        TRACE() << "Object cannot be registered: " << objectName();
-        return false;
-    }
-
-    return (m_registered = true);
-}
-
 SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
 {
-    SignonIdentity *identity =
-        new SignonIdentity(id, parent->identityTimeout(), parent);
-
-    if (!identity->init()) {
-        TRACE() << "The created identity is invalid and will be deleted.\n";
-        delete identity;
-        return NULL;
-    }
-
-    return identity;
+    return new SignonIdentity(id, parent->identityTimeout(), parent);
 }
 
 void SignonIdentity::destroy()
 {
-    if (m_registered)
-    {
-        emit unregistered();
-        QDBusConnection connection = SIGNOND_BUS;
-        connection.unregisterObject(objectName());
-        m_registered = false;
-    }
-
     deleteLater();
 }
 

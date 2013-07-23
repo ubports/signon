@@ -2,7 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
- * Copyright (C) 2012 Canonical Ltd.
+ * Copyright (C) 2012-2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -149,6 +149,7 @@ private:
 
     void identityStored(SignonIdentity *identity);
     void setupSignalHandlers();
+    void registerObject(QObject *object);
 
     void eraseBackupDir() const;
     bool copyToBackupDir(const QStringList &fileNames) const;

@@ -2,6 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2013 Canonical Ltd.
  *
  * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -530,13 +531,9 @@ void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
     SignonIdentity *identity =
         SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
-    if (identity == NULL) {
-        sendErrorReply(internalServerErrName,
-                       internalServerErrStr +
-                       QLatin1String("Could not create remote Identity "
-                                     "object."));
-        return;
-    }
+    Q_ASSERT(identity != NULL);
+
+    registerObject(identity);
 
     m_unstoredIdentities.insert(identity->objectName(), identity);
 
@@ -571,15 +568,7 @@ void SignonDaemon::getIdentity(const quint32 id,
     //if not create it
     if (identity == NULL)
         identity = SignonIdentity::createIdentity(id, this);
-
-    if (identity == NULL)
-    {
-        sendErrorReply(internalServerErrName,
-                       internalServerErrStr +
-                       QLatin1String("Could not create remote Identity "
-                                     "object."));
-        return;
-    }
+    Q_ASSERT(identity != NULL);
 
     bool ok;
     SignonIdentityInfo info = identity->queryInfo(ok, false);
@@ -588,8 +577,11 @@ void SignonDaemon::getIdentity(const quint32 id,
     {
         sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+        identity->destroy();
         return;
     }
+
+    registerObject(identity);
 
     //cache the identity as stored
     m_storedIdentities.insert(identity->id(), identity);
@@ -708,18 +700,30 @@ bool SignonDaemon::clear()
 QString SignonDaemon::getAuthSessionObjectPath(const quint32 id,
                                                const QString type)
 {
-    bool supportsAuthMethod = false;
     pid_t ownerPid = AccessControlManagerHelper::pidOfPeer(*this);
-    QString objectPath =
-        SignonAuthSession::getAuthSessionObjectPath(id, type, this,
-                                                    supportsAuthMethod,
-                                                    ownerPid);
-    if (objectPath.isEmpty() && !supportsAuthMethod) {
+    SignonAuthSession *authSession =
+        SignonAuthSession::createAuthSession(id, type, this, ownerPid);
+    if (authSession == NULL) {
         sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
                        SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
         return QString();
     }
-    return objectPath;
+
+    registerObject(authSession);
+
+    return authSession->objectName();
+}
+
+void SignonDaemon::registerObject(QObject *object)
+{
+    QDBusConnection conn = connection();
+    if (conn.objectRegisteredAt(object->objectName()) == object)
+        return;
+
+    if (!conn.registerObject(object->objectName(), object,
+                             QDBusConnection::ExportAdaptors)) {
+        BLAME() << "Object registration failed:" << object << conn.lastError();
+    }
 }
 
 void SignonDaemon::eraseBackupDir() const

@@ -84,7 +84,6 @@ private Q_SLOTS:
 
 private:
     SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
-    bool init();
     bool credentialsStored() const { return m_id > 0 ? true : false; }
     void queryUserPassword(const QVariantMap &params);
 
@@ -93,7 +92,6 @@ private:
     SignonUiAdaptor *m_signonui;
     SignonIdentityInfo *m_pInfo;
     SignonDaemon *m_pSignonDaemon;
-    bool m_registered;
     QDBusMessage m_message;
 
 }; //class SignonDaemon
