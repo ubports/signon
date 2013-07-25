@@ -26,6 +26,7 @@
 
 #include <QDBusConnection>
 #include <QDBusObjectPath>
+#include <QDBusPendingCallWatcher>
 #include <QDebug>
 #include <QMetaMethod>
 #include <QMetaType>
@@ -36,33 +37,6 @@
 using namespace SignOn;
 
 namespace SignOn {
-
-class Operation
-{
-public:
-    Operation(const QString &name,
-              const QList<QVariant> &args,
-              QObject *receiver,
-              const char *replySlot,
-              const char *errorSlot,
-              int id):
-        m_name(name),
-        m_args(args),
-        m_receiver(receiver),
-        m_replySlot(replySlot),
-        m_errorSlot(errorSlot),
-        m_id(id)
-    {
-    }
-    ~Operation() {};
-
-    QString m_name;
-    QList<QVariant> m_args;
-    QObject *m_receiver;
-    const char *m_replySlot;
-    const char *m_errorSlot;
-    int m_id;
-};
 
 class Connection
 {
@@ -82,6 +56,84 @@ public:
 
 } // namespace
 
+PendingCall::PendingCall(const QString &method,
+                         const QList<QVariant> &args,
+                         QObject *parent):
+    QObject(parent),
+    m_method(method),
+    m_args(args),
+    m_watcher(0),
+    m_interfaceWasDestroyed(false)
+{
+}
+
+PendingCall::~PendingCall()
+{
+}
+
+bool PendingCall::cancel()
+{
+    if (m_watcher) {
+        // Too late, can't cancel
+        return false;
+    }
+    Q_EMIT finished(0);
+    return true;
+}
+
+void PendingCall::doCall(QDBusAbstractInterface *interface)
+{
+    QDBusPendingCall call =
+        interface->asyncCallWithArgumentList(m_method, m_args);
+    m_watcher = new QDBusPendingCallWatcher(call, this);
+    QObject::connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this, SLOT(onFinished(QDBusPendingCallWatcher*)));
+    /* Check if the interface gets destroyed while our call executes */
+    m_interfaceWasDestroyed = false;
+    QObject::connect(interface, SIGNAL(destroyed()),
+                     this, SLOT(onInterfaceDestroyed()));
+}
+
+void PendingCall::fail(const QDBusError &err)
+{
+    Q_EMIT error(err);
+    Q_EMIT finished(0);
+}
+
+void PendingCall::onFinished(QDBusPendingCallWatcher *watcher)
+{
+    /* Check if the call failed because the interface became invalid; if
+     * so, emit a signal to instruct the AsyncDBusProxy to re-queue this
+     * operation. */
+    if (m_interfaceWasDestroyed && watcher->isError()) {
+        QDBusError::ErrorType type = watcher->error().type();
+        if (type == QDBusError::Disconnected ||
+            type == QDBusError::UnknownObject) {
+            TRACE() << "emitting retry signal";
+            Q_EMIT requeueRequested();
+            return;
+        }
+    }
+
+    if (watcher->isError()) {
+        Q_EMIT error(watcher->error());
+    } else {
+        Q_EMIT success(watcher);
+    }
+    Q_EMIT finished(watcher);
+}
+
+void PendingCall::onInterfaceDestroyed()
+{
+    /* If the interface is destroyed during the lifetime of the call, this can
+     * be because the remote object got destroyed or the D-Bus connection
+     * dropped. In either case, we might have to re-queue our method call.
+     *
+     * This is done in the onFinished() slot; here we just record the event.
+     */
+    m_interfaceWasDestroyed = true;
+}
+
 AsyncDBusProxy::AsyncDBusProxy(const QString &service,
                                const char *interface,
                                QObject *clientObject):
@@ -90,7 +142,6 @@ AsyncDBusProxy::AsyncDBusProxy(const QString &service,
     m_connection(NULL),
     m_clientObject(clientObject),
     m_interface(NULL),
-    m_nextCallId(1),
     m_status(Incomplete)
 {
 }
@@ -114,21 +165,15 @@ void AsyncDBusProxy::setStatus(Status status)
         qDeleteAll(m_connectionsQueue);
         m_connectionsQueue.clear();
 
-        Q_FOREACH(Operation *op, m_operationsQueue) {
-            doCall(op->m_name,
-                   op->m_args,
-                   op->m_receiver,
-                   op->m_replySlot,
-                   op->m_errorSlot);
+        Q_FOREACH(PendingCall *call, m_operationsQueue) {
+            call->doCall(m_interface);
         }
-        qDeleteAll(m_operationsQueue);
         m_operationsQueue.clear();
     } else if (status == Invalid) {
         /* signal error on all operations */
-        Q_FOREACH(Operation *op, m_operationsQueue) {
-            sendErrorReply(op->m_receiver, op->m_errorSlot);
+        Q_FOREACH(PendingCall *call, m_operationsQueue) {
+            call->fail(m_lastError);
         }
-        qDeleteAll(m_operationsQueue);
         m_operationsQueue.clear();
     }
 }
@@ -158,27 +203,6 @@ void AsyncDBusProxy::update()
     setStatus(Ready);
 }
 
-void AsyncDBusProxy::doCall(const QString &method, const QList<QVariant> &args,
-                            QObject *receiver,
-                            const char *replySlot, const char *errorSlot)
-{
-    if (replySlot != NULL) {
-        m_interface->callWithCallback(method, args,
-                                      receiver, replySlot, errorSlot);
-    } else {
-        m_interface->callWithArgumentList(QDBus::NoBlock, method, args);
-    }
-}
-
-void AsyncDBusProxy::sendErrorReply(QObject *receiver, const char *slot)
-{
-    int indexOfMethod = receiver->metaObject()->indexOfMethod(
-                                  QMetaObject::normalizedSignature(slot + 1));
-    QMetaMethod method = receiver->metaObject()->method(indexOfMethod);
-
-    method.invoke(receiver, Q_ARG(QDBusError, m_lastError));
-}
-
 void AsyncDBusProxy::setConnection(const QDBusConnection &connection)
 {
     delete m_connection;
@@ -200,37 +224,48 @@ void AsyncDBusProxy::setError(const QDBusError &error)
     setStatus(Invalid);
 }
 
-int AsyncDBusProxy::queueCall(const QString &method,
-                              const QList<QVariant> &args,
-                              const char *replySlot,
-                              const char *errorSlot)
+PendingCall *AsyncDBusProxy::queueCall(const QString &method,
+                                       const QList<QVariant> &args,
+                                       const char *replySlot,
+                                       const char *errorSlot)
 {
     return queueCall(method, args, m_clientObject, replySlot, errorSlot);
 }
 
-int AsyncDBusProxy::queueCall(const QString &method,
-                              const QList<QVariant> &args,
-                              QObject *receiver,
-                              const char *replySlot,
-                              const char *errorSlot)
+PendingCall *AsyncDBusProxy::queueCall(const QString &method,
+                                       const QList<QVariant> &args,
+                                       QObject *receiver,
+                                       const char *replySlot,
+                                       const char *errorSlot)
 {
-    TRACE() << method << m_status;
-    if (m_status == Ready) {
-        doCall(method, args, receiver, replySlot, errorSlot);
-        return 0;
-    } else if (m_status == Incomplete) {
-        Operation *op = new Operation(method, args,
-                                      receiver, replySlot, errorSlot,
-                                      m_nextCallId++);
-        m_operationsQueue.enqueue(op);
-        if (m_path.isEmpty()) {
-            Q_EMIT objectPathNeeded();
+    PendingCall *call = new PendingCall(method, args, this);
+    QObject::connect(call, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this, SLOT(onCallFinished(QDBusPendingCallWatcher*)));
+    QObject::connect(call, SIGNAL(requeueRequested()),
+                     this, SLOT(onRequeueRequested()));
+
+    if (errorSlot) {
+        QObject::connect(call, SIGNAL(error(const QDBusError&)),
+                         receiver, errorSlot);
+        if (replySlot) {
+            QObject::connect(call, SIGNAL(success(QDBusPendingCallWatcher*)),
+                             receiver, replySlot);
         }
-        return op->m_id;
-    } else {
-        sendErrorReply(receiver, errorSlot);
-        return -1;
+    } else if (replySlot) {
+        QObject::connect(call, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                         receiver, replySlot);
     }
+
+    if (m_status == Ready) {
+        call->doCall(m_interface);
+    } else if (m_status == Incomplete) {
+        enqueue(call);
+    } else {
+        QMetaObject::invokeMethod(call, "fail",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QDBusError, m_lastError));
+    }
+    return call;
 }
 
 bool AsyncDBusProxy::connect(const char *name,
@@ -248,15 +283,24 @@ bool AsyncDBusProxy::connect(const char *name,
     }
 }
 
-bool AsyncDBusProxy::cancelCall(int id)
+void AsyncDBusProxy::enqueue(PendingCall *call)
 {
-    for (int i = 0; i < m_operationsQueue.count(); i++) {
-        Operation *op = m_operationsQueue.at(i);
-        if (op->m_id == id) {
-            delete op;
-            m_operationsQueue.removeAt(i);
-            return true;
-        }
+    m_operationsQueue.enqueue(call);
+    if (m_path.isEmpty()) {
+        Q_EMIT objectPathNeeded();
     }
-    return false;
+}
+
+void AsyncDBusProxy::onCallFinished(QDBusPendingCallWatcher *watcher)
+{
+    Q_UNUSED(watcher);
+    PendingCall *call = qobject_cast<PendingCall*>(sender());
+    m_operationsQueue.removeOne(call);
+    call->deleteLater();
+}
+
+void AsyncDBusProxy::onRequeueRequested()
+{
+    PendingCall *call = qobject_cast<PendingCall*>(sender());
+    enqueue(call);
 }

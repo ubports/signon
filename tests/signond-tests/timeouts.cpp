@@ -115,7 +115,6 @@ void TimeoutsTest::identityTimeout()
     QVERIFY(!identityAlive(path));
 
     /* Calling a method on the client should re-register the identity */
-    QTest::qWait(100);
     QSignalSpy removed(identity, SIGNAL(removed()));
     QObject::connect(identity, SIGNAL(removed()),
                      &loop, SLOT(quit()), Qt::QueuedConnection);

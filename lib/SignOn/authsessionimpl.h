@@ -28,6 +28,7 @@
 #include <QObject>
 #include <QByteArray>
 #include <QMap>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
@@ -69,14 +70,15 @@ private Q_SLOTS:
     void ignoreError(const QDBusError &err);
     void errorSlot(const QDBusError &err);
     void authenticationSlot(const QString &path);
-    void mechanismsAvailableSlot(const QStringList &mechanisms);
-    void responseSlot(const QVariantMap &sessionDataVa);
+    void mechanismsAvailableSlot(QDBusPendingCallWatcher *call);
+    void responseSlot(QDBusPendingCallWatcher *call);
     void stateSlot(int state, const QString &message);
     void unregisteredSlot();
 
 private:
-    int send2interface(const QString &operation,
-                       const char *slot, const QVariantList &arguments);
+    PendingCall *send2interface(const QString &operation,
+                                const char *slot,
+                                const QVariantList &arguments);
     void setId(quint32 id);
 
 private:
@@ -91,9 +93,9 @@ private:
     bool m_isAuthInProcessing;
 
     /*
-     * id of process operation
+     * Handle to process operation
      */
-    int m_processCallId;
+    QPointer<PendingCall> m_processCall;
 };
 
 } //namespace SignOn

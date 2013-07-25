@@ -77,13 +77,13 @@ public:
 
 public Q_SLOTS:
     void errorReply(const QDBusError &err);
-    void storeCredentialsReply(const quint32 id);
+    void storeCredentialsReply(QDBusPendingCallWatcher *call);
     void removeReply();
     void addReferenceReply();
     void removeReferenceReply();
-    void getInfoReply(const QVariantMap &infoData);
-    void verifyUserReply(const bool valid);
-    void verifySecretReply(const bool valid);
+    void getInfoReply(QDBusPendingCallWatcher *call);
+    void verifyUserReply(QDBusPendingCallWatcher *call);
+    void verifySecretReply(QDBusPendingCallWatcher *call);
     void signOutReply();
     void infoUpdated(int);
     void remoteObjectDestroyed();

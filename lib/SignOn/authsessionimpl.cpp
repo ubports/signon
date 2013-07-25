@@ -26,6 +26,8 @@
 #include "authsessionimpl.h"
 #include "libsignoncommon.h"
 
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 
 #define SIGNOND_AUTHSESSION_CONNECTION_PROBLEM \
     QLatin1String("Cannot create remote AuthSession object: " \
@@ -65,7 +67,7 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent,
                 SIGNOND_AUTH_SESSION_INTERFACE_C,
                 this),
     m_methodName(methodName),
-    m_processCallId(-1)
+    m_processCall(0)
 {
     m_dbusProxy.connect("stateChanged", this,
                         SLOT(stateSlot(int, const QString&)));
@@ -85,9 +87,9 @@ AuthSessionImpl::~AuthSessionImpl()
 {
 }
 
-int AuthSessionImpl::send2interface(const QString &operation,
-                                    const char *slot,
-                                    const QVariantList &arguments)
+PendingCall *AuthSessionImpl::send2interface(const QString &operation,
+                                             const char *slot,
+                                             const QVariantList &arguments)
 {
     return m_dbusProxy.queueCall(operation, arguments,
                                  slot,
@@ -143,14 +145,14 @@ AuthSessionImpl::queryAvailableMechanisms(const QStringList &wantedMechanisms)
     arguments += wantedMechanisms;
 
     send2interface(remoteFunctionName,
-                   SLOT(mechanismsAvailableSlot(const QStringList&)),
+                   SLOT(mechanismsAvailableSlot(QDBusPendingCallWatcher*)),
                    arguments);
 }
 
 void AuthSessionImpl::process(const SessionData &sessionData,
                               const QString &mechanism)
 {
-    if (m_processCallId >= 0) {
+    if (m_processCall) {
         TRACE() << "AuthSession: client is busy";
 
         emit m_parent->error(
@@ -169,8 +171,8 @@ void AuthSessionImpl::process(const SessionData &sessionData,
 
     remoteFunctionName = QLatin1String("process");
 
-    m_processCallId = send2interface(remoteFunctionName,
-                   SLOT(responseSlot(const QVariantMap&)), arguments);
+    m_processCall = send2interface(remoteFunctionName,
+                   SLOT(responseSlot(QDBusPendingCallWatcher*)), arguments);
     Q_EMIT m_parent->stateChanged(AuthSession::ProcessPending,
                                   QLatin1String("The request is added "
                                                 "to queue."));
@@ -178,14 +180,14 @@ void AuthSessionImpl::process(const SessionData &sessionData,
 
 void AuthSessionImpl::cancel()
 {
-    if (m_dbusProxy.cancelCall(m_processCallId)) {
+    if (m_processCall && m_processCall->cancel()) {
         emit m_parent->error(Error(Error::SessionCanceled,
                                    QLatin1String("Process is canceled.")));
     } else {
         send2interface(QLatin1String("cancel"), 0, QVariantList());
     }
 
-    m_processCallId = -1;
+    m_processCall = 0;
 }
 
 void AuthSessionImpl::ignoreError(const QDBusError &err)
@@ -197,7 +199,7 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
 {
     TRACE() << err;
 
-    m_processCallId = -1;
+    m_processCall = 0;
     int errCode = Error::Unknown;
     QString errMessage;
 
@@ -278,15 +280,19 @@ void AuthSessionImpl::authenticationSlot(const QString &path)
     m_isAuthInProcessing = false;
 }
 
-void AuthSessionImpl::mechanismsAvailableSlot(const QStringList& mechanisms)
+void AuthSessionImpl::mechanismsAvailableSlot(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<QStringList> reply = *call;
+    QStringList mechanisms = reply.argumentAt<0>();
     emit m_parent->mechanismsAvailable(mechanisms);
 }
 
-void AuthSessionImpl::responseSlot(const QVariantMap &sessionDataVa)
+void AuthSessionImpl::responseSlot(QDBusPendingCallWatcher *call)
 {
-    m_processCallId = -1;
+    m_processCall = 0;
 
+    QDBusPendingReply<QVariantMap> reply = *call;
+    QVariantMap sessionDataVa = reply.argumentAt<0>();
     emit m_parent->response(SessionData(sessionDataVa));
 }
 

@@ -25,6 +25,7 @@
 
 #include <QByteArray>
 #include <QDBusArgument>
+#include <QDBusPendingReply>
 #include <QTimer>
 
 #include "signond/signoncommon.h"
@@ -185,7 +186,7 @@ void IdentityImpl::requestCredentialsUpdate(const QString &message)
     args << message;
     m_dbusProxy.queueCall(QLatin1String("requestCredentialsUpdate"),
                           args,
-                          SLOT(storeCredentialsReply(const quint32)),
+                          SLOT(storeCredentialsReply(QDBusPendingCallWatcher*)),
                           SLOT(errorReply(const QDBusError&)));
 }
 
@@ -213,7 +214,7 @@ void IdentityImpl::storeCredentials(const IdentityInfo &info)
     args << map;
 
     m_dbusProxy.queueCall(QLatin1String("store"), args,
-                          SLOT(storeCredentialsReply(const quint32)),
+                          SLOT(storeCredentialsReply(QDBusPendingCallWatcher*)),
                           SLOT(errorReply(const QDBusError&)));
 }
 
@@ -288,7 +289,7 @@ void IdentityImpl::verifyUser(const QVariantMap &params)
 
     m_dbusProxy.queueCall(QLatin1String("verifyUser"),
                           QVariantList() << params,
-                          SLOT(verifyUserReply(const bool)),
+                          SLOT(verifyUserReply(QDBusPendingCallWatcher*)),
                           SLOT(errorReply(const QDBusError&)));
 }
 
@@ -299,7 +300,7 @@ void IdentityImpl::verifySecret(const QString &secret)
 
     m_dbusProxy.queueCall(QLatin1String("verifySecret"),
                           QVariantList() << QVariant(secret),
-                          SLOT(verifySecretReply(const bool)),
+                          SLOT(verifySecretReply(QDBusPendingCallWatcher*)),
                           SLOT(errorReply(const QDBusError&)));
 }
 
@@ -361,8 +362,10 @@ void IdentityImpl::authSessionCancelReply(const SignOn::Error &err)
     }
 }
 
-void IdentityImpl::storeCredentialsReply(const quint32 id)
+void IdentityImpl::storeCredentialsReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<quint32> reply = *call;
+    quint32 id = reply.argumentAt<0>();
     TRACE() << "stored id:" << id << "old id:" << this->id();
     if (m_tmpIdentityInfo) {
         *m_identityInfo = *m_tmpIdentityInfo;
@@ -395,8 +398,10 @@ void IdentityImpl::removeReferenceReply()
     emit m_parent->referenceRemoved();
 }
 
-void IdentityImpl::getInfoReply(const QVariantMap &infoData)
+void IdentityImpl::getInfoReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<QVariantMap> reply = *call;
+    QVariantMap infoData = reply.argumentAt<0>();
     TRACE() << infoData;
     updateCachedData(infoData);
     updateState(Ready);
@@ -412,13 +417,17 @@ void IdentityImpl::getInfoReply(const QVariantMap &infoData)
     }
 }
 
-void IdentityImpl::verifyUserReply(const bool valid)
+void IdentityImpl::verifyUserReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<bool> reply = *call;
+    bool valid = reply.argumentAt<0>();
     emit m_parent->userVerified(valid);
 }
 
-void IdentityImpl::verifySecretReply(const bool valid)
+void IdentityImpl::verifySecretReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<bool> reply = *call;
+    bool valid = reply.argumentAt<0>();
     emit m_parent->secretVerified(valid);
 }
 
@@ -529,7 +538,7 @@ void IdentityImpl::updateContents()
 {
     m_dbusProxy.queueCall(QLatin1String("getInfo"),
                           QVariantList(),
-                          SLOT(getInfoReply(const QVariantMap &)),
+                          SLOT(getInfoReply(QDBusPendingCallWatcher*)),
                           SLOT(errorReply(const QDBusError&)));
     updateState(PendingUpdate);
 }

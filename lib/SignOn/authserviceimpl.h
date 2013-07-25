@@ -65,10 +65,10 @@ public:
 
 public Q_SLOTS:
     void errorReply(const QDBusError &err);
-    void queryMechanismsReply(const QStringList &mechs);
+    void queryMechanismsReply(QDBusPendingCallWatcher *call);
     void queryMechanismsError(const QDBusError &err);
-    void queryIdentitiesReply(const QDBusMessage &msg);
-    void queryMethodsReply(const QStringList &methods);
+    void queryIdentitiesReply(QDBusPendingCallWatcher *call);
+    void queryMethodsReply(QDBusPendingCallWatcher *call);
     void clearReply();
 
 private:

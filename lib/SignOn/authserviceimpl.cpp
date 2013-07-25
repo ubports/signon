@@ -24,6 +24,8 @@
 #include <QDBusArgument>
 #include <QDBusMessage>
 #include <QDBusMetaType>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QTimer>
 
 #include "signond/signoncommon.h"
@@ -81,7 +83,7 @@ AuthServiceImpl::~AuthServiceImpl()
 void AuthServiceImpl::queryMethods()
 {
     sendRequest(QLatin1String("queryMethods"),
-                SLOT(queryMethodsReply(const QStringList&)),
+                SLOT(queryMethodsReply(QDBusPendingCallWatcher*)),
                 QVariantList());
 }
 
@@ -89,7 +91,7 @@ void AuthServiceImpl::queryMechanisms(const QString &method)
 {
     m_dbusProxy.queueCall(QLatin1String("queryMechanisms"),
                           QVariantList() << method,
-                          SLOT(queryMechanismsReply(const QStringList&)),
+                          SLOT(queryMechanismsReply(QDBusPendingCallWatcher*)),
                           SLOT(queryMechanismsError(const QDBusError&)));
     m_methodsForWhichMechsWereQueried.enqueue(method);
 }
@@ -128,7 +130,7 @@ void AuthServiceImpl::queryIdentities(const AuthService::IdentityFilter &filter)
     args << filterMap;
 
     sendRequest(QLatin1String("queryIdentities"),
-                SLOT(queryIdentitiesReply(const QDBusMessage &)),
+                SLOT(queryIdentitiesReply(QDBusPendingCallWatcher*)),
                 args);
 }
 
@@ -150,13 +152,17 @@ void AuthServiceImpl::sendRequest(const QString &operation,
                           SLOT(errorReply(const QDBusError&)));
 }
 
-void AuthServiceImpl::queryMethodsReply(const QStringList &methods)
+void AuthServiceImpl::queryMethodsReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<QStringList> reply = *call;
+    QStringList methods = reply.argumentAt<0>();
     emit m_parent->methodsAvailable(methods);
 }
 
-void AuthServiceImpl::queryMechanismsReply(const QStringList &mechs)
+void AuthServiceImpl::queryMechanismsReply(QDBusPendingCallWatcher *call)
 {
+    QDBusPendingReply<QStringList> reply = *call;
+    QStringList mechs = reply.argumentAt<0>();
     TRACE() << mechs;
     QString method;
     if (!m_methodsForWhichMechsWereQueried.empty())
@@ -174,8 +180,9 @@ void AuthServiceImpl::queryMechanismsError(const QDBusError &err)
     errorReply(err);
 }
 
-void AuthServiceImpl::queryIdentitiesReply(const QDBusMessage &msg)
+void AuthServiceImpl::queryIdentitiesReply(QDBusPendingCallWatcher *call)
 {
+    QDBusMessage msg = call->reply();
     QList<QVariant> args = msg.arguments();
     if (args.isEmpty()) {
         BLAME() << "Invalid reply: no arguments";

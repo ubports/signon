@@ -30,8 +30,10 @@
 #include <QQueue>
 #include <QVariant>
 
+class QDBusAbstractInterface;
 class QDBusConnection;
 class QDBusObjectPath;
+class QDBusPendingCallWatcher;
 
 /*
  * @cond IMPL
@@ -39,8 +41,42 @@ class QDBusObjectPath;
 namespace SignOn {
 
 class DBusInterface;
-class Operation;
 class Connection;
+class AsyncDBusProxy;
+
+class PendingCall: public QObject
+{
+    Q_OBJECT
+
+public:
+    ~PendingCall();
+
+    bool cancel();
+
+Q_SIGNALS:
+    void finished(QDBusPendingCallWatcher *watcher);
+    void success(QDBusPendingCallWatcher *watcher);
+    void error(const QDBusError &error);
+    void requeueRequested();
+
+private Q_SLOTS:
+    void onFinished(QDBusPendingCallWatcher *watcher);
+    void onInterfaceDestroyed();
+    void fail(const QDBusError &error);
+
+private:
+    friend class AsyncDBusProxy;
+    PendingCall(const QString &method,
+                const QList<QVariant> &args,
+                QObject *parent = 0);
+    void doCall(QDBusAbstractInterface *interface);
+
+private:
+    QString m_method;
+    QList<QVariant> m_args;
+    QDBusPendingCallWatcher *m_watcher;
+    bool m_interfaceWasDestroyed;
+};
 
 class AsyncDBusProxy: public QObject
 {
@@ -56,16 +92,16 @@ public:
     void setObjectPath(const QDBusObjectPath &objectPath);
     void setError(const QDBusError &error);
 
-    int queueCall(const QString &method,
-                  const QList<QVariant> &args,
-                  const char *replySlot, const char *errorSlot);
-    int queueCall(const QString &method,
-                  const QList<QVariant> &args,
-                  QObject *receiver,
-                  const char *replySlot, const char *errorSlot);
+    PendingCall *queueCall(const QString &method,
+                           const QList<QVariant> &args,
+                           const char *replySlot = 0,
+                           const char *errorSlot = 0);
+    PendingCall *queueCall(const QString &method,
+                           const QList<QVariant> &args,
+                           QObject *receiver,
+                           const char *replySlot,
+                           const char *errorSlot);
     bool connect(const char *name, QObject *receiver, const char *slot);
-
-    bool cancelCall(int id);
 
 Q_SIGNALS:
     void objectPathNeeded();
@@ -78,10 +114,11 @@ private:
     };
     void setStatus(Status status);
     void update();
-    void doCall(const QString &method, const QList<QVariant> &args,
-                QObject *receiver,
-                const char *replySlot, const char *errorSlot);
-    void sendErrorReply(QObject *receiver, const char *slot);
+    void enqueue(PendingCall *call);
+
+private Q_SLOTS:
+    void onCallFinished(QDBusPendingCallWatcher *watcher);
+    void onRequeueRequested();
 
 private:
     QString m_serviceName;
@@ -89,10 +126,9 @@ private:
     QString m_path;
     QDBusConnection *m_connection;
     QObject *m_clientObject;
-    QQueue<Operation *> m_operationsQueue;
+    QQueue<PendingCall *> m_operationsQueue;
     QQueue<Connection *> m_connectionsQueue;
     DBusInterface *m_interface;
-    int m_nextCallId;
     Status m_status;
     QDBusError m_lastError;
 };

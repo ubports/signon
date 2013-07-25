@@ -660,9 +660,6 @@ void TestAuthSession::process_after_timeout()
     SSO_TEST_CREATE_AUTH_SESSION(as2, "ssotest");
     Q_UNUSED(as2);
 
-    // let libsignon-qt process the "unregistered" signal
-    QTest::qWait(100);
-
     // Try processing again
     as->process(inData, "mech1");
 
