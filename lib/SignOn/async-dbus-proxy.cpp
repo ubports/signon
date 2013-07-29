@@ -150,6 +150,9 @@ AsyncDBusProxy::AsyncDBusProxy(const QString &service,
 
 AsyncDBusProxy::~AsyncDBusProxy()
 {
+    qDeleteAll(m_connectionsQueue);
+    m_connectionsQueue.clear();
+
     delete m_connection;
 }
 
@@ -164,8 +167,6 @@ void AsyncDBusProxy::setStatus(Status status)
                                  connection->m_receiver,
                                  connection->m_slot);
         }
-        qDeleteAll(m_connectionsQueue);
-        m_connectionsQueue.clear();
 
         Q_FOREACH(PendingCall *call, m_operationsQueue) {
             call->doCall(m_interface);
@@ -284,15 +285,15 @@ bool AsyncDBusProxy::connect(const char *name,
                              QObject *receiver,
                              const char *slot)
 {
+    /* Remember all the connections anyway, because we'll re-play them if we
+     * disconnect and reconnect again */
+    Connection *connection = new Connection(name, receiver, slot);
+    m_connectionsQueue.enqueue(connection);
+
     if (m_status == Ready) {
         return m_interface->connect(name, receiver, slot);
-    } else if (m_status == Incomplete) {
-        Connection *connection = new Connection(name, receiver, slot);
-        m_connectionsQueue.enqueue(connection);
-        return true;
-    } else {
-        return false;
     }
+    return true;
 }
 
 void AsyncDBusProxy::enqueue(PendingCall *call)
