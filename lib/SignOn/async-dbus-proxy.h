@@ -133,6 +133,18 @@ private:
     QDBusError m_lastError;
 };
 
+class SignondAsyncDBusProxy: public AsyncDBusProxy
+{
+    Q_OBJECT
+public:
+    SignondAsyncDBusProxy(const char *interface,
+                          QObject *clientObject);
+    ~SignondAsyncDBusProxy();
+
+private:
+    void setupConnection();
+};
+
 } //SignOn
 
 /*

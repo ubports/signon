@@ -48,8 +48,7 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent,
                                  const QString &methodName):
     QObject(parent),
     m_parent(parent),
-    m_dbusProxy(SIGNOND_SERVICE,
-                SIGNOND_AUTH_SESSION_INTERFACE_C,
+    m_dbusProxy(SIGNOND_AUTH_SESSION_INTERFACE_C,
                 this),
     m_methodName(methodName),
     m_processCall(0)
@@ -58,7 +57,6 @@ AuthSessionImpl::AuthSessionImpl(AuthSession *parent,
                         SLOT(stateSlot(int, const QString&)));
     m_dbusProxy.connect("unregistered", this,
                         SLOT(unregisteredSlot()));
-    m_dbusProxy.setConnection(SIGNOND_BUS);
     QObject::connect(&m_dbusProxy, SIGNAL(objectPathNeeded()),
                      this, SLOT(initInterface()));
 

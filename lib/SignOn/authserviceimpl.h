@@ -78,7 +78,7 @@ private:
 
 private:
     AuthService *m_parent;
-    AsyncDBusProxy m_dbusProxy;
+    SignondAsyncDBusProxy m_dbusProxy;
     QQueue<QString> m_methodsForWhichMechsWereQueried;
 };
 

@@ -65,13 +65,11 @@ QString AuthService::IdentityRegExp::pattern() const
 AuthServiceImpl::AuthServiceImpl(AuthService *parent):
     QObject(parent),
     m_parent(parent),
-    m_dbusProxy(SIGNOND_SERVICE,
-                SIGNOND_DAEMON_INTERFACE_C,
+    m_dbusProxy(SIGNOND_DAEMON_INTERFACE_C,
                 this)
 {
     TRACE();
     m_dbusProxy.setObjectPath(QDBusObjectPath(SIGNOND_DAEMON_OBJECTPATH));
-    m_dbusProxy.setConnection(SIGNOND_BUS);
 
     qDBusRegisterMetaType<MapList>();
 }

@@ -120,7 +120,7 @@ private:
 private:
     Identity *m_parent;
     IdentityInfo *m_identityInfo;
-    AsyncDBusProxy m_dbusProxy;
+    SignondAsyncDBusProxy m_dbusProxy;
 
     /* Cache info in the storing case, so that if the storing succeeds, server
      * side does not have to send succesfully stored data over IPC channel.

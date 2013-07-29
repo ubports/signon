@@ -83,7 +83,7 @@ private:
 
 private:
     AuthSession *m_parent;
-    AsyncDBusProxy m_dbusProxy;
+    SignondAsyncDBusProxy m_dbusProxy;
     quint32 m_id;
     QString m_methodName;
 

@@ -33,6 +33,7 @@
 
 #include "dbusinterface.h"
 #include "libsignoncommon.h"
+#include "signond/signoncommon.h"
 
 using namespace SignOn;
 
@@ -303,4 +304,20 @@ void AsyncDBusProxy::onRequeueRequested()
 {
     PendingCall *call = qobject_cast<PendingCall*>(sender());
     enqueue(call);
+}
+
+SignondAsyncDBusProxy::SignondAsyncDBusProxy(const char *interface,
+                                             QObject *clientObject):
+    AsyncDBusProxy(SIGNOND_SERVICE, interface, clientObject)
+{
+    setupConnection();
+}
+
+SignondAsyncDBusProxy::~SignondAsyncDBusProxy()
+{
+}
+
+void SignondAsyncDBusProxy::setupConnection()
+{
+    setConnection(SIGNOND_BUS);
 }

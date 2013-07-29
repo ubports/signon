@@ -61,8 +61,7 @@ IdentityImpl::IdentityImpl(Identity *parent, const quint32 id):
     QObject(parent),
     m_parent(parent),
     m_identityInfo(new IdentityInfo),
-    m_dbusProxy(SIGNOND_SERVICE,
-                SIGNOND_IDENTITY_INTERFACE_C,
+    m_dbusProxy(SIGNOND_IDENTITY_INTERFACE_C,
                 this),
     m_tmpIdentityInfo(NULL),
     m_state(NeedsRegistration),
@@ -72,7 +71,6 @@ IdentityImpl::IdentityImpl(Identity *parent, const quint32 id):
 {
     m_dbusProxy.connect("infoUpdated", this, SLOT(infoUpdated(int)));
     m_dbusProxy.connect("unregistered", this, SLOT(remoteObjectDestroyed()));
-    m_dbusProxy.setConnection(SIGNOND_BUS);
     QObject::connect(&m_dbusProxy, SIGNAL(objectPathNeeded()),
                      this, SLOT(sendRegisterRequest()));
 
