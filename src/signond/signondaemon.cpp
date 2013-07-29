@@ -38,6 +38,9 @@ extern "C" {
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QStandardPaths>
+#endif
 
 #include "SignOn/misc.h"
 
@@ -212,6 +215,26 @@ void SignonDaemonConfiguration::load()
         m_extensionsDir =
             environment.value(QLatin1String("SSO_EXTENSIONS_DIR"));
     }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QString runtimeDir =
+        QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+#else
+    QString runtimeDir = environment.value(QLatin1String("XDG_RUNTIME_DIR"));
+#endif
+    if (!runtimeDir.isEmpty()) {
+        QString socketFileName =
+            QString::fromLatin1("%1/" SIGNOND_SOCKET_FILENAME).arg(runtimeDir);
+        QDir socketDir = QFileInfo(socketFileName).absoluteDir();
+        if (!socketDir.exists() && !socketDir.mkpath(socketDir.path())) {
+            BLAME() << "Cannot create socket directory" << socketDir;
+        } else {
+            m_busAddress =
+                QString::fromLatin1("unix:path=%1").arg(socketFileName);
+        }
+    } else {
+        BLAME() << "XDG_RUNTIME_DIR unset, disabling p2p bus";
+    }
 }
 
 /* ---------------------- SignonDaemon ---------------------- */
@@ -223,8 +246,11 @@ static int sigFd[2];
 
 SignonDaemon *SignonDaemon::m_instance = NULL;
 
-SignonDaemon::SignonDaemon(QObject *parent) : QObject(parent)
-                                            , m_configuration(NULL)
+SignonDaemon::SignonDaemon(QObject *parent):
+    QObject(parent),
+    m_configuration(0),
+    m_pCAMManager(0),
+    m_dbusServer(0)
 {
     // Files created by signond must be unreadable by "other"
     umask(S_IROTH | S_IWOTH);
@@ -429,6 +455,15 @@ void SignonDaemon::init()
     (void)new SignonDaemonAdaptor(this);
     registerOptions = QDBusConnection::ExportAdaptors;
 
+    // p2p connection
+#ifdef ENABLE_P2P
+    m_dbusServer = new QDBusServer(m_configuration->busAddress(), this);
+    QObject::connect(m_dbusServer,
+                     SIGNAL(newConnection(const QDBusConnection &)),
+                     this, SLOT(onNewConnection(const QDBusConnection &)));
+#endif
+
+    // session bus
     if (!connection.registerObject(SIGNOND_DAEMON_OBJECTPATH,
                                    this, registerOptions)) {
         TRACE() << "Object cannot be registered";
@@ -462,6 +497,16 @@ void SignonDaemon::init()
     }
 
     TRACE() << "Signond SUCCESSFULLY initialized.";
+}
+
+void SignonDaemon::onNewConnection(const QDBusConnection &connection)
+{
+    TRACE() << "New p2p connection" << connection.name();
+    QDBusConnection conn(connection);
+    if (!conn.registerObject(SIGNOND_DAEMON_OBJECTPATH,
+                             this, QDBusConnection::ExportAdaptors)) {
+        qFatal("Failed to register SignonDaemon object");
+    }
 }
 
 void SignonDaemon::initExtensions()

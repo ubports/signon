@@ -76,6 +76,7 @@ public:
 
     QString pluginsDir() const { return m_pluginsDir; }
     QString extensionsDir() const { return m_extensionsDir; }
+    QString busAddress() const { return m_busAddress; }
     uint daemonTimeout() const { return m_daemonTimeout; }
     uint identityTimeout() const { return m_identityTimeout; }
     uint authSessionTimeout() const { return m_authSessionTimeout; }
@@ -83,6 +84,7 @@ public:
 private:
     QString m_pluginsDir;
     QString m_extensionsDir;
+    QString m_busAddress;
 
     // storage configuration
     CAMConfiguration m_camConfiguration;
@@ -135,6 +137,9 @@ public Q_SLOTS:
     bool clear();
     void onDisconnected();
 
+private Q_SLOTS:
+    void onNewConnection(const QDBusConnection &connection);
+
 public Q_SLOTS: // backup METHODS
     uchar backupStarts();
     uchar backupFinished();
@@ -174,6 +179,8 @@ private:
 
     int m_identityTimeout;
     int m_authSessionTimeout;
+
+    QDBusServer *m_dbusServer;
 
     /*
      * UNIX signals handling related

@@ -27,6 +27,9 @@
 #include <QBuffer>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#ifdef ENABLE_P2P
+#include <dbus/dbus.h>
+#endif
 
 #include "accesscontrolmanagerhelper.h"
 #include "signond-common.h"
@@ -152,6 +155,24 @@ AccessControlManagerHelper::isPeerAllowedToAccess(
 pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)
 {
     QString service = peerContext.message().service();
-    return peerContext.connection().interface()->servicePid(service).value();
+    if (service.isEmpty()) {
+#ifdef ENABLE_P2P
+        DBusConnection *connection =
+            (DBusConnection *)peerContext.connection().internalPointer();
+        unsigned long pid = 0;
+        dbus_bool_t ok = dbus_connection_get_unix_process_id(connection,
+                                                             &pid);
+        if (Q_UNLIKELY(!ok)) {
+            BLAME() << "Couldn't get PID of caller!";
+            return 0;
+        }
+        return pid;
+#else
+        BLAME() << "Empty caller name, and no P2P support enabled";
+        return 0;
+#endif
+    } else {
+        return peerContext.connection().interface()->servicePid(service).value();
+    }
 }
 

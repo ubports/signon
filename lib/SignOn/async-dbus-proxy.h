@@ -88,7 +88,6 @@ public:
                    QObject *clientObject);
     ~AsyncDBusProxy();
 
-    void setConnection(const QDBusConnection &connection);
     void setObjectPath(const QDBusObjectPath &objectPath);
     void setError(const QDBusError &error);
 
@@ -103,7 +102,12 @@ public:
                            const char *errorSlot);
     bool connect(const char *name, QObject *receiver, const char *slot);
 
+public Q_SLOTS:
+    void setConnection(const QDBusConnection &connection);
+    void setDisconnected();
+
 Q_SIGNALS:
+    void connectionNeeded();
     void objectPathNeeded();
 
 private:

@@ -31,6 +31,7 @@
 #include <QMetaMethod>
 #include <QMetaType>
 
+#include "connection-manager.h"
 #include "dbusinterface.h"
 #include "libsignoncommon.h"
 #include "signond/signoncommon.h"
@@ -211,6 +212,16 @@ void AsyncDBusProxy::setConnection(const QDBusConnection &connection)
     update();
 }
 
+void AsyncDBusProxy::setDisconnected()
+{
+    TRACE();
+    delete m_connection;
+    m_connection = 0;
+    /* The daemon is dead, so certainly the object paths are also invalid */
+    m_path = QString();
+    update();
+}
+
 void AsyncDBusProxy::setObjectPath(const QDBusObjectPath &objectPath)
 {
     Q_ASSERT(m_path.isEmpty() || objectPath.path().isEmpty());
@@ -287,6 +298,9 @@ bool AsyncDBusProxy::connect(const char *name,
 void AsyncDBusProxy::enqueue(PendingCall *call)
 {
     m_operationsQueue.enqueue(call);
+    if (!m_connection) {
+        Q_EMIT connectionNeeded();
+    }
     if (m_path.isEmpty()) {
         Q_EMIT objectPathNeeded();
     }
@@ -319,5 +333,14 @@ SignondAsyncDBusProxy::~SignondAsyncDBusProxy()
 
 void SignondAsyncDBusProxy::setupConnection()
 {
-    setConnection(SIGNOND_BUS);
+    ConnectionManager *connManager = ConnectionManager::instance();
+    QObject::connect(connManager, SIGNAL(connected(const QDBusConnection&)),
+                     this, SLOT(setConnection(const QDBusConnection&)));
+    QObject::connect(connManager, SIGNAL(disconnected()),
+                     this, SLOT(setDisconnected()));
+    QObject::connect(this, SIGNAL(connectionNeeded()),
+                     connManager, SLOT(connect()));
+    if (connManager->hasConnection()) {
+        setConnection(connManager->connection());
+    }
 }

@@ -23,6 +23,7 @@ private_headers = authserviceimpl.h \
     identityimpl.h \
     async-dbus-proxy.h \
     authsessionimpl.h \
+    connection-manager.h \
     identityinfoimpl.h \
     dbusinterface.h
 
@@ -40,6 +41,7 @@ SOURCES += identityinfo.cpp \
     authserviceimpl.cpp \
     authsession.cpp \
     authsessionimpl.cpp \
+    connection-manager.cpp \
     identityinfoimpl.cpp \
     dbusinterface.cpp
 
