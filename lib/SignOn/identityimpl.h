@@ -102,9 +102,8 @@ private Q_SLOTS:
     void verifySecret(const QString &secret);
     void signOut();
     void authSessionCancelReply(const SignOn::Error &err);
-    void registerReply(const QDBusObjectPath &objectPath,
-                       const QVariantMap &infoData);
-    void registerReply(const QDBusObjectPath &objectPath);
+    void registerReply(QDBusPendingCallWatcher *call);
+    void deleteServiceProxy();
 
 private:
     void copyInfo(const IdentityInfo &info);

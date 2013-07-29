@@ -526,42 +526,23 @@ bool IdentityImpl::sendRegisterRequest()
 
     QVariantList args;
     QString registerMethodName = QLatin1String("registerNewIdentity");
-    QByteArray registerReplyMethodName =
-        SLOT(registerReply(const QDBusObjectPath &));
 
     if (id() != SIGNOND_NEW_IDENTITY) {
         registerMethodName = QLatin1String("getIdentity");
         args << m_identityInfo->id();
-        registerReplyMethodName =
-            SLOT(registerReply(const QDBusObjectPath &, const QVariantMap &));
     }
 
-    QDBusMessage registerCall = QDBusMessage::createMethodCall(
-        SIGNOND_SERVICE,
-        SIGNOND_DAEMON_OBJECTPATH,
-        SIGNOND_DAEMON_INTERFACE,
-        registerMethodName);
+    SignondAsyncDBusProxy *authService =
+        new SignondAsyncDBusProxy(SIGNOND_DAEMON_INTERFACE_C, this);
+    authService->setObjectPath(QDBusObjectPath(SIGNOND_DAEMON_OBJECTPATH));
 
-    if (!args.isEmpty())
-        registerCall.setArguments(args);
-
-    registerCall.setDelayedReply(true);
-
-    bool registrationRequested = SIGNOND_BUS.callWithCallback(
-        registerCall,
-        this,
-        registerReplyMethodName.data(),
-        SLOT(errorReply(const QDBusError&)));
-
-    if (!registrationRequested) {
-        QDBusError err = SIGNOND_BUS.lastError();
-        TRACE() << "\nError name:" << err.name()
-                << "\nMessage: " << err.message()
-                << "\nType: " << QDBusError::errorString(err.type());
-        m_dbusProxy.setError(err);
-        updateState(NeedsRegistration);
-        return false;
-    }
+    PendingCall *call =
+        authService->queueCall(registerMethodName,
+                               args,
+                               SLOT(registerReply(QDBusPendingCallWatcher*)),
+                               SLOT(errorReply(const QDBusError&)));
+    QObject::connect(call, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this, SLOT(deleteServiceProxy()));
     updateState(PendingRegistration);
     return true;
 }
@@ -571,19 +552,24 @@ void IdentityImpl::updateCachedData(const QVariantMap &infoData)
     m_identityInfo->impl->updateFromMap(infoData);
 }
 
-void IdentityImpl::registerReply(const QDBusObjectPath &objectPath)
+void IdentityImpl::registerReply(QDBusPendingCallWatcher *call)
 {
-    registerReply(objectPath, QVariantMap());
+    QVariantList arguments = call->reply().arguments();
+    if (arguments.count() > 1) {
+        QDBusArgument info = arguments.at(1).value<QDBusArgument>();
+        updateCachedData(qdbus_cast<QVariantMap>(info));
+    }
+
+    m_dbusProxy.setObjectPath(arguments.at(0).value<QDBusObjectPath>());
+    updateState(Ready);
 }
 
-void IdentityImpl::registerReply(const QDBusObjectPath &objectPath,
-                                 const QVariantMap &infoData)
+void IdentityImpl::deleteServiceProxy()
 {
-    if (!infoData.empty())
-        updateCachedData(infoData);
-
-    m_dbusProxy.setObjectPath(objectPath);
-    updateState(Ready);
+    PendingCall *call = qobject_cast<PendingCall*>(sender());
+    /* This destroys the AsyncDBusProxy which we created just for registering
+     * the identity. */
+    call->parent()->deleteLater();
 }
 
 void IdentityImpl::remoteObjectDestroyed()

@@ -97,21 +97,22 @@ bool AuthSessionImpl::initInterface()
     m_isAuthInProcessing = true;
 
     QLatin1String operation("getAuthSessionObjectPath");
-    QDBusMessage msg = QDBusMessage::createMethodCall(SIGNOND_SERVICE,
-                                                      SIGNOND_DAEMON_OBJECTPATH,
-                                                      SIGNOND_DAEMON_INTERFACE,
-                                                      operation);
     QVariantList arguments;
     arguments += m_id;
     arguments += m_methodName;
 
-    msg.setArguments(arguments);
-    msg.setDelayedReply(true);
+    SignondAsyncDBusProxy *authService =
+        new SignondAsyncDBusProxy(SIGNOND_DAEMON_INTERFACE_C, this);
+    authService->setObjectPath(QDBusObjectPath(SIGNOND_DAEMON_OBJECTPATH));
 
-    return SIGNOND_BUS.callWithCallback(
-        msg, this,
-        SLOT(authenticationSlot(const QString&)),
-        SLOT(errorSlot(const QDBusError&)));
+    PendingCall *call =
+        authService->queueCall(operation,
+                               arguments,
+                               SLOT(authenticationSlot(QDBusPendingCallWatcher*)),
+                               SLOT(errorSlot(const QDBusError&)));
+    QObject::connect(call, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this, SLOT(deleteServiceProxy()));
+    return true;
 }
 
 QString AuthSessionImpl::name()
@@ -256,11 +257,20 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
 
 }
 
-void AuthSessionImpl::authenticationSlot(const QString &path)
+void AuthSessionImpl::authenticationSlot(QDBusPendingCallWatcher *call)
 {
-    m_dbusProxy.setObjectPath(QDBusObjectPath(path));
+    QDBusPendingReply<QString> reply = *call;
+    m_dbusProxy.setObjectPath(QDBusObjectPath(reply.argumentAt<0>()));
 
     m_isAuthInProcessing = false;
+}
+
+void AuthSessionImpl::deleteServiceProxy()
+{
+    PendingCall *call = qobject_cast<PendingCall*>(sender());
+    /* This destroys the AsyncDBusProxy which we created just for registering
+     * the authsession. */
+    call->parent()->deleteLater();
 }
 
 void AuthSessionImpl::mechanismsAvailableSlot(QDBusPendingCallWatcher *call)

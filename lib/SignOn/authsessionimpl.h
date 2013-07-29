@@ -69,7 +69,8 @@ private Q_SLOTS:
     bool initInterface();
     void ignoreError(const QDBusError &err);
     void errorSlot(const QDBusError &err);
-    void authenticationSlot(const QString &path);
+    void authenticationSlot(QDBusPendingCallWatcher *call);
+    void deleteServiceProxy();
     void mechanismsAvailableSlot(QDBusPendingCallWatcher *call);
     void responseSlot(QDBusPendingCallWatcher *call);
     void stateSlot(int state, const QString &message);
