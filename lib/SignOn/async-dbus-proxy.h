@@ -40,9 +40,9 @@ class QDBusPendingCallWatcher;
  */
 namespace SignOn {
 
-class DBusInterface;
-class Connection;
 class AsyncDBusProxy;
+class Connection;
+class DBusInterface;
 
 class PendingCall: public QObject
 {
