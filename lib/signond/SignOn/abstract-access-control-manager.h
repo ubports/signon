@@ -31,8 +31,9 @@
 #include <SignOn/extension-interface.h>
 
 #include <QString>
-#include <QDBusMessage>
 
+class QDBusConnection;
+class QDBusMessage;
 
 namespace SignOn {
 
@@ -63,20 +64,24 @@ public:
      * security context.
      * The access type to be checked depends on the concrete implementation of
      * this function.
+     * @param peerConnection the connection over which the message was sent.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @param securityContext, the securityContext to be checked against.
      * @returns true, if the peer is allowed, false otherwise.
      */
-    virtual bool isPeerAllowedToAccess(const QDBusMessage &peerMessage,
+    virtual bool isPeerAllowedToAccess(const QDBusConnection &peerConnection,
+                                       const QDBusMessage &peerMessage,
                                        const QString &securityContext);
 
     /*!
      * Looks up for the application identifier of a specific client process.
+     * @param peerConnection the connection over which the message was sent.
      * @param peerMessage, the request message sent over DBUS by the process.
      * @returns the application identifier of the process, or an empty string
      * if none found.
      */
-    virtual QString appIdOfPeer(const QDBusMessage &peerMessage);
+    virtual QString appIdOfPeer(const QDBusConnection &peerConnection,
+                                const QDBusMessage &peerMessage);
 
     /*!
      * @returns the application identifier of the keychain widget

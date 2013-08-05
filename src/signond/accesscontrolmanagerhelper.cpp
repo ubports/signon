@@ -130,8 +130,8 @@ QString AccessControlManagerHelper::appIdOfPeer(
                                        const QDBusConnection &peerConnection,
                                        const QDBusMessage &peerMessage)
 {
-    TRACE() << m_acManager->appIdOfPeer(peerMessage);
-    return m_acManager->appIdOfPeer(peerMessage);
+    TRACE() << m_acManager->appIdOfPeer(peerConnection, peerMessage);
+    return m_acManager->appIdOfPeer(peerConnection, peerMessage);
 }
 
 bool
@@ -158,7 +158,8 @@ AccessControlManagerHelper::isPeerAllowedToAccess(
                                        const QString securityContext)
 {
     TRACE() << securityContext;
-    return m_acManager->isPeerAllowedToAccess(peerMessage, securityContext);
+    return m_acManager->isPeerAllowedToAccess(peerConnection, peerMessage,
+                                              securityContext);
 }
 
 pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)

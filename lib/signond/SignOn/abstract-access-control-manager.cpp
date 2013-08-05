@@ -40,17 +40,21 @@ QString AbstractAccessControlManager::keychainWidgetAppId()
 }
 
 bool AbstractAccessControlManager::isPeerAllowedToAccess(
-                                               const QDBusMessage &peerMessage,
-                                               const QString &securityContext)
+                                       const QDBusConnection &peerConnection,
+                                       const QDBusMessage &peerMessage,
+                                       const QString &securityContext)
 {
+    Q_UNUSED(peerConnection);
     Q_UNUSED(peerMessage);
     Q_UNUSED(securityContext);
     return true;
 }
 
-QString
-AbstractAccessControlManager::appIdOfPeer(const QDBusMessage &peerMessage)
+QString AbstractAccessControlManager::appIdOfPeer(
+                                       const QDBusConnection &peerConnection,
+                                       const QDBusMessage &peerMessage)
 {
+    Q_UNUSED(peerConnection);
     Q_UNUSED(peerMessage);
     return QString();
 }
