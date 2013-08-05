@@ -176,9 +176,11 @@ bool SignonIdentity::addReference(const QString &reference)
         BLAME() << "NULL database handler object.";
         return false;
     }
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                 (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
     keepInUse();
     return db->addReference(m_id, appId, reference);
 }
@@ -194,9 +196,11 @@ bool SignonIdentity::removeReference(const QString &reference)
         BLAME() << "NULL database handler object.";
         return false;
     }
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                  (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
     keepInUse();
     return db->removeReference(m_id, appId, reference);
 }
@@ -437,9 +441,11 @@ quint32 SignonIdentity::store(const QVariantMap &info)
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
     QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                 (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
 
     bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
     QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
