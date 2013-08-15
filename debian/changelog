@@ -1,10 +1,14 @@
-signon (8.52+13.10.20130701-0ubuntu2) UNRELEASED; urgency=low
+signon (8.52+13.10.20130815-0ubuntu1) saucy; urgency=low
 
+  [ Alberto Mardegan ]
   * debian/rules
     - Specify qt5 build directory for all default debhelper scripts. This
       makes the tests run again (on the qt5 build only).
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 14 Aug 2013 13:58:39 +0300
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 595
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 15 Aug 2013 14:33:22 +0000
 
 signon (8.52+13.10.20130701-0ubuntu1) saucy; urgency=low
 
