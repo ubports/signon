@@ -46,45 +46,6 @@ int finishedClients = 0;
 
 #define TEST_DONE  qDebug("\n\n ----------------- %s PASS ----------------\n\n",  __func__);
 
-
-#ifdef SSO_TESTS_RUNNING_AS_UNTRUSTED
-    #define END_SERVICE_TEST_IF_UNTRUSTED  \
-        do {                                                    \
-            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
-            QVERIFY(m_serviceResult.m_error == Error::PermissionDenied);     \
-            QVERIFY(m_serviceResult.m_errMsg.contains(SIGNOND_PERMISSION_DENIED_ERR_STR)); \
-            TEST_DONE                                                                  \
-            return;                                                                    \
-        } while(0)
-
-    #define END_IDENTITY_TEST_IF_UNTRUSTED \
-        do {                                        \
-            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
-            qDebug() << QString("Code: %1, Msg: %2").arg(errCodeAsStr(m_identityResult.m_error)).arg(m_identityResult.m_errMsg); \
-            /* todo - remove first condition 1 moth after new err mgmnt release. */ \
-            QVERIFY(m_identityResult.m_error == Error::PermissionDenied);     \
-            QVERIFY(m_identityResult.m_errMsg.contains(SIGNOND_PERMISSION_DENIED_ERR_STR));  \
-            TEST_DONE                                                                    \
-            return;                                                                      \
-        } while(0)
-
-    // TODO - define this
-    #define END_SESSION_TEST_IF_UNTRUSTED  \
-        do {                                                    \
-            qDebug() << "\n\nRUNNING UNTRUSTED TEST CLIENT\n\n"; \
-            TEST_DONE                                           \
-            return;                                             \
-        } while(0)
-#else
-    #define END_SERVICE_TEST_IF_UNTRUSTED  \
-        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
-    #define END_IDENTITY_TEST_IF_UNTRUSTED \
-        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
-    #define CHECK_FOR_SESSION_ACCESS_CONTROL_ERROR  \
-        do { qDebug() << "\n\nRUNNING TRUSTED TEST CLIENT\n\n"; } while(0)
-#endif
-
-
 // ACL Tokens for the queryAuthPluginACL test
 #define ACL_TOKEN_0 "token_0"
 #define ACL_TOKEN_1 "token_1"
@@ -230,8 +191,6 @@ void SsoTestClient::queryAvailableMetods()
              TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    END_IDENTITY_TEST_IF_UNTRUSTED;
-
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         qDebug() << "Remote:" << m_identityResult.m_methods;
         qDebug() << "Local:" << m_storedIdentityInfo.methods();
@@ -277,8 +236,6 @@ void SsoTestClient::requestCredentialsUpdate()
              TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    END_IDENTITY_TEST_IF_UNTRUSTED;
-
     qDebug() << m_signOnUI->parameters();
     QVERIFY(m_identityResult.m_responseReceived ==
             TestIdentityResult::NormalResp);
@@ -309,7 +266,6 @@ void SsoTestClient::storeCredentials()
     }
 
     if (!testUpdatingCredentials()) {
-        END_IDENTITY_TEST_IF_UNTRUSTED;
         QFAIL("Updating existing credentials test failed.");
     }
 
@@ -358,8 +314,6 @@ void SsoTestClient::remove()
     QVERIFY2(m_identityResult.m_responseReceived !=
              TestIdentityResult::InexistentResp,
              "A response was not received.");
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
@@ -457,8 +411,6 @@ void SsoTestClient::removeStoreRemove()
 
     QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
@@ -589,8 +541,6 @@ void SsoTestClient::multipleRemove()
     QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    END_IDENTITY_TEST_IF_UNTRUSTED;
-
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
 
@@ -625,7 +575,6 @@ void SsoTestClient::storeCredentialsWithoutAuthMethodsTest()
     }
 
     if (!testUpdatingCredentials()) {
-        END_IDENTITY_TEST_IF_UNTRUSTED;
         QFAIL("Updating existing credentials test failed.");
     }
 
@@ -680,8 +629,6 @@ void SsoTestClient::queryInfo()
              "A response was not received.");
 
     QCOMPARE(m_identityResult.m_idInfo.accessControlList(), acl);
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_id == m_storedIdentityId);
@@ -744,8 +691,6 @@ void SsoTestClient::addReference()
              TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    END_IDENTITY_TEST_IF_UNTRUSTED;
-
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
     } else {
@@ -803,8 +748,6 @@ void SsoTestClient::removeReference()
 
     QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
         QVERIFY(m_identityResult.m_removed);
@@ -865,8 +808,6 @@ void SsoTestClient::verifyUser()
              TestIdentityResult::InexistentResp,
              "A response was not received.");
 
-    END_IDENTITY_TEST_IF_UNTRUSTED;
-
     QVERIFY(m_identityResult.m_responseReceived ==
             TestIdentityResult::NormalResp);
 
@@ -923,8 +864,6 @@ void SsoTestClient::verifySecret()
 
     QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp)
     {
@@ -1018,8 +957,6 @@ void SsoTestClient::signOut()
 
     QVERIFY2(m_identityResult.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
-
-    END_IDENTITY_TEST_IF_UNTRUSTED;
 
     QVERIFY2(identityResult1.m_responseReceived != TestIdentityResult::InexistentResp,
              "A response was not received.");
@@ -1265,8 +1202,6 @@ void SsoTestClient::queryIdentities()
     QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
 
-    END_SERVICE_TEST_IF_UNTRUSTED;
-
     if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
         QListIterator<IdentityInfo> it(m_serviceResult.m_identities);
@@ -1347,8 +1282,6 @@ void SsoTestClient::queryIdentitiesWithFilter()
 
     QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
-
-    END_SERVICE_TEST_IF_UNTRUSTED;
 
     if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp)
     {
@@ -1490,8 +1423,6 @@ void SsoTestClient::clear()
 
     QVERIFY2(m_serviceResult.m_responseReceived != TestAuthServiceResult::InexistentResp,
              "A response was not received.");
-
-    END_SERVICE_TEST_IF_UNTRUSTED;
 
     if (m_serviceResult.m_responseReceived == TestAuthServiceResult::NormalResp) {
         connect(
