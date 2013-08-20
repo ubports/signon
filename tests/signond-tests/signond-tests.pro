@@ -23,8 +23,6 @@ QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/signond/SignOn
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
-#DEFINES += CAM_UNIT_TESTS_FIXED
-
 DEFINES += SIGNOND_TRACE
 DEFINES += SIGNON_PLUGIN_TRACE
 
@@ -48,24 +46,6 @@ SOURCES = \
     $$TOP_SRC_DIR/src/signond/credentialsdb.cpp \
     $$TOP_SRC_DIR/src/signond/default-secrets-storage.cpp
 
-contains(DEFINES, CAM_UNIT_TESTS_FIXED) {
- HEADERS *=$$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.h \
-           $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/dbuspeer.h \
-           $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/defs.h \
-           $$TOP_SRC_DIR/src/signond/credentialsaccessmanager.h \
-           $$TOP_SRC_DIR/src/signond/accesscodehandler.h \
-           $$TOP_SRC_DIR/src/signond/simdbusadaptor.h \
-           $$TOP_SRC_DIR/src/signond/cryptomanager.h \
-           $$TOP_SRC_DIR/src/signond/credentialsdb.h \
-           $$TOP_SRC_DIR/src/signond/credentialsdb_p.h
-
- SOURCES *= $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/credentialsaccessmanagertest.cpp \
-            $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/includes.cpp \
-            $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server/dbuspeer.cpp
-
- LIBS += -lcreds
-}
-
 TARGET = signon-tests
 
 INCLUDEPATH += . \
@@ -74,8 +54,7 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/tests/pluginproxytest \
     $$TOP_SRC_DIR/src/signond \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn \
-    $$TOP_SRC_DIR/tests/credentialsaccessmanagertest/cam-test-server
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn
 
 DEFINES += SSO_CI_TESTMANAGEMENT
 
