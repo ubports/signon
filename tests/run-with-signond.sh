@@ -16,7 +16,7 @@ export LD_LIBRARY_PATH="${BUILDDIR}/lib/plugins/signon-plugins-common":"${BUILDD
 export XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR/signon-tests"
 mkdir -p "$XDG_RUNTIME_DIR"
 
-DBUS_CONFIG=${SRCDIR}/tests/testsession.conf
+DBUS_CONFIG=${BUILDDIR}/tests/testsession.conf
 
 # If dbus-test-runner exists, use it to run the tests in a separate D-Bus
 # session
