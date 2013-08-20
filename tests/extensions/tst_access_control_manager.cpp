@@ -23,6 +23,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDebug>
+#include <QSignalSpy>
 #include <QTest>
 
 #include <SignOn/AbstractAccessControlManager>
@@ -35,6 +36,7 @@ class AccessControlManagerTest: public QObject
 
 private Q_SLOTS:
     void test_abstract();
+    void test_abstractRequest();
 };
 
 void AccessControlManagerTest::test_abstract()
@@ -52,6 +54,37 @@ void AccessControlManagerTest::test_abstract()
     QCOMPARE(acm->appIdOfPeer(conn, msg), QString());
 
     QCOMPARE(acm->keychainWidgetAppId(), QString());
+
+    delete acm;
+}
+
+void AccessControlManagerTest::test_abstractRequest()
+{
+    AbstractAccessControlManager *acm = new AbstractAccessControlManager(this);
+
+    /* forge a QDBusMessage and a connection */
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall(":0.3", "/", "my.interface", "hi");
+    QDBusConnection conn(QLatin1String("test-connection"));
+
+    AccessRequest request;
+    request.setPeer(conn, msg);
+    request.setIdentity(4);
+
+    QCOMPARE(request.peerConnection().name(), conn.name());
+    QCOMPARE(request.peerMessage().member(), msg.member());
+    QCOMPARE(request.identity(), quint32(4));
+
+    AccessReply *reply = acm->handleRequest(request);
+    QVERIFY(reply != 0);
+    QVERIFY(!reply->isAccepted());
+
+    QSignalSpy finished(reply, SIGNAL(finished()));
+    QTest::qWait(10);
+    QCOMPARE(finished.count(), 1);
+    QVERIFY(reply->isAccepted());
+    QCOMPARE(reply->request().identity(), request.identity());
+    delete reply;
 
     delete acm;
 }
