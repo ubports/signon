@@ -85,15 +85,13 @@ int finishedClients = 0;
 #endif
 
 
-//Aegis Tokens for the queryAuthPluginACL test
-#define AEGIS_TOKEN_0 "token_0"
-#define AEGIS_TOKEN_1 "token_1"
-#define AEGIS_TOKEN_2 "libsignon-qt-tests::sso-encryption-token"
-#define AEGIS_TOKEN_3 "token_3"
-#define AEGIS_TOKEN_4 "token_4"
-#define AEGIS_TOKEN_5 "AID::com.nokia.maemo.libsignon-qt-tests.libsignon-qt-tests-id"
-
-#define TEST_AEGIS_TOKEN "libsignon-qt-tests::libsignon-qt-tests"
+// ACL Tokens for the queryAuthPluginACL test
+#define ACL_TOKEN_0 "token_0"
+#define ACL_TOKEN_1 "token_1"
+#define ACL_TOKEN_2 "libsignon-qt-tests::sso-encryption-token"
+#define ACL_TOKEN_3 "token_3"
+#define ACL_TOKEN_4 "token_4"
+#define ACL_TOKEN_5 "AID::com.nokia.maemo.libsignon-qt-tests.libsignon-qt-tests-id"
 
 SsoTestClient::SsoTestClient(SignOnUI *signOnUI, QObject *parent):
     QObject(parent),
@@ -201,7 +199,7 @@ void SsoTestClient::queryAvailableMetods()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying available methods.");
@@ -332,7 +330,7 @@ void SsoTestClient::remove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -430,7 +428,7 @@ void SsoTestClient::removeStoreRemove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -477,7 +475,7 @@ void SsoTestClient::removeStoreRemove()
                           "TEST_USERNAME_10",
                           methods);
         updateInfo.setSecret("TEST_PASSWORD_10");
-        updateInfo.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+        updateInfo.setAccessControlList(QStringList() << "*");
 
         m_identityResult.m_responseReceived = TestIdentityResult::InexistentResp;
         identity->storeCredentials(updateInfo);
@@ -562,7 +560,7 @@ void SsoTestClient::multipleRemove()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for removing identity.");
@@ -649,7 +647,7 @@ void SsoTestClient::queryInfo()
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
     QStringList acl;
-    acl << TEST_AEGIS_TOKEN;
+    acl << "*";
     info.setAccessControlList(acl);
 
     if (!storeCredentialsPrivate(info))
@@ -715,7 +713,7 @@ void SsoTestClient::addReference()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -774,7 +772,7 @@ void SsoTestClient::removeReference()
                       methods);
     info.setSecret("TEST_PASSWORD_1");
     info.setRealms(QStringList() << "test_realm");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for querying info.");
@@ -835,7 +833,7 @@ void SsoTestClient::verifyUser()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret(password);
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying user.");
@@ -897,7 +895,7 @@ void SsoTestClient::verifySecret()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for verifying secret.");
@@ -956,7 +954,7 @@ void SsoTestClient::signOut()
                       "TEST_USERNAME_1",
                       methods);
     info.setSecret("TEST_PASSWORD_1");
-    info.setAccessControlList(QStringList() << TEST_AEGIS_TOKEN);
+    info.setAccessControlList(QStringList() << "*");
 
     if (!storeCredentialsPrivate(info))
         QFAIL("Failed to initialize test for signing out.");
@@ -1395,8 +1393,8 @@ void SsoTestClient::queryAuthPluginACL()
                       "test_username_1",
                       methods);
     info.setSecret("test_password_1");
-    info.setAccessControlList(QStringList() << AEGIS_TOKEN_0 << AEGIS_TOKEN_1 << AEGIS_TOKEN_2
-                                            << AEGIS_TOKEN_3 << AEGIS_TOKEN_4 << AEGIS_TOKEN_5);
+    info.setAccessControlList(QStringList() << ACL_TOKEN_0 << ACL_TOKEN_1 << ACL_TOKEN_2
+                                            << ACL_TOKEN_3 << ACL_TOKEN_4 << ACL_TOKEN_5);
 
     Identity *id = Identity::newIdentity(info, this);
 
@@ -1451,21 +1449,11 @@ void SsoTestClient::queryAuthPluginACL()
         loop.exec();
 
 
-    #ifndef SSO_TESTS_RUNNING_AS_UNTRUSTED
     QVERIFY(errorSpy.count() == 0);
     QVERIFY(responseSpy.count() == 1);
 
-    /* MeeGo: We are not yet using the MSSF manifest files to request the
-     * needed security tokens for the libsignon-qt-test binary (because the
-     * MSSF is not yet integrated with RPM/spec files).
-     * Therefore, the following checks would fail.
-     */
-#if 0
-    //AEGIS_TOKEN_5  is the only common token set between testclient and the tokens inserted in db
-    QVERIFY(m_tokenList.count() == 1);
-    QVERIFY(m_tokenList.contains(AEGIS_TOKEN_5));
-#endif
-    #endif
+    QCOMPARE(m_tokenList.count(), 6);
+    QVERIFY(m_tokenList.contains(ACL_TOKEN_5));
 
     TEST_DONE
 }

@@ -87,7 +87,15 @@ bool AccessControlManagerHelper::isPeerAllowedToUseIdentity(
     if (db->errorOccurred())
         return false;
 
+    IdentityOwnership ownership =
+        isPeerOwnerOfIdentity(peerConnection, peerMessage, identityId);
+    if (ownership == ApplicationIsOwner || ownership == IdentityDoesNotHaveOwner)
+        return true;
+
     if (acl.isEmpty())
+        return false;
+
+    if (acl.contains(QLatin1String("*")))
         return true;
 
     return peerHasOneOfAccesses(peerConnection, peerMessage, acl);
