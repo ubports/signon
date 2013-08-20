@@ -701,6 +701,4 @@ void TestDatabase::credentialsOwnerSecurityTokenTest()
 
 }
 
-#if !defined(SSO_CI_TESTMANAGEMENT)
-    QTEST_MAIN(TestDatabase)
-#endif
+QTEST_MAIN(TestDatabase)

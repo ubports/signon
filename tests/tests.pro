@@ -7,7 +7,6 @@ CONFIG  += ordered
 
 SUBDIRS += \
     passwordplugintest \
-    pluginproxytest \
     libsignon-qt-tests/libsignon-qt-tests.pro \
     libsignon-qt-tests/libsignon-qt-untrusted-tests.pro \
     signond-tests \

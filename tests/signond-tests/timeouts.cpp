@@ -237,3 +237,5 @@ void TimeoutsTest::credentialsStored(const quint32 id)
     QVERIFY(id != 0);
     emit finished();
 }
+
+QTEST_MAIN(TimeoutsTest)

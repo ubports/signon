@@ -1,1 +1,4 @@
-signon-tests
+tst_backup
+tst_database
+tst_pluginproxy
+tst_timeouts
