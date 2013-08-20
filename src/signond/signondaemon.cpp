@@ -106,10 +106,13 @@ SignonDaemonConfiguration::~SignonDaemonConfiguration()
  */
 void SignonDaemonConfiguration::load()
 {
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+
     //Daemon configuration file
 
     QSettings::setPath(QSettings::NativeFormat, QSettings::SystemScope,
-                       QLatin1String("/etc"));
+                       environment.value(QLatin1String("SSO_CONFIG_FILE_DIR"),
+                                         QLatin1String("/etc")));
 
     QSettings settings(QLatin1String("signond"));
 
@@ -170,7 +173,6 @@ void SignonDaemonConfiguration::load()
 
     //Environment variables
 
-    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
     int value = 0;
     if (environment.contains(QLatin1String("SSO_DAEMON_TIMEOUT"))) {
         value = environment.value(
