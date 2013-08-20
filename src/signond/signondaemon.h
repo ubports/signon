@@ -123,21 +123,18 @@ public:
     int identityTimeout() const;
     int authSessionTimeout() const;
 
-public Q_SLOTS:
-    /* Immediate reply calls */
-
-    void registerNewIdentity(QDBusObjectPath &objectPath);
-    void getIdentity(const quint32 id, QDBusObjectPath &objectPath,
-                     QVariantMap &identityData);
-    QString getAuthSessionObjectPath(const quint32 id, const QString type);
+public:
+    QObject *registerNewIdentity();
+    QObject *getIdentity(const quint32 id, QVariantMap &identityData);
+    QObject *getAuthSession(const quint32 id, const QString type);
 
     QStringList queryMethods();
     QStringList queryMechanisms(const QString &method);
     QList<QVariantMap> queryIdentities(const QVariantMap &filter);
     bool clear();
-    void onDisconnected();
 
 private Q_SLOTS:
+    void onDisconnected();
     void onNewConnection(const QDBusConnection &connection);
 
 public Q_SLOTS: // backup METHODS
@@ -154,7 +151,6 @@ private:
 
     void identityStored(SignonIdentity *identity);
     void setupSignalHandlers();
-    void registerObject(QObject *object);
 
     void eraseBackupDir() const;
     bool copyToBackupDir(const QStringList &fileNames) const;

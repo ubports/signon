@@ -62,6 +62,8 @@ public Q_SLOTS:
 
 private:
     void securityErrorReply(const char *failedMethodName);
+    QDBusObjectPath registerObject(const QDBusConnection &connection,
+                                   QObject *object);
 
 private:
     SignonDaemon *m_parent;

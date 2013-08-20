@@ -43,7 +43,8 @@ SignonDaemonAdaptor::~SignonDaemonAdaptor()
 
 void SignonDaemonAdaptor::registerNewIdentity(QDBusObjectPath &objectPath)
 {
-    m_parent->registerNewIdentity(objectPath);
+    QObject *identity = m_parent->registerNewIdentity();
+    objectPath = registerObject(parentDBusContext().connection(), identity);
 
     SignonDisposable::destroyUnused();
 }
@@ -64,6 +65,25 @@ void SignonDaemonAdaptor::securityErrorReply(const char *failedMethodName)
     TRACE() << "Method FAILED Access Control check:" << failedMethodName;
 }
 
+QDBusObjectPath
+SignonDaemonAdaptor::registerObject(const QDBusConnection &connection,
+                                    QObject *object)
+{
+    if (!object) return QDBusObjectPath();
+
+    QString path = object->objectName();
+
+    if (connection.objectRegisteredAt(path) != object) {
+        QDBusConnection conn(connection);
+        if (!conn.registerObject(path, object,
+                                 QDBusConnection::ExportAdaptors)) {
+            BLAME() << "Object registration failed:" << object <<
+                conn.lastError();
+        }
+    }
+    return QDBusObjectPath(path);
+}
+
 void SignonDaemonAdaptor::getIdentity(const quint32 id,
                                       QDBusObjectPath &objectPath,
                                       QVariantMap &identityData)
@@ -75,7 +95,8 @@ void SignonDaemonAdaptor::getIdentity(const quint32 id,
         return;
     }
 
-    m_parent->getIdentity(id, objectPath, identityData);
+    QObject *identity = m_parent->getIdentity(id, identityData);
+    objectPath = registerObject(parentDBusContext().connection(), identity);
 
     SignonDisposable::destroyUnused();
 }
@@ -101,7 +122,10 @@ QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id,
     }
 
     TRACE() << "ACM passed, creating AuthSession object";
-    return m_parent->getAuthSessionObjectPath(id, type);
+    QObject *authSession = m_parent->getAuthSession(id, type);
+    QDBusObjectPath objectPath =
+        registerObject(parentDBusContext().connection(), authSession);
+    return objectPath.path();
 }
 
 QStringList SignonDaemonAdaptor::queryMechanisms(const QString &method)

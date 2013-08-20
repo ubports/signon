@@ -571,7 +571,7 @@ void SignonDaemon::identityStored(SignonIdentity *identity)
     }
 }
 
-void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
+QObject *SignonDaemon::registerNewIdentity()
 {
     TRACE() << "Registering new identity:";
 
@@ -580,11 +580,9 @@ void SignonDaemon::registerNewIdentity(QDBusObjectPath &objectPath)
 
     Q_ASSERT(identity != NULL);
 
-    registerObject(identity);
-
     m_unstoredIdentities.insert(identity->objectName(), identity);
 
-    objectPath = QDBusObjectPath(identity->objectName());
+    return identity;
 }
 
 int SignonDaemon::identityTimeout() const
@@ -601,11 +599,10 @@ int SignonDaemon::authSessionTimeout() const
                                      m_configuration->authSessionTimeout());
 }
 
-void SignonDaemon::getIdentity(const quint32 id,
-                               QDBusObjectPath &objectPath,
-                               QVariantMap &identityData)
+QObject *SignonDaemon::getIdentity(const quint32 id,
+                                   QVariantMap &identityData)
 {
-    SIGNON_RETURN_IF_CAM_UNAVAILABLE();
+    SIGNON_RETURN_IF_CAM_UNAVAILABLE(0);
 
     TRACE() << "Registering identity:" << id;
 
@@ -625,10 +622,8 @@ void SignonDaemon::getIdentity(const quint32 id,
         sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
                        SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
         identity->destroy();
-        return;
+        return 0;
     }
-
-    registerObject(identity);
 
     //cache the identity as stored
     m_storedIdentities.insert(identity->id(), identity);
@@ -637,7 +632,7 @@ void SignonDaemon::getIdentity(const quint32 id,
     identityData = info.toMap();
 
     TRACE() << "DONE REGISTERING IDENTITY";
-    objectPath = QDBusObjectPath(identity->objectName());
+    return identity;
 }
 
 QStringList SignonDaemon::queryMethods()
@@ -744,8 +739,8 @@ bool SignonDaemon::clear()
     return true;
 }
 
-QString SignonDaemon::getAuthSessionObjectPath(const quint32 id,
-                                               const QString type)
+QObject *SignonDaemon::getAuthSession(const quint32 id,
+                                      const QString type)
 {
     pid_t ownerPid = AccessControlManagerHelper::pidOfPeer(*this);
     SignonAuthSession *authSession =
@@ -753,24 +748,10 @@ QString SignonDaemon::getAuthSessionObjectPath(const quint32 id,
     if (authSession == NULL) {
         sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
                        SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
-        return QString();
+        return 0;
     }
 
-    registerObject(authSession);
-
-    return authSession->objectName();
-}
-
-void SignonDaemon::registerObject(QObject *object)
-{
-    QDBusConnection conn = connection();
-    if (conn.objectRegisteredAt(object->objectName()) == object)
-        return;
-
-    if (!conn.registerObject(object->objectName(), object,
-                             QDBusConnection::ExportAdaptors)) {
-        BLAME() << "Object registration failed:" << object << conn.lastError();
-    }
+    return authSession;
 }
 
 void SignonDaemon::eraseBackupDir() const
