@@ -172,11 +172,18 @@ AccessControlManagerHelper::isPeerAllowedToAccess(
 
 pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)
 {
-    QString service = peerContext.message().service();
+    return pidOfPeer(peerContext.connection(), peerContext.message());
+}
+
+pid_t AccessControlManagerHelper::pidOfPeer(
+                                       const QDBusConnection &peerConnection,
+                                       const QDBusMessage &peerMessage)
+{
+    QString service = peerMessage.service();
     if (service.isEmpty()) {
 #ifdef ENABLE_P2P
         DBusConnection *connection =
-            (DBusConnection *)peerContext.connection().internalPointer();
+            (DBusConnection *)peerConnection.internalPointer();
         unsigned long pid = 0;
         dbus_bool_t ok = dbus_connection_get_unix_process_id(connection,
                                                              &pid);
@@ -190,7 +197,7 @@ pid_t AccessControlManagerHelper::pidOfPeer(const QDBusContext &peerContext)
         return 0;
 #endif
     } else {
-        return peerContext.connection().interface()->servicePid(service).value();
+        return peerConnection.interface()->servicePid(service).value();
     }
 }
 

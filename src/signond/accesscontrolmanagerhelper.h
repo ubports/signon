@@ -71,6 +71,8 @@ public:
      * @returns process id of service client.
      */
     static pid_t pidOfPeer(const QDBusContext &peerContext);
+    static pid_t pidOfPeer(const QDBusConnection &peerConnection,
+                           const QDBusMessage &peerMessage);
 
     /* creating an instance of a class */
     static AccessControlManagerHelper *instance();

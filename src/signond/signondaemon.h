@@ -126,12 +126,17 @@ public:
 public:
     QObject *registerNewIdentity();
     QObject *getIdentity(const quint32 id, QVariantMap &identityData);
-    QObject *getAuthSession(const quint32 id, const QString type);
+    QObject *getAuthSession(const quint32 id, const QString type,
+                            pid_t ownerPid);
 
     QStringList queryMethods();
     QStringList queryMechanisms(const QString &method);
     QList<QVariantMap> queryIdentities(const QVariantMap &filter);
     bool clear();
+
+    QString lastErrorName() const { return m_lastErrorName; }
+    QString lastErrorMessage() const { return m_lastErrorMessage; }
+    bool lastErrorIsValid() const { return !m_lastErrorName.isEmpty(); }
 
 private Q_SLOTS:
     void onDisconnected();
@@ -157,6 +162,9 @@ private:
     bool copyFromBackupDir(const QStringList &fileNames) const;
     bool createStorageFileTree(const QStringList &fileNames) const;
 
+    void setLastError(const QString &name, const QString &msg);
+    void clearLastError();
+
 private:
     /*
      * The list of created SignonIdentities
@@ -177,6 +185,9 @@ private:
     int m_authSessionTimeout;
 
     QDBusServer *m_dbusServer;
+
+    QString m_lastErrorName;
+    QString m_lastErrorMessage;
 
     /*
      * UNIX signals handling related

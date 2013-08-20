@@ -61,7 +61,11 @@ public Q_SLOTS:
     bool clear();
 
 private:
-    void securityErrorReply(const char *failedMethodName);
+    void securityErrorReply();
+    void securityErrorReply(const QDBusConnection &connection,
+                            const QDBusMessage &message);
+    bool handleLastError(const QDBusConnection &connection,
+                         const QDBusMessage &message);
     QDBusObjectPath registerObject(const QDBusConnection &connection,
                                    QObject *object);
 

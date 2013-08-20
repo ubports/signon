@@ -55,10 +55,10 @@ extern "C" {
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \
-            sendErrorReply(internalServerErrName,                          \
-                           internalServerErrStr +                          \
-                           QLatin1String("Could not access Signon "        \
-                                         "Database."));                    \
+            setLastError(internalServerErrName,                            \
+                         internalServerErrStr +                            \
+                         QLatin1String("Could not access Signon "          \
+                                       "Database."));                      \
             return _ret_arg_;           \
         }                               \
     } while(0)
@@ -573,6 +573,8 @@ void SignonDaemon::identityStored(SignonIdentity *identity)
 
 QObject *SignonDaemon::registerNewIdentity()
 {
+    clearLastError();
+
     TRACE() << "Registering new identity:";
 
     SignonIdentity *identity =
@@ -602,6 +604,8 @@ int SignonDaemon::authSessionTimeout() const
 QObject *SignonDaemon::getIdentity(const quint32 id,
                                    QVariantMap &identityData)
 {
+    clearLastError();
+
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(0);
 
     TRACE() << "Registering identity:" << id;
@@ -619,8 +623,8 @@ QObject *SignonDaemon::getIdentity(const quint32 id,
 
     if (info.isNew())
     {
-        sendErrorReply(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
-                       SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
+        setLastError(SIGNOND_IDENTITY_NOT_FOUND_ERR_NAME,
+                     SIGNOND_IDENTITY_NOT_FOUND_ERR_STR);
         identity->destroy();
         return 0;
     }
@@ -659,7 +663,9 @@ QStringList SignonDaemon::queryMethods()
 
 QStringList SignonDaemon::queryMechanisms(const QString &method)
 {
-    TRACE() << "\n\n\n Querying mechanisms\n\n";
+    clearLastError();
+
+    TRACE() << method;
 
     QStringList mechs = SignonSessionCore::loadedPluginMethods(method);
 
@@ -670,11 +676,11 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
     if (!plugin) {
         TRACE() << "Could not load plugin of type: " << method;
-        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR +
-                       QString::fromLatin1("Method %1 is not known or could "
-                                           "not load specific configuration.").
-                       arg(method));
+        setLastError(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                     SIGNOND_METHOD_NOT_KNOWN_ERR_STR +
+                     QString::fromLatin1("Method %1 is not known or could "
+                                         "not load specific configuration.").
+                     arg(method));
         return QStringList();
     }
 
@@ -686,6 +692,8 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
 QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
 {
+    clearLastError();
+
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(QList<QVariantMap>());
 
     TRACE() << "Querying identities";
@@ -706,9 +714,9 @@ QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
     QList<SignonIdentityInfo> credentials = db->credentials(filterLocal);
 
     if (db->errorOccurred()) {
-        sendErrorReply(internalServerErrName,
-                       internalServerErrStr +
-                       QLatin1String("Querying database error occurred."));
+        setLastError(internalServerErrName,
+                     internalServerErrStr +
+                     QLatin1String("Querying database error occurred."));
         return QList<QVariantMap>();
     }
 
@@ -721,6 +729,8 @@ QList<QVariantMap> SignonDaemon::queryIdentities(const QVariantMap &filter)
 
 bool SignonDaemon::clear()
 {
+    clearLastError();
+
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(false);
 
     TRACE() << "\n\n\n Clearing DB\n\n";
@@ -731,23 +741,25 @@ bool SignonDaemon::clear()
     }
 
     if (!db->clear()) {
-        sendErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                       SIGNOND_INTERNAL_SERVER_ERR_STR +
-                       QLatin1String("Database error occurred."));
+        setLastError(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                     SIGNOND_INTERNAL_SERVER_ERR_STR +
+                     QLatin1String("Database error occurred."));
         return false;
     }
     return true;
 }
 
 QObject *SignonDaemon::getAuthSession(const quint32 id,
-                                      const QString type)
+                                      const QString type,
+                                      pid_t ownerPid)
 {
-    pid_t ownerPid = AccessControlManagerHelper::pidOfPeer(*this);
+    clearLastError();
+
     SignonAuthSession *authSession =
         SignonAuthSession::createAuthSession(id, type, this, ownerPid);
     if (authSession == NULL) {
-        sendErrorReply(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
-                       SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
+        setLastError(SIGNOND_METHOD_NOT_KNOWN_ERR_NAME,
+                     SIGNOND_METHOD_NOT_KNOWN_ERR_STR);
         return 0;
     }
 
@@ -1020,6 +1032,18 @@ void SignonDaemon::onDisconnected()
     QMetaObject::invokeMethod(QCoreApplication::instance(),
                               "quit",
                               Qt::QueuedConnection);
+}
+
+void SignonDaemon::setLastError(const QString &name, const QString &msg)
+{
+    m_lastErrorName = name;
+    m_lastErrorMessage = msg;
+}
+
+void SignonDaemon::clearLastError()
+{
+    m_lastErrorName = QString();
+    m_lastErrorMessage = QString();
 }
 
 } //namespace SignonDaemonNS
