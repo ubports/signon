@@ -1,4 +1,7 @@
-tst_backup
-tst_database
-tst_pluginproxy
-tst_timeouts
+/identity-tool
+/mock-ac-plugin/identity-ac-helper
+/tst_access_control
+/tst_backup
+/tst_database
+/tst_pluginproxy
+/tst_timeouts
