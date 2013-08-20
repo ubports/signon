@@ -173,6 +173,12 @@ void IdentityInfoImpl::updateFromMap(const QVariantMap &map)
             map.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
     }
 
+    if (map.contains(SIGNOND_IDENTITY_INFO_OWNER)) {
+        QStringList owners =
+            map.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
+        m_owner = owners.value(0, QString());
+    }
+
     if (map.contains(SIGNOND_IDENTITY_INFO_AUTHMETHODS)) {
         QVariant value = map.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
         m_authMethods = qdbus_cast<MethodMap>(value.value<QDBusArgument>());
