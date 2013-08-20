@@ -109,7 +109,11 @@ void SignonDaemonAdaptor::getIdentity(const quint32 id,
     QDBusMessage msg = parentDBusContext().message();
     QDBusConnection conn = parentDBusContext().connection();
     if (!acm->isPeerAllowedToUseIdentity(conn, msg, id)) {
-        securityErrorReply();
+        SignOn::AccessReply *reply =
+            acm->requestAccessToIdentity(conn, msg, id);
+        QObject::connect(reply, SIGNAL(finished()),
+                         this, SLOT(onIdentityAccessReplyFinished()));
+        msg.setDelayedReply(true);
         return;
     }
 
@@ -117,6 +121,37 @@ void SignonDaemonAdaptor::getIdentity(const quint32 id,
     if (handleLastError(conn, msg)) return;
 
     objectPath = registerObject(conn, identity);
+
+    SignonDisposable::destroyUnused();
+}
+
+void SignonDaemonAdaptor::onIdentityAccessReplyFinished()
+{
+    SignOn::AccessReply *reply = qobject_cast<SignOn::AccessReply*>(sender());
+    Q_ASSERT(reply != 0);
+
+    reply->deleteLater();
+    QDBusConnection connection = reply->request().peerConnection();
+    QDBusMessage message = reply->request().peerMessage();
+    quint32 id = reply->request().identity();
+    AccessControlManagerHelper *acm = AccessControlManagerHelper::instance();
+
+    if (!reply->isAccepted() ||
+        !acm->isPeerAllowedToUseIdentity(connection, message, id)) {
+        securityErrorReply(connection, message);
+        return;
+    }
+
+    QVariantMap identityData;
+    QObject *identity = m_parent->getIdentity(id, identityData);
+    if (handleLastError(connection, message)) return;
+
+    QDBusObjectPath objectPath = registerObject(connection, identity);
+
+    QVariantList args;
+    args << QVariant::fromValue(objectPath);
+    args << identityData;
+    connection.send(message.createReply(args));
 
     SignonDisposable::destroyUnused();
 }
@@ -138,7 +173,14 @@ QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id,
     /* Access Control */
     if (id != SIGNOND_NEW_IDENTITY) {
         if (!acm->isPeerAllowedToUseAuthSession(conn, msg, id)) {
-            securityErrorReply();
+            SignOn::AccessReply *reply =
+                acm->requestAccessToIdentity(conn, msg, id);
+            /* If the request is accepted, we'll need the method name ("type")
+             * in order to proceed with the creation of the authsession. */
+            reply->setProperty("type", type);
+            QObject::connect(reply, SIGNAL(finished()),
+                             this, SLOT(onAuthSessionAccessReplyFinished()));
+            msg.setDelayedReply(true);
             return QString();
         }
     }
@@ -150,6 +192,37 @@ QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id,
 
     QDBusObjectPath objectPath = registerObject(conn, authSession);
     return objectPath.path();
+}
+
+void SignonDaemonAdaptor::onAuthSessionAccessReplyFinished()
+{
+    SignOn::AccessReply *reply = qobject_cast<SignOn::AccessReply*>(sender());
+    Q_ASSERT(reply != 0);
+
+    reply->deleteLater();
+    QDBusConnection connection = reply->request().peerConnection();
+    QDBusMessage message = reply->request().peerMessage();
+    quint32 id = reply->request().identity();
+    QString type = reply->property("type").toString();
+    AccessControlManagerHelper *acm = AccessControlManagerHelper::instance();
+
+    if (!reply->isAccepted() ||
+        !acm->isPeerAllowedToUseIdentity(connection, message, id)) {
+        securityErrorReply(connection, message);
+        TRACE() << "still not allowed";
+        return;
+    }
+
+    pid_t ownerPid = acm->pidOfPeer(connection, message);
+    QObject *authSession = m_parent->getAuthSession(id, type, ownerPid);
+    if (handleLastError(connection, message)) return;
+    QDBusObjectPath objectPath = registerObject(connection, authSession);
+
+    QVariantList args;
+    args << QVariant::fromValue(objectPath);
+    connection.send(message.createReply(args));
+
+    SignonDisposable::destroyUnused();
 }
 
 QStringList SignonDaemonAdaptor::queryMechanisms(const QString &method)

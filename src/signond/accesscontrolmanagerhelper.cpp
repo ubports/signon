@@ -201,3 +201,14 @@ pid_t AccessControlManagerHelper::pidOfPeer(
     }
 }
 
+SignOn::AccessReply *
+AccessControlManagerHelper::requestAccessToIdentity(
+                                       const QDBusConnection &peerConnection,
+                                       const QDBusMessage &peerMessage,
+                                       quint32 id)
+{
+    SignOn::AccessRequest request;
+    request.setPeer(peerConnection, peerMessage);
+    request.setIdentity(id);
+    return m_acManager->handleRequest(request);
+}

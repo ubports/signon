@@ -69,6 +69,10 @@ private:
     QDBusObjectPath registerObject(const QDBusConnection &connection,
                                    QObject *object);
 
+private Q_SLOTS:
+    void onIdentityAccessReplyFinished();
+    void onAuthSessionAccessReplyFinished();
+
 private:
     SignonDaemon *m_parent;
 }; //class SignonDaemonAdaptor

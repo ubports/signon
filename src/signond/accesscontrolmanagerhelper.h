@@ -182,6 +182,11 @@ public:
                               const QDBusMessage &peerMessage,
                               const QStringList secContexts);
 
+    SignOn::AccessReply *
+        requestAccessToIdentity(const QDBusConnection &peerConnection,
+                                const QDBusMessage &peerMessage,
+                                quint32 id);
+
 private:
     SignOn::AbstractAccessControlManager *m_acManager;
     static AccessControlManagerHelper* m_pInstance;
