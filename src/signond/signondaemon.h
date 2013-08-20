@@ -106,7 +106,6 @@ class SignonDaemon: public QObject, protected QDBusContext
 {
     Q_OBJECT
 
-    friend class SignonIdentity;
     friend class SignonSessionCore;
     friend class SignonDaemonAdaptor;
 
@@ -141,6 +140,8 @@ public:
 private Q_SLOTS:
     void onDisconnected();
     void onNewConnection(const QDBusConnection &connection);
+    void onIdentityStored(SignonIdentity *identity);
+    void onIdentityDestroyed();
 
 public Q_SLOTS: // backup METHODS
     uchar backupStarts();
@@ -154,7 +155,7 @@ private:
     void initExtension(const QString &filePath);
     bool initStorage();
 
-    void identityStored(SignonIdentity *identity);
+    void watchIdentity(SignonIdentity *identity);
     void setupSignalHandlers();
 
     void eraseBackupDir() const;
@@ -170,7 +171,6 @@ private:
      * The list of created SignonIdentities
      * */
     QMap<quint32, SignonIdentity *> m_storedIdentities;
-    QMap<QString, SignonIdentity *> m_unstoredIdentities;
 
     SignonDaemonConfiguration *m_configuration;
 

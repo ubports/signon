@@ -273,7 +273,6 @@ SignonDaemon::~SignonDaemon()
 
     SignonAuthSession::stopAllAuthSessions();
     m_storedIdentities.clear();
-    m_unstoredIdentities.clear();
 
     if (m_pCAMManager) {
         m_pCAMManager->closeCredentialsSystem();
@@ -563,10 +562,25 @@ bool SignonDaemon::initStorage()
     return true;
 }
 
-void SignonDaemon::identityStored(SignonIdentity *identity)
+void SignonDaemon::onIdentityStored(SignonIdentity *identity)
 {
-    if (m_unstoredIdentities.contains(identity->objectName())) {
-        m_unstoredIdentities.remove(identity->objectName());
+    m_storedIdentities.insert(identity->id(), identity);
+}
+
+void SignonDaemon::onIdentityDestroyed()
+{
+    SignonIdentity *identity = qobject_cast<SignonIdentity*>(sender());
+    m_storedIdentities.remove(identity->id());
+}
+
+void SignonDaemon::watchIdentity(SignonIdentity *identity)
+{
+    QObject::connect(identity, SIGNAL(stored(SignonIdentity*)),
+                     this, SLOT(onIdentityStored(SignonIdentity*)));
+    QObject::connect(identity, SIGNAL(unregistered()),
+                     this, SLOT(onIdentityDestroyed()));
+
+    if (identity->id() != SIGNOND_NEW_IDENTITY) {
         m_storedIdentities.insert(identity->id(), identity);
     }
 }
@@ -581,8 +595,7 @@ QObject *SignonDaemon::registerNewIdentity()
         SignonIdentity::createIdentity(SIGNOND_NEW_IDENTITY, this);
 
     Q_ASSERT(identity != NULL);
-
-    m_unstoredIdentities.insert(identity->objectName(), identity);
+    watchIdentity(identity);
 
     return identity;
 }
@@ -629,8 +642,7 @@ QObject *SignonDaemon::getIdentity(const quint32 id,
         return 0;
     }
 
-    //cache the identity as stored
-    m_storedIdentities.insert(identity->id(), identity);
+    watchIdentity(identity);
     identity->keepInUse();
 
     identityData = info.toMap();

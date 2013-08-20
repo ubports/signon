@@ -80,6 +80,7 @@ Q_SIGNALS:
     void unregistered();
     //TODO - split this into the 3 separate signals(updated, removed, signed out)
     void infoUpdated(int);
+    void stored(SignonIdentity *identity);
 
 private Q_SLOTS:
     void removeCompleted(QDBusPendingCallWatcher *call);
@@ -87,7 +88,6 @@ private Q_SLOTS:
 
 private:
     SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
-    bool credentialsStored() const { return m_id > 0 ? true : false; }
     void queryUserPassword(const QVariantMap &params,
                            const QDBusConnection &connection,
                            const QDBusMessage &message);
@@ -96,7 +96,6 @@ private:
     quint32 m_id;
     SignonUiAdaptor *m_signonui;
     SignonIdentityInfo *m_pInfo;
-    SignonDaemon *m_pSignonDaemon;
 }; //class SignonDaemon
 
 } //namespace SignonDaemonNS

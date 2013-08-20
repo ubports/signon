@@ -85,8 +85,7 @@ private:
 SignonIdentity::SignonIdentity(quint32 id, int timeout,
                                SignonDaemon *parent):
     SignonDisposable(timeout, parent),
-    m_pInfo(NULL),
-    m_pSignonDaemon(parent)
+    m_pInfo(NULL)
 {
     m_id = id;
 
@@ -110,12 +109,8 @@ SignonIdentity::~SignonIdentity()
 {
     emit unregistered();
 
-    if (credentialsStored())
-        m_pSignonDaemon->m_storedIdentities.remove(m_id);
-    else
-        m_pSignonDaemon->m_unstoredIdentities.remove(objectName());
-
     delete m_signonui;
+    delete m_pInfo;
 }
 
 SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
@@ -519,7 +514,7 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info)
             delete m_pInfo;
             m_pInfo = NULL;
         }
-        m_pSignonDaemon->identityStored(this);
+        Q_EMIT stored(this);
 
         TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
         emit infoUpdated((int)SignOn::IdentityDataUpdated);
