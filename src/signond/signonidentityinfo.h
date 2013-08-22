@@ -57,7 +57,6 @@ struct SignonIdentityInfo
                        int refCount = 0,
                        bool validated = false);
 
-    const QList<QVariant> toVariantList();
     const QVariantMap toMap() const;
 
     bool operator== (const SignonIdentityInfo &other) const;
