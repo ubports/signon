@@ -1,5 +1,6 @@
-signon (8.53-0ubuntu1) UNRELEASED; urgency=low
+signon (8.53+13.10.20130826-0ubuntu1) saucy; urgency=low
 
+  [ Alberto Mardegan ]
   * New upstream release.
     - API/ABI break in libsignon-extension.so which will affect extensions
       providing an implementation of the AbstractAccessControlManager (we are
@@ -24,7 +25,10 @@ signon (8.53-0ubuntu1) UNRELEASED; urgency=low
     - Support exchanging recursive QVariantMaps between signond and the
       plugins
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 22 Aug 2013 09:53:28 +0300
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 597
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Mon, 26 Aug 2013 18:07:15 +0000
 
 signon (8.52+13.10.20130815-0ubuntu1) saucy; urgency=low
 
