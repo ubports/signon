@@ -127,6 +127,7 @@ QString IdentityInfo::owner() const
 void IdentityInfo::setAccessControlList(const QStringList &accessControlList)
 {
     impl->m_accessControlList = accessControlList;
+    impl->m_isEmpty = false;
 }
 
 QStringList IdentityInfo::accessControlList() const

@@ -51,14 +51,45 @@ namespace SignonDaemonNS {
 const QString internalServerErrName = SIGNOND_INTERNAL_SERVER_ERR_NAME;
 const QString internalServerErrStr = SIGNOND_INTERNAL_SERVER_ERR_STR;
 
+class PendingCallWatcherWithContext: public QDBusPendingCallWatcher
+{
+    Q_OBJECT
+
+public:
+    PendingCallWatcherWithContext(const QDBusPendingCall &call,
+                                  SignonIdentity *parent):
+        QDBusPendingCallWatcher(call, parent),
+        m_connection(parent->connection()),
+        m_message(parent->message())
+    {
+    }
+
+    PendingCallWatcherWithContext(const QDBusPendingCall &call,
+                                  const QDBusConnection &connection,
+                                  const QDBusMessage &message,
+                                  SignonIdentity *parent):
+        QDBusPendingCallWatcher(call, parent),
+        m_connection(connection),
+        m_message(message)
+    {
+    }
+
+    const QDBusConnection &connection() const { return m_connection; }
+    const QDBusMessage &message() const { return m_message; }
+
+private:
+    QDBusConnection m_connection;
+    QDBusMessage m_message;
+};
+
 SignonIdentity::SignonIdentity(quint32 id, int timeout,
                                SignonDaemon *parent):
     SignonDisposable(timeout, parent),
-    m_pInfo(NULL),
-    m_pSignonDaemon(parent),
-    m_registered(false)
+    m_pInfo(NULL)
 {
     m_id = id;
+
+    (void)new SignonIdentityAdaptor(this);
 
     /*
      * creation of unique name for the given identity
@@ -68,79 +99,27 @@ SignonIdentity::SignonIdentity(quint32 id, int timeout,
                          + QString::number(incr++, 16);
     setObjectName(objectName);
 
-    m_signonui = new SignonUiAdaptor(
-                                    SIGNON_UI_SERVICE,
-                                    SIGNON_UI_DAEMON_OBJECTPATH,
-                                    SIGNOND_BUS,
-                                    this);
+    m_signonui = new SignonUiAdaptor(SIGNON_UI_SERVICE,
+                                     SIGNON_UI_DAEMON_OBJECTPATH,
+                                     QDBusConnection::sessionBus(),
+                                     this);
 }
 
 SignonIdentity::~SignonIdentity()
 {
-    if (m_registered)
-    {
-        emit unregistered();
-        QDBusConnection connection = SIGNOND_BUS;
-        connection.unregisterObject(objectName());
-    }
-
-    if (credentialsStored())
-        m_pSignonDaemon->m_storedIdentities.remove(m_id);
-    else
-        m_pSignonDaemon->m_unstoredIdentities.remove(objectName());
+    emit unregistered();
 
     delete m_signonui;
-}
-
-bool SignonIdentity::init()
-{
-    QDBusConnection connection = SIGNOND_BUS;
-
-    if (!connection.isConnected()) {
-        QDBusError err = connection.lastError();
-        TRACE() << "Connection cannot be established:" <<
-            err.errorString(err.type()) ;
-        return false;
-    }
-
-    QDBusConnection::RegisterOptions registerOptions =
-        QDBusConnection::ExportAllContents;
-
-    (void)new SignonIdentityAdaptor(this);
-    registerOptions = QDBusConnection::ExportAdaptors;
-
-    if (!connection.registerObject(objectName(), this, registerOptions)) {
-        TRACE() << "Object cannot be registered: " << objectName();
-        return false;
-    }
-
-    return (m_registered = true);
+    delete m_pInfo;
 }
 
 SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
 {
-    SignonIdentity *identity =
-        new SignonIdentity(id, parent->identityTimeout(), parent);
-
-    if (!identity->init()) {
-        TRACE() << "The created identity is invalid and will be deleted.\n";
-        delete identity;
-        return NULL;
-    }
-
-    return identity;
+    return new SignonIdentity(id, parent->identityTimeout(), parent);
 }
 
 void SignonIdentity::destroy()
 {
-    if (m_registered)
-    {
-        emit unregistered();
-        QDBusConnection connection = SIGNOND_BUS;
-        connection.unregisterObject(objectName());
-        m_registered = false;
-    }
-
     deleteLater();
 }
 
@@ -192,9 +171,11 @@ bool SignonIdentity::addReference(const QString &reference)
         BLAME() << "NULL database handler object.";
         return false;
     }
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                 (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
     keepInUse();
     return db->addReference(m_id, appId, reference);
 }
@@ -210,9 +191,11 @@ bool SignonIdentity::removeReference(const QString &reference)
         BLAME() << "NULL database handler object.";
         return false;
     }
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                  (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
     keepInUse();
     return db->removeReference(m_id, appId, reference);
 }
@@ -239,7 +222,6 @@ quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
 
     //delay dbus reply, ui interaction might take long time to complete
     setDelayedReply(true);
-    m_message = message();
 
     //create ui request to ask password
     QVariantMap uiRequest;
@@ -249,8 +231,9 @@ quint32 SignonIdentity::requestCredentialsUpdate(const QString &displayMessage)
     uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
 
     TRACE() << "Waiting for reply from signon-ui";
-    QDBusPendingCallWatcher *watcher =
-        new QDBusPendingCallWatcher(m_signonui->queryDialog(uiRequest), this);
+    PendingCallWatcherWithContext *watcher =
+        new PendingCallWatcherWithContext(m_signonui->queryDialog(uiRequest),
+                                          this);
     connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
             this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
 
@@ -286,10 +269,14 @@ QVariantMap SignonIdentity::getInfo()
     return info.toMap();
 }
 
-void SignonIdentity::queryUserPassword(const QVariantMap &params) {
+void SignonIdentity::queryUserPassword(const QVariantMap &params,
+                                       const QDBusConnection &connection,
+                                       const QDBusMessage &message)
+{
     TRACE() << "Waiting for reply from signon-ui";
-    QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(
-            m_signonui->queryDialog(params), this);
+    PendingCallWatcherWithContext *watcher =
+        new PendingCallWatcherWithContext(m_signonui->queryDialog(params),
+                                          connection, message, this);
     connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)), this,
             SLOT(verifyUiSlot(QDBusPendingCallWatcher*)));
 
@@ -318,7 +305,6 @@ bool SignonIdentity::verifyUser(const QVariantMap &params)
 
     //delay dbus reply, ui interaction might take long time to complete
     setDelayedReply(true);
-    m_message = message();
 
     //create ui request to ask password
     QVariantMap uiRequest;
@@ -327,7 +313,7 @@ bool SignonIdentity::verifyUser(const QVariantMap &params)
     uiRequest.insert(SSOUI_KEY_USERNAME, info.userName());
     uiRequest.insert(SSOUI_KEY_CAPTION, info.caption());
 
-    queryUserPassword(uiRequest);
+    queryUserPassword(uiRequest, connection(), message());
     return false;
 }
 
@@ -365,11 +351,10 @@ void SignonIdentity::remove()
         return;
     }
     setDelayedReply(true);
-    m_message = message();
     setAutoDestruct(false);
-    QDBusPendingCallWatcher *watcher =
-        new QDBusPendingCallWatcher(m_signonui->removeIdentityData(m_id),
-                                    this);
+    PendingCallWatcherWithContext *watcher =
+        new PendingCallWatcherWithContext(m_signonui->removeIdentityData(m_id),
+                                          this);
     connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
             this, SLOT(removeCompleted(QDBusPendingCallWatcher*)));
     keepInUse();
@@ -377,17 +362,21 @@ void SignonIdentity::remove()
 
 void SignonIdentity::removeCompleted(QDBusPendingCallWatcher *call)
 {
+    Q_ASSERT(call != NULL);
+
     setAutoDestruct(true);
     call->deleteLater();
 
+    PendingCallWatcherWithContext *context =
+        qobject_cast<PendingCallWatcherWithContext*>(call);
     QDBusPendingReply<> signOnUiReply = *call;
     bool ok = !signOnUiReply.isError();
     TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
 
     emit infoUpdated((int)SignOn::IdentityRemoved);
 
-    QDBusMessage reply = m_message.createReply();
-    SIGNOND_BUS.send(reply);
+    QDBusMessage reply = context->message().createReply();
+    context->connection().send(reply);
 }
 
 bool SignonIdentity::signOut()
@@ -410,11 +399,10 @@ bool SignonIdentity::signOut()
         }
 
         setDelayedReply(true);
-        m_message = message();
         setAutoDestruct(false);
-        QDBusPendingCallWatcher *watcher =
-            new QDBusPendingCallWatcher(m_signonui->removeIdentityData(m_id),
-                                        this);
+        PendingCallWatcherWithContext *watcher =
+            new PendingCallWatcherWithContext(m_signonui->removeIdentityData(m_id),
+                                              this);
         connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
                 this, SLOT(signOutCompleted(QDBusPendingCallWatcher*)));
     }
@@ -424,18 +412,22 @@ bool SignonIdentity::signOut()
 
 void SignonIdentity::signOutCompleted(QDBusPendingCallWatcher *call)
 {
+    Q_ASSERT(call != NULL);
+
     setAutoDestruct(true);
     call->deleteLater();
 
+    PendingCallWatcherWithContext *context =
+        qobject_cast<PendingCallWatcherWithContext*>(call);
     QDBusPendingReply<> signOnUiReply = *call;
     bool ok = !signOnUiReply.isError();
     TRACE() << (ok ? "removeIdentityData succeeded" : "removeIdentityData failed");
 
     emit infoUpdated((int)SignOn::IdentitySignedOut);
 
-    QDBusMessage reply = m_message.createReply();
+    QDBusMessage reply = context->message().createReply();
     reply << ok;
-    SIGNOND_BUS.send(reply);
+    context->connection().send(reply);
 }
 
 quint32 SignonIdentity::store(const QVariantMap &info)
@@ -444,9 +436,11 @@ quint32 SignonIdentity::store(const QVariantMap &info)
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
     QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+    const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
-                                 (static_cast<QDBusContext>(*this)).message());
+                                                   context.connection(),
+                                                   context.message());
 
     bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
     QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
@@ -520,7 +514,7 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info)
             delete m_pInfo;
             m_pInfo = NULL;
         }
-        m_pSignonDaemon->identityStored(this);
+        Q_EMIT stored(this);
 
         TRACE() << "FRESH, JUST STORED CREDENTIALS ID:" << m_id;
         emit infoUpdated((int)SignOn::IdentityDataUpdated);
@@ -531,31 +525,35 @@ quint32 SignonIdentity::storeCredentials(const SignonIdentityInfo &info)
 void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
 {
     TRACE();
+    Q_ASSERT(call != NULL);
+
     setAutoDestruct(true);
 
+    PendingCallWatcherWithContext *context =
+        qobject_cast<PendingCallWatcherWithContext*>(call);
+    const QDBusMessage &message = context->message();
+    const QDBusConnection &connection = context->connection();
+
     QDBusMessage errReply;
-    QDBusPendingReply<QVariantMap> reply;
-    if (call != NULL) {
-        reply = *call;
-        call->deleteLater();
-    }
+    QDBusPendingReply<QVariantMap> reply = *call;
+    call->deleteLater();
+
     QVariantMap resultParameters;
     if (!reply.isError() && reply.count()) {
         resultParameters = reply.argumentAt<0>();
     } else {
-        errReply =
-            m_message.createErrorReply(
+        errReply = message.createErrorReply(
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        connection.send(errReply);
         return;
     }
 
     if (!resultParameters.contains(SSOUI_KEY_ERROR)) {
         //no reply code
-        errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                SIGNOND_INTERNAL_SERVER_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        errReply = message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                                            SIGNOND_INTERNAL_SERVER_ERR_STR);
+        connection.send(errReply);
         return;
     }
 
@@ -564,16 +562,16 @@ void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
     if (errorCode != QUERY_ERROR_NONE) {
         if (errorCode == QUERY_ERROR_CANCELED)
             errReply =
-                m_message.createErrorReply(
+                message.createErrorReply(
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
         else
             errReply =
-                m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
                     QString(QLatin1String("signon-ui call returned error %1")).
                     arg(errorCode));
 
-        SIGNOND_BUS.send(errReply);
+        connection.send(errReply);
         return;
     }
 
@@ -582,9 +580,9 @@ void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
             CredentialsAccessManager::instance()->credentialsDB();
         if (db == NULL) {
             BLAME() << "NULL database handler object.";
-            errReply = m_message.createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+            errReply = message.createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
                     SIGNOND_STORE_FAILED_ERR_STR);
-            SIGNOND_BUS.send(errReply);
+            connection.send(errReply);
             return;
         }
 
@@ -596,9 +594,9 @@ void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
             delete m_pInfo;
             m_pInfo = NULL;
             if (ret != SIGNOND_NEW_IDENTITY) {
-                QDBusMessage dbusreply = m_message.createReply();
+                QDBusMessage dbusreply = message.createReply();
                 dbusreply << quint32(m_id);
-                SIGNOND_BUS.send(dbusreply);
+                connection.send(dbusreply);
                 return;
             } else{
                 BLAME() << "Error during update";
@@ -607,40 +605,44 @@ void SignonIdentity::queryUiSlot(QDBusPendingCallWatcher *call)
     }
 
     //this should not happen, return error
-    errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+    errReply = message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
             SIGNOND_INTERNAL_SERVER_ERR_STR);
-    SIGNOND_BUS.send(errReply);
+    connection.send(errReply);
     return;
 }
 
 void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
 {
     TRACE();
+    Q_ASSERT(call != NULL);
+
     setAutoDestruct(true);
 
+    PendingCallWatcherWithContext *context =
+        qobject_cast<PendingCallWatcherWithContext*>(call);
+    const QDBusMessage &message = context->message();
+    const QDBusConnection &connection = context->connection();
+
     QDBusMessage errReply;
-    QDBusPendingReply<QVariantMap> reply;
-    if (call != NULL) {
-        reply = *call;
-        call->deleteLater();
-    }
+    QDBusPendingReply<QVariantMap> reply = *call;
+    call->deleteLater();
     QVariantMap resultParameters;
     if (!reply.isError() && reply.count()) {
         resultParameters = reply.argumentAt<0>();
     } else {
         errReply =
-            m_message.createErrorReply(
+            message.createErrorReply(
                                  SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
                                  SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        connection.send(errReply);
         return;
     }
 
     if (!resultParameters.contains(SSOUI_KEY_ERROR)) {
         //no reply code
-        errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
-                SIGNOND_INTERNAL_SERVER_ERR_STR);
-        SIGNOND_BUS.send(errReply);
+        errReply = message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+                                            SIGNOND_INTERNAL_SERVER_ERR_STR);
+        connection.send(errReply);
         return;
     }
 
@@ -648,21 +650,21 @@ void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
     TRACE() << "error: " << errorCode;
     if (errorCode != QUERY_ERROR_NONE) {
         if (errorCode == QUERY_ERROR_CANCELED)
-            errReply = m_message.createErrorReply(
+            errReply = message.createErrorReply(
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_NAME,
                                   SIGNOND_IDENTITY_OPERATION_CANCELED_ERR_STR);
         else if (errorCode == QUERY_ERROR_FORGOT_PASSWORD)
-            errReply = m_message.createErrorReply(
+            errReply = message.createErrorReply(
                                   SIGNOND_FORGOT_PASSWORD_ERR_NAME,
                                   SIGNOND_FORGOT_PASSWORD_ERR_STR);
         else
-            errReply = m_message.createErrorReply(
+            errReply = message.createErrorReply(
                                   SIGNOND_INTERNAL_SERVER_ERR_NAME,
                                   QString(QLatin1String("signon-ui call "
                                                         "returned error %1")).
                                   arg(errorCode));
 
-        SIGNOND_BUS.send(errReply);
+        connection.send(errReply);
         return;
     }
 
@@ -671,9 +673,9 @@ void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
             CredentialsAccessManager::instance()->credentialsDB();
         if (db == NULL) {
             BLAME() << "NULL database handler object.";
-            errReply = m_message.createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
+            errReply = message.createErrorReply(SIGNOND_STORE_FAILED_ERR_NAME,
                     SIGNOND_STORE_FAILED_ERR_STR);
-            SIGNOND_BUS.send(errReply);
+            connection.send(errReply);
             return;
         }
 
@@ -690,7 +692,7 @@ void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
                     resultParameters[SSOUI_KEY_CONFIRMCOUNT] = (count-1);
                     resultParameters[SSOUI_KEY_MESSAGEID] =
                         QUERY_MESSAGE_NOT_AUTHORIZED;
-                    queryUserPassword(resultParameters);
+                    queryUserPassword(resultParameters, connection, message);
                     return;
                 } else {
                     //TODO show error note here if needed
@@ -698,17 +700,19 @@ void SignonIdentity::verifyUiSlot(QDBusPendingCallWatcher *call)
             }
             delete m_pInfo;
             m_pInfo = NULL;
-            QDBusMessage dbusreply = m_message.createReply();
+            QDBusMessage dbusreply = message.createReply();
             dbusreply << ret;
-            SIGNOND_BUS.send(dbusreply);
+            connection.send(dbusreply);
             return;
         }
     }
     //this should not happen, return error
-    errReply = m_message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
+    errReply = message.createErrorReply(SIGNOND_INTERNAL_SERVER_ERR_NAME,
             SIGNOND_INTERNAL_SERVER_ERR_STR);
-    SIGNOND_BUS.send(errReply);
+    connection.send(errReply);
     return;
 }
 
 } //namespace SignonDaemonNS
+
+#include "signonidentity.moc"

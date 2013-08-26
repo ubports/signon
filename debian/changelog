@@ -1,3 +1,31 @@
+signon (8.53-0ubuntu1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - API/ABI break in libsignon-extension.so which will affect extensions
+      providing an implementation of the AbstractAccessControlManager (we are
+      aware of Ubuntu's apparmor extension only, which is still in early
+      developments)
+    - Revamp of unit tests; in particular, installation of tests is untested
+      and probably needs some fixes. Patches are welcome, and will be
+      incorporated with the next release.
+    - Support for peer-to-peer connections
+    - Extend the AbstractAccessControlManager interface to provide an
+      asynchronous method to process access control requests, via the new
+      AccessRequest / AccessReply classes.
+    - Fix a memory leak and a crash at exit
+    - Show pid of signonpluginprocess in syslog
+    - Tests: fix for out-of-tree builds
+    - Tests: do not build "untrusted" tests
+    - Tests: add access control tests
+    - signond: create AccessRequests when AC is denied
+    - signond: allow overriding config dir
+    - signond: empty ACL means "no access"
+    - Remove unmaintained MSSF and SMACK AC extensions
+    - Support exchanging recursive QVariantMaps between signond and the
+      plugins
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 22 Aug 2013 09:53:28 +0300
+
 signon (8.52+13.10.20130815-0ubuntu1) saucy; urgency=low
 
   [ Alberto Mardegan ]

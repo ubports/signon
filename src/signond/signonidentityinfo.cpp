@@ -104,24 +104,6 @@ SignonIdentityInfo::SignonIdentityInfo(const quint32 id,
 {
 }
 
-const QList<QVariant> SignonIdentityInfo::toVariantList()
-{
-    QList<QVariant> list;
-    list << m_id
-         << m_userName
-         << m_password
-         << m_caption
-         << m_realms
-         << QVariant::fromValue(m_methods)
-         << m_accessControlList
-         << m_type
-         << m_refCount
-         << m_validated
-         << m_isUserNameSecret;
-
-    return list;
-}
-
 const QVariantMap SignonIdentityInfo::toMap() const
 {
     QVariantMap values;
@@ -133,6 +115,7 @@ const QVariantMap SignonIdentityInfo::toMap() const
     values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
                   QVariant::fromValue(m_methods));
     values.insert(SIGNOND_IDENTITY_INFO_ACL, m_accessControlList);
+    values.insert(SIGNOND_IDENTITY_INFO_OWNER, m_ownerList);
     values.insert(SIGNOND_IDENTITY_INFO_TYPE, m_type);
     values.insert(SIGNOND_IDENTITY_INFO_REFCOUNT, m_refCount);
     values.insert(SIGNOND_IDENTITY_INFO_VALIDATED, m_validated);

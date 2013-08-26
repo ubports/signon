@@ -21,9 +21,10 @@ public_headers += \
 
 private_headers = authserviceimpl.h \
     identityimpl.h \
+    async-dbus-proxy.h \
     authsessionimpl.h \
+    connection-manager.h \
     identityinfoimpl.h \
-    dbusoperationqueuehandler.h \
     dbusinterface.h
 
 HEADERS = $$public_headers \
@@ -35,12 +36,13 @@ INCLUDEPATH += . \
 SOURCES += identityinfo.cpp \
     identity.cpp \
     identityimpl.cpp \
+    async-dbus-proxy.cpp \
     authservice.cpp \
     authserviceimpl.cpp \
     authsession.cpp \
     authsessionimpl.cpp \
+    connection-manager.cpp \
     identityinfoimpl.cpp \
-    dbusoperationqueuehandler.cpp \
     dbusinterface.cpp
 
 QT += core \
