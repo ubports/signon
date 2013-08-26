@@ -19,7 +19,7 @@ Build-Depends: debhelper (>= 9),
                quilt,
                dh-migrations,
                dbus-test-runner,
-Standards-Version: 3.9.3
+Standards-Version: 3.9.4
 Homepage: http://code.google.com/p/accounts-sso/
 # If you aren't a member of ~online-accounts but need to upload packaging changes,
 # just go ahead.  ~online-accounts will notice and sync up the code again.
