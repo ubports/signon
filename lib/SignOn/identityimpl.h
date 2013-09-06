@@ -107,8 +107,6 @@ private Q_SLOTS:
 
 private:
     void copyInfo(const IdentityInfo &info);
-    bool sendRequest(const char *remoteMethod, const QList<QVariant> &args,
-                     const char *replySlot, int timeout = -1);
     void updateState(State state);
     bool checkRemoved();
 
