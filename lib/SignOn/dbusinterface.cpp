@@ -23,6 +23,8 @@
 #include "dbusinterface.h"
 #include "libsignoncommon.h"
 
+#include <climits>
+
 using namespace SignOn;
 
 static bool connIsP2P(const QDBusConnection &connection)
@@ -41,6 +43,7 @@ DBusInterface::DBusInterface(const QString &service,
     QDBusAbstractInterface(connIsP2P(connection) ? QLatin1String("") : service,
                            path, interface, connection, parent)
 {
+    setTimeout(INT_MAX);
 }
 
 DBusInterface::~DBusInterface()

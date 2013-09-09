@@ -1,0 +1,11 @@
+--- a/src/signond/signond.conf
++++ b/src/signond/signond.conf
+@@ -16,7 +16,7 @@
+ ;   "default" - no AC
+ ;   "smack-ac" - Smack AC
+ ;   "mssf-ac" - MSSF AC
+-AccessControlManager=default
++AccessControlManager=apparmor-ac
+ FileSystemName=signonfs
+ Size=8
+ FileSystemType=ext2
