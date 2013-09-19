@@ -120,6 +120,9 @@ SignonIdentity *SignonIdentity::createIdentity(quint32 id, SignonDaemon *parent)
 
 void SignonIdentity::destroy()
 {
+    /* Emitting the destroyed signal makes QDBusConnection unregister the
+     * object */
+    Q_EMIT destroyed();
     deleteLater();
 }
 
