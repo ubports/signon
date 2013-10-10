@@ -12,15 +12,24 @@ export DPKG_GENSYMBOLS_CHECK_LEVEL=4
 
 # don't apply use_keyring patch on armhf, we have no keyring available
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
-SERIES := debian/patches/series
 
-$(SERIES):
-	-cat $(SERIES).all $(SERIES).$(DEB_HOST_ARCH) >$(SERIES)
-
-override_dh_quilt_patch: $(SERIES)
+override_dh_quilt_patch:
 	dh_quilt_patch
+	if test -r debian/patches/series.$(DEB_HOST_ARCH); then \
+		pc=".pc.$(DEB_HOST_ARCH)"; \
+		test -d "$(CURDIR)/$$pc" || mkdir "$(CURDIR)/$$pc"; \
+		cp debian/patches/series.$(DEB_HOST_ARCH) $(CURDIR)/$$pc/series; \
+		cd $(CURDIR); \
+		QUILT_PC="$$pc" quilt upgrade || true; \
+		QUILT_PC="$$pc" QUILT_PATCHES="debian/patches/" quilt push -a || true; \
+	fi; \
 
-override_dh_quilt_unpatch: $(SERIES)
+override_dh_quilt_unpatch:
+	if test -r debian/patches/series.$(DEB_HOST_ARCH); then \
+		pc=".pc.$(DEB_HOST_ARCH)"; \
+		cd $(CURDIR); \
+		QUILT_PC="$$pc" QUILT_PATCHES="debian/patches/" quilt pop -a || true; \
+	fi; \
 	dh_quilt_unpatch
 # end changes for dropping keyring patch for armhf
 
@@ -56,4 +65,4 @@ override_dh_install:
 	dh_install --fail-missing
 
 %:
-	dh $@ -Bbuild/qt5 --parallel --with migrations,quilt
+	dh $@ -Bbuild/qt5 --parallel --with migrations,quilt 
