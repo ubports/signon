@@ -1,3 +1,16 @@
+signon (8.54+13.10.20130918.1-0ubuntu2) UNRELEASED; urgency=low
+
+  * Merge from upstream.
+    - Use any available extension plugins, unless one is explicitly
+      configured.
+    - Unregister the identity on disposable timeout (fixes a race condition).
+  * debian/rules
+    - Remove architecture-specific patches (LP: #1237782)
+  * debian/patches
+    - Remove all patches (no longer needed, given the upstream changes)
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 14 Oct 2013 13:43:16 +0300
+
 signon (8.54+13.10.20130918.1-0ubuntu1) saucy; urgency=low
 
   [ Alberto Mardegan ]
