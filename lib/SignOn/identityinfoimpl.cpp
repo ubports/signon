@@ -162,6 +162,9 @@ void IdentityInfoImpl::updateFromMap(const QVariantMap &map)
     if (map.contains(SIGNOND_IDENTITY_INFO_SECRET))
         m_secret = map.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
 
+    if (map.contains(SIGNOND_IDENTITY_INFO_STORESECRET))
+        m_storeSecret = map.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
+
     if (map.contains(SIGNOND_IDENTITY_INFO_CAPTION))
         m_caption = map.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
 

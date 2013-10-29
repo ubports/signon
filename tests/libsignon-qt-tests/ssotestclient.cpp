@@ -628,6 +628,7 @@ void SsoTestClient::queryInfo()
              TestIdentityResult::InexistentResp,
              "A response was not received.");
 
+    QCOMPARE(m_identityResult.m_idInfo.isStoringSecret(), true);
     QCOMPARE(m_identityResult.m_idInfo.accessControlList(), acl);
 
     if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
