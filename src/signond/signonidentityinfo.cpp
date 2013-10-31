@@ -110,6 +110,7 @@ const QVariantMap SignonIdentityInfo::toMap() const
     values.insert(SIGNOND_IDENTITY_INFO_ID, m_id);
     values.insert(SIGNOND_IDENTITY_INFO_USERNAME, m_userName);
     values.insert(SIGNOND_IDENTITY_INFO_SECRET, m_password);
+    values.insert(SIGNOND_IDENTITY_INFO_STORESECRET, m_storePassword);
     values.insert(SIGNOND_IDENTITY_INFO_CAPTION, m_caption);
     values.insert(SIGNOND_IDENTITY_INFO_REALMS, m_realms);
     values.insert(SIGNOND_IDENTITY_INFO_AUTHMETHODS,
@@ -146,6 +147,7 @@ bool SignonIdentityInfo::operator==(const SignonIdentityInfo &other) const
     return (m_id == other.m_id)
             && (m_userName == other.m_userName)
             && (m_password == other.m_password)
+            && (m_storePassword == other.m_storePassword)
             && (m_caption == other.m_caption)
             && (me.m_realms ==you.m_realms)
             && (me.m_accessControlList == you.m_accessControlList)
