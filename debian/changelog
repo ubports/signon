@@ -1,6 +1,9 @@
-signon (8.54+13.10.20130918.1-0ubuntu2) UNRELEASED; urgency=low
+signon (8.55-0ubuntu1) UNRELEASED; urgency=low
 
-  * Merge from upstream.
+  * New upstream version
+    - Preserve value of IdentityInfo::storeSecret
+      Fixes: http://code.google.com/p/accounts-sso/issues/detail?id=210
+    - Build speedup: reduce usage of CONFIG+=ordered
     - Use any available extension plugins, unless one is explicitly
       configured.
     - Unregister the identity on disposable timeout (fixes a race condition).
@@ -9,7 +12,7 @@ signon (8.54+13.10.20130918.1-0ubuntu2) UNRELEASED; urgency=low
   * debian/patches
     - Remove all patches (no longer needed, given the upstream changes)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 14 Oct 2013 13:43:16 +0300
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 31 Oct 2013 14:05:34 +0200
 
 signon (8.54+13.10.20130918.1-0ubuntu1) saucy; urgency=low
 
