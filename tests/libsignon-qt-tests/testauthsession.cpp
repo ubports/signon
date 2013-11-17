@@ -636,7 +636,7 @@ void TestAuthSession::process_after_timeout()
 
     QObject::connect(as, SIGNAL(response(const SignOn::SessionData&)),
                      &loop, SLOT(quit()));
-    QTimer::singleShot(10*1000, &loop, SLOT(quit()));
+    QTimer::singleShot(20*1000, &loop, SLOT(quit()));
 
     SessionData inData;
 
