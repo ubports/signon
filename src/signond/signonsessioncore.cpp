@@ -927,7 +927,7 @@ void SignonSessionCore::destroy()
     else
         sessionsOfNonStoredCredentials.removeOne(this);
 
-    emit destroyed();
+    qDeleteAll(children());
     deleteLater();
 }
 
