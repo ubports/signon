@@ -1,7 +1,9 @@
-signon (8.55-0ubuntu2) UNRELEASED; urgency=low
+signon (8.55-0ubuntu3) UNRELEASED; urgency=low
 
   * New pull from upstream
     - Increate tiemout in authsession test
+    - signond: on idle timeout, directly delete all AuthSessions (should fix
+      a race condition which makes a test fail)
   * New upstream version
     - Preserve value of IdentityInfo::storeSecret
       Fixes: http://code.google.com/p/accounts-sso/issues/detail?id=210
@@ -14,7 +16,7 @@ signon (8.55-0ubuntu2) UNRELEASED; urgency=low
   * debian/patches
     - Remove all patches (no longer needed, given the upstream changes)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 12 Nov 2013 14:40:04 +0200
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 19 Nov 2013 10:21:40 +0200
 
 signon (8.54+13.10.20130918.1-0ubuntu1) saucy; urgency=low
 
