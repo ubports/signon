@@ -1588,6 +1588,107 @@ bool SsoTestClient::testUpdatingCredentials(bool addMethods)
     return true;
 }
 
+void SsoTestClient::emptyPasswordRegression()
+{
+    TEST_START
+
+    m_identityResult.reset();
+
+    QString myPassword("My password");
+    //inserting some credentials
+    QMap<MethodName, MechanismsList> methods;
+    methods.insert("method1", QStringList() << "mech1" << "mech2");
+    methods.insert("method2", QStringList() << "mech1" << "mech2" << "mech3");
+    IdentityInfo info("TEST_CAPTION_1",
+                      "TEST_USERNAME_1",
+                      methods);
+    info.setSecret(myPassword);
+    info.setRealms(QStringList() << "test_realm");
+    QStringList acl;
+    acl << "*";
+    info.setAccessControlList(acl);
+
+    Identity *identity = Identity::newIdentity(info);
+
+    QEventLoop loop;
+
+    const char *errorSignature = SIGNAL(error(const SignOn::Error &));
+    QSignalSpy errorSignal(identity, errorSignature);
+    connect(identity, errorSignature, &loop, SLOT(quit()));
+
+    const char *credentialsStoredSignature =
+        SIGNAL(credentialsStored(const quint32));
+    QSignalSpy credentialsStoredSignal(identity, credentialsStoredSignature);
+    connect(identity, credentialsStoredSignature, &loop, SLOT(quit()));
+
+    identity->storeCredentials();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(errorSignal.count(), 0);
+    QCOMPARE(credentialsStoredSignal.count(), 1);
+    credentialsStoredSignal.clear();
+
+    /* Verify that the password is the one set by signon UI */
+    const char *secretVerifiedSignature = SIGNAL(secretVerified(const bool));
+    QSignalSpy secretVerifiedSignal(identity, secretVerifiedSignature);
+    connect(identity, secretVerifiedSignature, &loop, SLOT(quit()));
+
+    identity->verifySecret(myPassword);
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(secretVerifiedSignal.count(), 1);
+    QCOMPARE(secretVerifiedSignal.at(0).at(0).toBool(), true);
+    secretVerifiedSignal.clear();
+
+    /* Now get the info, and re-store the identity */
+    const char *infoSignature = SIGNAL(info(const SignOn::IdentityInfo &));
+    connect(identity, infoSignature,
+            &m_identityResult, SLOT(info(const SignOn::IdentityInfo &)));
+    connect(identity, infoSignature, &loop, SLOT(quit()));
+
+    identity->queryInfo();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QVERIFY2(m_identityResult.m_responseReceived !=
+             TestIdentityResult::InexistentResp,
+             "A response was not received.");
+    QCOMPARE(m_identityResult.m_idInfo.isStoringSecret(), true);
+    QCOMPARE(m_identityResult.m_idInfo.secret(), QString());
+
+    /* Write it back, and verify that the password doesn't change.
+     * Change the username to make sure that this is not a no-op. */
+    QString myUserName("Bob");
+    m_identityResult.m_idInfo.setUserName(myUserName);
+
+    identity->storeCredentials(m_identityResult.m_idInfo);
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    /* check that the store succeeded */
+    QCOMPARE(errorSignal.count(), 0);
+    QCOMPARE(credentialsStoredSignal.count(), 1);
+    credentialsStoredSignal.clear();
+
+    identity->verifySecret(myPassword);
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(secretVerifiedSignal.count(), 1);
+    QCOMPARE(secretVerifiedSignal.at(0).at(0).toBool(), true);
+
+    delete identity;
+
+    TEST_DONE
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);

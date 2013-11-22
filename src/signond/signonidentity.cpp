@@ -269,6 +269,7 @@ QVariantMap SignonIdentity::getInfo()
     }
 
     keepInUse();
+    info.removeSecrets();
     return info.toMap();
 }
 
@@ -438,14 +439,12 @@ quint32 SignonIdentity::store(const QVariantMap &info)
     keepInUse();
     SIGNON_RETURN_IF_CAM_UNAVAILABLE(SIGNOND_NEW_IDENTITY);
 
-    QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
     const QDBusContext &context = static_cast<QDBusContext>(*this);
     QString appId =
         AccessControlManagerHelper::instance()->appIdOfPeer(
                                                    context.connection(),
                                                    context.message());
 
-    bool storeSecret = info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
     QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
     MethodMap methods =
         qdbus_cast<MethodMap>(container.value<QDBusArgument>());
@@ -461,6 +460,12 @@ quint32 SignonIdentity::store(const QVariantMap &info)
         m_pInfo->setMethods(methods);
         m_pInfo->setOwnerList(ownerList);
     } else {
+        if (info.contains(SIGNOND_IDENTITY_INFO_SECRET)) {
+            QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
+            m_pInfo->setPassword(secret);
+        }
+        bool storeSecret =
+            info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
         QString userName =
             info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
         QString caption =
@@ -471,6 +476,7 @@ quint32 SignonIdentity::store(const QVariantMap &info)
             info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
         int type = info.value(SIGNOND_IDENTITY_INFO_TYPE).toInt();
 
+        m_pInfo->setStorePassword(storeSecret);
         m_pInfo->setUserName(userName);
         m_pInfo->setCaption(caption);
         m_pInfo->setMethods(methods);
@@ -480,8 +486,6 @@ quint32 SignonIdentity::store(const QVariantMap &info)
         m_pInfo->setType(type);
     }
 
-    m_pInfo->setPassword(secret);
-    m_pInfo->setStorePassword(storeSecret);
     m_id = storeCredentials(*m_pInfo);
 
     if (m_id == SIGNOND_NEW_IDENTITY) {
