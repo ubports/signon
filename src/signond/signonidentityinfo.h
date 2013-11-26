@@ -46,8 +46,6 @@ struct SignonIdentityInfo: protected QVariantMap
 
     const QVariantMap toMap() const;
 
-    SignonIdentityInfo &operator=(const SignonIdentityInfo &other);
-
     void setNew() { setId(SIGNOND_NEW_IDENTITY); }
     bool isNew() const { return id() == SIGNOND_NEW_IDENTITY; }
     void setId(quint32 id) { insert(SIGNOND_IDENTITY_INFO_ID, id); }
