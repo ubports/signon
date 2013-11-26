@@ -108,11 +108,4 @@ bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
     return true;
 }
 
-SignonIdentityInfo &
-SignonIdentityInfo::operator=(const SignonIdentityInfo &other)
-{
-    QVariantMap(*this) = QVariantMap(other);
-    return *this;
-}
-
 } //namespace SignonDaemonNS
