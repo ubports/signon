@@ -108,7 +108,7 @@ void IdentityImpl::updateState(State state)
 
 void IdentityImpl::copyInfo(const IdentityInfo &info)
 {
-    m_identityInfo->impl->copy(*(info.impl));
+    *m_identityInfo->impl = *info.impl;
 }
 
 quint32 IdentityImpl::id() const
@@ -187,7 +187,6 @@ void IdentityImpl::storeCredentials(const IdentityInfo &info)
     QVariantList args;
     QVariantMap map = localInfo->impl->toMap();
     map.insert(SIGNOND_IDENTITY_INFO_ID, m_identityInfo->id());
-    map.insert(SIGNOND_IDENTITY_INFO_SECRET, localInfo->secret());
     args << map;
 
     m_dbusProxy.queueCall(QLatin1String("store"), args,

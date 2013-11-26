@@ -36,7 +36,6 @@
 #include <QtSql>
 
 #include "SignOn/abstract-secrets-storage.h"
-#include "signonidentityinfo.h"
 
 #define SSO_MAX_TOKEN_STORAGE (4*1024) // 4 kB for token store/identity/method
 
@@ -56,6 +55,7 @@ enum IdentityFlags {
 
 class MetaDataDB;
 class SecretsCache;
+class SignonIdentityInfo;
 
 /*!
  * @class CredentialsDB

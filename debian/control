@@ -101,7 +101,7 @@ Depends: ${shlibs:Depends},
          libqt5sql5-sqlite,
 Breaks: signon-saslplugin (<< 8.40), signon-plugins
 Replaces: signon-saslplugin (<< 8.40), signon-plugins
-Recommends: signon-ui, signon-keyring-extension
+Recommends: signon-ui
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
