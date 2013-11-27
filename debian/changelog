@@ -1,10 +1,11 @@
-signon (8.55-0ubuntu4) UNRELEASED; urgency=low
+signon (8.55-0ubuntu5) UNRELEASED; urgency=low
 
   * New pull from upstream
     - Increate tiemout in authsession test
     - signond: on idle timeout, directly delete all AuthSessions (should fix
       a race condition which makes a test fail)
     - signond: avoid rewriting password with empty string
+    - signond: fix a crash when destroying authentication sessions
   * debian/control
     - Remove signon-keyring-extension from Recommends field
   * New upstream version
@@ -19,7 +20,7 @@ signon (8.55-0ubuntu4) UNRELEASED; urgency=low
   * debian/patches
     - Remove all patches (no longer needed, given the upstream changes)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 26 Nov 2013 11:51:34 +0200
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 27 Nov 2013 18:37:20 +0200
 
 signon (8.54+13.10.20130918.1-0ubuntu1) saucy; urgency=low
 
