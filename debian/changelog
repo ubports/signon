@@ -1,5 +1,6 @@
-signon (8.55-0ubuntu5) UNRELEASED; urgency=low
+signon (8.55+14.04.20131127-0ubuntu1) trusty; urgency=low
 
+  [ Alberto Mardegan ]
   * New pull from upstream
     - Increate tiemout in authsession test
     - signond: on idle timeout, directly delete all AuthSessions (should fix
@@ -20,7 +21,17 @@ signon (8.55-0ubuntu5) UNRELEASED; urgency=low
   * debian/patches
     - Remove all patches (no longer needed, given the upstream changes)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 27 Nov 2013 18:37:20 +0200
+  [ Ken VanDine ]
+  * revert quilt simplification, it didn't work in the PPA build for
+    armhf.
+
+  [ Robert Bruce Park ]
+  * Simplify quilt overrides.
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 607
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 27 Nov 2013 17:33:09 +0000
 
 signon (8.54+13.10.20130918.1-0ubuntu1) saucy; urgency=low
 
