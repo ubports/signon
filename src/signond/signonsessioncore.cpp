@@ -927,8 +927,10 @@ void SignonSessionCore::destroy()
     else
         sessionsOfNonStoredCredentials.removeOne(this);
 
-    QObjectList authSessions = children();
-    qDeleteAll(authSessions);
+    QObjectList authSessions;
+    while (authSessions = children(), !authSessions.isEmpty()) {
+        delete authSessions.first();
+    }
     deleteLater();
 }
 
