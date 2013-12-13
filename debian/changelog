@@ -1,3 +1,14 @@
+signon (8.55+14.04.20131212-0ubuntu1) trusty; urgency=low
+
+  [ Alberto Mardegan ]
+  * Do not use qDeleteAll() on the QObject's children. (LP: #1156776,
+    #1258578, #1237782)
+
+  [ Ubuntu daily release ]
+  * Automatic snapshot from revision 609
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 12 Dec 2013 21:41:01 +0000
+
 signon (8.55+14.04.20131127-0ubuntu1) trusty; urgency=low
 
   [ Alberto Mardegan ]
