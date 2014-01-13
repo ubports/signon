@@ -445,9 +445,9 @@ quint32 SignonIdentity::store(const QVariantMap &info)
                                                    context.connection(),
                                                    context.message());
 
-    QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
-    MethodMap methods =
-        qdbus_cast<MethodMap>(container.value<QDBusArgument>());
+    const QVariant container = info.value(SIGNOND_IDENTITY_INFO_AUTHMETHODS);
+    MethodMap methods = container.isValid() ?
+        qdbus_cast<MethodMap>(container.value<QDBusArgument>()) : MethodMap();
 
     //Add creator to owner list if it has AID
     QStringList ownerList =
