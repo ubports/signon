@@ -12,7 +12,7 @@ export SSO_DAEMON_TIMEOUT=5
 export SSO_IDENTITY_TIMEOUT=5
 export SSO_AUTHSESSION_TIMEOUT=5
 export PATH="${BUILDDIR}/src/remotepluginprocess:$PATH"
-export LD_LIBRARY_PATH="${BUILDDIR}/lib/plugins/signon-plugins-common":"${BUILDDIR}/lib/signond/SignOn":"$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="${BUILDDIR}/lib/plugins":"${BUILDDIR}/lib/plugins/signon-plugins-common":"${BUILDDIR}/lib/signond/SignOn":"$LD_LIBRARY_PATH"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-$(whoami)}/signon-tests"
 mkdir -p "$XDG_RUNTIME_DIR"
 
