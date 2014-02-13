@@ -72,3 +72,11 @@ INSTALLS += headers
 pkgconfig.files = lib$${TARGET}.pc
 include($${TOP_SRC_DIR}/common-pkgconfig.pri)
 INSTALLS += pkgconfig
+
+QMAKE_SUBSTITUTES += SignOnQtConfig.cmake.in \
+    SignOnQtConfigVersion.cmake.in
+cmake_modules.files = SignOnQtConfig.cmake \
+    SignOnQtConfigVersion.cmake
+cmake_modules.path = $${CMAKE_CONFIG_PATH}
+
+INSTALLS += cmake_modules
