@@ -1,3 +1,13 @@
+signon (8.56-0ubuntu1) UNRELEASED; urgency=medium
+
+  * New upstream release
+    - Make it easier to use with CMake by adding a Config*.cmake files
+      This allow applications using cmake to do:
+      find_package(SignOnQt 8.55 REQUIRED)
+    - signond: don't attempt demarshalling an invalid QVariant 
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 13 Feb 2014 17:09:52 +0200
+
 signon (8.55+14.04.20131212-0ubuntu1) trusty; urgency=low
 
   [ Alberto Mardegan ]

@@ -1,3 +1,4 @@
+usr/lib/cmake
 usr/lib/libsignon-qt5.so
 usr/lib/pkgconfig/libsignon-qt5.pc
 usr/include/signon-qt5/SignOn/*
