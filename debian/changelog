@@ -1,12 +1,24 @@
-signon (8.56-0ubuntu1) UNRELEASED; urgency=medium
+signon (8.56+14.04.20140307-0ubuntu1) trusty; urgency=medium
 
+  [ Alberto Mardegan ]
   * New upstream release
     - Make it easier to use with CMake by adding a Config*.cmake files
       This allow applications using cmake to do:
       find_package(SignOnQt 8.55 REQUIRED)
     - signond: don't attempt demarshalling an invalid QVariant 
+  * Fix tests for Qt 5.2 Merge from upstream. (LP: #1156776, #1258578,
+    #1267805, #1237782)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Thu, 13 Feb 2014 17:09:52 +0200
+  [ CI bot ]
+  * No change rebuild against Qt 5.2.1.
+
+  [ Timo Jyrinki ]
+  * Drop quilt usage as recommended for daily release packages.
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Fri, 07 Mar 2014 10:35:52 +0000
 
 signon (8.55+14.04.20131212-0ubuntu1) trusty; urgency=low
 
