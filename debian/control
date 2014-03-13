@@ -33,16 +33,25 @@ Depends: ${shlibs:Depends},
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
+Package: libsignon-common-dev
+Architecture: any
+Priority: optional
+Section: libdevel
+Depends: ${misc:Depends},
+Description: Development files for libsignon
+ CMake files for the libsignon-qt and libsignon-qt5 libraries.
+
 Package: libsignon-qt-dev
 Architecture: any
 Priority: optional
 Section: libdevel
 Depends: libsignon-qt1 (= ${binary:Version}),
+         libsignon-common-dev (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends},
          libqt4-dev (>= 4.5),
 Description: Development files for libsignon-qt
- Headers and static libraries for the libsignon-qt library
+ Headers and static libraries for the libsignon-qt library.
 
 Package: libsignon-qt5-1
 Architecture: any
@@ -58,6 +67,7 @@ Architecture: any
 Priority: optional
 Section: libdevel
 Depends: libsignon-qt5-1 (= ${binary:Version}),
+         libsignon-common-dev (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends},
          qtbase5-dev,
