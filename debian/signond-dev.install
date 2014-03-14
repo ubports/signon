@@ -1,5 +1,3 @@
-
-# extensions
 usr/include/signon-extension/SignOn/*
 usr/include/signond/*
 usr/lib/libsignon-extension.so
