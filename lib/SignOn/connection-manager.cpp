@@ -103,7 +103,7 @@ ConnectionManager::setupSocketConnection()
     if (!connection.isConnected()) {
         QDBusError error = connection.lastError();
         QString name = error.name();
-        BLAME() << "p2p error:" << error << error.type();
+        TRACE() << "p2p error:" << error << error.type();
         if (name == QLatin1String("org.freedesktop.DBus.Error.FileNotFound") &&
             m_serviceStatus != ServiceActivated) {
             return SocketConnectionNoService;
