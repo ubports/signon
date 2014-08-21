@@ -348,7 +348,17 @@ void TestDatabase::updateCredentialsTest()
     QCOMPARE(retInfo.userName(), updateInfo.userName());
     QCOMPARE(retInfo.password(), updateInfo.password());
     QCOMPARE(retInfo.storePassword(), updateInfo.storePassword());
-    QCOMPARE(retInfo.methods(), updateInfo.methods());
+
+    /* The sorting of the method's mechanisms might vary, so we cannot just
+     * compare the whole method map as a whole. */
+    QCOMPARE(retInfo.methods().keys().toSet(),
+             updateInfo.methods().keys().toSet());
+    QMapIterator<QString, QStringList> it(retInfo.methods());
+    while (it.hasNext()) {
+        it.next();
+        QCOMPARE(it.value().toSet(), umethods.value(it.key()).toSet());
+    }
+
     QCOMPARE(retInfo.realms().toSet(), updateInfo.realms().toSet());
     QCOMPARE(retInfo.accessControlList().toSet(),
              updateInfo.accessControlList().toSet());

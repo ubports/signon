@@ -85,6 +85,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void removeCompleted(QDBusPendingCallWatcher *call);
     void signOutCompleted(QDBusPendingCallWatcher *call);
+    void onCredentialsUpdated(quint32 id);
 
 private:
     SignonIdentity(quint32 id, int timeout, SignonDaemon *parent);
