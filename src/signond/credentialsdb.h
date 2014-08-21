@@ -134,6 +134,9 @@ public:
     QStringList references(const quint32 id,
                            const QString &token = QString());
 
+Q_SIGNALS:
+    void credentialsUpdated(quint32 id);
+
 private:
     SignOn::AbstractSecretsStorage *secretsStorage;
     SecretsCache *m_secretsCache;
