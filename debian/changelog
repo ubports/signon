@@ -1,3 +1,15 @@
+signon (8.57-0ubuntu0) UNRELEASED; urgency=medium
+
+  * New upstream release
+    - Build: add CMake config files for Qt5
+    - Tests: make database test more robust
+    - signond: notify clients of credentials updates
+    - signond: fix passing of DBus maps to plugins
+    - lib: don't emit a critical warning on p2p socket failure
+    - lib/plugins: do not build a static library
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 25 Aug 2014 17:38:00 +0300
+
 signon (8.56+14.04.20140307-0ubuntu3) utopic; urgency=medium
 
   * Changes to enable reverse-deps to be cross-built, since cross-pkg-config
