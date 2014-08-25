@@ -32,6 +32,9 @@ override_dh_auto_clean:
 override_dh_auto_install:
 	dh_auto_install -Bbuild/qt4 -plibsignon-qt1
 	dh_auto_install -Bbuild/qt4 -plibsignon-qt-dev
+	mv debian/tmp/usr/lib/cmake/SignOnQt debian/tmp/usr/lib/cmake/SignOnQt4
+	mv debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQtConfig.cmake debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQt4Config.cmake
+	mv debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQtConfigVersion.cmake debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQt4ConfigVersion.cmake
 	dh_auto_install -Bbuild/qt5
 
 override_dh_install:

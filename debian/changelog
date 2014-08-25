@@ -1,3 +1,9 @@
+signon (8.56+14.04.20140307-0ubuntu2) trusty; urgency=medium
+
+  * In debian/rules move qt4 cmake files to not clash with qt5 cmake files
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Sun, 16 Mar 2014 19:35:02 +0000
+
 signon (8.56+14.04.20140307-0ubuntu1) trusty; urgency=medium
 
   [ Alberto Mardegan ]

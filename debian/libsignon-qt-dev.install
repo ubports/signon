@@ -1,4 +1,4 @@
-usr/lib/cmake
+usr/lib/cmake/SignOnQt4/
 usr/lib/libsignon-qt.so
 usr/lib/pkgconfig/libsignon-qt.pc
 usr/include/signon-qt/SignOn/*
