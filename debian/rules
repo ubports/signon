@@ -13,11 +13,11 @@ export DPKG_GENSYMBOLS_CHECK_LEVEL=4
 override_dh_auto_configure:
 	mkdir -p build/qt4 build/qt5
 	QT_SELECT=qt4 \
-	dh_auto_configure -Bbuild/qt4 -- LIBDIR=/usr/lib \
+	dh_auto_configure -Bbuild/qt4 -- LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		BUILD_DIR=build/qt4 \
 		"QMAKE_CXXFLAGS=$(CFLAGS)" ../../signon.pro
 	QT_SELECT=qt5 \
-	dh_auto_configure -Bbuild/qt5 -- LIBDIR=/usr/lib \
+	dh_auto_configure -Bbuild/qt5 -- LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		BUILD_DIR=build/qt5 \
 		"QMAKE_CXXFLAGS=$(CFLAGS)" ../../signon.pro
 
@@ -32,16 +32,16 @@ override_dh_auto_clean:
 override_dh_auto_install:
 	dh_auto_install -Bbuild/qt4 -plibsignon-qt1
 	dh_auto_install -Bbuild/qt4 -plibsignon-qt-dev
-	mv debian/tmp/usr/lib/cmake/SignOnQt debian/tmp/usr/lib/cmake/SignOnQt4
-	mv debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQtConfig.cmake debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQt4Config.cmake
-	mv debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQtConfigVersion.cmake debian/tmp/usr/lib/cmake/SignOnQt4/SignOnQt4ConfigVersion.cmake
+	mv debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt4
+	mv debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt4/SignOnQtConfig.cmake debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt4/SignOnQt4Config.cmake
+	mv debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt4/SignOnQtConfigVersion.cmake debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/cmake/SignOnQt4/SignOnQt4ConfigVersion.cmake
 	dh_auto_install -Bbuild/qt5
 
 override_dh_install:
 	rm -f debian/tmp/usr/include/signon-plugins/*example*.h
 	rm -f debian/tmp/usr/include/signon-plugins/*test*.h
-	rm -f debian/tmp/usr/lib/libsignon-qt*.*a
-	rm -f debian/tmp/usr/lib/signon/libexampleplugin.so
+	rm -f debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/libsignon-qt*.*a
+	rm -f debian/tmp/usr/lib/$(DEB_HOST_MULTIARCH)/signon/libexampleplugin.so
 	dh_install --fail-missing
 
 %:

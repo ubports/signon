@@ -1,3 +1,11 @@
+signon (8.56+14.04.20140307-0ubuntu3) utopic; urgency=medium
+
+  * Changes to enable reverse-deps to be cross-built, since cross-pkg-config
+    no longer looks in /usr/lib/pkgconfig for pcfiles. (LP: #1316667)
+  * Install into Multi-Arch directories and set M-A: Same on library packages.
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 08 May 2014 10:58:12 +0100
+
 signon (8.56+14.04.20140307-0ubuntu2) trusty; urgency=medium
 
   * In debian/rules move qt4 cmake files to not clash with qt5 cmake files

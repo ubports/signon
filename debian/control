@@ -30,6 +30,7 @@ Section: libs
 Priority: optional
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
@@ -50,6 +51,7 @@ Section: libs
 Priority: optional
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
@@ -79,6 +81,7 @@ Section: libs
 Priority: optional
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
@@ -88,6 +91,7 @@ Section: libs
 Priority: optional
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
