@@ -1,4 +1,4 @@
-usr/lib/*/libsignon-plugins.a
+usr/lib/*/libsignon-plugins.so
 usr/lib/*/pkgconfig/signon-plugins.pc
 usr/lib/*/pkgconfig/signon-plugins-common.pc
 usr/include/signon-plugins/SignOn
