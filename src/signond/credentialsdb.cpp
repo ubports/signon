@@ -1432,6 +1432,8 @@ quint32 CredentialsDB::updateCredentials(const SignonIdentityInfo &info)
         }
     }
 
+    Q_EMIT credentialsUpdated(id);
+
     return id;
 }
 

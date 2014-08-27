@@ -24,6 +24,7 @@ coverage.info
 debian
 doc/html
 doc/qch
+lib/SignOn/SignOnQt*.cmake
 lib/SignOn/doc/html
 lib/SignOn/doc/qch
 server/com.google.code.AccountsSSO.SingleSignOn.service

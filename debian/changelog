@@ -1,3 +1,29 @@
+signon (8.57-0ubuntu0) UNRELEASED; urgency=medium
+
+  * New upstream release
+    - Build: add CMake config files for Qt5
+    - Tests: make database test more robust
+    - signond: notify clients of credentials updates
+    - signond: fix passing of DBus maps to plugins
+    - lib: don't emit a critical warning on p2p socket failure
+    - lib/plugins: do not build a static library
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 25 Aug 2014 17:38:00 +0300
+
+signon (8.56+14.04.20140307-0ubuntu3) utopic; urgency=medium
+
+  * Changes to enable reverse-deps to be cross-built, since cross-pkg-config
+    no longer looks in /usr/lib/pkgconfig for pcfiles. (LP: #1316667)
+  * Install into Multi-Arch directories and set M-A: Same on library packages.
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 08 May 2014 10:58:12 +0100
+
+signon (8.56+14.04.20140307-0ubuntu2) trusty; urgency=medium
+
+  * In debian/rules move qt4 cmake files to not clash with qt5 cmake files
+
+ -- Jonathan Riddell <jriddell@ubuntu.com>  Sun, 16 Mar 2014 19:35:02 +0000
+
 signon (8.56+14.04.20140307-0ubuntu1) trusty; urgency=medium
 
   [ Alberto Mardegan ]

@@ -36,9 +36,11 @@ DEFINES += NO_SIGNON_USER
 # Qt4/Qt5 common checks
 greaterThan(QT_MAJOR_VERSION, 4) {
     LIBSIGNON = libsignon-qt5
+    CMAKE_BASENAME = SignOnQt5
     LIBQTCORE = Qt5Core
 } else {
     LIBSIGNON = libsignon-qt
+    CMAKE_BASENAME = SignOnQt
     LIBQTCORE = QtCore
 }
 
@@ -84,7 +86,7 @@ isEmpty( LIBDIR ) {
 }
 
 isEmpty ( CMAKE_CONFIG_PATH ) {
-    CMAKE_CONFIG_PATH = $${INSTALL_LIBDIR}/cmake/SignOnQt/
+    CMAKE_CONFIG_PATH = $${INSTALL_LIBDIR}/cmake/$${CMAKE_BASENAME}
     message("====")
     message("==== NOTE: To override the cmake module installation path run: `qmake CMAKE_CONFIG_PATH=/custom/path'")
     message("==== (current installation path is `$${CMAKE_CONFIG_PATH}')")

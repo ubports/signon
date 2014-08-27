@@ -103,6 +103,12 @@ SignonIdentity::SignonIdentity(quint32 id, int timeout,
                                      SIGNON_UI_DAEMON_OBJECTPATH,
                                      QDBusConnection::sessionBus(),
                                      this);
+
+    /* Watch for credential updates happening outside of this object (this can
+     * happen on request of authentication plugins) */
+    CredentialsDB *db = CredentialsAccessManager::instance()->credentialsDB();
+    QObject::connect(db, SIGNAL(credentialsUpdated(quint32)),
+                     this, SLOT(onCredentialsUpdated(quint32)));
 }
 
 SignonIdentity::~SignonIdentity()
@@ -432,6 +438,22 @@ void SignonIdentity::signOutCompleted(QDBusPendingCallWatcher *call)
     QDBusMessage reply = context->message().createReply();
     reply << ok;
     context->connection().send(reply);
+}
+
+void SignonIdentity::onCredentialsUpdated(quint32 id)
+{
+    if (id != m_id) return;
+
+    TRACE() << m_id;
+
+    /* Clear the cached information about the identity; some of it might not be
+     * valid anymore */
+    if (m_pInfo) {
+        delete m_pInfo;
+        m_pInfo = NULL;
+    }
+
+    emit infoUpdated((int)SignOn::IdentityDataUpdated);
 }
 
 quint32 SignonIdentity::store(const QVariantMap &info)
