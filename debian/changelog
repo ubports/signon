@@ -1,5 +1,6 @@
-signon (8.57-0ubuntu0) UNRELEASED; urgency=medium
+signon (8.57+14.10.20140827-0ubuntu1) utopic; urgency=medium
 
+  [ Alberto Mardegan ]
   * New upstream release
     - Build: add CMake config files for Qt5
     - Tests: make database test more robust
@@ -8,7 +9,10 @@ signon (8.57-0ubuntu0) UNRELEASED; urgency=medium
     - lib: don't emit a critical warning on p2p socket failure
     - lib/plugins: do not build a static library
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 25 Aug 2014 17:38:00 +0300
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Wed, 27 Aug 2014 15:34:55 +0000
 
 signon (8.56+14.04.20140307-0ubuntu3) utopic; urgency=medium
 
