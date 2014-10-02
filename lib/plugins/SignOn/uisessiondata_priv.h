@@ -66,6 +66,9 @@
 #define SSOUI_KEY_METHOD            QLatin1String("Method")
 #define SSOUI_KEY_MECHANISM         QLatin1String("Mechanism")
 
+/* Process ID of the client application */
+#define SSOUI_KEY_PID               QLatin1String("Pid")
+
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
 #define SSOUI_KEY_SLOT_REFRESH "refresh"
