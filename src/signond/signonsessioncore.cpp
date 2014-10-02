@@ -705,6 +705,9 @@ void SignonSessionCore::processUiRequest(const QVariantMap &data)
         request.m_params[SSOUI_KEY_CLIENT_DATA] = m_clientData;
         request.m_params[SSOUI_KEY_METHOD] = m_method;
         request.m_params[SSOUI_KEY_MECHANISM] = request.m_mechanism;
+        request.m_params[SSOUI_KEY_PID] =
+            AccessControlManagerHelper::instance()->pidOfPeer(request.m_conn,
+                                                              request.m_msg);
 
         CredentialsAccessManager *camManager =
             CredentialsAccessManager::instance();
