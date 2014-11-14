@@ -68,6 +68,8 @@
 
 /* Process ID of the client application */
 #define SSOUI_KEY_PID               QLatin1String("Pid")
+/* Application ID (security context) of the client application */
+#define SSOUI_KEY_APP_ID            QLatin1String("AppId")
 
 #define SSOUI_KEY_SLOT_ACCEPT  "accept"
 #define SSOUI_KEY_SLOT_REJECT  "reject"
