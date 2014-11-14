@@ -172,7 +172,7 @@ QString SignonDaemonAdaptor::getAuthSessionObjectPath(const quint32 id,
 
     /* Access Control */
     if (id != SIGNOND_NEW_IDENTITY) {
-        if (!acm->isPeerAllowedToUseAuthSession(conn, msg, id)) {
+        if (!acm->isPeerAllowedToUseIdentity(conn, msg, id)) {
             SignOn::AccessReply *reply =
                 acm->requestAccessToIdentity(conn, msg, id);
             /* If the request is accepted, we'll need the method name ("type")
