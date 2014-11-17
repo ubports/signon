@@ -257,16 +257,137 @@ void SsoTestClient::requestCredentialsUpdate()
     TEST_DONE
 }
 
+void SsoTestClient::storeCredentials_data()
+{
+    QTest::addColumn<bool>("addMethods");
+
+    QTest::newRow("with methods") << true;
+    QTest::newRow("without methods") << false;
+}
+
 void SsoTestClient::storeCredentials()
 {
     TEST_START
 
-    if (!testAddingNewCredentials()) {
-        QFAIL("Adding new credentials test failed.");
+    QFETCH(bool, addMethods);
+
+    m_identityResult.reset();
+
+    QMap<MethodName, MechanismsList> methods;
+    if (addMethods) {
+        methods.insert("dummy", QStringList() << "mech1" << "mech2" << "mech3");
+        methods.insert("dummy1", QStringList() << "mech11" << "mech12" << "mech13");
+    }
+    IdentityInfo info("TEST_CAPTION", "TEST_USERNAME", methods);
+    info.setSecret("TEST_SECRET");
+    info.setRealms(QStringList() << "TEST_REALM1" << "TEST_REALM2");
+    info.setAccessControlList(QStringList() << "*");
+
+    Identity *identity = Identity::newIdentity(info, this);
+
+    QEventLoop loop;
+
+    connect(identity, SIGNAL(error(const SignOn::Error &)),
+            &m_identityResult, SLOT(error(const SignOn::Error &)));
+
+    connect(identity, SIGNAL(credentialsStored(const quint32)),
+            &m_identityResult, SLOT(credentialsStored(const quint32)));
+    connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
+    identity->storeCredentials();
+
+    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+    loop.exec();
+
+    if (m_identityResult.m_responseReceived ==
+        TestIdentityResult::InexistentResp) {
+        QFAIL("A response was not received.");
     }
 
-    if (!testUpdatingCredentials()) {
-        QFAIL("Updating existing credentials test failed.");
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
+        QCOMPARE(m_identityResult.m_id, identity->id());
+
+        Identity *existingIdentity =
+            Identity::existingIdentity(m_identityResult.m_id, this);
+        QVERIFY2(existingIdentity != NULL,
+                 "Could not create existing identity. '0' ID provided?");
+        connect(existingIdentity, SIGNAL(info(const SignOn::IdentityInfo &)),
+                &m_identityResult, SLOT(info(const SignOn::IdentityInfo &)));
+
+        existingIdentity->queryInfo();
+
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+        delete existingIdentity;
+
+        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
+                                                      info)) {
+            QFAIL("Compared identity infos are not the same.");
+        }
+    } else {
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nError code: " << codeStr;
+        QFAIL("Error received");
+    }
+
+    // Test update credentials functionality
+
+    Identity *existingIdentity = Identity::existingIdentity(m_identityResult.m_id, this);
+    QVERIFY2(existingIdentity != NULL,
+             "Could not create existing identity. '0' ID provided?");
+
+    methods.clear();
+    if (addMethods) {
+        methods.insert("dummy1", QStringList() << "mech11" << "mech12" << "mech13");
+        methods.insert("dummy2", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
+        methods.insert("dummy3", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
+    }
+
+    IdentityInfo updateInfo("TEST_CAPTION", "TEST_USERNAME_UPDATED", methods);
+    updateInfo.setSecret("TEST_SECRET_YES", false);
+
+    do
+    {
+        QEventLoop loop;
+
+        connect(existingIdentity, SIGNAL(error(const SignOn::Error &)),
+                &m_identityResult, SLOT(error(const SignOn::Error &)));
+
+        connect(existingIdentity, SIGNAL(credentialsStored(const quint32)),
+                &m_identityResult, SLOT(credentialsStored(const quint32)));
+        connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+
+        existingIdentity->storeCredentials(updateInfo);
+        qDebug();
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+    } while(0);
+
+    if (m_identityResult.m_responseReceived ==
+        TestIdentityResult::InexistentResp) {
+        QFAIL("A response was not received.");
+    }
+
+    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
+        QEventLoop loop;
+        connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
+        connect(existingIdentity, SIGNAL(info(const SignOn::IdentityInfo &)),
+                &m_identityResult, SLOT(info(const SignOn::IdentityInfo &)));
+
+        existingIdentity->queryInfo();
+        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
+        loop.exec();
+
+        qDebug() << "ID:" << existingIdentity->id();
+        QCOMPARE(m_identityResult.m_idInfo.caption(), updateInfo.caption());
+        QCOMPARE(m_identityResult.m_idInfo.methods(), updateInfo.methods());
+        QCOMPARE(m_identityResult.m_idInfo.userName(), updateInfo.userName());
+    } else {
+        QString codeStr = errCodeAsStr(m_identityResult.m_error);
+        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
+                 << ".\nError code: " << codeStr;
+        QFAIL("Error received");
     }
 
     TEST_DONE
@@ -562,21 +683,6 @@ void SsoTestClient::multipleRemove()
     }
 
     delete identity;
-
-    TEST_DONE
-}
-
-void SsoTestClient::storeCredentialsWithoutAuthMethodsTest()
-{
-    TEST_START
-
-    if (!testAddingNewCredentials(false)) {
-        QFAIL("Adding new credentials test failed.");
-    }
-
-    if (!testUpdatingCredentials()) {
-        QFAIL("Updating existing credentials test failed.");
-    }
 
     TEST_DONE
 }
@@ -1446,146 +1552,6 @@ void SsoTestClient::clear()
     }
 
     TEST_DONE
-}
-
-bool SsoTestClient::testAddingNewCredentials(bool addMethods)
-{
-    m_identityResult.reset();
-
-    QMap<MethodName, MechanismsList> methods;
-    if (addMethods) {
-        methods.insert("dummy", QStringList() << "mech1" << "mech2" << "mech3");
-        methods.insert("dummy1", QStringList() << "mech11" << "mech12" << "mech13");
-    }
-    IdentityInfo info("TEST_CAPTION", "TEST_USERNAME", methods);
-    info.setSecret("TEST_SECRET");
-    info.setRealms(QStringList() << "TEST_REALM1" << "TEST_REALM2");
-
-    Identity *identity = Identity::newIdentity(info, this);
-
-    QEventLoop loop;
-
-    connect(identity, SIGNAL(error(const SignOn::Error &)),
-            &m_identityResult, SLOT(error(const SignOn::Error &)));
-
-    connect(identity, SIGNAL(credentialsStored(const quint32)),
-            &m_identityResult, SLOT(credentialsStored(const quint32)));
-    connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-
-    identity->storeCredentials();
-
-    QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-    loop.exec();
-
-    if (m_identityResult.m_responseReceived ==
-        TestIdentityResult::InexistentResp) {
-        qDebug() << "A response was not received.";
-        return false;
-    }
-
-    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
-        if (m_identityResult.m_id != identity->id()) {
-            qDebug() << "Queried identity id does not match with stored data.";
-            return false;
-        }
-
-        Identity *existingIdentity =
-            Identity::existingIdentity(m_identityResult.m_id, this);
-        if (existingIdentity == NULL) {
-            qDebug() << "Could not create existing identity. '0' ID provided?";
-            return false;
-        }
-        connect(existingIdentity, SIGNAL(info(const SignOn::IdentityInfo &)),
-                &m_identityResult, SLOT(info(const SignOn::IdentityInfo &)));
-
-        existingIdentity->queryInfo();
-
-        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-        loop.exec();
-        delete existingIdentity;
-
-        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
-                                                      info)) {
-            qDebug() << "Compared identity infos are not the same.";
-            return false;
-        }
-    } else {
-        QString codeStr = errCodeAsStr(m_identityResult.m_error);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
-                 << ".\nError code: " << codeStr;
-        return false;
-    }
-    return true;
-}
-
-bool SsoTestClient::testUpdatingCredentials(bool addMethods)
-{
-    // Test update credentials functionality
-
-    Identity *existingIdentity = Identity::existingIdentity(m_identityResult.m_id, this);
-    if (existingIdentity == NULL) {
-        qDebug() << "Could not create existing identity. '0' ID provided?";
-        return false;
-    }
-
-    QMap<MethodName, MechanismsList> methods;
-    if (addMethods) {
-        methods.insert("dummy1", QStringList() << "mech11" << "mech12" << "mech13");
-        methods.insert("dummy2", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
-        methods.insert("dummy3", QStringList() << "mech1_updated" << "mech2" << "mech1_updated2");
-    }
-
-    IdentityInfo updateInfo("TEST_CAPTION", "TEST_USERNAME_UPDATED", methods);
-    updateInfo.setSecret("TEST_SECRET_YES", false);
-
-    do
-    {
-        QEventLoop loop;
-
-        connect(existingIdentity, SIGNAL(error(const SignOn::Error &)),
-                &m_identityResult, SLOT(error(const SignOn::Error &)));
-
-        connect(existingIdentity, SIGNAL(credentialsStored(const quint32)),
-                &m_identityResult, SLOT(credentialsStored(const quint32)));
-        connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-
-        existingIdentity->storeCredentials(updateInfo);
-        qDebug();
-        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-        loop.exec();
-    } while(0);
-
-    qDebug();
-    if (m_identityResult.m_responseReceived ==
-        TestIdentityResult::InexistentResp) {
-        qDebug() << "A response was not received.";
-        return false;
-    }
-
-    if (m_identityResult.m_responseReceived == TestIdentityResult::NormalResp) {
-        QEventLoop loop;
-        connect(&m_identityResult, SIGNAL(testCompleted()), &loop, SLOT(quit()));
-        connect(existingIdentity, SIGNAL(info(const SignOn::IdentityInfo &)),
-                &m_identityResult, SLOT(info(const SignOn::IdentityInfo &)));
-
-        existingIdentity->queryInfo();
-        QTimer::singleShot(test_timeout, &loop, SLOT(quit()));
-        loop.exec();
-
-        qDebug() << "ID:" << existingIdentity->id();
-        if (!TestIdentityResult::compareIdentityInfos(m_identityResult.m_idInfo,
-                                                      updateInfo)) {
-            qDebug() << "Compared identity infos are not the same.";
-            return false;
-        }
-    } else {
-        QString codeStr = errCodeAsStr(m_identityResult.m_error);
-        qDebug() << "Error reply: " << m_serviceResult.m_errMsg
-                 << ".\nError code: " << codeStr;
-
-        return false;
-    }
-    return true;
 }
 
 void SsoTestClient::emptyPasswordRegression()

@@ -361,6 +361,7 @@ void TestAuthSession::process_with_unauthorized_method()
     methods.insert(QLatin1String("ssotest"), mechs);
     IdentityInfo info("test_caption", "test_user_name", methods);
     info.setSecret("test_secret");
+    info.setAccessControlList(QStringList() << "*");
     Identity *id = Identity::newIdentity(info, this);
 
     QSignalSpy spyResponseStoreCreds(id, SIGNAL(credentialsStored(const quint32)));
