@@ -1,5 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
+    tst_access_control_manager_helper.pro \
     tst_timeouts.pro \
     tst_pluginproxy.pro \
     tst_database.pro \

@@ -62,6 +62,7 @@ void TimeoutsTest::identityTimeout()
     IdentityInfo info = IdentityInfo(QLatin1String("timeout test"),
                                      QLatin1String("timeout@test"),
                                      methods);
+    info.setAccessControlList(QStringList() << "*");
     Identity *identity = Identity::newIdentity(info);
     QVERIFY(identity != NULL);
 
@@ -135,6 +136,7 @@ void TimeoutsTest::identityRegisterTwice()
     IdentityInfo info = IdentityInfo(QLatin1String("timeout test"),
                                      QLatin1String("timeout@test"),
                                      methods);
+    info.setAccessControlList(QStringList() << "*");
     Identity *identity = Identity::newIdentity(info);
     QVERIFY(identity != NULL);
 

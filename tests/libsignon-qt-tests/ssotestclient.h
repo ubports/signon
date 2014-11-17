@@ -56,6 +56,7 @@ private Q_SLOTS:
      * Identity tests
      */
     void queryAvailableMetods();
+    void storeCredentials_data();
     void storeCredentials();
     void requestCredentialsUpdate();
     void queryInfo();
@@ -65,7 +66,6 @@ private Q_SLOTS:
     void verifySecret();
     void signOut();
     void remove();
-    void storeCredentialsWithoutAuthMethodsTest();
     void sessionTest();
     void multipleRemove();
     void removeStoreRemove();
