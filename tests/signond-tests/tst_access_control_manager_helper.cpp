@@ -28,11 +28,12 @@
 #include <QTest>
 
 #include <SignOn/AbstractAccessControlManager>
-#include "accesscontrolmanagerhelper.cpp"
+#include "accesscontrolmanagerhelper.h"
 #include "credentialsaccessmanager.h"
 #include "credentialsdb.h"
 
 using namespace SignOn;
+using namespace SignonDaemonNS;
 
 // mock AbstractAccessControlManager {
 class AcmPlugin: public SignOn::AbstractAccessControlManager
