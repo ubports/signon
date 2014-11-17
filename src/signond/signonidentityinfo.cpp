@@ -60,6 +60,18 @@ const QVariantMap SignonIdentityInfo::toMap() const
     return *this;
 }
 
+void SignonIdentityInfo::update(const SignonIdentityInfo &info)
+{
+    QMapIterator<QString, QVariant> it(info);
+    while (it.hasNext()) {
+        it.next();
+        // We don't allow updating the ID
+        if (it.key() == SIGNOND_IDENTITY_INFO_ID) continue;
+
+        insert(it.key(), it.value());
+    }
+}
+
 bool SignonIdentityInfo::checkMethodAndMechanism(const QString &method,
                                                  const QString &mechanism,
                                                  QString &allowedMechanism)
