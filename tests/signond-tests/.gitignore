@@ -1,6 +1,7 @@
 /identity-tool
 /mock-ac-plugin/identity-ac-helper
 /tst_access_control
+/tst_access_control_manager_helper
 /tst_backup
 /tst_database
 /tst_pluginproxy
