@@ -1,3 +1,13 @@
+signon (8.57+15.04.20141127.1-0ubuntu1) vivid; urgency=low
+
+  [ Ubuntu daily release ]
+  * New rebuild forced
+
+  [ Alberto Mardegan ]
+  * Merge from upstream
+
+ -- Ubuntu daily release <ps-jenkins@lists.canonical.com>  Thu, 27 Nov 2014 10:53:16 +0000
+
 signon (8.57+14.10.20141006-0ubuntu1) utopic; urgency=low
 
   [ Alberto Mardegan ]
