@@ -471,41 +471,19 @@ quint32 SignonIdentity::store(const QVariantMap &info)
     MethodMap methods = container.isValid() ?
         qdbus_cast<MethodMap>(container.value<QDBusArgument>()) : MethodMap();
 
-    //Add creator to owner list if it has AID
-    QStringList ownerList =
-        info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
-    if (!appId.isNull())
-        ownerList.append(appId);
-
     if (m_pInfo == 0) {
         m_pInfo = new SignonIdentityInfo(info);
         m_pInfo->setMethods(methods);
+        //Add creator to owner list if it has AID
+        QStringList ownerList =
+            info.value(SIGNOND_IDENTITY_INFO_OWNER).toStringList();
+        if (!appId.isNull()) {
+            ownerList.append(appId);
+        }
         m_pInfo->setOwnerList(ownerList);
     } else {
-        if (info.contains(SIGNOND_IDENTITY_INFO_SECRET)) {
-            QString secret = info.value(SIGNOND_IDENTITY_INFO_SECRET).toString();
-            m_pInfo->setPassword(secret);
-        }
-        bool storeSecret =
-            info.value(SIGNOND_IDENTITY_INFO_STORESECRET).toBool();
-        QString userName =
-            info.value(SIGNOND_IDENTITY_INFO_USERNAME).toString();
-        QString caption =
-            info.value(SIGNOND_IDENTITY_INFO_CAPTION).toString();
-        QStringList realms =
-            info.value(SIGNOND_IDENTITY_INFO_REALMS).toStringList();
-        QStringList accessControlList =
-            info.value(SIGNOND_IDENTITY_INFO_ACL).toStringList();
-        int type = info.value(SIGNOND_IDENTITY_INFO_TYPE).toInt();
-
-        m_pInfo->setStorePassword(storeSecret);
-        m_pInfo->setUserName(userName);
-        m_pInfo->setCaption(caption);
-        m_pInfo->setMethods(methods);
-        m_pInfo->setRealms(realms);
-        m_pInfo->setAccessControlList(accessControlList);
-        m_pInfo->setOwnerList(ownerList);
-        m_pInfo->setType(type);
+        SignonIdentityInfo newInfo(info);
+        m_pInfo->update(newInfo);
     }
 
     m_id = storeCredentials(*m_pInfo);

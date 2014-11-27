@@ -89,7 +89,7 @@ bool AccessControlManagerHelper::isPeerAllowedToUseIdentity(
 
     IdentityOwnership ownership =
         isPeerOwnerOfIdentity(peerConnection, peerMessage, identityId);
-    if (ownership == ApplicationIsOwner || ownership == IdentityDoesNotHaveOwner)
+    if (ownership == ApplicationIsOwner)
         return true;
 
     if (acl.isEmpty())
