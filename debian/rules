@@ -19,6 +19,7 @@ override_dh_auto_configure:
 	QT_SELECT=qt5 \
 	dh_auto_configure -Bbuild/qt5 -- LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH) \
 		BUILD_DIR=build/qt5 \
+		CONFIG+=enable-p2p \
 		"QMAKE_CXXFLAGS=$(CFLAGS)" ../../signon.pro
 
 override_dh_auto_build:
