@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
+CONFIG += ordered
 SUBDIRS = \
     tst_access_control_manager_helper.pro \
     tst_timeouts.pro \
