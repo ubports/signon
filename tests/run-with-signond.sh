@@ -6,14 +6,15 @@ set -e
 
 # start a local signond
 
+export HOME="$(mktemp -d --tmpdir signond-tests-XXXXXX)"
 export SSO_LOGGING_LEVEL=2
-export SSO_STORAGE_PATH="/tmp"
+export SSO_STORAGE_PATH="${HOME}"
 export SSO_DAEMON_TIMEOUT=5
 export SSO_IDENTITY_TIMEOUT=5
 export SSO_AUTHSESSION_TIMEOUT=5
 export PATH="${BUILDDIR}/src/remotepluginprocess:$PATH"
 export LD_LIBRARY_PATH="${BUILDDIR}/lib/plugins":"${BUILDDIR}/lib/plugins/signon-plugins-common":"${BUILDDIR}/lib/signond/SignOn":"$LD_LIBRARY_PATH"
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-$(whoami)}/signon-tests"
+export XDG_RUNTIME_DIR="${HOME}/runtime-dir"
 mkdir -p "$XDG_RUNTIME_DIR"
 
 DBUS_CONFIG=${BUILDDIR}/tests/testsession.conf
@@ -41,4 +42,6 @@ else
     trap - EXIT
     cleanUp
 fi
+
+rm -rf ${HOME}
 
