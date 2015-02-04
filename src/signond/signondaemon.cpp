@@ -271,6 +271,8 @@ SignonDaemon::~SignonDaemon()
         exit(0);
     }
 
+    delete m_dbusServer;
+
     SignonAuthSession::stopAllAuthSessions();
     m_storedIdentities.clear();
 
