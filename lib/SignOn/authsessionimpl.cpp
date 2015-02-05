@@ -247,6 +247,8 @@ void AuthSessionImpl::errorSlot(const QDBusError &err)
         m_isAuthInProcessing = false;
 
         m_dbusProxy.setError(err);
+        // Forces a reinitialization of the proxy
+        m_dbusProxy.setObjectPath(QDBusObjectPath());
         return;
     }
 
