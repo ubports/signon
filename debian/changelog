@@ -1,3 +1,12 @@
+signon (8.57+15.04.20150204.1-0ubuntu3) UNRELEASED; urgency=medium
+
+  * Merge from upstream
+    - lib: reset the DBus proxy when registration failed
+    - Fix build with Qt 5.5 (LP: #1447175)
+    - Remove obsolete warning about not running as root
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Fri, 12 Jun 2015 14:17:06 +0300
+
 signon (8.57+15.04.20150204.1-0ubuntu1) vivid; urgency=medium
 
   [ Alberto Mardegan ]
