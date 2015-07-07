@@ -445,7 +445,7 @@ void IdentityImpl::infoUpdated(int state)
 
 void IdentityImpl::errorReply(const QDBusError& err)
 {
-    TRACE() << err.name();
+    TRACE() << err;
 
     /* Signon specific errors */
     if (err.name() == SIGNOND_UNKNOWN_ERR_NAME) {
