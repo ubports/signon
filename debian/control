@@ -2,8 +2,9 @@ Source: signon
 Section: gnome
 Priority: optional
 Maintainer: Ubuntu Desktop Team <ubuntu-desktop@lists.ubuntu.com>
-Build-Depends: debhelper (>= 9),
-               pkg-config,
+Build-Depends: dbus-test-runner,
+               debhelper (>= 9),
+               dh-migrations,
                doxygen,
                graphviz,
                libdbus-1-dev,
@@ -12,25 +13,25 @@ Build-Depends: debhelper (>= 9),
                libqt4-sql-sqlite,
                libqt5sql5-sqlite,
                libssl-dev,
+               pkg-config,
                qt4-dev-tools,
                qt4-qmake,
                qt5-qmake,
                qtbase5-dev,
                qtchooser,
-               dh-migrations,
-               dbus-test-runner,
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: http://code.google.com/p/accounts-sso/
-# If you aren't a member of ~online-accounts but need to upload packaging changes,
-# just go ahead.  ~online-accounts will notice and sync up the code again.
-Vcs-Bzr: https://code.launchpad.net/~online-accounts/signon/trunk
+# if you don't have have commit access to this branch but would like to upload
+# directly to Ubuntu, don't worry: your changes will be merged back into the
+# upstream branch
+Vcs-Bzr: lp:signon
 
 Package: libsignon-qt1
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
 Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
@@ -39,19 +40,19 @@ Package: libsignon-qt-dev
 Architecture: any
 Priority: optional
 Section: libdevel
-Depends: libsignon-qt1 (= ${binary:Version}),
-         ${shlibs:Depends},
+Depends: libqt4-dev (>= 4.5),
+         libsignon-qt1 (= ${binary:Version}),
          ${misc:Depends},
-         libqt4-dev (>= 4.5),
+         ${shlibs:Depends},
 Description: Development files for libsignon-qt
- Headers and static libraries for the libsignon-qt library
+ Headers and static libraries for the libsignon-qt library.
 
 Package: libsignon-qt5-1
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
 Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
@@ -61,9 +62,9 @@ Architecture: any
 Priority: optional
 Section: libdevel
 Depends: libsignon-qt5-1 (= ${binary:Version}),
-         ${shlibs:Depends},
-         ${misc:Depends},
          qtbase5-dev,
+         ${misc:Depends},
+         ${shlibs:Depends},
 Description: Development files for libsignon-qt
  Headers and static libraries for the libsignon-qt library
 
@@ -80,8 +81,8 @@ Package: libsignon-plugins-common1
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
 Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
@@ -90,8 +91,8 @@ Package: libsignon-extension1
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
 Multi-Arch: same
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
@@ -100,12 +101,14 @@ Package: signond
 Architecture: any
 Section: gnome
 Priority: optional
-Depends: ${shlibs:Depends},
+Depends: libqt5sql5-sqlite,
          ${misc:Depends},
-         libqt5sql5-sqlite,
-Breaks: signon-saslplugin (<< 8.40), signon-plugins
-Replaces: signon-saslplugin (<< 8.40), signon-plugins
-Recommends: signon-ui
+         ${shlibs:Depends},
+Breaks: signon-plugins,
+        signon-saslplugin (<< 8.40),
+Replaces: signon-plugins,
+          signon-saslplugin (<< 8.40),
+Recommends: signon-ui,
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
@@ -113,12 +116,12 @@ Package: signond-dev
 Architecture: any
 Priority: optional
 Section: libdevel
-Depends: signond (= ${binary:Version}),
-         ${shlibs:Depends},
+Depends: qtbase5-dev,
+         signond (= ${binary:Version}),
          ${misc:Depends},
-         qtbase5-dev,
-Breaks: signon-saslplugin-dev (<< 8.40)
-Replaces: signon-saslplugin-dev (<< 8.40)
+         ${shlibs:Depends},
+Breaks: signon-saslplugin-dev (<< 8.40),
+Replaces: signon-saslplugin-dev (<< 8.40),
 Description: Development files for Signon client library development
  Common headers and DBUS interfaces definition files for the Signon Framework.
 
@@ -137,8 +140,8 @@ Section: libdevel
 Priority: optional
 Depends: libsignon-plugins-common1 (= ${binary:Version}),
          libsignon-qt5-dev,
-         ${shlibs:Depends},
          ${misc:Depends},
+         ${shlibs:Depends},
 Description: Development files for Single Sign On plugins
  Headers and static libraries for Single Sign On plugin development.
 
@@ -155,11 +158,11 @@ Package: signon-plugin-password
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
+Depends: signond,
          ${misc:Depends},
-         signond,
-Replaces: signon-passwordplugin
-Conflicts: signon-passwordplugin
+         ${shlibs:Depends},
+Replaces: signon-passwordplugin,
+Conflicts: signon-passwordplugin,
 Description: Plain Password plugin for Single Sign On
  Password plugin for Single Sign On.
 
@@ -167,8 +170,8 @@ Package: signon-plugin-ssotest
 Architecture: any
 Section: libs
 Priority: optional
-Depends: ${shlibs:Depends},
+Depends: signond,
          ${misc:Depends},
-         signond,
+         ${shlibs:Depends},
 Description: Test plugin for Single Sign On
  Test plugin for Single Sign On.
