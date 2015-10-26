@@ -60,10 +60,4 @@
     #define SIGNON_EXPORT
 #endif
 
-/*
-   TODO - Add here a common data container for IdentityInfo,
-          dbus register it and use it as qt dbus type
-          for the signond <--> libsignon communication
-*/
-
 #endif // LIBSIGNONCOMMON_H
