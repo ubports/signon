@@ -1,7 +1,6 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2015 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -20,24 +19,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-/*!
- * @copyright Copyright (C) 2009-2011 Nokia Corporation.
- * @license LGPL
- */
 
-#ifndef LIBSIGNONCOMMON_H
-#define LIBSIGNONCOMMON_H
+#include "debug.h"
+#include <QByteArray>
 
-#ifdef SIGNON_EXPORT
-    #undef SIGNON_EXPORT
-#endif
+int libsignon_logging_level = 1;
 
-#if __GNUC__ >= 4
-    #define SIGNON_EXPORT __attribute__ ((visibility("default")))
-#endif
+namespace SignOn {
 
-#ifndef SIGNON_EXPORT
-    #define SIGNON_EXPORT
-#endif
+void setLoggingLevel(int level) {
+    libsignon_logging_level = level;
+}
 
-#endif // LIBSIGNONCOMMON_H
+void initDebug() {
+    QByteArray loggingLevelVar = qgetenv("LIBSIGNON_LOGGING_LEVEL");
+    if (!loggingLevelVar.isEmpty()) {
+        setLoggingLevel(loggingLevelVar.toInt());
+    }
+}
+
+}
+

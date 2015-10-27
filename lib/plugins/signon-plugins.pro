@@ -5,6 +5,8 @@ include( ../../common-project-config.pri )
 include($${TOP_SRC_DIR}/common-installs-config.pri)
 include($${TOP_SRC_DIR}/common-vars.pri)
 
+INCLUDEPATH += ..
+
 HEADERS = \
     SignOn/authpluginif.h \
     SignOn/uisessiondata.h \

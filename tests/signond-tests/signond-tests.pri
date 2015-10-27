@@ -20,7 +20,8 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 QMAKE_LIBDIR += \
-    $${TOP_BUILD_DIR}/lib/signond/SignOn
+    $${TOP_BUILD_DIR}/lib/signond/SignOn \
+    $${TOP_BUILD_DIR}/lib/SignOn
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 SIGNOND_SRC = $${TOP_SRC_DIR}/src/signond
@@ -33,7 +34,8 @@ INCLUDEPATH += . \
     $$TOP_SRC_DIR/lib/signond \
     $$TOP_SRC_DIR/src/signond \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
-    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn
+    $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common/SignOn \
+    $${TOP_SRC_DIR}/lib \
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti

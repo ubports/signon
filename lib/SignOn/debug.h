@@ -1,7 +1,6 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2015 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
@@ -20,24 +19,44 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA
  */
-/*!
- * @copyright Copyright (C) 2009-2011 Nokia Corporation.
- * @license LGPL
- */
 
-#ifndef LIBSIGNONCOMMON_H
-#define LIBSIGNONCOMMON_H
+#ifndef LIBSIGNON_DEBUG_H
+#define LIBSIGNON_DEBUG_H
 
-#ifdef SIGNON_EXPORT
-    #undef SIGNON_EXPORT
+#include <QDebug>
+
+#ifdef TRACE
+    #undef TRACE
 #endif
 
-#if __GNUC__ >= 4
-    #define SIGNON_EXPORT __attribute__ ((visibility("default")))
+#ifdef BLAME
+    #undef BLAME
 #endif
 
-#ifndef SIGNON_EXPORT
-    #define SIGNON_EXPORT
+#ifdef DEBUG_ENABLED
+extern int libsignon_logging_level;
+static inline bool debugEnabled() {
+        return libsignon_logging_level >= 2;
+}
+
+static inline bool criticalsEnabled() {
+        return libsignon_logging_level >= 1;
+}
+#define TRACE() \
+        if (debugEnabled()) qDebug()
+#define BLAME() \
+        if (criticalsEnabled()) qCritical()
+
+#else // DEBUG_ENABLED
+    #define TRACE() while (0) qDebug()
+    #define BLAME() while (0) qDebug()
 #endif
 
-#endif // LIBSIGNONCOMMON_H
+namespace SignOn {
+
+void setLoggingLevel(int level);
+void initDebug();
+
+}
+
+#endif // LIBSIGNON_DEBUG_H

@@ -60,7 +60,8 @@ INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
     $${TOP_SRC_DIR}/lib/plugins/signon-plugins-common \
     $${TOP_SRC_DIR}/lib/signond \
-    $${TOP_SRC_DIR}/lib/sim-dlc
+    $${TOP_SRC_DIR}/lib/sim-dlc \
+    $${TOP_SRC_DIR}/lib
 
 CONFIG += build_all \
     link_pkgconfig

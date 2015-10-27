@@ -13,7 +13,8 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 QMAKE_LIBDIR += \
-    $${TOP_BUILD_DIR}/lib/signond/SignOn
+    $${TOP_BUILD_DIR}/lib/signond/SignOn \
+    $${TOP_BUILD_DIR}/lib/SignOn
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 INCLUDEPATH += \
