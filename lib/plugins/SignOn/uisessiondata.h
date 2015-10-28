@@ -50,8 +50,9 @@ enum QueryError {
                                    valid. */
     QUERY_ERROR_REFRESH_FAILED,  /**< Refresh failed. */
     QUERY_ERROR_FORBIDDEN,       /**< Showing ui forbidden by ui policy. */
-    QUERY_ERROR_FORGOT_PASSWORD  /**< User pressed forgot password. */
-    //TODO add more errors
+    QUERY_ERROR_FORGOT_PASSWORD, /**< User pressed forgot password. */
+    QUERY_ERROR_NETWORK,         /**< Network error. */
+    QUERY_ERROR_SSL,             /**< SSL error. */
 };
 
 /*!
