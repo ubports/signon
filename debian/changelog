@@ -1,11 +1,15 @@
-signon (8.58-0ubuntu1) UNRELEASED; urgency=medium
+signon (8.58+16.04.20151028-0ubuntu1) xenial; urgency=medium
 
+  [ Alberto Mardegan ]
   * New upstream release
     - Add a couple of error codes for SignOn UI (network and SSL errors)
     - lib: remove unnecessary semicolon after namespace
       Fixes a GCC warning with -Wpedantic.
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 28 Sep 2015 17:49:43 +0300
+  [ CI Train Bot ]
+  * New rebuild forced.
+
+ -- David Barth <david.barth@canonical.com>  Wed, 28 Oct 2015 15:59:39 +0000
 
 signon (8.57+15.10.20150616-0ubuntu1) wily; urgency=medium
 
