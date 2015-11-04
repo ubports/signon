@@ -8,7 +8,8 @@ include($${TOP_SRC_DIR}/common-vars.pri)
 CONFIG += qt
 QT += dbus
 
-INCLUDEPATH += ../
+INCLUDEPATH += ../ \
+    $${TOP_SRC_DIR}/lib
 
 DEFINES += SIGNON_PLUGIN_TRACE
 

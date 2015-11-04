@@ -21,6 +21,7 @@
  */
 
 #include "connection-manager.h"
+#include "debug.h"
 #include "libsignoncommon.h"
 #include "signond/signoncommon.h"
 

@@ -2,8 +2,8 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011-2015 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include "libsignoncommon.h"
 #include "authsession.h"
 #include "authsessionimpl.h"
+#include "debug.h"
 
 
 namespace SignOn {
@@ -36,6 +37,8 @@ AuthSession::AuthSession(quint32 id, const QString &methodName,
     QObject(parent),
     impl(new AuthSessionImpl(this, id, methodName))
 {
+    initDebug();
+
     qRegisterMetaType<SessionData>("SessionData");
     qRegisterMetaType<AuthSessionState>("AuthSession::AuthSessionState");
 
