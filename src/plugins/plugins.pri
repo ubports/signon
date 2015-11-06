@@ -16,7 +16,8 @@ CONFIG += \
 
 DEFINES += SIGNON_PLUGIN_TRACE
 INCLUDEPATH += . \
-    $$TOP_SRC_DIR/lib/plugins
+    $$TOP_SRC_DIR/lib/plugins \
+    $$TOP_SRC_DIR/lib
 LIBS += -lsignon-plugins
 QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/plugins

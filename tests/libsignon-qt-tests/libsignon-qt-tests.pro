@@ -16,6 +16,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 } else {
     LIBS *= -lsignon-qt
 }
+QMAKE_LIBDIR += $${TOP_BUILD_DIR}/lib/SignOn
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 
 SOURCES += \
@@ -34,6 +35,7 @@ HEADERS += \
     testidentityresult.h \
     $$TOP_SRC_DIR/src/plugins/test/ssotest2data.h
 INCLUDEPATH += . \
+    $$TOP_SRC_DIR/lib \
     $$TOP_SRC_DIR/lib/plugins \
     $$TOP_SRC_DIR/src/plugins/test
 DEFINES += SSO_CI_TESTMANAGEMENT

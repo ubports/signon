@@ -2,6 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2011 Nokia Corporation.
+ * Copyright (C) 2011-2015 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -21,6 +22,7 @@
  */
 
 #include "dbusinterface.h"
+#include "debug.h"
 #include "libsignoncommon.h"
 
 #include <climits>

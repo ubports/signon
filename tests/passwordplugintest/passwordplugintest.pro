@@ -16,7 +16,8 @@ HEADERS += passwordplugintest.h \
 
 INCLUDEPATH += $${TOP_SRC_DIR}/lib/plugins \
     $${TOP_SRC_DIR}/src/plugins/password \
-    $${TOP_SRC_DIR}/src/plugins
+    $${TOP_SRC_DIR}/src/plugins \
+    $${TOP_SRC_DIR}/lib
 
 QMAKE_CXXFLAGS += -fno-exceptions \
     -fno-rtti

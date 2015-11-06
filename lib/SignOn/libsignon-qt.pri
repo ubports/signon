@@ -20,30 +20,33 @@ public_headers += \
     signonerror.h
 
 private_headers = authserviceimpl.h \
-    identityimpl.h \
     async-dbus-proxy.h \
     authsessionimpl.h \
     connection-manager.h \
-    identityinfoimpl.h \
-    dbusinterface.h
+    dbusinterface.h \
+    debug.h \
+    identityimpl.h \
+    identityinfoimpl.h
 
 HEADERS = $$public_headers \
     $$private_headers
 
 INCLUDEPATH += . \
+    .. \
     $$TOP_SRC_DIR/include
 
 SOURCES += identityinfo.cpp \
-    identity.cpp \
-    identityimpl.cpp \
     async-dbus-proxy.cpp \
     authservice.cpp \
     authserviceimpl.cpp \
     authsession.cpp \
     authsessionimpl.cpp \
     connection-manager.cpp \
-    identityinfoimpl.cpp \
-    dbusinterface.cpp
+    dbusinterface.cpp \
+    debug.cpp \
+    identity.cpp \
+    identityimpl.cpp \
+    identityinfoimpl.cpp
 
 QT += core \
     dbus
@@ -54,8 +57,7 @@ CONFIG += \
     
 DEFINES += \
     QT_NO_CAST_TO_ASCII \
-    QT_NO_CAST_FROM_ASCII \
-    LIBSIGNON_TRACE
+    QT_NO_CAST_FROM_ASCII
 
 include( $$TOP_SRC_DIR/common-installs-config.pri )
 

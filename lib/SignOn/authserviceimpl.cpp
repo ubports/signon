@@ -2,9 +2,8 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
- * Copyright (C) 2013 Canonical Ltd.
+ * Copyright (C) 2013-2015 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +29,7 @@
 
 #include "signond/signoncommon.h"
 
+#include "debug.h"
 #include "libsignoncommon.h"
 #include "identityinfo.h"
 #include "identityinfoimpl.h"

@@ -2,8 +2,8 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2011-2015 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
  * 02110-1301 USA
  */
 
+#include "debug.h"
 #include "identityimpl.h"
 #include "identity.h"
 
@@ -29,6 +30,8 @@ namespace SignOn {
 Identity::Identity(const quint32 id, QObject *parent):
     QObject(parent)
 {
+    initDebug();
+
     qRegisterMetaType<Error>("SignOn::Error");
     qRegisterMetaType<Error>("Error");
 
