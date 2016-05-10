@@ -5,4 +5,5 @@
 /tst_backup
 /tst_database
 /tst_pluginproxy
+/tst_signond
 /tst_timeouts
