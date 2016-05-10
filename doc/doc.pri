@@ -18,7 +18,6 @@ for( folder, DOC_FOLDERS ) {
 # extra build targets for generating and cleaning documentation
 #-----------------------------------------------------------------------------
 DOC_INPUT += $${_PRO_FILE_PWD_}/doc/src
-DOC_INPUT += $${_PRO_FILE_PWD_}/src
 
 # target for generating documentation
 doctarget.target     = docs
