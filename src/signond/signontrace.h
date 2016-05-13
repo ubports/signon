@@ -58,8 +58,11 @@ public:
         m_pInstance = new SignonTrace(logOutput);
     }
 
-    static void output(QtMsgType type, const char *msg)
+    static void output(QtMsgType type, const QMessageLogContext &context,
+                       const QString &msg)
     {
+        Q_UNUSED(context);
+
         if (!m_pInstance)
             return;
 
@@ -79,7 +82,7 @@ public:
             default: priority = LOG_INFO; break;
         }
 
-        syslog(priority, "%s", msg);
+        syslog(priority, "%s", msg.toUtf8().constData());
     }
 
 private:
@@ -88,7 +91,7 @@ private:
     {
         if (logOutput == Syslog) {
             openlog(NULL, LOG_PID, LOG_DAEMON);
-            qInstallMsgHandler(output);
+            qInstallMessageHandler(output);
         }
     }
 

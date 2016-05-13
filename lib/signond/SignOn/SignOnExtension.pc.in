@@ -7,6 +7,6 @@ plugindir=$$SIGNOND_EXTENSIONS_DIR
 Name: SignOnExtension
 Description: SignOn extension development 
 Version: $$PROJECT_VERSION
-Requires: $${LIBQTCORE}
+Requires: Qt5Core
 Libs: -L${libdir} -lsignon-extension
 Cflags: -I${includedir}/signon-extension

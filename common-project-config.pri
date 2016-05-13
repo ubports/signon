@@ -15,13 +15,8 @@ RCC_DIR         = resources
 QMAKE_CXXFLAGS -= -Werror -Wno-write-strings
 # Disable RTTI
 QMAKE_CXXFLAGS += -fno-exceptions -fno-rtti
-
-greaterThan(QT_MAJOR_VERSION, 4) {
-    # Qt5: use C++11. This is used to avoid the source incompatibility
-    # with the QSKIP macro, as described in:
-    # http://www.kdab.com/porting-from-qt-4-to-qt-5/
-    QMAKE_CXXFLAGS += -std=c++11
-}
+# Use C++11
+QMAKE_CXXFLAGS += -std=c++11
 
 isEmpty(TOP_SRC_DIR) {
     TOP_SRC_DIR = $$PWD
@@ -33,16 +28,9 @@ DEFINES += DEBUG_ENABLED
 #TODO comment this to restrict plugins to run under signon user
 DEFINES += NO_SIGNON_USER
 
-# Qt4/Qt5 common checks
-greaterThan(QT_MAJOR_VERSION, 4) {
-    LIBSIGNON = libsignon-qt5
-    CMAKE_BASENAME = SignOnQt5
-    LIBQTCORE = Qt5Core
-} else {
-    LIBSIGNON = libsignon-qt
-    CMAKE_BASENAME = SignOnQt
-    LIBQTCORE = QtCore
-}
+# Library name for CMake and pkg-config
+LIBSIGNON = libsignon-qt5
+CMAKE_BASENAME = SignOnQt5
 
 #-----------------------------------------------------------------------------
 # setup the installation prefix

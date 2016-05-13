@@ -27,8 +27,6 @@ extern "C" {
     #include <sys/types.h>
 }
 
-#define QT_DISABLE_DEPRECATED_BEFORE QT_VERSION_CHECK(4, 0, 0)
-
 #include <QtDebug>
 #include <QDir>
 #include <QDBusConnection>
@@ -37,9 +35,7 @@ extern "C" {
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QSocketNotifier>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
-#endif
 
 #include "SignOn/misc.h"
 
@@ -217,12 +213,8 @@ void SignonDaemonConfiguration::load()
             environment.value(QLatin1String("SSO_EXTENSIONS_DIR"));
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QString runtimeDir =
         QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-#else
-    QString runtimeDir = environment.value(QLatin1String("XDG_RUNTIME_DIR"));
-#endif
     if (!runtimeDir.isEmpty()) {
         QString socketFileName =
             QString::fromLatin1("%1/" SIGNOND_SOCKET_FILENAME).arg(runtimeDir);

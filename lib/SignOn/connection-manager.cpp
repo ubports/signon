@@ -30,9 +30,7 @@
 #include <QDBusPendingCallWatcher>
 #include <QPointer>
 #include <QProcessEnvironment>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
-#endif
 
 using namespace SignOn;
 
@@ -86,12 +84,8 @@ ConnectionManager::setupSocketConnection()
         return SocketConnectionUnavailable;
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QString runtimeDir =
         QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-#else
-    QString runtimeDir = environment.value(QLatin1String("XDG_RUNTIME_DIR"));
-#endif
     if (runtimeDir.isEmpty()) return SocketConnectionUnavailable;
 
     QString socketFileName =

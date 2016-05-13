@@ -1,7 +1,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2013 Canonical Ltd.
+ * Copyright (C) 2013-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -30,9 +30,7 @@ class Plugin: public QObject, public SignOn::ExtensionInterface3
 {
     Q_OBJECT
     Q_INTERFACES(SignOn::ExtensionInterface3)
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     Q_PLUGIN_METADATA(IID "com.nokia.SingleSignOn.ExtensionInterface/3.0")
-#endif
 
 public:
     Plugin(QObject *parent = 0);

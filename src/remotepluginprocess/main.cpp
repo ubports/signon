@@ -32,8 +32,6 @@ extern "C" {
 #include <syslog.h>
 }
 
-#define QT_DISABLE_DEPRECATED_BEFORE QT_VERSION_CHECK(4, 0, 0)
-
 #include "debug.h"
 #include "remotepluginprocess.h"
 
@@ -43,8 +41,11 @@ using namespace RemotePluginProcessNS;
 
 RemotePluginProcess *process = NULL;
 
-void messageHandler(QtMsgType type, const char *msg)
+void messageHandler(QtMsgType type, const QMessageLogContext &context,
+                    const QString & msg)
 {
+    Q_UNUSED(context);
+
     if (debugLevel < 2) {
         if (type == QtDebugMsg) return;
         if (debugLevel < 1 && type == QtWarningMsg) return;
@@ -60,13 +61,13 @@ void messageHandler(QtMsgType type, const char *msg)
     default: priority = LOG_INFO; break;
     }
 
-    syslog(priority, "%s", msg);
+    syslog(priority, "%s", msg.toUtf8().constData());
 }
 
 int main(int argc, char *argv[])
 {
     openlog(NULL, LOG_CONS | LOG_PID, LOG_DAEMON);
-    qInstallMsgHandler(messageHandler);
+    qInstallMessageHandler(messageHandler);
     debugInit();
 
     TRACE() << "handler:" << (void *)messageHandler;
