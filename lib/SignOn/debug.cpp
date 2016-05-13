@@ -1,7 +1,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *

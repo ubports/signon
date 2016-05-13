@@ -2,7 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2010-2011 Nokia Corporation.
- * Copyright (C) 2011 Canonical Ltd.
+ * Copyright (C) 2011-2016 Canonical Ltd.
  * Copyright (C) 2011 Intel Corporation.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
