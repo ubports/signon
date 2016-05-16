@@ -47,7 +47,6 @@ extern "C" {
 #include "signonidentity.h"
 #include "signonauthsession.h"
 #include "accesscontrolmanagerhelper.h"
-#include "backupifadaptor.h"
 
 #define SIGNON_RETURN_IF_CAM_UNAVAILABLE(_ret_arg_) do {                   \
         if (m_pCAMManager && !m_pCAMManager->credentialsSystemOpened()) {  \

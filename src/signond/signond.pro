@@ -9,8 +9,8 @@ QT += core \
     dbus
 
 #generate adaptor for backup
-system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
-    ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
+DBUS_ADAPTORS += \
+    ../../lib/signond/com.nokia.SingleSignOn.Backup.xml
 
 HEADERS += \
     accesscontrolmanagerhelper.h \
@@ -76,11 +76,9 @@ CONFIG(enable-p2p) {
 CONFIG(enable-backup) {
     DEFINES += ENABLE_BACKUP
     SOURCES += \
-        backup.cpp \
-        backupifadaptor.cpp
+        backup.cpp
     HEADERS += \
-        backup.h \
-        backupifadaptor.h
+        backup.h
 }
 
 DEFINES += QT_NO_CAST_TO_ASCII \
@@ -94,10 +92,6 @@ LIBS += \
     -lrt \
     -lsignon-plugins-common \
     -lsignon-extension
-
-QMAKE_DISTCLEAN += \
-    backupifadaptor.cpp \
-    backupifadaptor.h
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )

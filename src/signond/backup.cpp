@@ -30,7 +30,7 @@
 #include "SignOn/misc.h"
 
 #include "backup.h"
-#include "backupifadaptor.h"
+#include "backup_adaptor.h"
 #include "credentialsaccessmanager.h"
 #include "signond-common.h"
 
@@ -52,7 +52,7 @@ Backup::Backup(CredentialsAccessManager *cam, bool backupMode,
     QDBusConnection::RegisterOptions registerSessionOptions =
         QDBusConnection::ExportAdaptors;
 
-    (void)new BackupIfAdaptor(this);
+    (void)new BackupclientAdaptor(this);
 
     if (!sessionConnection.registerObject(SIGNOND_DAEMON_OBJECTPATH
                                           + QLatin1String("/Backup"),
