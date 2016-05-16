@@ -27,11 +27,9 @@
 
 using namespace SignonDaemonNS;
 
-SignonAuthSession::SignonAuthSession(quint32 id,
-                                     const QString &method,
+SignonAuthSession::SignonAuthSession(SignonSessionCore *core,
                                      pid_t ownerPid):
-    m_id(id),
-    m_method(method),
+    QObject(core),
     m_ownerPid(ownerPid)
 {
     TRACE();
@@ -44,6 +42,9 @@ SignonAuthSession::SignonAuthSession(quint32 id,
     TRACE() << objectName;
 
     setObjectName(objectName);
+
+    connect(core, SIGNAL(stateChanged(const QString&, int, const QString&)),
+            this, SLOT(stateChangedSlot(const QString&, int, const QString&)));
 }
 
 SignonAuthSession::~SignonAuthSession()
@@ -58,19 +59,13 @@ SignonAuthSession *SignonAuthSession::createAuthSession(const quint32 id,
                                                         pid_t ownerPid)
 {
     TRACE();
-    SignonAuthSession *sas = new SignonAuthSession(id, method, ownerPid);
-
     SignonSessionCore *core = SignonSessionCore::sessionCore(id, method, parent);
     if (!core) {
         TRACE() << "Cannot retrieve proper tasks queue";
-        delete sas;
         return NULL;
     }
 
-    sas->setParent(core);
-
-    connect(core, SIGNAL(stateChanged(const QString&, int, const QString&)),
-            sas, SLOT(stateChangedSlot(const QString&, int, const QString&)));
+    SignonAuthSession *sas = new SignonAuthSession(core, ownerPid);
 
     TRACE() << "SignonAuthSession created successfully:" << sas->objectName();
     return sas;
@@ -83,12 +78,12 @@ void SignonAuthSession::stopAllAuthSessions()
 
 quint32 SignonAuthSession::id() const
 {
-    return m_id;
+    return parent()->id();
 }
 
 QString SignonAuthSession::method() const
 {
-    return m_method;
+    return parent()->method();
 }
 
 pid_t SignonAuthSession::ownerPid() const
@@ -122,7 +117,6 @@ void SignonAuthSession::cancel()
 
 void SignonAuthSession::setId(quint32 id)
 {
-    m_id = id;
     parent()->setId(id);
 }
 

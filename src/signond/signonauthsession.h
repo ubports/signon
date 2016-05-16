@@ -81,7 +81,7 @@ private Q_SLOTS:
                           const QString &message);
 
 protected:
-    SignonAuthSession(quint32 id, const QString &method, pid_t ownerPid);
+    SignonAuthSession(SignonSessionCore *core, pid_t ownerPid);
     virtual ~SignonAuthSession();
 
 private:
