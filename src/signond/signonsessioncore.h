@@ -64,7 +64,6 @@ public:
      * just for any case
      * */
     static void stopAllAuthSessions();
-    static QStringList loadedPluginMethods(const QString &method);
 
     void destroy();
 

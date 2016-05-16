@@ -208,21 +208,6 @@ void SignonSessionCore::stopAllAuthSessions()
     sessionsOfNonStoredCredentials.clear();
 }
 
-QStringList SignonSessionCore::loadedPluginMethods(const QString &method)
-{
-    foreach (SignonSessionCore *corePtr, sessionsOfStoredCredentials) {
-        if (corePtr->method() == method)
-            return corePtr->queryAvailableMechanisms(QStringList());
-    }
-
-    foreach (SignonSessionCore *corePtr, sessionsOfNonStoredCredentials) {
-        if (corePtr->method() == method)
-            return corePtr->queryAvailableMechanisms(QStringList());
-    }
-
-    return QStringList();
-}
-
 QStringList
 SignonSessionCore::queryAvailableMechanisms(const QStringList &wantedMechanisms)
 {

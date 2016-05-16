@@ -625,11 +625,6 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
 
     TRACE() << method;
 
-    QStringList mechs = SignonSessionCore::loadedPluginMethods(method);
-
-    if (!mechs.isEmpty())
-        return mechs;
-
     PluginProxy *plugin = PluginProxy::createNewPluginProxy(method);
 
     if (!plugin) {
@@ -642,7 +637,7 @@ QStringList SignonDaemon::queryMechanisms(const QString &method)
         return QStringList();
     }
 
-    mechs = plugin->mechanisms();
+    QStringList mechs = plugin->mechanisms();
     delete plugin;
 
     return mechs;
