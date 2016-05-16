@@ -369,11 +369,12 @@ void SignonDaemon::init()
                "constructed first");
 
     setupSignalHandlers();
-    bool backupMode = app->arguments().contains(QLatin1String("-backup"));
     m_pCAMManager =
         new CredentialsAccessManager(m_configuration->camConfiguration());
 
+#ifdef ENABLE_BACKUP
     /* backup dbus interface */
+    bool backupMode = app->arguments().contains(QLatin1String("-backup"));
     (void)new Backup(m_pCAMManager, backupMode, this);
 
     if (backupMode) {
@@ -381,6 +382,7 @@ void SignonDaemon::init()
         //skip rest of initialization in backup mode
         return;
     }
+#endif
 
     /* DBus Service init */
     QDBusConnection connection = SIGNOND_BUS;

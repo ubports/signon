@@ -14,7 +14,6 @@ system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp 
 
 HEADERS += \
     accesscontrolmanagerhelper.h \
-    backup.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
     credentialsdb_p.h \
@@ -34,11 +33,9 @@ HEADERS += \
     signonidentityinfo.h \
     signonui_interface.h \
     signonidentityadaptor.h \
-    backupifadaptor.h \
     signonsessioncoretools.h
 SOURCES += \
     accesscontrolmanagerhelper.cpp \
-    backup.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
     default-crypto-manager.cpp \
@@ -56,7 +53,6 @@ SOURCES += \
     signondaemon.cpp \
     signonidentityinfo.cpp \
     signonidentityadaptor.cpp \
-    backupifadaptor.cpp \
     signonsessioncoretools.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
@@ -75,6 +71,16 @@ QMAKE_LIBDIR += \
 CONFIG(enable-p2p) {
     DEFINES += ENABLE_P2P
     PKGCONFIG += dbus-1
+}
+
+CONFIG(enable-backup) {
+    DEFINES += ENABLE_BACKUP
+    SOURCES += \
+        backup.cpp \
+        backupifadaptor.cpp
+    HEADERS += \
+        backup.h \
+        backupifadaptor.h
 }
 
 DEFINES += QT_NO_CAST_TO_ASCII \
