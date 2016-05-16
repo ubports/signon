@@ -39,6 +39,7 @@ extern "C" {
 
 #include "SignOn/misc.h"
 
+#include "backup.h"
 #include "signondaemon.h"
 #include "signond-common.h"
 #include "signontrace.h"
@@ -57,9 +58,6 @@ extern "C" {
             return _ret_arg_;           \
         }                               \
     } while(0)
-
-#define BACKUP_DIR_NAME() \
-    (QDir::separator() + QLatin1String("backup"))
 
 using namespace SignOn;
 
@@ -258,10 +256,6 @@ SignonDaemon::~SignonDaemon()
     ::close(sigFd[0]);
     ::close(sigFd[1]);
 
-    if (m_backup) {
-        exit(0);
-    }
-
     delete m_dbusServer;
 
     SignonAuthSession::stopAllAuthSessions();
@@ -273,16 +267,8 @@ SignonDaemon::~SignonDaemon()
     }
 
     QDBusConnection sessionConnection = QDBusConnection::sessionBus();
-
-    sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH
-                                       + QLatin1String("/Backup"));
-    sessionConnection.unregisterService(SIGNOND_SERVICE
-                                        + QLatin1String(".Backup"));
-    if (m_backup == false)
-    {
-        sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH);
-        sessionConnection.unregisterService(SIGNOND_SERVICE);
-    }
+    sessionConnection.unregisterObject(SIGNOND_DAEMON_OBJECTPATH);
+    sessionConnection.unregisterService(SIGNOND_SERVICE);
 
     delete m_configuration;
 
@@ -383,45 +369,14 @@ void SignonDaemon::init()
                "constructed first");
 
     setupSignalHandlers();
-    m_backup = app->arguments().contains(QLatin1String("-backup"));
+    bool backupMode = app->arguments().contains(QLatin1String("-backup"));
     m_pCAMManager =
         new CredentialsAccessManager(m_configuration->camConfiguration());
 
     /* backup dbus interface */
-    QDBusConnection sessionConnection = QDBusConnection::sessionBus();
+    (void)new Backup(m_pCAMManager, backupMode, this);
 
-    if (!sessionConnection.isConnected()) {
-        QDBusError err = sessionConnection.lastError();
-        TRACE() << "Session connection cannot be established:" <<
-            err.errorString(err.type());
-        TRACE() << err.message();
-
-        qFatal("SignonDaemon requires session bus to start working");
-    }
-
-    QDBusConnection::RegisterOptions registerSessionOptions =
-        QDBusConnection::ExportAdaptors;
-
-    (void)new BackupIfAdaptor(this);
-
-    if (!sessionConnection.registerObject(SIGNOND_DAEMON_OBJECTPATH
-                                          + QLatin1String("/Backup"),
-                                          this, registerSessionOptions)) {
-        TRACE() << "Object cannot be registered";
-
-        qFatal("SignonDaemon requires to register backup object");
-    }
-
-    if (!sessionConnection.registerService(SIGNOND_SERVICE +
-                                           QLatin1String(".Backup"))) {
-        QDBusError err = sessionConnection.lastError();
-        TRACE() << "Service cannot be registered: " <<
-            err.errorString(err.type());
-
-        qFatal("SignonDaemon requires to register backup service");
-    }
-
-    if (m_backup) {
+    if (backupMode) {
         TRACE() << "Signond initialized in backup mode.";
         //skip rest of initialization in backup mode
         return;
@@ -765,265 +720,6 @@ QObject *SignonDaemon::getAuthSession(const quint32 id,
     }
 
     return authSession;
-}
-
-void SignonDaemon::eraseBackupDir() const
-{
-    const CAMConfiguration config = m_configuration->camConfiguration();
-    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
-
-    QDir target(backupRoot);
-    if (!target.exists()) return;
-
-    QStringList targetEntries = target.entryList(QDir::Files);
-    foreach (QString entry, targetEntries) {
-        target.remove(entry);
-    }
-
-    target.rmdir(backupRoot);
-}
-
-bool SignonDaemon::copyToBackupDir(const QStringList &fileNames) const
-{
-    const CAMConfiguration config = m_configuration->camConfiguration();
-    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
-
-    QDir target(backupRoot);
-    if (!target.exists() && !target.mkpath(backupRoot)) {
-        qCritical() << "Cannot create target directory";
-        return false;
-    }
-
-    setUserOwnership(backupRoot);
-
-    /* Now copy the files to be backed up */
-    bool ok = true;
-    foreach (const QString &fileName, fileNames) {
-        /* Remove the target file, if it exists */
-        if (target.exists(fileName))
-            target.remove(fileName);
-
-        /* Copy the source into the target directory */
-        QString source = config.m_storagePath + QDir::separator() + fileName;
-        if (!QFile::exists(source)) continue;
-
-        QString destination = backupRoot + QDir::separator() + fileName;
-        ok = QFile::copy(source, destination);
-        if (!ok) {
-            BLAME() << "Copying" << source << "to" << destination << "failed";
-            break;
-        }
-
-        setUserOwnership(destination);
-    }
-
-    return ok;
-}
-
-bool SignonDaemon::copyFromBackupDir(const QStringList &fileNames) const
-{
-    const CAMConfiguration config = m_configuration->camConfiguration();
-    QString backupRoot = config.m_storagePath + BACKUP_DIR_NAME();
-
-    QDir sourceDir(backupRoot);
-    if (!sourceDir.exists()) {
-        TRACE() << "Backup directory does not exist!";
-    }
-
-    if (!sourceDir.exists(config.m_dbName)) {
-        TRACE() << "Backup does not contain DB:" << config.m_dbName;
-    }
-
-    /* Now restore the files from the backup */
-    bool ok = true;
-    QDir target(config.m_storagePath);
-    QStringList movedFiles, copiedFiles;
-    foreach (const QString &fileName, fileNames) {
-        /* Remove the target file, if it exists */
-        if (target.exists(fileName)) {
-            if (target.rename(fileName, fileName + QLatin1String(".bak")))
-                movedFiles += fileName;
-        }
-
-        /* Copy the source into the target directory */
-        QString source = backupRoot + QDir::separator() + fileName;
-        if (!QFile::exists(source)) {
-            TRACE() << "Ignoring file not present in backup:" << source;
-            continue;
-        }
-
-        QString destination =
-            config.m_storagePath + QDir::separator() + fileName;
-
-        ok = QFile::copy(source, destination);
-        if (ok) {
-            copiedFiles << fileName;
-        } else {
-            qWarning() << "Copy failed for:" << source;
-            break;
-        }
-    }
-
-    if (!ok) {
-        qWarning() << "Restore failed, recovering previous DB";
-
-        foreach (const QString &fileName, copiedFiles) {
-            target.remove(fileName);
-        }
-
-        foreach (const QString &fileName, movedFiles) {
-            if (!target.rename(fileName + QLatin1String(".bak"), fileName)) {
-                qCritical() << "Could not recover:" << fileName;
-            }
-        }
-    } else {
-        /* delete ".bak" files */
-        foreach (const QString &fileName, movedFiles) {
-            target.remove(fileName + QLatin1String(".bak"));
-        }
-
-    }
-    return ok;
-}
-
-bool SignonDaemon::createStorageFileTree(const QStringList &backupFiles) const
-{
-    QString storageDirPath = m_configuration->camConfiguration().m_storagePath;
-    QDir storageDir(storageDirPath);
-
-    if (!storageDir.exists()) {
-        if (!storageDir.mkpath(storageDirPath)) {
-            qCritical() << "Could not create storage dir for backup.";
-            return false;
-        }
-    }
-
-    foreach (const QString &fileName, backupFiles) {
-        if (storageDir.exists(fileName)) continue;
-
-        QString filePath = storageDir.path() + QDir::separator() + fileName;
-        QFile file(filePath);
-        if (!file.open(QIODevice::WriteOnly)) {
-            qCritical() << "Failed to create empty file for backup:" << filePath;
-            return false;
-        } else {
-            file.close();
-        }
-    }
-
-    return true;
-}
-
-uchar SignonDaemon::backupStarts()
-{
-    TRACE() << "backup";
-    if (!m_backup && m_pCAMManager->credentialsSystemOpened())
-    {
-        m_pCAMManager->closeCredentialsSystem();
-        if (m_pCAMManager->credentialsSystemOpened())
-        {
-            qCritical() << "Cannot close credentials database";
-            return 2;
-        }
-    }
-
-    const CAMConfiguration config = m_configuration->camConfiguration();
-
-    /* do backup copy: prepare the list of files to be backed up */
-    QStringList backupFiles;
-    backupFiles << config.m_dbName;
-    backupFiles << m_pCAMManager->backupFiles();
-
-    /* make sure that all the backup files and storage directory exist:
-       create storage dir and empty files if not so, as backup/restore
-       operations must be consistent */
-    if (!createStorageFileTree(backupFiles)) {
-        qCritical() << "Cannot create backup file tree.";
-        return 2;
-    }
-
-    /* perform the copy */
-    eraseBackupDir();
-    if (!copyToBackupDir(backupFiles)) {
-        qCritical() << "Cannot copy database";
-        if (!m_backup)
-            m_pCAMManager->openCredentialsSystem();
-        return 2;
-    }
-
-    if (!m_backup)
-    {
-        //mount file system back
-        if (!m_pCAMManager->openCredentialsSystem()) {
-            qCritical() << "Cannot reopen database";
-        }
-    }
-    return 0;
-}
-
-uchar SignonDaemon::backupFinished()
-{
-    TRACE() << "close";
-
-    eraseBackupDir();
-
-    if (m_backup)
-    {
-        //close daemon
-        TRACE() << "close daemon";
-        this->deleteLater();
-    }
-
-    return 0;
- }
-
-/*
- * Does nothing but start-on-demand
- * */
-uchar SignonDaemon::restoreStarts()
-{
-    TRACE();
-    return 0;
-}
-
-uchar SignonDaemon::restoreFinished()
-{
-    TRACE() << "restore";
-    //restore requested
-    if (m_pCAMManager->credentialsSystemOpened())
-    {
-        //umount file system
-        if (!m_pCAMManager->closeCredentialsSystem())
-        {
-            qCritical() << "database cannot be closed";
-            return 2;
-        }
-    }
-
-    const CAMConfiguration config = m_configuration->camConfiguration();
-
-    QStringList backupFiles;
-    backupFiles << config.m_dbName;
-    backupFiles << m_pCAMManager->backupFiles();
-
-    /* perform the copy */
-    if (!copyFromBackupDir(backupFiles)) {
-        qCritical() << "Cannot copy database";
-        m_pCAMManager->openCredentialsSystem();
-        return 2;
-    }
-
-    eraseBackupDir();
-
-    //TODO check database integrity
-    if (!m_backup)
-    {
-        //mount file system back
-         if (!m_pCAMManager->openCredentialsSystem())
-             return 2;
-    }
-
-    return 0;
 }
 
 void SignonDaemon::onDisconnected()

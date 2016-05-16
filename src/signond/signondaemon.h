@@ -142,12 +142,6 @@ private Q_SLOTS:
     void onIdentityStored(SignonIdentity *identity);
     void onIdentityDestroyed();
 
-public Q_SLOTS: // backup METHODS
-    uchar backupStarts();
-    uchar backupFinished();
-    uchar restoreStarts();
-    uchar restoreFinished();
-
 private:
     SignonDaemon(QObject *parent);
     void initExtensions();
@@ -156,11 +150,6 @@ private:
 
     void watchIdentity(SignonIdentity *identity);
     void setupSignalHandlers();
-
-    void eraseBackupDir() const;
-    bool copyToBackupDir(const QStringList &fileNames) const;
-    bool copyFromBackupDir(const QStringList &fileNames) const;
-    bool createStorageFileTree(const QStringList &fileNames) const;
 
     void setLastError(const QString &name, const QString &msg);
     void clearLastError();
@@ -177,8 +166,6 @@ private:
      * The instance of CAM
      * */
     CredentialsAccessManager *m_pCAMManager;
-
-    bool m_backup;
 
     int m_identityTimeout;
     int m_authSessionTimeout;

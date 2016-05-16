@@ -14,6 +14,7 @@ system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp 
 
 HEADERS += \
     accesscontrolmanagerhelper.h \
+    backup.h \
     credentialsaccessmanager.h \
     credentialsdb.h \
     credentialsdb_p.h \
@@ -37,6 +38,7 @@ HEADERS += \
     signonsessioncoretools.h
 SOURCES += \
     accesscontrolmanagerhelper.cpp \
+    backup.cpp \
     credentialsaccessmanager.cpp \
     credentialsdb.cpp \
     default-crypto-manager.cpp \
