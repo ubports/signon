@@ -105,7 +105,7 @@
     SIGNOND_STRING(SIGNOND_ERR_PREFIX "InternalCommunication")
 
 #define SIGNOND_PERMISSION_DENIED_ERR_STR \
-    SIGNOND_STRING("Client has insuficient permissions to access the service.")
+    SIGNOND_STRING("Client has insufficient permissions to access the service.")
 #define SIGNOND_PERMISSION_DENIED_ERR_NAME \
     SIGNOND_STRING(SIGNOND_ERR_PREFIX "PermissionDenied")
 

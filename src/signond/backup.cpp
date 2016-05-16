@@ -153,7 +153,7 @@ bool Backup::copyFromBackupDir(const QStringList &fileNames) const
     QDir target(config.m_storagePath);
     QStringList movedFiles, copiedFiles;
     foreach (const QString &fileName, fileNames) {
-        /* Remove the target file, if it exists */
+        /* Rename the target file, if it exists */
         if (target.exists(fileName)) {
             if (target.rename(fileName, fileName + QLatin1String(".bak")))
                 movedFiles += fileName;
