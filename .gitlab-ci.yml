@@ -1,0 +1,33 @@
+image: ubuntu:xenial
+
+cache:
+  key: apt-cache
+  paths:
+  - apt-cache/
+
+before_script:
+  - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
+  - apt-get update -yq && apt-get -o dir::cache::archives="$APT_CACHE_DIR" install -y qt5-qmake qtbase5-dev qtchooser pkg-config libqt5sql5-sqlite doxygen libdbus-1-dev
+  - apt-get -o dir::cache::archives="$APT_CACHE_DIR" install -y dbus-test-runner libqtdbusmock1-dev libqtdbustest1-dev
+  - apt-get -o dir::cache::archives="$APT_CACHE_DIR" install -y lcov gcovr
+
+build_amd64:
+  stage: build
+  script:
+    - export QT_SELECT=qt5
+    - mkdir build
+    - cd build
+    - qmake CONFIG+=debug CONFIG+=coverage CONFIG+=enable-backup CONFIG+=enable-p2p ..
+    - make -j 4
+  artifacts:
+    paths:
+      - build/
+
+test_amd64:
+  stage: test
+  script:
+    - find build | xargs touch # Avoid rebuilding
+    - cd build
+    - make coverage-html
+  dependencies:
+    - build_amd64
