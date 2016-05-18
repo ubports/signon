@@ -68,28 +68,6 @@ namespace SignOn {
 namespace RemotePluginProcessNS {
 
 /*!
- * @class CancelEventThread
- * Thread to enable cancel functionality.
- */
-class CancelEventThread: public QThread
-{
-    Q_OBJECT
-
-public:
-    CancelEventThread(AuthPluginInterface *plugin);
-    ~CancelEventThread();
-
-    void run();
-
-public Q_SLOTS:
-    void cancel();
-
-private:
-    AuthPluginInterface *m_plugin;
-    QSocketNotifier *m_cancelNotifier;
-};
-
-/*!
  * @class RemotePluginProcess
  * Class to execute plugin process.
  */
@@ -136,9 +114,6 @@ private:
     void process();
     void userActionFinished();
     void refresh();
-
-    void enableCancelThread();
-    void disableCancelThread();
 
 private Q_SLOTS:
     void result(const SignOn::SessionData &data);

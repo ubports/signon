@@ -45,6 +45,7 @@ public:
     void receiveData(int expectedDataSize);
 
     void setReadChannelSocketNotifier(QSocketNotifier *notifier);
+    bool isReading() const { return m_isReading; }
 
 public Q_SLOTS:
     void readBlob();
@@ -66,6 +67,7 @@ public:
     QByteArray m_blobBuffer;
     QSocketNotifier *m_readNotifier;
     int m_blobSize;
+    bool m_isReading;
 };
 
 }

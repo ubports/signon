@@ -41,12 +41,11 @@ using namespace SignOn;
 
 namespace RemotePluginProcessNS {
 
-static CancelEventThread *cancelThread = NULL;
-
 /* ---------------------- RemotePluginProcess ---------------------- */
 
 RemotePluginProcess::RemotePluginProcess(QObject *parent):
-    QObject(parent)
+    QObject(parent),
+    m_currentOperation(PLUGIN_OP_STOP)
 {
     m_plugin = NULL;
     m_readnotifier = NULL;
@@ -61,12 +60,6 @@ RemotePluginProcess::~RemotePluginProcess()
     delete m_plugin;
     delete m_readnotifier;
     delete m_errnotifier;
-
-    if (cancelThread) {
-        cancelThread->quit();
-        cancelThread->wait();
-        delete cancelThread;
-    }
 }
 
 RemotePluginProcess *
@@ -160,11 +153,6 @@ bool RemotePluginProcess::setupDataStreams()
     connect(m_errnotifier, SIGNAL(activated(int)),
             this, SIGNAL(processStopped()));
 
-    if (!cancelThread)
-        cancelThread = new CancelEventThread(m_plugin);
-
-    TRACE() << "cancel thread created";
-
     m_blobIOHandler = new BlobIOHandler(&m_inFile, &m_outFile, this);
 
     connect(m_blobIOHandler,
@@ -202,12 +190,10 @@ void RemotePluginProcess::blobIOError()
     error(
         Error(Error::InternalServer,
         QLatin1String("Failed to I/O session data to/from the signon daemon.")));
-    connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
 }
 
 void RemotePluginProcess::result(const SignOn::SessionData &data)
 {
-    disableCancelThread();
     QDataStream out(&m_outFile);
     QVariantMap resultDataMap;
 
@@ -238,8 +224,6 @@ void RemotePluginProcess::store(const SignOn::SessionData &data)
 
 void RemotePluginProcess::error(const SignOn::Error &err)
 {
-    disableCancelThread();
-
     QDataStream out(&m_outFile);
 
     out << (quint32)PLUGIN_RESPONSE_ERROR;
@@ -253,7 +237,6 @@ void RemotePluginProcess::error(const SignOn::Error &err)
 void RemotePluginProcess::userActionRequired(const SignOn::UiSessionData &data)
 {
     TRACE();
-    disableCancelThread();
 
     QDataStream out(&m_outFile);
     QVariantMap resultDataMap;
@@ -269,15 +252,12 @@ void RemotePluginProcess::userActionRequired(const SignOn::UiSessionData &data)
 void RemotePluginProcess::refreshed(const SignOn::UiSessionData &data)
 {
     TRACE();
-    disableCancelThread();
 
     QDataStream out(&m_outFile);
     QVariantMap resultDataMap;
 
     foreach(QString key, data.propertyNames())
         resultDataMap[key] = data.getProperty(key);
-
-    m_readnotifier->setEnabled(true);
 
     out << (quint32)PLUGIN_RESPONSE_REFRESHED;
 
@@ -331,13 +311,10 @@ void RemotePluginProcess::process()
 {
     QDataStream in(&m_inFile);
 
-
     in >> m_currentMechanism;
 
     int processBlobSize = -1;
     in >> processBlobSize;
-
-    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
 
     m_currentOperation = PLUGIN_OP_PROCESS;
     m_blobIOHandler->receiveData(processBlobSize);
@@ -349,8 +326,6 @@ void RemotePluginProcess::userActionFinished()
     int processBlobSize = -1;
     in >> processBlobSize;
 
-    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-
     m_currentOperation = PLUGIN_OP_PROCESS_UI;
     m_blobIOHandler->receiveData(processBlobSize);
 }
@@ -361,17 +336,12 @@ void RemotePluginProcess::refresh()
     int processBlobSize = -1;
     in >> processBlobSize;
 
-    disconnect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-
     m_currentOperation = PLUGIN_OP_REFRESH;
     m_blobIOHandler->receiveData(processBlobSize);
 }
 
 void RemotePluginProcess::sessionDataReceived(const QVariantMap &sessionDataMap)
 {
-    enableCancelThread();
-    TRACE() << "The cancel thread is started";
-
     if (m_currentOperation == PLUGIN_OP_PROCESS) {
         SessionData inData(sessionDataMap);
         m_plugin->process(inData, m_currentMechanism);
@@ -392,81 +362,33 @@ void RemotePluginProcess::sessionDataReceived(const QVariantMap &sessionDataMap)
     }
 
     m_currentOperation = PLUGIN_OP_STOP;
-    connect(m_readnotifier, SIGNAL(activated(int)), this, SLOT(startTask()));
-}
-
-void RemotePluginProcess::enableCancelThread()
-{
-    QEventLoop loop;
-    connect(cancelThread,
-            SIGNAL(started()),
-            &loop,
-            SLOT(quit()));
-
-    m_readnotifier->setEnabled(false);
-    QTimer::singleShot(0.5*1000, &loop, SLOT(quit()));
-    cancelThread->start();
-    loop.exec();
-    QThread::yieldCurrentThread();
-}
-
-void RemotePluginProcess::disableCancelThread()
-{
-    if (!cancelThread->isRunning())
-        return;
-
-    /**
-     * Sort of terrible workaround which
-     * I do not know how to fix: the thread
-     * could hang up during wait up without
-     * these loops and sleeps
-     */
-    cancelThread->quit();
-
-    TRACE() << "Before the isFinished loop ";
-
-    int i = 0;
-    while (!cancelThread->isFinished()) {
-        cancelThread->quit();
-        TRACE() << "Internal iteration " << i++;
-        usleep(0.005 * 1000000);
-    }
-
-    if (!cancelThread->wait(500)) {
-        BLAME() << "Cannot disable cancel thread";
-        int i;
-        for (i = 0; i < 5; i++) {
-            usleep(0.01 * 1000000);
-            if (cancelThread->wait(500))
-                break;
-        }
-
-        if (i == 5) {
-            BLAME() << "Cannot do anything with cancel thread";
-            cancelThread->terminate();
-            cancelThread->wait();
-        }
-    }
-
-    m_readnotifier->setEnabled(true);
 }
 
 void RemotePluginProcess::startTask()
 {
+    if (m_blobIOHandler->isReading()) {
+        /* A data blob is being read; there's nothing for us here */
+        return;
+    }
+
     quint32 opcode = PLUGIN_OP_STOP;
     bool is_stopped = false;
 
     QDataStream in(&m_inFile);
     in >> opcode;
 
+    /* If the plugin is busy, the only allowed action here is canceling */
+    if (m_currentOperation != PLUGIN_OP_STOP && opcode != PLUGIN_OP_CANCEL) {
+        qCritical() << "Operation requested while plugin busy! - code" <<
+            opcode;
+        m_plugin->abort();
+        Q_EMIT processStopped();
+        return;
+    }
+
     switch (opcode) {
     case PLUGIN_OP_CANCEL:
-        {
-            m_plugin->cancel(); break;
-            //still do not have clear understanding
-            //of the cancelation-stop mechanism
-            //is_stopped = true;
-        }
+        m_plugin->cancel();
         break;
     case PLUGIN_OP_TYPE:
         type();
@@ -506,57 +428,6 @@ void RemotePluginProcess::startTask()
         m_plugin->abort();
         emit processStopped();
     }
-}
-
-CancelEventThread::CancelEventThread(AuthPluginInterface *plugin)
-{
-    m_plugin = plugin;
-    m_cancelNotifier = 0;
-}
-
-CancelEventThread::~CancelEventThread()
-{
-    delete m_cancelNotifier;
-}
-
-void CancelEventThread::run()
-{
-    if (!m_cancelNotifier) {
-        m_cancelNotifier = new QSocketNotifier(STDIN_FILENO,
-                                               QSocketNotifier::Read);
-        connect(m_cancelNotifier, SIGNAL(activated(int)),
-                this, SLOT(cancel()), Qt::DirectConnection);
-    }
-
-    m_cancelNotifier->setEnabled(true);
-    exec();
-    m_cancelNotifier->setEnabled(false);
-}
-
-void CancelEventThread::cancel()
-{
-    char buf[4];
-    memset(buf, 0, 4);
-    int n = 0;
-
-    if (!(n = read(STDIN_FILENO, buf, 4))) {
-        qCritical() << "Cannot read from cancel socket";
-        return;
-    }
-
-    /*
-     * Read the actual value of
-     * */
-    QByteArray ba(buf, 4);
-    quint32 opcode;
-    QDataStream ds(ba);
-    ds >> opcode;
-
-    if (opcode != PLUGIN_OP_CANCEL)
-        qCritical() << "wrong operation code: breakage of remotepluginprocess "
-            "threads synchronization: " << opcode;
-
-    m_plugin->cancel();
 }
 
 } //namespace RemotePluginProcessNS

@@ -41,7 +41,8 @@ BlobIOHandler::BlobIOHandler(QIODevice *readChannel,
     m_readChannel(readChannel),
     m_writeChannel(writeChannel),
     m_readNotifier(0),
-    m_blobSize(-1)
+    m_blobSize(-1),
+    m_isReading(false)
 {
 }
 
@@ -73,9 +74,9 @@ bool BlobIOHandler::sendData(const QVariantMap &map)
 
 void BlobIOHandler::setReadNotificationEnabled(bool enabled)
 {
+    m_isReading = enabled;
     if (enabled) {
         if (m_readNotifier != 0) {
-            m_readNotifier->setEnabled(true);
             connect(m_readNotifier, SIGNAL(activated(int)),
                     this, SLOT(readBlob()));
         } else {
@@ -86,7 +87,6 @@ void BlobIOHandler::setReadNotificationEnabled(bool enabled)
         if (m_readNotifier != 0) {
             disconnect(m_readNotifier, SIGNAL(activated(int)),
                        this, SLOT(readBlob()));
-            m_readNotifier->setEnabled(false);
         } else {
             disconnect(m_readChannel, SIGNAL(readyRead()),
                        this, SLOT(readBlob()));

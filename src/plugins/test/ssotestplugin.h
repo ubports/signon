@@ -51,10 +51,13 @@ public Q_SLOTS:
 private:
     QString m_type;
     QStringList m_mechanisms;
+    SignOn::SessionData m_data;
+    QString m_mechanism;
+    QTimer m_timer;
+    int m_statusCounter;
 
 private Q_SLOTS:
-    void execProcess(const SignOn::SessionData &inData,
-                     const QString &mechanism);
+    void execProcess();
 };
 
 } //namespace SsoTestPluginNS

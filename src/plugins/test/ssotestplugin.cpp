@@ -33,9 +33,6 @@ using namespace SignOn;
 
 namespace SsoTestPluginNS {
 
-static QMutex mutex;
-static bool is_canceled = false;
-
 SsoTestPlugin::SsoTestPlugin(QObject *parent):
     AuthPluginInterface(parent)
 {
@@ -48,6 +45,8 @@ SsoTestPlugin::SsoTestPlugin(QObject *parent):
     m_mechanisms += QLatin1String("BLOB");
 
     qRegisterMetaType<SignOn::SessionData>("SignOn::SessionData");
+
+    QObject::connect(&m_timer, SIGNAL(timeout()), this, SLOT(execProcess()));
 }
 
 SsoTestPlugin::~SsoTestPlugin()
@@ -56,9 +55,10 @@ SsoTestPlugin::~SsoTestPlugin()
 
 void SsoTestPlugin::cancel()
 {
-    TRACE();
-    QMutexLocker locker(&mutex);
-    is_canceled = true;
+    TRACE() << "Operation is canceled";
+    emit error(Error(Error::SessionCanceled,
+                     QLatin1String("The operation is canceled")));
+    m_timer.stop();
 }
 
 /*
@@ -74,37 +74,28 @@ void SsoTestPlugin::process(const SignOn::SessionData &inData,
         return;
     }
 
-    QMetaObject::invokeMethod(this,
-                              "execProcess",
-                              Qt::QueuedConnection,
-                              Q_ARG(SignOn::SessionData, inData),
-                              Q_ARG(QString, mechanism));
+    m_data = inData;
+    m_mechanism = mechanism;
+    m_statusCounter = 0;
+
+    m_timer.setInterval(100);
+    m_timer.setSingleShot(false);
+    m_timer.start();
 }
 
-void SsoTestPlugin::execProcess(const SignOn::SessionData &inData,
-                                const QString &mechanism)
+void SsoTestPlugin::execProcess()
 {
-    SignOn::SessionData outData(inData);
+    m_statusCounter++;
+    emit statusChanged(PLUGIN_STATE_WAITING,
+                       QLatin1String("hello from the test plugin"));
+    if (m_statusCounter < 10) return;
+
+    m_timer.stop();
+
+    SignOn::SessionData outData(m_data);
     outData.setRealm("testRealm_after_test");
 
-    for (int i = 0; i < 10; i++)
-        if (!is_canceled) {
-            TRACE() << "Signal is sent";
-            emit statusChanged(PLUGIN_STATE_WAITING,
-                               QLatin1String("hello from the test plugin"));
-            usleep(0.1 * 1000000);
-        }
-
-    if (is_canceled) {
-        TRACE() << "Operation is canceled";
-        QMutexLocker locker(&mutex);
-        is_canceled = false;
-        emit error(Error(Error::SessionCanceled,
-                         QLatin1String("The operation is canceled")));
-        return;
-    }
-
-    if (mechanism == QLatin1String("BLOB")) {
+    if (m_mechanism == QLatin1String("BLOB")) {
         emit result(outData);
         return;
     }
@@ -112,12 +103,12 @@ void SsoTestPlugin::execProcess(const SignOn::SessionData &inData,
     foreach(QString key, outData.propertyNames())
         TRACE() << key << ": " << outData.getProperty(key);
 
-    if (mechanism == QLatin1String("mech1")) {
+    if (m_mechanism == QLatin1String("mech1")) {
         emit result(outData);
         return;
     }
 
-    if (mechanism == QLatin1String("mech2")) {
+    if (m_mechanism == QLatin1String("mech2")) {
         SignOn::UiSessionData data;
         data.setQueryPassword(true);
         emit userActionRequired(data);
