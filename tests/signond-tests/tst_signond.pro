@@ -22,7 +22,8 @@ DEFINES += \
     TEST_DBUS_CONFIG_FILE=\\\"../testsession.conf\\\"
 
 INCLUDEPATH += \
-    $${TOP_SRC_DIR}/lib
+    $${TOP_SRC_DIR}/lib \
+    $${TOP_SRC_DIR}/lib/plugins
 
 SOURCES += \
     tst_signond.cpp

@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <sys/types.h>
 
+#include "SignOn/UiSessionData"
 #include "signond/signoncommon.h"
 
 #include "fake_signonui.h"
@@ -68,6 +69,8 @@ private Q_SLOTS:
     void testAuthSessionMechanisms();
     void testAuthSessionProcess();
     void testAuthSessionProcessUi();
+    void testAuthSessionCloseUi_data();
+    void testAuthSessionCloseUi();
 
 private:
     void setupEnvironment();
@@ -529,6 +532,83 @@ void SignondTest::testAuthSessionProcessUi()
         { "UserName", "the user" },
     };
     QCOMPARE(response, expectedResponse);
+}
+
+void SignondTest::testAuthSessionCloseUi_data()
+{
+    QTest::addColumn<QVariantMap>("uiReply");
+    QTest::addColumn<bool>("expectedCancellation");
+
+    QTest::newRow("no UI") <<
+        QVariantMap {} <<
+        false;
+
+    QTest::newRow("with UI") <<
+        QVariantMap {
+            { "data",
+                QVariantMap {
+                    { "UserName", "the user" },
+                    { "Secret", "s3c'r3t" },
+                    { "QueryErrorCode", 0 },
+                }
+            }
+        } <<
+        true;
+
+    QTest::newRow("with UI error") <<
+        QVariantMap {
+            { "error", "some.Dbus.Error" }
+        } <<
+        false;
+
+    QTest::newRow("with UI canceled") <<
+        QVariantMap {
+            { "data",
+                QVariantMap {
+                    { "UserName", "the user" },
+                    { "Secret", "s3c'r3t" },
+                    { "QueryErrorCode", SignOn::QUERY_ERROR_CANCELED },
+                }
+            }
+        } <<
+        false;
+}
+
+void SignondTest::testAuthSessionCloseUi()
+{
+    QFETCH(QVariantMap, uiReply);
+    QFETCH(bool, expectedCancellation);
+
+    QDBusMessage msg = methodCall(SIGNOND_DAEMON_OBJECTPATH,
+                                  SIGNOND_DAEMON_INTERFACE,
+                                  "getAuthSessionObjectPath");
+    msg << uint(0);
+    msg << QString("ssotest");
+    QDBusMessage reply = connection().call(msg);
+    QVERIFY(replyIsValid(reply));
+    QString objectPath = reply.arguments()[0].toString();
+    QVERIFY(objectPath.startsWith('/'));
+
+    /* prepare SignOnUi */
+    OrgFreedesktopDBusMockInterface &mockInterface =
+        m_signonUi.mockedService();
+    mockInterface.ClearCalls().waitForFinished();
+    m_signonUi.setNextReply(uiReply);
+
+    /* Start the authentication; if uiReply is empty, don't invoke signonUI */
+    QString mechanism = uiReply.isEmpty() ? "mech1" : "mech2";
+    QVariantMap sessionData {
+        { "Some key", "its value" },
+        { "height", 123 },
+    };
+    msg = methodCall(objectPath, SIGNOND_AUTH_SESSION_INTERFACE, "process");
+    msg << sessionData;
+    msg << mechanism;
+    connection().call(msg);
+
+    /* Check whether signonui has been asked to close */
+    QTRY_COMPARE(mockInterface.GetMethodCalls("cancelUiRequest").value().count(),
+                 expectedCancellation ? 1 : 0);
 }
 
 QTEST_GUILESS_MAIN(SignondTest);
