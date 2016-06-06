@@ -1,9 +1,11 @@
-signon (8.58+16.04.20151106-0ubuntu2) UNRELEASED; urgency=medium
+signon (8.58+16.04.20151106-0ubuntu3) UNRELEASED; urgency=medium
 
   * debian/control, debian/libsignon-qt{1,-dev}.install, debian/rules:
     Don't build Qt4 packages.
+  * debian/libsignon-{qt5-1,extension1,plugins-common1}.symbols:
+    Add symbols files for our public libraries.
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 10 May 2016 17:04:07 +0300
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Mon, 06 Jun 2016 13:06:39 +0300
 
 signon (8.58+16.04.20151106-0ubuntu1) xenial; urgency=medium
 
