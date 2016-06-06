@@ -132,6 +132,7 @@ void SignondTest::setupEnvironment()
     qputenv("XDG_RUNTIME_DIR", baseDirPath + "/runtime-dir");
     baseDir.mkpath("runtime-dir");
     qputenv("SSO_STORAGE_PATH", baseDirPath);
+    qputenv("SSO_EXTENSIONS_DIR", baseDirPath + "/non-existing-dir");
     qputenv("SSO_USE_PEER_BUS", "0");
     qputenv("SSO_LOGGING_LEVEL", "2");
     qputenv("SSO_PLUGINS_DIR", BUILDDIR "/src/plugins/test");
