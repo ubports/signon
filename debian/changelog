@@ -2,8 +2,6 @@ signon (8.59-0ubuntu1) UNRELEASED; urgency=medium
 
   * debian/control, debian/libsignon-qt{1,-dev}.install, debian/rules:
     Don't build Qt4 packages.
-  * debian/libsignon-{qt5-1,extension1,plugins-common1}.symbols:
-    Add symbols files for our public libraries.
   * New upstream release
     - Remove Qt4 support
     - Lib: add more defines for SignOnUi password dialog
