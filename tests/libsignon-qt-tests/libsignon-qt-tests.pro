@@ -11,11 +11,7 @@ QT += \
     testlib
 QT -= gui
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-    LIBS *= -lsignon-qt5
-} else {
-    LIBS *= -lsignon-qt
-}
+LIBS *= -lsignon-qt5
 QMAKE_LIBDIR += $${TOP_BUILD_DIR}/lib/SignOn
 QMAKE_RPATHDIR = $${QMAKE_LIBDIR}
 

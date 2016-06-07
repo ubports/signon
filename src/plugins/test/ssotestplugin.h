@@ -2,6 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -50,10 +51,13 @@ public Q_SLOTS:
 private:
     QString m_type;
     QStringList m_mechanisms;
+    SignOn::SessionData m_data;
+    QString m_mechanism;
+    QTimer m_timer;
+    int m_statusCounter;
 
 private Q_SLOTS:
-    void execProcess(const SignOn::SessionData &inData,
-                     const QString &mechanism);
+    void execProcess();
 };
 
 } //namespace SsoTestPluginNS

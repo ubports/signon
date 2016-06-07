@@ -7,5 +7,9 @@ SUBDIRS = \
     tst_database.pro \
     access-control.pro \
 
+system(pkg-config --exists libqtdbusmock-1) {
+    SUBDIRS += tst_signond.pro
+}
+
 # Disabled until fixed
 #SUBDIRS += tst_backup.pro

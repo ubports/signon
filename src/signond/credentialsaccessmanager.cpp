@@ -4,8 +4,8 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <mailto:ext-Aurel.Popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  * Contact: Jussi Laako <jussi.laako@linux.intel.com>
  *

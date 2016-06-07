@@ -2,7 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
- * Copyright (C) 2012 Canonical Ltd.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -105,7 +105,7 @@
     SIGNOND_STRING(SIGNOND_ERR_PREFIX "InternalCommunication")
 
 #define SIGNOND_PERMISSION_DENIED_ERR_STR \
-    SIGNOND_STRING("Client has insuficient permissions to access the service.")
+    SIGNOND_STRING("Client has insufficient permissions to access the service.")
 #define SIGNOND_PERMISSION_DENIED_ERR_NAME \
     SIGNOND_STRING(SIGNOND_ERR_PREFIX "PermissionDenied")
 

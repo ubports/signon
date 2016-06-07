@@ -2,6 +2,7 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -63,7 +64,6 @@ public:
      * just for any case
      * */
     static void stopAllAuthSessions();
-    static QStringList loadedPluginMethods(const QString &method);
 
     void destroy();
 

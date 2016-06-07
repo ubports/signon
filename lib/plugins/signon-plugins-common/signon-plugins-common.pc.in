@@ -6,5 +6,5 @@ plugin_includedir=${includedir}/signon-plugins/SignOn
 Name: signon-plugins-common
 Description: SignonPluginsCommon
 Version: $$PROJECT_VERSION
-Libs.private: -L/usr/lib -l$${LIBQTCORE}
+Libs.private: -L/usr/lib -lQt5Core
 Cflags:  -I${includedir}/signon-plugins -I${includedir}/signon-plugins/SignOn
