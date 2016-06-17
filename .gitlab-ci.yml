@@ -31,3 +31,21 @@ test_amd64:
     - make coverage-html
   dependencies:
     - build_amd64
+  artifacts:
+    paths:
+      - ./
+
+pages:
+  stage: deploy
+  script:
+    - cd build
+    - make install INSTALL_ROOT=$(pwd)/out
+    - cd ..
+    - mkdir public
+    - cp -a build/coverage-html public/coverage
+    - cp -a build/out/usr/share/doc/libsignon-qt/html/* public
+  dependencies:
+    - test_amd64
+  artifacts:
+    paths:
+      - public
