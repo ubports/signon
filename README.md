@@ -21,3 +21,10 @@ qmake
 make
 make install
 ```
+
+Resources
+---------
+
+[libsignon-qt API reference documentation](http://accounts-sso.gitlab.io/signond/index.html)
+
+[Official source code repository](https://gitlab.com/accounts-sso/signond)

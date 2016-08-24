@@ -1,4 +1,4 @@
-signon (8.59-0ubuntu1) UNRELEASED; urgency=medium
+signon (8.59-0ubuntu2) UNRELEASED; urgency=medium
 
   * debian/control, debian/libsignon-qt{1,-dev}.install, debian/rules:
     Don't build Qt4 packages.
@@ -16,8 +16,11 @@ signon (8.59-0ubuntu1) UNRELEASED; urgency=medium
     - Tests: add tst_signond using QtDBusMock
     - Doc: don't build signond documentation
     - Escape quotation marks in ConfigVersion.cmake.in files
+  * Merge from upstream
+    - Tests: fix AuthSession's "invocation of process() from another process"
+      test (LP: #1608822)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 07 Jun 2016 17:59:11 +0300
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 24 Aug 2016 16:40:59 +0300
 
 signon (8.58+16.04.20151106-0ubuntu1) xenial; urgency=medium
 
