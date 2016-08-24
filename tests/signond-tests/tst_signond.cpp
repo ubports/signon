@@ -22,6 +22,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -68,6 +69,7 @@ private Q_SLOTS:
     void testAuthSessionMechanisms_data();
     void testAuthSessionMechanisms();
     void testAuthSessionProcess();
+    void testAuthSessionProcessFromOtherProcess();
     void testAuthSessionProcessUi();
     void testAuthSessionCloseUi_data();
     void testAuthSessionCloseUi();
@@ -490,6 +492,35 @@ void SignondTest::testAuthSessionProcess()
     QVariantMap expectedResponse = sessionData;
     expectedResponse["Realm"] = "testRealm_after_test";
     QCOMPARE(response, expectedResponse);
+}
+
+void SignondTest::testAuthSessionProcessFromOtherProcess()
+{
+    QDBusMessage msg = methodCall(SIGNOND_DAEMON_OBJECTPATH,
+                                  SIGNOND_DAEMON_INTERFACE,
+                                  "getAuthSessionObjectPath");
+    msg << uint(0);
+    msg << QString("ssotest");
+    QDBusMessage reply = connection().call(msg);
+    QVERIFY(replyIsValid(reply));
+
+    QCOMPARE(reply.arguments().count(), 1);
+
+    QString objectPath = reply.arguments()[0].toString();
+    QVERIFY(objectPath.startsWith('/'));
+
+    /* Pass this object path to another process, and verify that it's not
+     * allowed to use the session */
+    QProcess sessionTool;
+    sessionTool.start("./session_tool", { "--sessionPath", objectPath });
+    QVERIFY(sessionTool.waitForStarted());
+    QVERIFY(sessionTool.waitForFinished());
+
+    QByteArray output = sessionTool.readAllStandardOutput();
+    QVERIFY(output.startsWith("Error:"));
+
+    QString errorName = output.mid(6);
+    QCOMPARE(errorName, SIGNOND_PERMISSION_DENIED_ERR_NAME);
 }
 
 void SignondTest::testAuthSessionProcessUi()

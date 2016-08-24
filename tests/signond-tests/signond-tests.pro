@@ -8,7 +8,10 @@ SUBDIRS = \
     access-control.pro \
 
 system(pkg-config --exists libqtdbusmock-1) {
-    SUBDIRS += tst_signond.pro
+    SUBDIRS += \
+        session_tool.pro \
+        tst_signond.pro
+    tst_signond.depends += session_tool
 }
 
 # Disabled until fixed
