@@ -12,12 +12,9 @@ QT += core \
 
 QT -= gui
 
-LIBS += -lsignon-extension
-greaterThan(QT_MAJOR_VERSION, 4) {
-    LIBS += -lsignon-qt5
-} else {
-    LIBS += -lsignon-qt
-}
+LIBS += \
+    -lsignon-extension \
+    -lsignon-qt5
 
 QMAKE_LIBDIR += \
     $${TOP_BUILD_DIR}/lib/signond/SignOn \

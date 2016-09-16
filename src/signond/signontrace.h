@@ -2,8 +2,8 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -58,8 +58,11 @@ public:
         m_pInstance = new SignonTrace(logOutput);
     }
 
-    static void output(QtMsgType type, const char *msg)
+    static void output(QtMsgType type, const QMessageLogContext &context,
+                       const QString &msg)
     {
+        Q_UNUSED(context);
+
         if (!m_pInstance)
             return;
 
@@ -79,7 +82,7 @@ public:
             default: priority = LOG_INFO; break;
         }
 
-        syslog(priority, "%s", msg);
+        syslog(priority, "%s", msg.toUtf8().constData());
     }
 
 private:
@@ -88,7 +91,7 @@ private:
     {
         if (logOutput == Syslog) {
             openlog(NULL, LOG_PID, LOG_DAEMON);
-            qInstallMsgHandler(output);
+            qInstallMessageHandler(output);
         }
     }
 

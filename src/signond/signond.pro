@@ -9,8 +9,8 @@ QT += core \
     dbus
 
 #generate adaptor for backup
-system(qdbusxml2cpp -c BackupIfAdaptor -a backupifadaptor.h:backupifadaptor.cpp \
-    ../../lib/signond/com.nokia.SingleSignOn.Backup.xml)
+DBUS_ADAPTORS += \
+    ../../lib/signond/com.nokia.SingleSignOn.Backup.xml
 
 HEADERS += \
     accesscontrolmanagerhelper.h \
@@ -33,7 +33,6 @@ HEADERS += \
     signonidentityinfo.h \
     signonui_interface.h \
     signonidentityadaptor.h \
-    backupifadaptor.h \
     signonsessioncoretools.h
 SOURCES += \
     accesscontrolmanagerhelper.cpp \
@@ -54,7 +53,6 @@ SOURCES += \
     signondaemon.cpp \
     signonidentityinfo.cpp \
     signonidentityadaptor.cpp \
-    backupifadaptor.cpp \
     signonsessioncoretools.cpp
 INCLUDEPATH += . \
     $${TOP_SRC_DIR}/lib/plugins \
@@ -75,6 +73,14 @@ CONFIG(enable-p2p) {
     PKGCONFIG += dbus-1
 }
 
+CONFIG(enable-backup) {
+    DEFINES += ENABLE_BACKUP
+    SOURCES += \
+        backup.cpp
+    HEADERS += \
+        backup.h
+}
+
 DEFINES += QT_NO_CAST_TO_ASCII \
     QT_NO_CAST_FROM_ASCII
 DEFINES += "SIGNOND_PLUGINS_DIR=$${SIGNOND_PLUGINS_DIR_QUOTED}"
@@ -86,10 +92,6 @@ LIBS += \
     -lrt \
     -lsignon-plugins-common \
     -lsignon-extension
-
-QMAKE_DISTCLEAN += \
-    backupifadaptor.cpp \
-    backupifadaptor.h
 
 headers.files = $$HEADERS
 include( ../../common-installs-config.pri )

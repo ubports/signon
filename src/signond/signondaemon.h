@@ -2,9 +2,8 @@
  * This file is part of signon
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
- * Copyright (C) 2012-2013 Canonical Ltd.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
- * Contact: Aurel Popirtac <ext-aurel.popirtac@nokia.com>
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -143,12 +142,6 @@ private Q_SLOTS:
     void onIdentityStored(SignonIdentity *identity);
     void onIdentityDestroyed();
 
-public Q_SLOTS: // backup METHODS
-    uchar backupStarts();
-    uchar backupFinished();
-    uchar restoreStarts();
-    uchar restoreFinished();
-
 private:
     SignonDaemon(QObject *parent);
     void initExtensions();
@@ -157,11 +150,6 @@ private:
 
     void watchIdentity(SignonIdentity *identity);
     void setupSignalHandlers();
-
-    void eraseBackupDir() const;
-    bool copyToBackupDir(const QStringList &fileNames) const;
-    bool copyFromBackupDir(const QStringList &fileNames) const;
-    bool createStorageFileTree(const QStringList &fileNames) const;
 
     void setLastError(const QString &name, const QString &msg);
     void clearLastError();
@@ -178,8 +166,6 @@ private:
      * The instance of CAM
      * */
     CredentialsAccessManager *m_pCAMManager;
-
-    bool m_backup;
 
     int m_identityTimeout;
     int m_authSessionTimeout;

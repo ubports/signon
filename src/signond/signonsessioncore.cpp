@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2009-2010 Nokia Corporation.
  * Copyright (C) 2011 Intel Corporation.
+ * Copyright (C) 2012-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  * Contact: Jussi Laako <jussi.laako@linux.intel.com>
@@ -205,21 +206,6 @@ void SignonSessionCore::stopAllAuthSessions()
 
     qDeleteAll(sessionsOfNonStoredCredentials);
     sessionsOfNonStoredCredentials.clear();
-}
-
-QStringList SignonSessionCore::loadedPluginMethods(const QString &method)
-{
-    foreach (SignonSessionCore *corePtr, sessionsOfStoredCredentials) {
-        if (corePtr->method() == method)
-            return corePtr->queryAvailableMechanisms(QStringList());
-    }
-
-    foreach (SignonSessionCore *corePtr, sessionsOfNonStoredCredentials) {
-        if (corePtr->method() == method)
-            return corePtr->queryAvailableMechanisms(QStringList());
-    }
-
-    return QStringList();
 }
 
 QStringList
@@ -614,11 +600,14 @@ void SignonSessionCore::processResultReply(const QVariantMap &data)
         rd.m_conn.send(rd.m_msg.createReply(arguments));
 
         if (m_watcher && !m_watcher->isFinished()) {
-            m_signonui->cancelUiRequest(rd.m_cancelKey);
             delete m_watcher;
             m_watcher = 0;
         }
-        m_queryCredsUiDisplayed = false;
+        /* Inform SignOnUi that we are done */
+        if (m_queryCredsUiDisplayed) {
+            m_signonui->cancelUiRequest(rd.m_cancelKey);
+            m_queryCredsUiDisplayed = false;
+        }
     }
 
     requestDone();
@@ -745,6 +734,7 @@ void SignonSessionCore::processUiRequest(const QVariantMap &data)
         m_watcher = new QDBusPendingCallWatcher(
                      m_signonui->queryDialog(request.m_params),
                      this);
+        m_queryCredsUiDisplayed = true;
         connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
                 this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
     }
@@ -771,6 +761,7 @@ void SignonSessionCore::processRefreshRequest(const QVariantMap &data)
         m_watcher = new QDBusPendingCallWatcher(
                      m_signonui->refreshDialog(m_listOfRequests.head().m_params),
                      this);
+        m_queryCredsUiDisplayed = true;
         connect(m_watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
                 this, SLOT(queryUiSlot(QDBusPendingCallWatcher*)));
     }
@@ -792,9 +783,13 @@ void SignonSessionCore::processError(int err, const QString &message)
         replyError(rd.m_conn, rd.m_msg, err, message);
 
         if (m_watcher && !m_watcher->isFinished()) {
-            m_signonui->cancelUiRequest(rd.m_cancelKey);
             delete m_watcher;
             m_watcher = 0;
+        }
+        /* Inform SignOnUi that we are done */
+        if (m_queryCredsUiDisplayed) {
+            m_queryCredsUiDisplayed = false;
+            m_signonui->cancelUiRequest(rd.m_cancelKey);
         }
     }
 
@@ -857,17 +852,16 @@ void SignonSessionCore::queryUiSlot(QDBusPendingCallWatcher *call)
         rd.m_params = resultParameters;
 
         /* If the query ui was canceled or any other error occurred
-         * do not set this flag to true. */
+         * we assume that the UI is not displayed. */
         if (resultParameters.contains(SSOUI_KEY_ERROR)
             && (resultParameters[SSOUI_KEY_ERROR] == QUERY_ERROR_CANCELED)) {
 
             m_queryCredsUiDisplayed = false;
-        } else {
-            m_queryCredsUiDisplayed = true;
         }
     } else {
         rd.m_params.insert(SSOUI_KEY_ERROR,
                            (int)SignOn::QUERY_ERROR_NO_SIGNONUI);
+        m_queryCredsUiDisplayed = false;
     }
 
     if (!m_canceled) {

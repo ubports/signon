@@ -40,7 +40,3 @@ AbstractCryptoManager *CryptsetupPlugin::cryptoManager(QObject *parent) const
     qDebug() << Q_FUNC_INFO;
     return new CryptoManager(parent);
 }
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-Q_EXPORT_PLUGIN2(cryptsetup, CryptsetupPlugin);
-#endif

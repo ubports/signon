@@ -1,7 +1,7 @@
 /*
  * This file is part of signon
  *
- * Copyright (C) 2013 Canonical Ltd.
+ * Copyright (C) 2013-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -39,7 +39,3 @@ Plugin::accessControlManager(QObject *parent) const
     qDebug() << Q_FUNC_INFO;
     return new AccessControlManager(parent);
 }
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-Q_EXPORT_PLUGIN2(mock-ac, Plugin);
-#endif

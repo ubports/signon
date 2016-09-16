@@ -26,7 +26,7 @@ CONFIG += \
     build_all \
     link_pkgconfig
 
-system(pkg-config --exists libproxy-1.0) {
+lessThan(QT_VERSION, "5.5.0"):system(pkg-config --exists libproxy-1.0) {
     DEFINES += HAVE_LIBPROXY
     PKGCONFIG += libproxy-1.0
     SOURCES += my-network-proxy-factory.cpp

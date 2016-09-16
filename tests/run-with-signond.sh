@@ -24,7 +24,7 @@ DBUS_CONFIG=${BUILDDIR}/tests/testsession.conf
 if command -v dbus-test-runner > /dev/null ; then
     echo "Using dbus-test-runner"
     export SSO_LOGGING_OUTPUT="stdout"
-    dbus-test-runner -m 180 --dbus-config=${DBUS_CONFIG} \
+    dbus-test-runner -m 600 --dbus-config=${DBUS_CONFIG} \
         -t "$@" --keep-env
 else
     echo "Using dbus-launch"

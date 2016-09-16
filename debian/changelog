@@ -1,3 +1,27 @@
+signon (8.59-0ubuntu2) UNRELEASED; urgency=medium
+
+  * debian/control, debian/libsignon-qt{1,-dev}.install, debian/rules:
+    Don't build Qt4 packages.
+  * New upstream release
+    - Remove Qt4 support
+    - Lib: add more defines for SignOnUi password dialog
+    - signond: inform SignOnUI when a session finishes
+    - signond: add configure option to enable backup
+    - signond: minor code simplifications and cleanups
+    - plugins: don't use custom proxy implementation on Qt 5.5 and later
+    - RemotePluginProcess: don't use a thread for cancel
+    - Build: use qmake's DBUS_ADAPTORS to build the backup adaptor
+    - Build: support implicit out-of-tree builds
+    - Build: enable CI in gitlab
+    - Tests: add tst_signond using QtDBusMock
+    - Doc: don't build signond documentation
+    - Escape quotation marks in ConfigVersion.cmake.in files
+  * Merge from upstream
+    - Tests: fix AuthSession's "invocation of process() from another process"
+      test (LP: #1608822)
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 24 Aug 2016 16:40:59 +0300
+
 signon (8.58+16.04.20151106-0ubuntu1) xenial; urgency=medium
 
   [ Alberto Mardegan ]
