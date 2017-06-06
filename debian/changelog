@@ -1,3 +1,9 @@
+signon (8.59+17.10.20170606-0ubuntu1) artful; urgency=medium
+
+  * Recommend signon-ui-x11 instead of transitional signon-ui
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 06 Jun 2017 17:45:09 +0000
+
 signon (8.59+16.10.20160916-0ubuntu1) yakkety; urgency=medium
 
   * debian/control, debian/libsignon-qt{1,-dev}.install, debian/rules:
