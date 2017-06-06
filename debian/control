@@ -83,7 +83,7 @@ Breaks: signon-plugins,
         signon-saslplugin (<< 8.40),
 Replaces: signon-plugins,
           signon-saslplugin (<< 8.40),
-Recommends: signon-ui,
+Recommends: signon-ui-x11,
 Description: Single Sign On framework
  Framework to provide credential storage and authentication service.
 
