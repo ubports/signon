@@ -1,3 +1,9 @@
+signon (8.60+ubports) xenial; urgency=medium
+
+  * Imported to UBports
+
+ -- UBports auto importer <infra@ubports.com>  Sat, 10 Mar 2018 19:48:04 +0000
+
 signon (8.59+17.10.20170606-0ubuntu1) artful; urgency=medium
 
   * Recommend signon-ui-x11 instead of transitional signon-ui
